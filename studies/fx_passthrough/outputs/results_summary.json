@@ -1,56 +1,43 @@
 {
   "study": "fx_passthrough",
-  "generated": "2026-01-31T13:45:00.000000",
-  "status": "pending_cpi_data",
-  "status_message": "BNS CPI API currently returning 500 errors. Analysis pending API recovery.",
-  "data_status": {
+  "generated": "2026-01-31T22:24:59.168749+00:00",
+  "status": "partial_analysis_with_headline_cpi",
+  "status_message": "Headline CPI available. COICOP category breakdown unavailable (BNS API error). Block A cannot run without category data.",
+  "data_available": {
     "nbk_usd_kzt": {
       "status": "downloaded",
-      "n_obs": 192,
-      "date_range": ["2010-01-01", "2025-12-01"]
+      "n_obs": 192
     },
     "bns_national_income": {
       "status": "downloaded",
-      "n_obs": 1126,
-      "date_range": ["2010-03-01", "2025-09-01"]
+      "n_obs": 61
+    },
+    "bns_headline_cpi": {
+      "status": "downloaded",
+      "n_obs": 178,
+      "date_range": [
+        "2011-01-01",
+        "2025-10-01"
+      ]
     },
     "bns_cpi_categories": {
       "status": "api_error",
-      "error": "BNS API returning 500 Internal Server Error",
-      "required_for": ["block_a", "falsification"],
-      "manual_download_url": "https://stat.gov.kz/en/industries/prices/stat-official-ind-prices/"
-    },
-    "fred_data": {
-      "status": "downloaded",
-      "sources": ["IGREA", "VIXCLS", "DCOILBRENTEU"]
-    },
-    "baumeister_shocks": {
-      "status": "downloaded",
-      "n_obs": 608
+      "error": "Only headline CPI available, COICOP category breakdown not accessible"
     }
   },
-  "available_panels": {
-    "income_series": {
-      "status": "built",
-      "n_obs": 1126,
-      "columns": ["date", "nominal_income", "wage_income", "transfer_income", "nominal_income_growth", "wage_income_share", "transfer_income_share"]
-    },
-    "cpi_panel": {
-      "status": "not_built",
-      "reason": "Requires BNS CPI category data"
-    }
+  "analysis_possible": {
+    "exchange_rate_dynamics": "YES",
+    "income_analysis": "YES",
+    "block_a_cpi_passthrough": "NO - requires COICOP categories",
+    "block_b_income_lpiv": "PARTIAL - can use headline inflation",
+    "falsification_admin_prices": "NO - requires COICOP categories"
   },
-  "previous_results_invalidated": true,
-  "previous_results_reason": "Previous results were based on synthetic CPI data with artificial uniform pass-through. Admin price falsification test failure was due to synthetic data, not real economic patterns.",
-  "block_a": null,
-  "block_b": null,
-  "block_e": null,
-  "structural_break": null,
-  "falsification": null,
-  "next_steps": [
-    "Monitor BNS API status at https://stat.gov.kz/en/industries/prices/stat-official-ind-prices/",
-    "Once API recovers, run: PYTHONPATH=. python scripts/download_all_data.py",
-    "Then run: kzresearch passthrough run-full-chain",
-    "Alternative: Manually download CPI category data from BNS website and place in data/raw/kazakhstan_bns/cpi_categories.parquet"
-  ]
+  "reduced_form_results": {
+    "fx_cpi_correlation_contemporaneous": 0.289,
+    "fx_cpi_correlation_1mo_lag": 0.3856,
+    "cumulative_passthrough_3mo": 0.0984,
+    "passthrough_r2": 0.1859,
+    "pre_float_volatility_pct": 2.28,
+    "post_float_volatility_pct": 4.38
+  }
 }

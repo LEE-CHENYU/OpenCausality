@@ -1,80 +1,87 @@
 {
-  "version": "1.0",
-  "last_updated": "2026-01-31T13:40:46.548679",
+  "last_updated": "2026-01-31T22:26:07.248288+00:00",
   "sources": {
-    "fred_igrea": {
-      "status": "downloaded",
-      "n_rows": 311,
-      "date_range": [
-        "2000-01-01",
-        "2025-11-01"
-      ],
-      "last_download": "2026-01-31T13:40:43.296478",
-      "error": null
-    },
-    "fred_vix": {
-      "status": "downloaded",
-      "n_rows": 6804,
-      "date_range": [
-        "2000-01-03",
-        "2026-01-29"
-      ],
-      "last_download": "2026-01-31T13:40:43.305454",
-      "error": null
-    },
-    "fred_brent": {
-      "status": "downloaded",
-      "n_rows": 6801,
-      "date_range": [
-        "2000-01-03",
-        "2026-01-26"
-      ],
-      "last_download": "2026-01-31T13:40:43.312304",
-      "error": null
-    },
-    "baumeister_shocks": {
-      "status": "downloaded",
-      "n_rows": 608,
-      "date_range": [
-        "1975-02-01",
-        "2025-09-01"
-      ],
-      "last_download": "2026-01-31T13:40:43.314934",
-      "error": null
-    },
     "nbk_usd_kzt": {
       "status": "downloaded",
-      "n_rows": 192,
+      "path": "data/raw/nbk/usd_kzt.parquet",
+      "n_obs": 192,
       "date_range": [
         "2010-01-01",
         "2025-12-01"
       ],
-      "last_download": "2026-01-31T13:40:43.317333",
-      "error": null
+      "last_download": "2026-01-31T22:26:07.248524+00:00"
     },
-    "bns_cpi_categories": {
-      "status": "failed",
-      "n_rows": 0,
-      "date_range": null,
-      "last_download": "2026-01-31T13:40:46.223380",
-      "error": "CPI category data unavailable.\nBNS API failed and no local cache found.\nPlease download CPI by category data manually from:\nhttps://stat.gov.kz/en/industries/prices/stat-official-ind-prices/"
+    "bns_headline_cpi": {
+      "status": "downloaded",
+      "path": "data/processed/fx_passthrough/headline_cpi.parquet",
+      "n_obs": 178,
+      "date_range": [
+        "2011-01-01",
+        "2025-10-01"
+      ],
+      "last_download": "2026-01-31T22:26:07.248526+00:00"
     },
     "bns_national_income": {
       "status": "downloaded",
-      "n_rows": 1126,
+      "path": "data/processed/fx_passthrough/income_series.parquet",
+      "n_obs": 61,
       "date_range": [
-        "2010-03-01",
-        "2025-09-01"
+        "2010-Q2",
+        "2025-Q3"
       ],
-      "last_download": "2026-01-31T13:40:43.323302",
-      "error": null
+      "last_download": "2026-01-31T22:26:07.248527+00:00"
     },
-    "worldbank_reer": {
-      "status": "failed_optional",
-      "n_rows": 0,
-      "date_range": null,
-      "last_download": "2026-01-31T13:40:46.548665",
-      "error": "World Bank REER fetch failed"
+    "bns_cpi_categories": {
+      "status": "api_error",
+      "path": null,
+      "error": "BNS API only returns headline CPI, COICOP category breakdown not accessible",
+      "manual_download_url": "https://stat.gov.kz/en/industries/prices/stat-official-ind-prices/",
+      "required_format": {
+        "columns": [
+          "date",
+          "category_code",
+          "category_name",
+          "cpi_index"
+        ],
+        "categories": [
+          "01-Food",
+          "02-Alcohol",
+          "03-Clothing",
+          "04-Housing",
+          "05-Furnishings",
+          "06-Health",
+          "07-Transport",
+          "08-Communications",
+          "09-Recreation",
+          "10-Education",
+          "11-Restaurants",
+          "12-Misc"
+        ]
+      }
+    },
+    "fred_data": {
+      "status": "downloaded",
+      "path": "data/raw/fred/",
+      "series": [
+        "IGREA",
+        "VIXCLS",
+        "DCOILBRENTEU"
+      ],
+      "last_download": "2026-01-31"
+    },
+    "baumeister_shocks": {
+      "status": "downloaded",
+      "path": "data/raw/baumeister_shocks/shocks.parquet",
+      "n_obs": 608,
+      "last_download": "2026-01-31"
     }
+  },
+  "analysis_status": {
+    "exchange_rate_dynamics": "complete",
+    "reduced_form_passthrough": "complete",
+    "income_analysis": "complete",
+    "block_a_category_did": "blocked - missing CPI categories",
+    "block_b_lpiv": "blocked - missing Block A output",
+    "falsification_tests": "blocked - missing CPI categories"
   }
 }
