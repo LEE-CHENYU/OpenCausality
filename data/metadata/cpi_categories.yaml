@@ -1,0 +1,218 @@
+# CPI Category Metadata for FX Passthrough Study (Block A)
+#
+# COICOP (Classification of Individual Consumption According to Purpose)
+# categories with import intensity and administrative price indicators.
+#
+# Import shares are predetermined (fixed pre-period) for causal identification.
+
+version: "1.0"
+study: "fx_passthrough"
+description: "CPI category metadata for Block A pass-through analysis"
+
+# Reference year for import intensity estimates
+reference_year: 2019
+import_intensity_source: "Default estimates calibrated to emerging market patterns"
+
+# Categories excluded from main analysis
+excluded_categories:
+  admin_prices:
+    - "04"  # Housing, water, electricity, gas
+    - "06"  # Health (regulated prices)
+    - "08"  # Communications (regulated tariffs)
+    - "10"  # Education (regulated fees)
+  reason: "Administered prices do not respond to market FX shocks"
+
+categories:
+  "01":
+    name: "Food and non-alcoholic beverages"
+    name_short: "Food"
+    tradable: true
+    import_share: 0.40
+    import_share_confidence: "medium"
+    admin_price: false
+    cpi_weight: 0.35  # Approximate CPI basket weight
+    notes: "Partial import dependence - domestic agriculture + imported processed goods"
+    examples:
+      - "Imported fruits and vegetables"
+      - "Processed foods"
+      - "Domestic grains and meat"
+
+  "02":
+    name: "Alcoholic beverages, tobacco"
+    name_short: "Alcohol/Tobacco"
+    tradable: true
+    import_share: 0.60
+    import_share_confidence: "medium"
+    admin_price: false
+    cpi_weight: 0.03
+    notes: "Significant import content - foreign brands, tobacco imports"
+
+  "03":
+    name: "Clothing and footwear"
+    name_short: "Clothing"
+    tradable: true
+    import_share: 0.80
+    import_share_confidence: "high"
+    admin_price: false
+    cpi_weight: 0.08
+    notes: "Highly import-dependent - most clothing/footwear imported from China, Turkey"
+    expected_passthrough: "Strong - expect high β for this category"
+
+  "04":
+    name: "Housing, water, electricity, gas"
+    name_short: "Housing/Utilities"
+    tradable: false
+    import_share: 0.10
+    import_share_confidence: "low"
+    admin_price: true
+    cpi_weight: 0.12
+    notes: "Domestic services, regulated utility prices"
+    exclude_from_main: true
+    exclusion_reason: "Administered prices - tariffs set by regulators"
+
+  "05":
+    name: "Furnishings, household equipment"
+    name_short: "Furnishings"
+    tradable: true
+    import_share: 0.45
+    import_share_confidence: "medium"
+    admin_price: false
+    cpi_weight: 0.05
+    notes: "Mixed domestic/imported - furniture partly domestic, appliances mostly imported"
+
+  "06":
+    name: "Health"
+    name_short: "Health"
+    tradable: false
+    import_share: 0.15
+    import_share_confidence: "low"
+    admin_price: true
+    cpi_weight: 0.04
+    notes: "Domestic services + imported pharmaceuticals"
+    exclude_from_main: true
+    exclusion_reason: "Mix of regulated prices and local services"
+
+  "07":
+    name: "Transport"
+    name_short: "Transport"
+    tradable: true
+    import_share: 0.40
+    import_share_confidence: "medium"
+    admin_price: false
+    cpi_weight: 0.14
+    notes: "Vehicles imported, fuel domestic but priced in USD"
+    subcategories:
+      "07.1":
+        name: "Purchase of vehicles"
+        import_share: 0.85
+        notes: "Almost all vehicles imported"
+      "07.2":
+        name: "Operation of vehicles"
+        import_share: 0.30
+        notes: "Fuel, parts, maintenance"
+      "07.3":
+        name: "Transport services"
+        import_share: 0.05
+        admin_price: true
+        notes: "Public transport - regulated fares"
+
+  "08":
+    name: "Communications"
+    name_short: "Communications"
+    tradable: false
+    import_share: 0.10
+    import_share_confidence: "low"
+    admin_price: true
+    cpi_weight: 0.04
+    notes: "Domestic telecom services, regulated tariffs"
+    exclude_from_main: true
+    exclusion_reason: "Regulated telecommunications tariffs"
+
+  "09":
+    name: "Recreation and culture"
+    name_short: "Recreation"
+    tradable: true
+    import_share: 0.55
+    import_share_confidence: "medium"
+    admin_price: false
+    cpi_weight: 0.04
+    notes: "Electronics imported, cultural services domestic"
+    examples:
+      - "Consumer electronics (high import)"
+      - "Books, media (mixed)"
+      - "Recreation services (domestic)"
+
+  "10":
+    name: "Education"
+    name_short: "Education"
+    tradable: false
+    import_share: 0.05
+    import_share_confidence: "high"
+    admin_price: true
+    cpi_weight: 0.03
+    notes: "Domestic service, regulated fees"
+    exclude_from_main: true
+    exclusion_reason: "Education fees regulated by government"
+
+  "11":
+    name: "Restaurants and hotels"
+    name_short: "Restaurants/Hotels"
+    tradable: false
+    import_share: 0.05
+    import_share_confidence: "high"
+    admin_price: false
+    cpi_weight: 0.04
+    notes: "Local services with some imported inputs (food)"
+
+  "12":
+    name: "Miscellaneous goods and services"
+    name_short: "Miscellaneous"
+    tradable: true
+    import_share: 0.35
+    import_share_confidence: "low"
+    admin_price: false
+    cpi_weight: 0.04
+    notes: "Heterogeneous category - personal care products, financial services"
+
+# Summary statistics
+summary:
+  n_categories: 12
+  n_tradable: 7
+  n_admin_excluded: 4
+  n_in_main_analysis: 8
+
+  weighted_import_share:
+    all_categories: 0.34
+    tradable_only: 0.52
+    main_analysis: 0.47
+
+  expected_effects:
+    high_passthrough:
+      - "03"  # Clothing (s=0.80)
+      - "02"  # Alcohol/tobacco (s=0.60)
+      - "09"  # Recreation (s=0.55)
+    medium_passthrough:
+      - "05"  # Furnishings (s=0.45)
+      - "07"  # Transport (s=0.40)
+      - "01"  # Food (s=0.40)
+    low_passthrough:
+      - "12"  # Miscellaneous (s=0.35)
+      - "11"  # Restaurants (s=0.05)
+
+# Data quality notes
+data_quality:
+  import_shares:
+    source: "Default calibrated estimates"
+    ideal_source: "BNS Input-Output tables"
+    confidence: "fair"
+    note: "Should be updated with actual IO table data when available"
+
+  cpi_weights:
+    source: "Approximate from BNS publications"
+    confidence: "medium"
+    note: "Weights may vary by year"
+
+  admin_price_classification:
+    source: "Manual classification based on regulatory structure"
+    confidence: "high"
+    note: "Clear regulatory framework for utilities, education, health"

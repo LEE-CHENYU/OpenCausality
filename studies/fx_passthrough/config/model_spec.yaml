@@ -1,0 +1,266 @@
+# FX Passthrough Study - Model Specification
+# Pre-specified parameters for causal chain analysis
+
+version: "1.0"
+study: "fx_passthrough"
+description: "FX-to-Expenditure Causal Chain Study"
+
+# =============================================================================
+# Research Design
+# =============================================================================
+
+research_question: |
+  How do exchange rate shocks affect household welfare in Kazakhstan
+  through inflation, income, and expenditure channels?
+
+causal_chain:
+  - step: 1
+    name: "FX -> Inflation"
+    block: "A"
+    method: "CPI Category DiD"
+  - step: 2
+    name: "Inflation -> Income"
+    block: "B"
+    method: "LP-IV"
+  - step: 3
+    name: "Real Income Decomposition"
+    block: "C"
+    method: "Accounting Identity"
+  - step: 4
+    name: "Transfer Mechanism"
+    block: "D"
+    method: "IV via Imported Inflation"
+  - step: 5
+    name: "Inflation -> Expenditure"
+    block: "E"
+    method: "LP-IV"
+
+identification:
+  instrument: "imported_inflation"
+  formula: "Z_t = sum_c(w_c * s_c * delta_FX_t)"
+  exogeneity_claim: |
+    Imported inflation pressure affects income/expenditure only through
+    headline inflation (exclusion restriction).
+
+# =============================================================================
+# Block A: CPI Pass-Through
+# =============================================================================
+
+block_a:
+  name: "CPI Category Pass-Through"
+  estimand: |
+    pi_{c,t+h} = alpha_c + delta_t + sum_{k=0}^K beta_{h,k}(s_c * delta_FX_{t-k}) + eps_{c,t+h}
+
+  specification:
+    outcome: "inflation_mom"
+    exposure: "import_share"  # s_c
+    shock: "fx_change"  # delta_FX_t
+    max_horizon: 12  # months
+    max_lags: 3
+
+  fixed_effects:
+    category: true  # alpha_c
+    time: true  # delta_t
+
+  exclusions:
+    exclude_admin_prices: true
+    admin_categories:
+      - "04"  # Housing, utilities
+      - "06"  # Health
+      - "08"  # Communications
+      - "10"  # Education
+
+  inference:
+    method: "small_n"  # N ~ 12 categories
+    bootstrap_iterations: 999
+    permutation_iterations: 1000
+    weight_type: "webb"  # for small N
+
+# =============================================================================
+# Block B: Income LP-IV
+# =============================================================================
+
+block_b:
+  name: "Income Response to Externally-Driven Inflation"
+
+  first_stage:
+    endogenous: "headline_inflation"
+    instrument: "imported_inflation"  # Z_t from Block A
+    formula: "pi_t = a + theta * Z_t + Gamma(L)controls + u_t"
+
+  second_stage:
+    outcomes:
+      - "nominal_income_growth"
+      - "wage_income_growth"
+      - "transfer_income_growth"
+    formula: "delta_Y_{t+h} = alpha_h + beta_h * pi_hat_t + Phi_h(L)controls + eps_{t+h}"
+
+  specification:
+    max_horizon: 12  # quarters (or months)
+    controls:
+      - "oil_price_lag"
+      - "global_activity_lag"
+
+  diagnostics:
+    weak_iv_threshold: 10  # F-statistic
+    report_ols_comparison: true
+
+# =============================================================================
+# Block C: Accounting Identity
+# =============================================================================
+
+block_c:
+  name: "Real Income Decomposition"
+  identity: "delta_log(real_income) = delta_log(nominal_income) - delta_log(CPI)"
+
+  procedure:
+    - "Estimate nominal income responses from Block B"
+    - "Estimate CPI responses from Block A aggregate"
+    - "Construct real income as derived object"
+
+  caution: |
+    Do NOT run IV directly on real income when CPI is instrumented.
+    This creates mechanical IV issues.
+
+# =============================================================================
+# Block D: Transfer Mechanism
+# =============================================================================
+
+block_d:
+  name: "Transfer Mechanism Tests"
+
+  tests:
+    d1_automatic_stabilizer:
+      description: "Transfers as automatic stabilizer"
+      formula: "delta_T_{t+h} = alpha_h + beta_h * pi_hat_t + controls + eps"
+      prediction: "beta_h > 0 (transfers rise with inflation)"
+
+    d2_composition:
+      description: "Income composition changes"
+      outcomes:
+        - "wage_share_change"
+        - "transfer_share_change"
+      predictions:
+        wage_share: "beta_h < 0"
+        transfer_share: "gamma_h > 0"
+
+    d3_rdit:
+      description: "RDiT around pension indexation"
+      note: "Suggestive only due to January confounds"
+      discontinuity_months: [1, 4]  # Typical indexation months
+
+# =============================================================================
+# Block E: Expenditure Response
+# =============================================================================
+
+block_e:
+  name: "Expenditure Response"
+
+  specification:
+    outcome: "real_expenditure_growth"
+    endogenous: "headline_inflation"
+    instrument: "imported_inflation"
+    formula: "delta_E_{t+h} = alpha_h + beta_h * pi_hat_t + controls + eps"
+    max_horizon: 12
+
+  alternative_outcomes:
+    - "consumption_expenditure"
+    - "food_expenditure_share"
+    - "nonfood_expenditure_share"
+
+# =============================================================================
+# Structural Break Analysis
+# =============================================================================
+
+structural_break:
+  event: "FX regime change"
+  date: "2015-08"
+  description: "Kazakhstan floated the tenge in August 2015"
+
+  periods:
+    pre_float:
+      start: "2010Q1"
+      end: "2015Q2"
+    post_float:
+      start: "2015Q3"
+      end: "present"
+
+  analysis:
+    - "Report pre/post estimates separately"
+    - "Test for coefficient stability"
+    - "Consider regime-specific interpretations"
+
+# =============================================================================
+# Falsification Tests
+# =============================================================================
+
+falsification:
+  pre_trends:
+    block: "A"
+    description: "s_c * delta_FX_{t+k} for k < 0"
+    pass_criterion: "Joint p > 0.05"
+
+  admin_prices:
+    block: "A"
+    description: "Administered prices should not respond"
+    pass_criterion: "Coefficients insignificant"
+
+  placebo_exposure:
+    block: "A"
+    description: "Non-tradables (s_c ~ 0) should not respond"
+    pass_criterion: "Coefficients insignificant"
+
+  permutation:
+    block: "A"
+    description: "Shuffle s_c across categories"
+    pass_criterion: "beta extreme vs permutation distribution"
+
+  weak_iv:
+    block: "B"
+    description: "First-stage F-statistic"
+    pass_criterion: "F > 10"
+
+  composition_check:
+    block: "D"
+    description: "Wage + transfer shares should sum correctly"
+    pass_criterion: "Accounting identity holds"
+
+  backtest:
+    description: "Validate against known episodes"
+    episodes:
+      - name: "2014-15 oil crash"
+        date_range: ["2014Q3", "2015Q4"]
+      - name: "2020 pandemic"
+        date_range: ["2020Q1", "2020Q4"]
+
+# =============================================================================
+# Data Requirements
+# =============================================================================
+
+data_requirements:
+  exchange_rate:
+    primary: "NBK USD/KZT"
+    fallback: ["IMF NEER", "World Bank REER"]
+    frequency: "monthly"
+
+  cpi_categories:
+    source: "BNS CPI by COICOP"
+    n_categories: 12
+    frequency: "monthly"
+
+  import_intensity:
+    source: "BNS IO tables / default estimates"
+    predetermined: true
+    reference_year: 2019
+
+  national_income:
+    source: "BNS Expenses and Incomes"
+    frequency: "quarterly"
+    components:
+      - "nominal_monetary_income"
+      - "wage_income"
+      - "transfer_income"
+
+  expenditure:
+    source: "BNS Expenses and Incomes"
+    frequency: "quarterly"

@@ -275,6 +275,138 @@ datasets:
       - year: 2022
         change: "East Kazakhstan, Almaty Region, Karaganda -> split regions"
 
+  # ============================================================================
+  # FX Passthrough Study Data Sources (NEW)
+  # ============================================================================
+
+  nbk_usd_kzt:
+    name: "USD/KZT Official Exchange Rate"
+    source: "National Bank of Kazakhstan"
+    source_url: "https://nationalbank.kz/en/exchangerates/"
+    frequency: "daily"
+    date_range:
+      start: "2000-01-01"
+      end: "present"
+    quality: "excellent"
+    status: "primary"
+    tier: 1
+    units: "KZT per USD"
+    file_location: "data/raw/nbk/usd_kzt.parquet"
+    required_for: "FX passthrough Block A"
+
+  imf_eer_neer:
+    name: "Nominal Effective Exchange Rate"
+    source: "IMF International Financial Statistics"
+    source_url: "https://data.imf.org/"
+    frequency: "monthly"
+    quality: "excellent"
+    status: "requires_auth"
+    tier: 2
+    units: "index"
+    note: "Requires IMF data portal authentication"
+
+  worldbank_reer:
+    name: "Real Effective Exchange Rate"
+    source: "World Bank"
+    source_url: "https://data.worldbank.org/indicator/PX.REX.REER"
+    frequency: "annual"
+    quality: "good"
+    status: "robustness_only"
+    tier: 3
+    units: "index (2010=100)"
+    note: "Annual frequency limits use to robustness checks"
+
+  bns_cpi_categories:
+    name: "CPI by COICOP Category"
+    source: "Kazakhstan Bureau of National Statistics"
+    source_url: "https://stat.gov.kz/en/industries/prices/"
+    frequency: "monthly"
+    n_categories: 12
+    quality: "good"
+    status: "available"
+    required_for: "FX passthrough Block A (CPI category DiD)"
+    file_location: "data/raw/kazakhstan_bns/cpi_categories.parquet"
+    coicop_divisions:
+      - code: "01"
+        name: "Food and non-alcoholic beverages"
+        tradable: true
+      - code: "02"
+        name: "Alcoholic beverages, tobacco"
+        tradable: true
+      - code: "03"
+        name: "Clothing and footwear"
+        tradable: true
+      - code: "04"
+        name: "Housing, water, electricity, gas"
+        tradable: false
+        admin_price: true
+      - code: "05"
+        name: "Furnishings, household equipment"
+        tradable: true
+      - code: "06"
+        name: "Health"
+        tradable: false
+        admin_price: true
+      - code: "07"
+        name: "Transport"
+        tradable: true
+      - code: "08"
+        name: "Communications"
+        tradable: false
+        admin_price: true
+      - code: "09"
+        name: "Recreation and culture"
+        tradable: true
+      - code: "10"
+        name: "Education"
+        tradable: false
+        admin_price: true
+      - code: "11"
+        name: "Restaurants and hotels"
+        tradable: false
+      - code: "12"
+        name: "Miscellaneous goods and services"
+        tradable: true
+
+  bns_national_income:
+    name: "National Monetary Income Aggregates"
+    source: "BNS Expenses and Incomes of Population"
+    source_url: "https://stat.gov.kz/en/industries/labor-and-income/stat-life/"
+    frequency: "monthly/quarterly"
+    quality: "good"
+    status: "available"
+    components:
+      - nominal_monetary_income
+      - wage_income
+      - transfer_income
+      - self_employment_income
+      - other_income
+      - pension_income
+    note: "NOT disposable income after taxes - BNS macro estimate of monetary resources"
+    file_location: "data/raw/kazakhstan_bns/national_income.parquet"
+    required_for: "FX passthrough Blocks B, C, D"
+
+  import_intensity_coicop:
+    name: "Import Intensity by COICOP Category"
+    source: "Constructed from BNS IO tables / default estimates"
+    frequency: "static"
+    quality: "fair"
+    status: "available"
+    method: "Three-tier: IO tables > COMTRADE > default"
+    predetermined: true
+    reference_year: 2019
+    file_location: "data/raw/import_intensity/coicop_shares.parquet"
+    required_for: "FX passthrough Block A exposure variable (s_c)"
+
+  imported_inflation_instrument:
+    name: "Imported Inflation Pressure (Z_t)"
+    source: "Constructed from Block A"
+    formula: "Z_t = sum_c(w_c * s_c * delta_FX_t)"
+    quality: "derived"
+    status: "constructed"
+    role: "Instrument for headline inflation in Blocks B, D, E"
+    note: "Constructed during Block A estimation"
+
 # ============================================================================
 # Quality Summary (v2)
 # ============================================================================

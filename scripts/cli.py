@@ -32,6 +32,12 @@ try:
 except ImportError:
     pass
 
+try:
+    from studies.fx_passthrough.src.cli import app as passthrough_app
+    app.add_typer(passthrough_app, name="passthrough", help="FX passthrough study commands")
+except ImportError:
+    pass
+
 
 @app.command("list-studies")
 def list_studies():
@@ -55,6 +61,12 @@ def list_studies():
         "Active",
         "kzresearch credit",
     )
+    table.add_row(
+        "fx_passthrough",
+        "FX → inflation → income → expenditure",
+        "Active",
+        "kzresearch passthrough",
+    )
 
     console.print(table)
 
@@ -63,18 +75,20 @@ def list_studies():
 def info():
     """Show information about the research platform."""
     console.print("\n[bold cyan]Kazakhstan Econometric Research Platform[/bold cyan]\n")
-    console.print("Version: 0.2.0")
+    console.print("Version: 0.3.0")
     console.print("\n[bold]Studies:[/bold]")
     console.print("  1. [cyan]household_welfare[/cyan] - Oil shocks → household income")
-    console.print("  2. [cyan]credit_default[/cyan] - Income → credit default\n")
+    console.print("  2. [cyan]credit_default[/cyan] - Income → credit default")
+    console.print("  3. [cyan]fx_passthrough[/cyan] - FX → inflation → expenditure\n")
     console.print("[bold]Shared Infrastructure:[/bold]")
-    console.print("  - shared/data/ - Data clients (BNS, FRED, policy calendar)")
-    console.print("  - shared/model/ - Inference, event study, diagnostics")
+    console.print("  - shared/data/ - Data clients (BNS, FRED, exchange rate, CPI)")
+    console.print("  - shared/model/ - Inference, event study, small-N methods")
     console.print("  - shared/engine/ - Scenario simulation base\n")
     console.print("[bold]Usage:[/bold]")
-    console.print("  kzresearch list-studies    List all studies")
-    console.print("  kzresearch welfare --help  Household welfare commands")
-    console.print("  kzresearch credit --help   Credit default commands\n")
+    console.print("  kzresearch list-studies       List all studies")
+    console.print("  kzresearch welfare --help     Household welfare commands")
+    console.print("  kzresearch credit --help      Credit default commands")
+    console.print("  kzresearch passthrough --help FX passthrough commands\n")
 
 
 if __name__ == "__main__":
