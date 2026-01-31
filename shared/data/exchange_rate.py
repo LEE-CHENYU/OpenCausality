@@ -125,9 +125,10 @@ class ExchangeRateClient(HTTPDataSource):
         Fetch USD/KZT official rate from National Bank of Kazakhstan.
 
         NBK provides daily rates via their API/data portal.
-        Uses multiple API endpoints with fallback logic.
+        Uses the get_rates.cfm endpoint to fetch monthly data points.
         """
         import httpx
+        from xml.etree import ElementTree as ET
 
         if end_date is None:
             end_date = datetime.now().strftime("%Y-%m-%d")
@@ -141,116 +142,80 @@ class ExchangeRateClient(HTTPDataSource):
             headers={"User-Agent": "Mozilla/5.0 (compatible; KazakhstanResearch/1.0)"},
         )
 
+        rates = []
+
         try:
-            # Try the NBK official rates API (newer endpoint)
+            # Generate monthly date points to fetch
+            start_dt = pd.to_datetime(start_date)
+            end_dt = pd.to_datetime(end_date)
+
+            # Create monthly date range (first of each month)
+            date_range = pd.date_range(start=start_dt, end=end_dt, freq="MS")
+
             api_url = f"{self.nbk_base_url}/rss/get_rates.cfm"
-            params = {
-                "fdate": start_date.replace("-", "."),
-            }
 
-            response = nbk_client.get(api_url, params=params)
-            response.raise_for_status()
+            for fetch_date in date_range:
+                try:
+                    # Format date as DD.MM.YYYY for NBK API
+                    fdate = fetch_date.strftime("%d.%m.%Y")
+                    response = nbk_client.get(api_url, params={"fdate": fdate})
 
-            # Parse XML response
-            from xml.etree import ElementTree as ET
-            root = ET.fromstring(response.content)
+                    if response.status_code != 200:
+                        continue
 
-            rates = []
-            for item in root.findall(".//item"):
-                title_elem = item.find("title")
-                desc_elem = item.find("description")
-                pub_date_elem = item.find("pubDate")
+                    root = ET.fromstring(response.content)
 
-                if title_elem is not None and "USD" in (title_elem.text or ""):
-                    if desc_elem is not None and pub_date_elem is not None:
+                    # Get date from root element
+                    date_elem = root.find("date")
+                    rate_date = None
+                    if date_elem is not None and date_elem.text:
                         try:
-                            rate = float(desc_elem.text.strip())
-                            date = pd.to_datetime(pub_date_elem.text)
-                            rates.append({"date": date, "rate": rate})
-                        except (ValueError, TypeError):
-                            continue
+                            rate_date = pd.to_datetime(date_elem.text, format="%d.%m.%Y")
+                        except ValueError:
+                            rate_date = fetch_date
+
+                    # Find USD rate
+                    for item in root.findall(".//item"):
+                        title_elem = item.find("title")
+                        desc_elem = item.find("description")
+
+                        if title_elem is not None and title_elem.text == "USD":
+                            if desc_elem is not None and desc_elem.text:
+                                try:
+                                    rate = float(desc_elem.text.strip())
+                                    rates.append({
+                                        "date": rate_date or fetch_date,
+                                        "rate": rate,
+                                    })
+                                except (ValueError, TypeError):
+                                    pass
+                            break
+
+                except Exception as e:
+                    logger.debug(f"Failed to fetch rate for {fetch_date}: {e}")
+                    continue
 
             if rates:
                 df = pd.DataFrame(rates)
                 df["source"] = "nbk"
                 df["currency_pair"] = "USD/KZT"
                 df = df.sort_values("date").reset_index(drop=True)
+                df = df.drop_duplicates(subset=["date"], keep="last")
 
                 self._metadata.append(ExchangeRateMetadata(
                     source="NBK",
                     tier=1,
-                    frequency="daily",
+                    frequency="monthly",
                     start_date=df["date"].min().strftime("%Y-%m-%d"),
                     end_date=df["date"].max().strftime("%Y-%m-%d"),
                     n_obs=len(df),
                 ))
 
+                logger.info(f"Fetched {len(df)} monthly NBK exchange rates")
                 return df[["date", "rate", "source", "currency_pair"]]
 
         except Exception as e:
-            logger.debug(f"NBK RSS API failed: {e}, trying JSON endpoint")
-
-        try:
-            # Try the NBK JSON API
-            api_url = f"{self.nbk_base_url}/ru/api/exchangerates/rates"
-            params = {
-                "currency": "USD",
-                "dateFrom": start_date,
-                "dateTo": end_date,
-            }
-
-            response = nbk_client.get(api_url, params=params)
-            response.raise_for_status()
-
-            data = response.json()
-
-            # Handle various response formats
-            if isinstance(data, dict):
-                # May have a "rates" or "data" key
-                data = data.get("rates") or data.get("data") or data.get("items") or []
-
-            if isinstance(data, list) and len(data) > 0:
-                df = pd.DataFrame(data)
-
-                # Flexible column mapping - find date and rate columns
-                date_col = None
-                rate_col = None
-                for col in df.columns:
-                    col_lower = col.lower()
-                    if "date" in col_lower or col_lower == "dt":
-                        date_col = col
-                    elif "value" in col_lower or "rate" in col_lower or col_lower == "val":
-                        rate_col = col
-
-                if date_col and rate_col:
-                    df = df.rename(columns={date_col: "date", rate_col: "rate"})
-                elif "date" not in df.columns or "rate" not in df.columns:
-                    # Try first two columns
-                    cols = df.columns.tolist()
-                    if len(cols) >= 2:
-                        df = df.rename(columns={cols[0]: "date", cols[1]: "rate"})
-
-                df["date"] = pd.to_datetime(df["date"], errors="coerce")
-                df["rate"] = pd.to_numeric(df["rate"], errors="coerce")
-                df = df.dropna(subset=["date", "rate"])
-                df["source"] = "nbk"
-                df["currency_pair"] = "USD/KZT"
-                df = df.sort_values("date").reset_index(drop=True)
-
-                if len(df) > 0:
-                    self._metadata.append(ExchangeRateMetadata(
-                        source="NBK",
-                        tier=1,
-                        frequency="daily",
-                        start_date=df["date"].min().strftime("%Y-%m-%d"),
-                        end_date=df["date"].max().strftime("%Y-%m-%d"),
-                        n_obs=len(df),
-                    ))
-
-                    return df[["date", "rate", "source", "currency_pair"]]
-
-        except Exception as e:
-            logger.debug(f"NBK JSON API failed: {e}, trying XML endpoint")
+            logger.warning(f"NBK monthly fetch failed: {e}")
 
         finally:
             nbk_client.close()

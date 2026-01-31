@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "last_updated": "2026-01-31T13:32:35.978844",
+  "last_updated": "2026-01-31T13:40:46.548679",
   "sources": {
     "fred_igrea": {
       "status": "downloaded",
@@ -9,7 +9,7 @@
         "2000-01-01",
         "2025-11-01"
       ],
-      "last_download": "2026-01-31T13:32:04.172821",
+      "last_download": "2026-01-31T13:40:43.296478",
       "error": null
     },
     "fred_vix": {
@@ -19,7 +19,7 @@
         "2000-01-03",
         "2026-01-29"
       ],
-      "last_download": "2026-01-31T13:32:04.177561",
+      "last_download": "2026-01-31T13:40:43.305454",
       "error": null
     },
     "fred_brent": {
@@ -29,7 +29,7 @@
         "2000-01-03",
         "2026-01-26"
       ],
-      "last_download": "2026-01-31T13:32:04.182387",
+      "last_download": "2026-01-31T13:40:43.312304",
       "error": null
     },
     "baumeister_shocks": {
@@ -39,24 +39,24 @@
         "1975-02-01",
         "2025-09-01"
       ],
-      "last_download": "2026-01-31T13:32:04.185021",
+      "last_download": "2026-01-31T13:40:43.314934",
       "error": null
     },
     "nbk_usd_kzt": {
       "status": "downloaded",
-      "n_rows": 1,
+      "n_rows": 192,
       "date_range": [
-        "2026-01-02",
-        "2026-01-02"
+        "2010-01-01",
+        "2025-12-01"
       ],
-      "last_download": "2026-01-31T13:32:07.612065",
+      "last_download": "2026-01-31T13:40:43.317333",
       "error": null
     },
     "bns_cpi_categories": {
       "status": "failed",
       "n_rows": 0,
       "date_range": null,
-      "last_download": "2026-01-31T13:32:11.645198",
+      "last_download": "2026-01-31T13:40:46.223380",
       "error": "CPI category data unavailable.\nBNS API failed and no local cache found.\nPlease download CPI by category data manually from:\nhttps://stat.gov.kz/en/industries/prices/stat-official-ind-prices/"
     },
     "bns_national_income": {
@@ -66,14 +66,14 @@
         "2010-03-01",
         "2025-09-01"
       ],
-      "last_download": "2026-01-31T13:32:22.896342",
+      "last_download": "2026-01-31T13:40:43.323302",
       "error": null
     },
     "worldbank_reer": {
       "status": "failed_optional",
       "n_rows": 0,
       "date_range": null,
-      "last_download": "2026-01-31T13:32:35.978755",
+      "last_download": "2026-01-31T13:40:46.548665",
       "error": "World Bank REER fetch failed"
     }
   }
