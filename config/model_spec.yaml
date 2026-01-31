@@ -1,0 +1,171 @@
+# Kazakhstan Household Welfare Model Specification
+# ================================================
+
+# Panel settings
+panel:
+  frequency: quarterly
+  start_year: 2010
+  end_year: 2024
+
+# Region harmonization
+# Map new regions to parent pre-split regions for consistent geography
+region_crosswalk:
+  # 2022 splits
+  Abay: East Kazakhstan
+  Zhetysu: Almaty Region
+  Ulytau: Karaganda
+  # 2018 reform
+  Turkestan: South Kazakhstan
+  Shymkent: South Kazakhstan
+
+# Exposure definitions (pre-period, frozen)
+exposures:
+  oil:
+    name: E_oil_r
+    description: Average 2010-2013 mining share
+    baseline_start: 2010
+    baseline_end: 2013
+    source: BNS regional accounts
+
+  debt:
+    name: E_debt_r
+    description: Average pre-shock debt repayment share
+    baseline_start: 2010
+    baseline_end: 2013
+    source: BNS household budget survey
+
+  cyclical:
+    name: E_cyc_r
+    description: Pre-period cyclical employment/GRP shares
+    baseline_start: 2010
+    baseline_end: 2013
+    source: BNS labor statistics
+
+# Shock series
+shocks:
+  oil_supply:
+    source: baumeister
+    series: oil_supply_shock
+    frequency: monthly
+    aggregation: mean  # for quarterly aggregation
+
+  oil_demand:
+    source: baumeister
+    series: oil_demand_shock
+    frequency: monthly
+    aggregation: mean
+
+  global_activity:
+    source: fred
+    series: IGREA
+    frequency: monthly
+    aggregation: mean
+    transform: innovation  # AR residual
+
+  vix:
+    source: fred
+    series: VIXCLS
+    frequency: daily
+    aggregation: mean
+    transform: innovation  # AR residual
+
+  brent:
+    source: fred
+    series: DCOILBRENTEU
+    frequency: daily
+    aggregation: mean
+    transform: log_return
+
+# Outcome variable
+outcome:
+  name: log_income_pc
+  description: Log per-capita monetary income by region
+  source: BNS
+  frequency: quarterly
+
+# Model specifications
+specifications:
+  baseline:
+    description: Total reduced-form effect (no mediators)
+    fixed_effects:
+      - region
+      - time
+    covariates: []  # No mediators - these are channels
+    interactions:
+      - exposure: E_oil_r
+        shock: oil_supply_shock
+      - exposure: E_oil_r
+        shock: oil_demand_shock
+      - exposure: E_cyc_r
+        shock: global_activity_innovation
+    inference:
+      method: driscoll_kraay
+      kernel: bartlett
+      bandwidth: auto
+
+  auxiliary_mechanisms:
+    description: Channel exploration with mediators
+    fixed_effects:
+      - region
+      - time
+    covariates:
+      - cpi_regional
+      - exchange_rate
+      - fiscal_transfers_pc
+    interactions:
+      - exposure: E_oil_r
+        shock: oil_supply_shock
+
+# Local projections
+local_projections:
+  max_horizon: 12  # quarters
+  inference: driscoll_kraay
+
+# Falsification tests
+falsification:
+  pre_trends:
+    leads: [1, 2, 3, 4]  # quarters before shock
+
+  placebo_exposures:
+    - name: non_oil_manufacturing
+      description: Manufacturing share in non-oil regions
+
+  region_reform_placebo:
+    reform_dates:
+      - 2018Q1  # Turkestan/Shymkent
+      - 2022Q1  # Abay/Zhetysu/Ulytau
+    window: 4  # quarters around reform
+
+# Scenario engine
+scenarios:
+  shock_space:
+    description: Define in structural shock units
+    examples:
+      - name: oil_supply_disruption
+        oil_supply_shock: -2.0  # 2 SD negative supply shock
+        duration_quarters: 4
+
+  observable_space:
+    description: Define in observable terms
+    examples:
+      - name: brent_collapse
+        brent_change_pct: -30
+        duration_quarters: 4
+        requires_filter: true
+
+# Backtest episodes
+backtests:
+  - name: oil_collapse_2014
+    start: 2014Q3
+    end: 2016Q1
+    description: 2014-16 oil price collapse
+
+  - name: pandemic_2020
+    start: 2020Q1
+    end: 2020Q4
+    description: COVID-19 pandemic shock
+
+  - name: energy_crisis_2022
+    start: 2022Q1
+    end: 2022Q4
+    description: 2022 energy market disruption
