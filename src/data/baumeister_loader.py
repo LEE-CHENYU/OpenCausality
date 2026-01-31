@@ -142,9 +142,15 @@ class BaumeisterLoader(HTTPDataSource):
             except Exception as e:
                 logger.debug(f"Discovery failed: {e}")
 
-        # Fallback: generate synthetic data for testing
-        logger.warning("Could not fetch Baumeister data, generating placeholder")
-        return self._generate_placeholder_data()
+        # No silent fallback - fail loudly
+        raise ValueError(
+            "CRITICAL: Could not fetch Baumeister oil shock data. "
+            "All download attempts failed. "
+            "The analysis requires real structural oil shocks, not synthetic data. "
+            "Options: (1) Check network connectivity, (2) Manually download from "
+            "https://sites.google.com/site/cjsbaumeister/datasets and place in data/backup/baumeister/, "
+            "(3) Check if Google Drive URLs have changed."
+        )
 
     def _fetch_from_url(self, url: str) -> pd.DataFrame:
         """Fetch data from a direct URL."""
@@ -249,8 +255,18 @@ class BaumeisterLoader(HTTPDataSource):
 
         return df
 
-    def _generate_placeholder_data(self) -> pd.DataFrame:
-        """Generate placeholder data for testing when real data unavailable."""
+    def _generate_placeholder_data_for_tests_only(self) -> pd.DataFrame:
+        """
+        Generate placeholder data FOR UNIT TESTS ONLY.
+
+        WARNING: This method should NEVER be called in production code.
+        It generates deterministic random data (seed=42) that has no
+        relationship to real oil market shocks. Using this data for
+        actual analysis would produce meaningless results.
+
+        This method exists solely to allow unit tests to run without
+        network access.
+        """
         import numpy as np
 
         # Generate monthly dates from 1975-02 to 2025-05
@@ -270,18 +286,10 @@ class BaumeisterLoader(HTTPDataSource):
             }
         )
 
-        # Add some structure: negative supply shocks around crisis dates
-        crisis_dates = ["2008-09", "2014-10", "2020-03", "2022-02"]
-        for crisis in crisis_dates:
-            mask = df["date"].dt.to_period("M").astype(str) == crisis
-            if mask.any():
-                idx = df[mask].index[0]
-                # Add shock sequence
-                for i, shock_size in enumerate([-2.0, -1.5, -1.0, -0.5]):
-                    if idx + i < len(df):
-                        df.loc[idx + i, "oil_supply_shock"] = shock_size
-
-        logger.warning("Using placeholder shock data - replace with real Baumeister data")
+        logger.error(
+            "USING SYNTHETIC SHOCK DATA - THIS IS FOR TESTS ONLY. "
+            "Results from this data are MEANINGLESS."
+        )
         return df
 
     def resample_to_quarterly(self, df: pd.DataFrame) -> pd.DataFrame:

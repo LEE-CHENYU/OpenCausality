@@ -1,8 +1,10 @@
-# Data Sources Documentation
+# Data Sources Documentation (v4)
 
 ## Overview
 
 This document provides comprehensive documentation for all data sources used in the Kazakhstan Household Welfare study.
+
+**v4 Update**: Study design revised. Main spec uses oil exposure only (E_oil_r). Cyclical exposure dropped from core model; GRP-based proxy available for robustness checks.
 
 ---
 
@@ -20,6 +22,7 @@ This document provides comprehensive documentation for all data sources used in 
 | **Units** | Index |
 | **Access Method** | `fredapi` Python library |
 | **API Endpoint** | `https://api.stlouisfed.org/fred/series/observations` |
+| **Status** | Available |
 
 **Transformation Applied**:
 - AR(1) residual computed as innovation (global_activity_shock)
@@ -38,7 +41,7 @@ This document provides comprehensive documentation for all data sources used in 
 | **Frequency** | Daily |
 | **Date Range** | 1990-01-02 to present |
 | **Units** | Index |
-| **Access Method** | `fredapi` Python library |
+| **Status** | Available |
 
 **Transformation Applied**:
 - AR(1) residual computed as innovation (vix_shock)
@@ -54,7 +57,7 @@ This document provides comprehensive documentation for all data sources used in 
 | **Frequency** | Daily |
 | **Date Range** | 1987-05-20 to present |
 | **Units** | Dollars per Barrel |
-| **Access Method** | `fredapi` Python library |
+| **Status** | Available |
 
 **Transformation Applied**:
 - Log returns computed (brent_shock)
@@ -76,11 +79,9 @@ This document provides comprehensive documentation for all data sources used in 
 | **Units** | Standard deviations |
 | **Access Method** | Google Drive direct download |
 | **File Format** | Excel (.xlsx) |
+| **Status** | Available |
 
-**Methodology**:
-- Sign-restricted Structural VAR with informative priors
-- Posterior median estimates
-- Updated monthly with ~2 month lag
+**v2 Behavior**: If download fails, code raises `ValueError` with manual download instructions. NO synthetic fallback.
 
 ### 2.2 Aggregate Demand Shock
 
@@ -92,7 +93,7 @@ This document provides comprehensive documentation for all data sources used in 
 | **Frequency** | Monthly |
 | **Date Range** | 1975-02 to 2025-09 |
 | **Units** | Standard deviations |
-| **Access Method** | Google Drive direct download |
+| **Status** | Available |
 
 **Citation**:
 > Baumeister, C. and Hamilton, J.D. (2019). "Structural Interpretation of Vector Autoregressions with Incomplete Identification: Revisiting the Role of Oil Supply and Demand Shocks." American Economic Review, 109(5), 1873-1910.
@@ -112,62 +113,167 @@ This document provides comprehensive documentation for all data sources used in 
 | **Frequency** | Quarterly |
 | **Date Range** | 2010Q1 to 2025Q2 |
 | **Units** | Tenge |
-| **Access Method** | REST API with iblock element downloads |
-| **File Format** | CSV (tab-delimited) |
+| **Status** | Partial (14/16 regions) |
 
-**Data Quality Issues**:
-- 2 of 16 regions missing (West Kazakhstan, North Kazakhstan)
-- Tab-delimited CSV with space as thousands separator
-- Region names in English, require harmonization
+**v2 Behavior**: If no income data available, code raises `ValueError`.
 
-**API Endpoint**:
+**Missing Regions**:
+- West Kazakhstan (oil region - critical gap)
+- North Kazakhstan
+
+**File**: `data/raw/kazakhstan_bns/income_per_capita.parquet`
+
+### 3.2 Mining Sector Shares (BLOCKING)
+
+| Attribute | Value |
+|-----------|-------|
+| **Source** | Kazakhstan Bureau of National Statistics |
+| **Required For** | Computing oil exposure (E_oil_r) |
+| **Status** | **UNAVAILABLE - BLOCKS PIPELINE** |
+| **API Status** | HTTP 500 errors |
+
+**v2 Behavior**:
+```python
+raise ValueError(
+    "CRITICAL: No mining sector data available. "
+    "Cannot compute oil exposure (E_oil_r) without real regional mining share data. "
+    "The shift-share identification requires measured exposures, not hardcoded values."
+)
 ```
-GET /api/iblock/element/{ID}/csv/file/en/
+
+**Resolution Options**:
+1. Contact BNS directly
+2. Use OECD regional statistics
+3. Find academic sources with documented regional oil dependence
+
+### 3.3 Employment by Sector (BLOCKING)
+
+| Attribute | Value |
+|-----------|-------|
+| **Source** | Kazakhstan Bureau of National Statistics |
+| **Required For** | Computing cyclical exposure (E_cyc_r) |
+| **Status** | **UNAVAILABLE - BLOCKS PIPELINE** |
+
+**v2 Behavior**:
+```python
+raise ValueError(
+    "CRITICAL: No employment data available. "
+    "Cannot compute cyclical exposure (E_cyc_r) without real regional employment data."
+)
 ```
 
-### 3.2 Expenditure Structure
+### 3.4 Expenditure Structure
 
 | Attribute | Value |
 |-----------|-------|
 | **Source** | Kazakhstan Bureau of National Statistics |
 | **iBlock ID** | 469805 |
-| **Description** | Household expenditure structure by category |
-| **Frequency** | Quarterly |
-| **Date Range** | 2010Q1 to 2025Q2 |
-| **Units** | Percentage |
+| **Required For** | Computing debt exposure (E_debt_r) |
+| **Status** | Needs verification (debt_share column required) |
 
-### 3.3 Mining Sector Shares (UNAVAILABLE)
-
-| Attribute | Value |
-|-----------|-------|
-| **Source** | Kazakhstan Bureau of National Statistics |
-| **Status** | **API returns HTTP 500 errors** |
-| **Description** | Mining sector share of regional GRP |
-| **Required For** | Computing oil exposure (E_oil_r) |
-
-**Fallback**: Hardcoded stylized values in `panel_data.py:321-329`
-
-### 3.4 Employment by Sector (UNAVAILABLE)
-
-| Attribute | Value |
-|-----------|-------|
-| **Source** | Kazakhstan Bureau of National Statistics |
-| **Status** | **Data not available** |
-| **Description** | Employment by sector and region |
-| **Required For** | Computing cyclical exposure (E_cyc_r) |
-
-**Fallback**: Hardcoded stylized values in `panel_data.py:397-416`
+**v2 Behavior**: Code raises `ValueError` if debt_share column missing.
 
 ---
 
-## 4. Region Crosswalk
+## 4. Alternative Data Sources (for BNS API Failures)
+
+When BNS API endpoints return HTTP 500 errors, the pipeline falls back to these documented alternative sources.
+
+### 4.1 USGS Mineral Industry Reports
+
+| Attribute | Value |
+|-----------|-------|
+| **Source** | U.S. Geological Survey |
+| **URL** | https://pubs.usgs.gov/myb/vol3/2022/myb3-2022-kazakhstan.pdf |
+| **Description** | Annual mineral industry survey including oil/gas sector |
+| **Coverage** | 2016-2022 (annual PDFs) |
+| **Regional Data** | YES - by province |
+| **Mining Employment** | YES - 273,000+ workers in 230+ enterprises |
+| **Oil/Gas Regional Shares** | YES - documented percentages |
+| **Status** | Available |
+
+**Key Regional Data (USGS 2022):**
+| Region | Oilfield Service Share | Notes |
+|--------|------------------------|-------|
+| Atyrau | 32% | Primary oil region |
+| Mangystau | 29% | Primary oil region |
+| Aktobe | 15% | Secondary oil region |
+| West Kazakhstan | 6% | Minor oil region |
+| Kyzylorda | 6% | Minor oil region |
+
+**Citation**:
+> USGS (2022). "2022 Minerals Yearbook: Kazakhstan." U.S. Geological Survey.
+
+### 4.2 EITI Kazakhstan (Extractive Industries Transparency Initiative)
+
+| Attribute | Value |
+|-----------|-------|
+| **Source** | Extractive Industries Transparency Initiative |
+| **URL** | https://eiti.org/countries/kazakhstan |
+| **Description** | Transparency reports on extractive industry revenues |
+| **Coverage** | 2005-2021+ |
+| **Regional GVA** | YES - Table 80 in 2020-2021 Report |
+| **Mining Revenue** | YES - by region |
+| **Format** | CSV export, PDF reports |
+| **Status** | Available |
+
+**Citation**:
+> EITI (2021). "Extractive Industries Transparency Initiative: Kazakhstan Country Report 2020-2021."
+
+### 4.3 stat.gov.kz GRP Publications
+
+| Attribute | Value |
+|-----------|-------|
+| **Source** | Kazakhstan Bureau of National Statistics |
+| **URL** | https://stat.gov.kz/en/industries/economy/national-accounts/publications/ |
+| **Description** | Gross Regional Product publications (works when API fails) |
+| **Coverage** | Annual, 2010-2023 |
+| **Regional GDP Share** | YES |
+| **GRP Per Capita** | YES |
+| **Status** | Available (publications work even when API down) |
+
+**Key Regional Data (2023):**
+| Region | GDP Share | GRP Per Capita | Oil Sector % |
+|--------|-----------|----------------|--------------|
+| Atyrau | 12.4% | 21,401K tenge (~$44,000) | 65% |
+| Almaty City | 20.6% | 11,310K tenge | 0% |
+| Mangystau | 4.8% | 9,500K tenge | 55% |
+| Karaganda | 7.2% | 5,890K tenge | 12% (coal) |
+
+### 4.4 Alternative Sources File Locations
+
+| Data Type | File Path | Status |
+|-----------|-----------|--------|
+| Mining shares | `data/raw/alternative_sources/mining_shares.csv` | Available |
+| GRP composition | `data/raw/alternative_sources/grp_composition.csv` | Available |
+| Documentation | `data/raw/alternative_sources/README.md` | Available |
+
+### 4.5 Fallback Logic
+
+The pipeline implements this fallback strategy:
+
+```
+1. Try BNS API (iblock endpoint)
+   ├─ Success → Use BNS data
+   └─ Failure (HTTP 500) → Continue to step 2
+
+2. Try alternative sources
+   ├─ mining_shares.csv exists → Use USGS/EITI data
+   └─ File missing → Raise ValueError with download instructions
+```
+
+**Code location**: `src/model/panel_data.py:_compute_oil_exposure()`
+
+---
+
+## 5. Region Crosswalk
 
 ### 4.1 Geographic Changes
 
 | Reform | Date | Change |
 |--------|------|--------|
-| Turkestan/Shymkent | June 2018 | South Kazakhstan Oblast split into Turkestan Region and Shymkent City |
-| Abay/Zhetysu/Ulytau | June 2022 | Three new regions carved from existing oblasts |
+| Turkestan/Shymkent | June 2018 | South Kazakhstan Oblast split |
+| Abay/Zhetysu/Ulytau | June 2022 | Three new regions carved |
 
 ### 4.2 Harmonization Mapping
 
@@ -183,30 +289,44 @@ GET /api/iblock/element/{ID}/csv/file/en/
 
 ---
 
-## 5. Data Quality Summary
+## 6. Data Requirements Summary (v4)
 
-### Overall Assessment
+### Required for Pipeline to Run
 
-| Source | Verified | Quality | Issues |
-|--------|----------|---------|--------|
-| FRED | Yes | Excellent | None |
-| Baumeister | Yes | Good | Silent fallback to synthetic data |
-| BNS Income | Partial | Fair | 2 regions missing |
-| BNS Mining | No | Unusable | API errors; hardcoded fallback |
-| BNS Employment | No | Unusable | Unavailable; hardcoded fallback |
+| Data | Variable | Source | Status |
+|------|----------|--------|--------|
+| Mining shares | E_oil_r | BNS | **BLOCKING** |
+| Employment by sector | E_cyc_r | BNS | **BLOCKING** |
+| Expenditure debt share | E_debt_r | BNS | Needs verification |
+| Per-capita income | log_income_pc | BNS | Partial |
+| Oil supply shock | oil_supply_shock | Baumeister | Available |
+| Demand shock | aggregate_demand_shock | Baumeister | Available |
+| Global activity | global_activity_shock | FRED | Available |
 
-### Data Lineage
+### Pipeline Will NOT Run Until
 
-All data downloads are logged in the data lineage system (`src/data/data_lineage.py`). Check the lineage report before running analysis:
-
-```python
-from src.data.data_lineage import print_lineage_report
-print_lineage_report()
-```
+1. Mining sector shares by region are provided
+2. Employment by sector data is provided
+3. Expenditure data with debt_share column is verified
 
 ---
 
-## 6. Access Instructions
+## 7. File Locations
+
+| Data Type | Raw Data Location | Status |
+|-----------|-------------------|--------|
+| FRED series | `data/raw/fred/*.parquet` | Available |
+| Baumeister shocks | `data/raw/baumeister_shocks/shocks.parquet` | Available |
+| BNS income | `data/raw/kazakhstan_bns/income_per_capita.parquet` | Partial |
+| BNS expenditure | `data/raw/kazakhstan_bns/expenditure_structure.parquet` | Needs verification |
+| BNS mining | N/A | **MISSING** |
+| BNS employment | N/A | **MISSING** |
+| Region crosswalk | `data/crosswalks/regions.csv` | Available |
+| Final panel | `data/processed/panel.parquet` | Cannot build until data obtained |
+
+---
+
+## 8. Access Instructions
 
 ### FRED API
 
@@ -219,32 +339,23 @@ print_lineage_report()
 Data is publicly available at:
 https://sites.google.com/site/cjsbaumeister/datasets
 
-Direct download links (may change):
-- Supply shocks: Google Drive file ID `1OsA8btgm2rmDucUFngiLkwv4uywTDmya`
-- Demand shocks: Google Drive file ID `1neFXLrIvGwggebQRwjmtrWK-dfQZ9NH8`
+If automatic download fails:
+1. Manually download supply and demand shock Excel files
+2. Place in `data/backup/baumeister/`
+3. Pipeline will attempt to load from backup
 
 ### BNS Data
 
-No API key required. Access via:
-1. iblock element IDs (discovered from website)
-2. Direct file downloads from stat.gov.kz
+No API key required. Access via iblock element IDs.
+
+**For missing data (mining, employment)**:
+1. Contact BNS directly: https://stat.gov.kz/contact
+2. Request regional mining sector shares and employment by sector
+3. Alternative: Use OECD regional statistics
 
 ---
 
-## 7. File Locations
-
-| Data Type | Raw Data Location | Processed Location |
-|-----------|-------------------|-------------------|
-| FRED series | `data/raw/fred/*.parquet` | Merged into panel |
-| Baumeister shocks | `data/raw/baumeister_shocks/shocks.parquet` | Merged into panel |
-| BNS income | `data/raw/kazakhstan_bns/income_per_capita.parquet` | Merged into panel |
-| BNS expenditure | `data/raw/kazakhstan_bns/expenditure_structure.parquet` | Merged into panel |
-| Region crosswalk | `data/crosswalks/regions.csv` | Used during harmonization |
-| Final panel | N/A | `data/processed/panel.parquet` |
-
----
-
-## 8. Update Frequency
+## 9. Update Frequency
 
 | Source | Update Frequency | Lag |
 |--------|------------------|-----|
@@ -256,4 +367,6 @@ No API key required. Access via:
 
 ---
 
-*Document generated: January 2026*
+*Document version: 4.0*
+*Generated: January 2026*
+*Update: Revised study design - oil exposure only in main spec, cyclical proxy for robustness*

@@ -2,6 +2,15 @@
 Shift-share regression model for Kazakhstan household welfare.
 
 Implements panel DiD with exposure × shock interactions.
+
+Study Design (v4):
+- MAIN SPEC: Oil exposure only (E_oil_r × oil shocks)
+  - Clean identification: regional oil exposure × exogenous oil shock
+  - Time FE absorbs national cyclical effects
+
+- ROBUSTNESS SPEC: Add cyclical proxy to check β stability
+  - Uses E_cyc_proxy_r (GRP-based, NOT true employment)
+  - Tests if oil coefficient is stable when adding noisy cyclical control
 """
 
 import logging
@@ -31,19 +40,61 @@ class ShiftShareSpec:
     bandwidth: int | None = None
 
 
-# Default specifications
+# =============================================================================
+# MAIN SPECIFICATION (v4): Oil exposure only
+# =============================================================================
+# This is the primary specification with clean identification:
+# y_{r,t} = α_r + δ_t + β(E_oil_r × Shock_oil_t) + u_{r,t}
+
+MAIN_SPEC = ShiftShareSpec(
+    name="main_oil_only",
+    outcome="log_income_pc",
+    interactions=[
+        ("E_oil_r", "oil_supply_shock"),
+        ("E_oil_r", "aggregate_demand_shock"),
+    ],
+    controls=[],  # No controls - clean reduced form
+    entity_effects=True,  # α_r: region fixed effects
+    time_effects=True,  # δ_t: absorbs national cycle
+    cov_type="kernel",  # Driscoll-Kraay HAC
+)
+
+# =============================================================================
+# ROBUSTNESS SPECIFICATION: Add cyclical proxy
+# =============================================================================
+# Tests if β is stable when adding noisy cyclical exposure control:
+# y_{r,t} = α_r + δ_t + β(E_oil_r × Shock_oil_t) + θ(E_cyc_proxy_r × Shock_cyc_t) + u_{r,t}
+# E_cyc_proxy_r is GRP-based, NOT true employment data
+
+ROBUSTNESS_SPEC = ShiftShareSpec(
+    name="robustness_with_cyclical_proxy",
+    outcome="log_income_pc",
+    interactions=[
+        ("E_oil_r", "oil_supply_shock"),
+        ("E_oil_r", "aggregate_demand_shock"),
+        ("E_cyc_proxy_r", "global_activity_shock"),  # GRP-based proxy
+    ],
+    controls=[],
+    entity_effects=True,
+    time_effects=True,
+    cov_type="kernel",
+)
+
+# =============================================================================
+# LEGACY: Original baseline (kept for backwards compatibility)
+# =============================================================================
 BASELINE_SPEC = ShiftShareSpec(
     name="baseline",
     outcome="log_income_pc",
     interactions=[
         ("E_oil_r", "oil_supply_shock"),
         ("E_oil_r", "aggregate_demand_shock"),
-        ("E_cyc_r", "global_activity_shock"),
+        ("E_cyc_proxy_r", "global_activity_shock"),  # Updated to use proxy
     ],
-    controls=[],  # No mediators in baseline
+    controls=[],
     entity_effects=True,
     time_effects=True,
-    cov_type="kernel",  # Driscoll-Kraay
+    cov_type="kernel",
 )
 
 AUXILIARY_SPEC = ShiftShareSpec(
@@ -217,8 +268,26 @@ class ShiftShareModel:
 
         return data
 
+    def fit_main(self) -> RegressionResult:
+        """
+        Fit main specification: oil exposure only.
+
+        This is the primary specification with clean identification:
+        y_{r,t} = α_r + δ_t + β(E_oil_r × Shock_oil_t) + u_{r,t}
+        """
+        return self.fit(MAIN_SPEC)
+
+    def fit_robustness(self) -> RegressionResult:
+        """
+        Fit robustness specification: add cyclical proxy.
+
+        Tests if β (oil coefficient) is stable when adding noisy cyclical control.
+        Uses E_cyc_proxy_r (GRP-based), NOT true employment data.
+        """
+        return self.fit(ROBUSTNESS_SPEC)
+
     def fit_baseline(self) -> RegressionResult:
-        """Fit baseline specification."""
+        """Fit baseline specification (legacy, same as main + cyclical proxy)."""
         return self.fit(BASELINE_SPEC)
 
     def fit_auxiliary(self) -> RegressionResult:
@@ -226,10 +295,49 @@ class ShiftShareModel:
         return self.fit(AUXILIARY_SPEC)
 
     def fit_all_specs(self) -> dict[str, RegressionResult]:
-        """Fit all defined specifications."""
-        self.fit(BASELINE_SPEC)
+        """Fit all specifications: main, robustness, and auxiliary."""
+        self.fit(MAIN_SPEC)
+        self.fit(ROBUSTNESS_SPEC)
         self.fit(AUXILIARY_SPEC)
         return self.results
+
+    def check_beta_stability(self) -> dict[str, Any]:
+        """
+        Compare β (oil coefficient) across main and robustness specs.
+
+        Returns:
+            Dictionary with comparison results
+        """
+        if "main_oil_only" not in self.results:
+            self.fit_main()
+        if "robustness_with_cyclical_proxy" not in self.results:
+            self.fit_robustness()
+
+        main = self.results["main_oil_only"]
+        robust = self.results["robustness_with_cyclical_proxy"]
+
+        # Find oil supply coefficient in both
+        oil_coef_main = main.params.get("E_oil_r_x_oil_supply", None)
+        oil_coef_robust = robust.params.get("E_oil_r_x_oil_supply", None)
+
+        if oil_coef_main is None or oil_coef_robust is None:
+            return {"error": "Oil supply coefficient not found in results"}
+
+        change = oil_coef_robust - oil_coef_main
+        pct_change = (change / abs(oil_coef_main)) * 100 if oil_coef_main != 0 else float('inf')
+
+        return {
+            "beta_main": oil_coef_main,
+            "beta_robust": oil_coef_robust,
+            "change": change,
+            "pct_change": pct_change,
+            "stable": abs(pct_change) < 20,  # Consider stable if <20% change
+            "interpretation": (
+                "β is STABLE: adding cyclical proxy does not materially change oil coefficient"
+                if abs(pct_change) < 20
+                else "β is NOT STABLE: adding cyclical proxy changes oil coefficient significantly"
+            ),
+        }
 
     def summary(self, spec_name: str | None = None) -> str:
         """Print summary of results."""

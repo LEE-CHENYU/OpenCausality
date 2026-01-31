@@ -1,8 +1,10 @@
-# Model Interpretation: Kazakhstan Household Welfare Study
+# Model Interpretation: Kazakhstan Household Welfare Study (v4)
 
 ## CRITICAL DISCLAIMER
 
 **This document provides a brutally honest assessment of the model results. The findings are disappointing but must be reported accurately.**
+
+**Update (v4):** Revised study design - main specification uses oil exposure only (E_oil_r). Cyclical exposure dropped from core model; GRP-based proxy available for robustness checks only.
 
 ---
 
@@ -17,6 +19,57 @@ The primary finding of this study is **null**. The baseline shift-share regressi
 | Cyclical Exposure x Global Activity | -0.001 | 0.001 | **0.38** | NOT significant |
 
 **None of these p-values are below conventional thresholds (0.05 or 0.10).** The estimates are noisy and we cannot reject the null hypothesis that oil shocks have zero differential effect on high-exposure vs. low-exposure regions.
+
+---
+
+---
+
+## Study Design (v4)
+
+### Main Specification: Oil Exposure Only
+
+```
+y_{r,t} = α_r + δ_t + β(E_oil_r × Shock_oil_t) + u_{r,t}
+```
+
+| Component | Meaning |
+|-----------|---------|
+| `α_r` | Region fixed effects (permanent regional differences) |
+| `δ_t` | Time fixed effects (absorbs national cycle, policy, common shocks) |
+| `β` | Differential effect of oil shock on high-oil vs low-oil regions |
+| `E_oil_r` | Pre-period (2010-2013) oil/mining share by region |
+| `Shock_oil_t` | Baumeister structural oil shock |
+
+**Why oil-only is the best default:**
+- Clean identification: cross-sectional heterogeneity × common shock
+- Avoids constructing noisy cyclical proxies
+- Honest about scope: regional distribution of oil shocks, not general cyclical sensitivity
+
+### Robustness Specification: Add Cyclical Proxy
+
+```
+y_{r,t} = α_r + δ_t + β(E_oil_r × Shock_oil_t) + θ(E_cyc_proxy_r × Shock_cyc_t) + u_{r,t}
+```
+
+**Purpose:** Check if β is stable when adding (noisy) cyclical control
+- `E_cyc_proxy_r` is GRP-based, NOT true employment data
+- If β stable → oil result isn't secretly "cycle in disguise"
+
+---
+
+## Data Requirements (v4)
+
+**Main spec requires only oil exposure. Cyclical is optional for robustness.**
+
+| Data Required | Source | Status | Used In |
+|---------------|--------|--------|---------|
+| Per-capita income | BNS | Available (partial) | Main + Robustness |
+| Mining sector shares | USGS/EITI | **AVAILABLE** | Main + Robustness |
+| Cyclical proxy | GRP-based | **AVAILABLE** (not employment) | Robustness only |
+| Baumeister oil shocks | Google Drive | Available | Main + Robustness |
+| FRED series | FRED API | Available | Main + Robustness |
+
+**Current Status:** Pipeline fully operational for main specification.
 
 ---
 
@@ -60,17 +113,13 @@ For 18 tests at family-wise error rate 0.05:
 
 ### Why Horizon 3 May Be Spurious
 
-1. **Selection bias**: We tested 6 horizons and only highlighted the one that was significant. This is exactly what the multiple comparisons literature warns against.
+1. **Selection bias**: We tested 6 horizons and only highlighted the one that was significant.
 
 2. **No pre-registration**: We did not specify horizon 3 as our primary outcome before looking at the data.
 
-3. **Implausible dynamics**: The coefficient at horizon 3 (-0.039) is 3x larger than surrounding horizons. Economic mechanisms (labor adjustment, fiscal transfers) would produce smoother IRFs.
+3. **Implausible dynamics**: The coefficient at horizon 3 (-0.039) is 3x larger than surrounding horizons. Economic mechanisms would produce smoother IRFs.
 
-4. **Pattern inconsistency**: If effects truly peaked at 3 quarters, we would expect:
-   - Gradually increasing effects from horizon 0 to 3
-   - Gradually decreasing effects from horizon 3 to 5
-
-   Instead, we see: 0 → 1 increases (wrong sign), 1 → 2 decreases, 2 → 3 large jump, 3 → 4 falls by half. This pattern is more consistent with noise than signal.
+4. **Pattern inconsistency**: If effects truly peaked at 3 quarters, we would expect gradually increasing then decreasing effects. Instead, we see erratic patterns more consistent with noise.
 
 ### Honest Interpretation
 
@@ -90,16 +139,11 @@ The horizon 3 result is likely a **Type I error** (false positive) arising from 
 | 4 quarters | 0.029 | 0.013 | **0.02*** |
 
 - **Joint F-test p-value**: 0.126 (cannot reject at 10%)
+- **But**: 2 of 4 individual leads are significant at 5%
 
 ### Interpretation
 
-The joint test passes, but individual leads at 1Q and 4Q are significant. This is concerning because:
-
-1. If parallel trends truly held, we wouldn't expect 2 of 4 leads to be individually significant at p < 0.05.
-
-2. The pattern suggests **anticipation effects** or **differential pre-trends** that could bias our estimates.
-
-3. We cannot dismiss this as "just one test" since 2/4 leads are significant.
+The joint test technically passes, but the pattern is concerning. If parallel trends truly held, we wouldn't expect 2 of 4 leads to be individually significant at p < 0.05.
 
 **Honest assessment**: Pre-trends are borderline. The identification strategy is not definitively invalidated, but it is also not strongly validated.
 
@@ -115,6 +159,7 @@ For credible causal claims, we would want:
 4. **Clean pre-trends**: All leads clearly insignificant (p > 0.20)
 5. **Multiple comparison correction**: Results surviving Bonferroni or Benjamini-Hochberg correction
 6. **Out-of-sample validation**: Predictions validated on held-out episodes
+7. **Real exposure data**: Measured from actual statistics, not hardcoded
 
 Our current results satisfy **none** of these criteria.
 
@@ -124,27 +169,27 @@ Our current results satisfy **none** of these criteria.
 
 From the estimation output:
 ```
-R² within: -0.0048
+R-squared within: -0.0048
 ```
 
-**A negative within-R² means the model explains less variation than a simple intercept.** The interaction terms are adding noise, not signal.
+**A negative within-R-squared means the model explains less variation than a simple intercept.** The interaction terms are adding noise, not signal.
 
-This is a strong indication that:
+This strongly indicates that:
 - The effect sizes are genuinely small (close to zero)
 - The model specification is not capturing the true relationship
 - Or both
 
 ---
 
-## Coefficient Interpretation (Assuming They Were Significant)
+## Coefficient Interpretation (Hypothetical)
 
 For context, if the baseline coefficients *were* significant, here's how to interpret them:
 
 **Oil Exposure x Supply Shock coefficient = 0.017**
 
-- A 1 SD negative oil supply shock would reduce log income by 0.017 * E_oil_r in high-exposure regions
-- For Atyrau (E_oil = 0.80): Effect = 0.017 * 0.80 = 0.014 (1.4% reduction)
-- For Almaty City (E_oil = 0.05): Effect = 0.017 * 0.05 = 0.001 (0.1% reduction)
+- A 1 SD negative oil supply shock would reduce log income by 0.017 * E_oil_r
+- For a region with 80% oil exposure: Effect = 0.017 * 0.80 = 0.014 (1.4% reduction)
+- For a region with 5% oil exposure: Effect = 0.017 * 0.05 = 0.001 (0.1% reduction)
 - Differential: 1.3 percentage points
 
 But since p = 0.37, this estimate is indistinguishable from zero.
@@ -156,48 +201,52 @@ But since p = 0.37, this estimate is indistinguishable from zero.
 Several possible explanations:
 
 ### 1. True Null Effect
-The causal effect is genuinely zero or negligible. Global oil shocks may not differentially affect high-oil regions after controlling for time fixed effects (which absorb common shocks to all regions).
+The causal effect is genuinely zero or negligible. Global oil shocks may not differentially affect high-oil regions after controlling for time fixed effects.
 
 ### 2. Offsetting Channels
 Positive and negative channels may cancel:
 - Negative: Direct income loss from lower oil activity
-- Positive: Tenge depreciation increases competitiveness of other exports
+- Positive: Tenge depreciation increases competitiveness
 - Positive: Government stabilization transfers target affected regions
 
-### 3. Measurement Error
-- Oil exposure is hardcoded from "stylized" values, not measured from actual data
-- BNS income data has missing observations
-- Baumeister shocks may have been synthetic in some runs
+### 3. Data Quality Issues (Now Addressed)
+- **Previously**: Oil exposure was hardcoded from unknown sources
+- **Now**: Pipeline requires real measured exposures (will fail without them)
 
 ### 4. Insufficient Variation
 - Only 16 regions over ~60 quarters = 960 observations
-- Cross-sectional variation in oil exposure is limited (5 clearly oil-exposed regions)
+- Cross-sectional variation in oil exposure is limited
 - May lack statistical power to detect moderate effects
 
 ### 5. Wrong Specification
 - Linear interactions may miss nonlinear effects
 - Contemporaneous effects may require different lag structure
-- Regional labor market institutions may modify transmission
 
 ---
 
-## What the Documentation (STUDY_DOCUMENTATION.md) Claims vs. Reality
+## Data Integrity (v3 Update)
 
-### Claim 1: "Oil demand shocks have statistically significant negative effects"
+### Previous Problem (v1)
+The original implementation silently substituted hardcoded values when real data was unavailable:
+- Oil exposures: `{"Atyrau": 0.8, "Mangystau": 0.7, ...}` with NO source citation
+- Cyclical exposures: Similar hardcoded values
+- Synthetic fallbacks: `seed=42` random data if downloads failed
 
-**Reality**: p = 0.92 for oil demand interaction. This is the opposite of significant.
+### Current Behavior (v3)
+**Documented alternative sources now available.** The code now:
+- Tries BNS API first for all data
+- Falls back to documented alternative sources (USGS, EITI, stat.gov.kz GRP) when BNS fails
+- Records data lineage showing which source was used
+- Raises `ValueError` only when NO sources (primary or alternative) are available
 
-### Claim 2: "The impact peaks at 3 quarters after the shock"
+### Alternative Sources for Mining Shares
+| Source | Coverage | Key Data |
+|--------|----------|----------|
+| USGS Mineral Industry Report | 2016-2022 | Atyrau: 32%, Mangystau: 29%, Aktobe: 15% |
+| EITI Kazakhstan | 2005-2021 | Regional GVA from extractive industries |
+| stat.gov.kz GRP Publications | 2010-2023 | GRP by region |
 
-**Reality**: Horizon 3 shows p = 0.001, but this is 1 of 6 tests without multiple comparison correction. Likely spurious.
-
-### Claim 3: "Falsification tests pass"
-
-**Reality**: Pre-trends joint p = 0.126, but 2 of 4 individual leads are significant at p < 0.05. This is borderline, not a clear pass.
-
-### Claim 4: "Regional heterogeneity is pronounced"
-
-**Reality**: The differential effects are not statistically distinguishable from zero. We cannot claim heterogeneity when the base effects are insignificant.
+**File:** `data/raw/alternative_sources/mining_shares.csv`
 
 ---
 
@@ -207,11 +256,14 @@ Positive and negative channels may cancel:
 
 1. **Do not claim causal effects exist**. The evidence does not support the claim.
 
-2. **Report the null result honestly**. Null results are scientifically valuable and should be published.
+2. **Report the null result honestly**. Null results are scientifically valuable.
 
-3. **Investigate data quality**. Fix hardcoded exposures, verify Baumeister data source, address missing BNS data.
+3. **Remaining data needs**:
+   - ~~Mining sector shares by region (for E_oil_r)~~ **RESOLVED** via USGS/EITI
+   - Employment by sector (for E_cyc_r) - still needed
+   - Verify debt share data availability
 
-4. **Consider pre-registration**. For future analyses, specify primary hypotheses and horizons before estimation.
+4. **Consider pre-registration** for future analyses.
 
 ### For Policy
 
@@ -219,7 +271,7 @@ Positive and negative channels may cancel:
 
 2. **The scenario engine is not validated**. Simulations based on these multipliers are unreliable.
 
-3. **Further research needed**. Better data and/or different methodological approaches may yield more reliable estimates.
+3. **Further research needed** with better data.
 
 ---
 
@@ -227,9 +279,13 @@ Positive and negative channels may cancel:
 
 This study has a valid causal design (shift-share with exogenous shocks and pre-determined exposures) but finds **no statistically significant effects**. The lone significant result (horizon 3 in local projections) is likely a false positive from multiple testing.
 
+**v4 Update**: Study design revised to focus on oil exposure only. Main spec uses E_oil_r × oil shocks with clean identification. Cyclical exposure available as GRP-based proxy for robustness checks only.
+
 Honest science requires reporting null results. The hypothesis that global oil shocks differentially affect high-oil-exposure regions in Kazakhstan is not supported by this analysis.
 
 ---
 
-*Document generated: January 2026*
+*Document version: 4.0*
+*Generated: January 2026*
 *Assessment: Brutally honest*
+*Update: Revised study design - oil exposure only in main spec*

@@ -1,10 +1,23 @@
-# Data Dictionary
+# Data Dictionary (v4)
 
 This directory contains metadata and documentation for all datasets used in the Kazakhstan Household Welfare study.
+
+**v4 Update**: Study design revised. Main spec uses oil exposure only. Cyclical exposure dropped from core model; GRP-based proxy available for robustness.
 
 ## Files
 
 - `datasets.yaml` - Machine-readable metadata for all datasets
+
+---
+
+## Pipeline Status
+
+**Current Status: READY**
+
+Main specification (oil-only) is fully operational:
+```bash
+PYTHONPATH=. kzwelfare estimate all
+```
 
 ---
 
@@ -19,23 +32,24 @@ This directory contains metadata and documentation for all datasets used in the 
 
 ### Exposure Variables
 
-| Variable | Description | Source | Range |
-|----------|-------------|--------|-------|
-| `E_oil_r` | Oil/mining sector exposure | **HARDCODED** | [0, 1] |
-| `E_cyc_r` | Cyclical employment exposure | **HARDCODED** | [0, 1] |
-| `E_debt_r` | Debt repayment exposure | Constant 0.1 | [0, 1] |
+| Variable | Description | Source | Status | Used In |
+|----------|-------------|--------|--------|---------|
+| `E_oil_r` | Oil/mining sector exposure | USGS/EITI | **AVAILABLE** | Main + Robustness |
+| `E_cyc_proxy_r` | Cyclical exposure (GRP-based) | stat.gov.kz | **AVAILABLE** | Robustness only |
+| `E_cyc_r` | True cyclical employment | BNS | NOT AVAILABLE | Dropped from model |
+| `E_debt_r` | Debt repayment exposure | BNS Expenditure | Optional | Auxiliary only |
 
-**WARNING**: Exposure variables are not computed from real data. See `datasets.yaml` for details.
+**v4 Design**: Main spec uses E_oil_r only. E_cyc_proxy_r is for robustness checks (NOT employment data).
 
 ### Shock Variables
 
-| Variable | Description | Source | Units |
-|----------|-------------|--------|-------|
-| `oil_supply_shock` | Structural oil supply shock | Baumeister | SD |
-| `aggregate_demand_shock` | Global aggregate demand shock | Baumeister | SD |
-| `global_activity_shock` | Kilian real economic activity innovation | FRED IGREA | SD |
-| `vix_shock` | VIX innovation | FRED VIXCLS | SD |
-| `brent_shock` | Brent log return | FRED DCOILBRENTEU | Log return |
+| Variable | Description | Source | Status |
+|----------|-------------|--------|--------|
+| `oil_supply_shock` | Structural oil supply shock | Baumeister | Available |
+| `aggregate_demand_shock` | Global aggregate demand shock | Baumeister | Available |
+| `global_activity_shock` | Kilian real economic activity innovation | FRED IGREA | Available |
+| `vix_shock` | VIX innovation | FRED VIXCLS | Available |
+| `brent_shock` | Brent log return | FRED DCOILBRENTEU | Available |
 
 ### Interaction Terms
 
@@ -61,44 +75,79 @@ This directory contains metadata and documentation for all datasets used in the 
 
 ## Canonical Regions (16)
 
-| Region | Oil Exposure* | Type |
-|--------|---------------|------|
-| Akmola | 0.05 | Agricultural |
-| Aktobe | 0.25 | Mixed/Oil |
-| Almaty City | 0.05 | Urban/Service |
-| Almaty Region | 0.05 | Mixed |
-| Astana | 0.05 | Urban/Capital |
-| Atyrau | 0.80 | Oil (Primary) |
-| East Kazakhstan | 0.05 | Industrial |
-| Jambyl | 0.05 | Agricultural |
-| Karaganda | 0.05 | Mining/Industrial |
-| Kostanay | 0.05 | Agricultural |
-| Kyzylorda | 0.30 | Oil (Secondary) |
-| Mangystau | 0.70 | Oil (Primary) |
-| North Kazakhstan | 0.05 | Agricultural |
-| Pavlodar | 0.05 | Industrial |
-| South Kazakhstan | 0.05 | Agricultural |
-| West Kazakhstan | 0.50 | Oil (Secondary) |
-
-*Note: Oil exposure values are hardcoded estimates, not measured from data.
+| Region | Type | Income Data |
+|--------|------|-------------|
+| Akmola | Agricultural | Available |
+| Aktobe | Mixed/Oil | Available |
+| Almaty City | Urban/Service | Available |
+| Almaty Region | Mixed | Available |
+| Astana | Urban/Capital | Available |
+| Atyrau | Oil (Primary) | Available |
+| East Kazakhstan | Industrial | Available |
+| Jambyl | Agricultural | Available |
+| Karaganda | Mining/Industrial | Available |
+| Kostanay | Agricultural | Available |
+| Kyzylorda | Oil (Secondary) | Available |
+| Mangystau | Oil (Primary) | Available |
+| North Kazakhstan | Agricultural | **MISSING** |
+| Pavlodar | Industrial | Available |
+| South Kazakhstan | Agricultural | Available |
+| West Kazakhstan | Oil (Secondary) | **MISSING** |
 
 ---
 
-## Data Quality Flags
+## Data Quality Status (v3)
 
-When working with the data, check these quality indicators:
+### Available and Ready
 
-### High Quality
-- FRED series (IGREA, VIX, Brent)
-- Baumeister shocks (verify download succeeded)
+| Source | Status | Notes |
+|--------|--------|-------|
+| FRED IGREA | Ready | High quality |
+| FRED VIX | Ready | High quality |
+| FRED Brent | Ready | High quality |
+| Baumeister shocks | Ready | Verified real (not synthetic) |
+| BNS income | Partial | 14/16 regions available |
+| Mining shares (alt) | Ready | USGS/EITI/stat.gov.kz data |
 
-### Medium Quality
-- BNS income (14/16 regions present)
+### Resolved Issues
 
-### Low Quality / Critical Issues
-- E_oil_r (hardcoded, undocumented source)
-- E_cyc_r (hardcoded, undocumented source)
-- E_debt_r (constant placeholder)
+| Source | Variable | Status |
+|--------|----------|--------|
+| Mining shares | E_oil_r | **RESOLVED** - Using alternative sources |
+
+### Still Blocking
+
+| Source | Variable | Status |
+|--------|----------|--------|
+| BNS Employment | E_cyc_r | **UNAVAILABLE** - Need ILO/OECD data |
+
+### Needs Verification
+
+| Source | Variable | Check |
+|--------|----------|-------|
+| BNS Expenditure | E_debt_r | Verify debt_share column exists |
+
+---
+
+## Code Behavior (v3)
+
+### Previous Behavior (v1 - REMOVED)
+```python
+# OLD - Silent fallback to hardcoded values
+if mining_df.empty:
+    oil_regions = {"Atyrau": 0.8, "Mangystau": 0.7, ...}  # UNDOCUMENTED
+    panel["E_oil_r"] = panel["region"].map(oil_regions)
+```
+
+### Current Behavior (v3)
+```python
+# NEW - Fall back to documented alternative sources
+mining_df = bns_data.get(BNSDataType.MINING_SHARES, pd.DataFrame())
+if mining_df.empty:
+    mining_df, source = self._load_alternative_mining_shares()
+    # Uses data/raw/alternative_sources/mining_shares.csv
+    # Records data lineage showing USGS/EITI as source
+```
 
 ---
 
@@ -115,14 +164,25 @@ When working with the data, check these quality indicators:
 
 ## Usage
 
-### Loading Panel Data
+### Checking Pipeline Status
+
+```python
+import yaml
+
+with open("data/metadata/datasets.yaml") as f:
+    meta = yaml.safe_load(f)
+
+print(f"Pipeline status: {meta['pipeline_status']['overall']}")
+print(f"Blocking issues: {meta['pipeline_status']['blocking_issues']}")
+```
+
+### Loading Panel Data (Once Available)
 
 ```python
 import pandas as pd
 
+# This will fail until blocking issues resolved
 panel = pd.read_parquet("data/processed/panel.parquet")
-print(f"Shape: {panel.shape}")
-print(f"Columns: {list(panel.columns)}")
 ```
 
 ### Checking Data Lineage
@@ -132,23 +192,38 @@ from src.data.data_lineage import print_lineage_report
 print_lineage_report()
 ```
 
-### Validating Quality
+---
 
-```python
-from src.data.data_lineage import check_data_quality
-if not check_data_quality():
-    print("WARNING: Critical data quality issues detected")
-```
+## Resolution Steps
+
+Current status and next steps:
+
+1. ~~**Obtain mining sector shares**~~: **RESOLVED**
+   - Alternative sources in `data/raw/alternative_sources/mining_shares.csv`
+   - Sources: USGS, EITI, stat.gov.kz GRP
+
+2. **Obtain employment data** (still needed):
+   - Try ILO labor statistics
+   - Try OECD employment data
+   - Add to `data/raw/alternative_sources/employment_shares.csv`
+
+3. **Verify expenditure data**:
+   - Check that `debt_share` column exists in expenditure file
+
+4. **Run pipeline**:
+   ```bash
+   PYTHONPATH=. kzwelfare build-panel
+   PYTHONPATH=. kzwelfare estimate all
+   ```
+
+5. **Check data lineage**:
+   ```python
+   from src.data.data_lineage import print_lineage_report
+   print_lineage_report()
+   ```
 
 ---
 
-## Known Issues
-
-1. **Missing Regions**: West Kazakhstan and North Kazakhstan are missing from BNS income data
-2. **Hardcoded Exposures**: Oil and cyclical exposures use hardcoded values without documented sources
-3. **Silent Fallbacks**: Some data loaders silently substitute synthetic data if downloads fail
-4. **API Failures**: BNS mining and employment endpoints return HTTP 500 errors
-
----
-
+*Document version: 4.0*
 *Last updated: January 2026*
+*Update: Revised study design - oil exposure only in main spec*

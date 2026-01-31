@@ -3,18 +3,31 @@ Panel data construction with region crosswalk.
 
 Implements stable geography approach by aggregating new regions
 back into parent pre-split regions.
+
+Supports fallback to alternative data sources when BNS API is unavailable.
 """
 
 import logging
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 import numpy as np
 import pandas as pd
 
 from config.settings import get_settings
+from src.data.data_lineage import (
+    record_source,
+    DataSourceStatus,
+    DataQualityLevel,
+)
 
 logger = logging.getLogger(__name__)
+
+# Alternative data source paths
+ALTERNATIVE_SOURCES_DIR = Path("data/raw/alternative_sources")
+MINING_SHARES_FILE = ALTERNATIVE_SOURCES_DIR / "mining_shares.csv"
+CYCLICAL_PROXY_FILE = ALTERNATIVE_SOURCES_DIR / "cyclical_proxy.csv"
 
 
 # Region crosswalk for stable geography
@@ -229,24 +242,21 @@ class PanelBuilder:
         income_df = bns_data.get(BNSDataType.INCOME_PER_CAPITA, pd.DataFrame())
 
         if income_df.empty:
-            logger.warning("No income data available, using placeholder")
-            # Generate placeholder for testing
-            np.random.seed(42)
-            panel["income_pc"] = np.exp(
-                10 + np.random.randn(len(panel)) * 0.3
+            raise ValueError(
+                "CRITICAL: No income data available. "
+                "Cannot proceed without real BNS income data. "
+                "Run 'kzwelfare fetch-data bns' to download data, or check BNS API status."
             )
-            panel["log_income_pc"] = np.log(panel["income_pc"])
-            return panel
 
         # Process and merge income data
         income_df = self._process_bns_income(income_df)
 
         if income_df.empty:
-            logger.warning("Processed income data is empty, using placeholder")
-            np.random.seed(42)
-            panel["income_pc"] = np.exp(10 + np.random.randn(len(panel)) * 0.3)
-            panel["log_income_pc"] = np.log(panel["income_pc"])
-            return panel
+            raise ValueError(
+                "CRITICAL: Processed income data is empty after cleaning. "
+                "Check BNS data format or column names. "
+                f"Raw data had columns: {list(bns_data.get('INCOME_PER_CAPITA', pd.DataFrame()).columns)}"
+            )
 
         panel = panel.merge(income_df, on=["region", "quarter"], how="left")
 
@@ -311,39 +321,111 @@ class PanelBuilder:
         baseline_start: int,
         baseline_end: int,
     ) -> pd.DataFrame:
-        """Compute oil/mining exposure by region."""
+        """
+        Compute oil/mining exposure by region.
+
+        First tries BNS data, then falls back to alternative sources
+        (USGS/EITI/stat.gov.kz GRP publications).
+        """
         from src.data.kazakhstan_bns import BNSDataType
 
         mining_df = bns_data.get(BNSDataType.MINING_SHARES, pd.DataFrame())
+        data_source = "bns_api"
+
+        # If BNS data unavailable, try alternative sources
+        if mining_df.empty:
+            logger.warning("BNS mining data unavailable, trying alternative sources")
+            mining_df, data_source = self._load_alternative_mining_shares()
 
         if mining_df.empty:
-            logger.warning("No mining data available, using stylized exposure")
-            # Stylized exposure based on known oil regions
-            oil_regions = {
-                "Atyrau": 0.8,
-                "Mangystau": 0.7,
-                "West Kazakhstan": 0.5,
-                "Kyzylorda": 0.3,
-                "Aktobe": 0.25,
-            }
-            panel["E_oil_r"] = panel["region"].map(oil_regions).fillna(0.05)
-            return panel
+            raise ValueError(
+                "CRITICAL: No mining sector data available from any source. "
+                "Cannot compute oil exposure (E_oil_r) without real regional mining share data. "
+                "The shift-share identification requires measured exposures, not hardcoded values. "
+                "\nOptions:\n"
+                "1. Download USGS report: https://pubs.usgs.gov/myb/vol3/2022/myb3-2022-kazakhstan.pdf\n"
+                "2. Download EITI report: https://eiti.org/countries/kazakhstan\n"
+                "3. Create data/raw/alternative_sources/mining_shares.csv\n"
+                "See data/raw/alternative_sources/README.md for format."
+            )
 
-        # Process and compute baseline average
+        # Process and compute exposure
         mining_df = mining_df.copy()
         if "region" in mining_df.columns:
             mining_df["region"] = mining_df["region"].apply(self.harmonize_region)
 
-        if "year" in mining_df.columns:
-            baseline = mining_df[
-                (mining_df["year"] >= baseline_start)
-                & (mining_df["year"] <= baseline_end)
-            ]
-            if "mining_share" in baseline.columns:
-                exposure = baseline.groupby("region")["mining_share"].mean()
-                panel["E_oil_r"] = panel["region"].map(exposure).fillna(0)
+        # For alternative sources, use mining_share directly (already a share)
+        if "mining_share" in mining_df.columns:
+            if "year" in mining_df.columns:
+                # Use baseline period if year data available
+                baseline = mining_df[
+                    (mining_df["year"] >= baseline_start)
+                    & (mining_df["year"] <= baseline_end)
+                ]
+                if not baseline.empty:
+                    exposure = baseline.groupby("region")["mining_share"].mean()
+                else:
+                    # Use all available data as structural approximation
+                    logger.info(
+                        f"No data in baseline period ({baseline_start}-{baseline_end}), "
+                        "using all available data as structural approximation"
+                    )
+                    exposure = mining_df.groupby("region")["mining_share"].mean()
+            else:
+                # No year column - use as static exposure
+                exposure = mining_df.set_index("region")["mining_share"]
+
+            panel["E_oil_r"] = panel["region"].map(exposure).fillna(0)
+
+            # Record data lineage
+            record_source(
+                source_name="E_oil_r (oil exposure)",
+                status=DataSourceStatus.REAL if data_source == "bns_api" else DataSourceStatus.CACHED,
+                quality=DataQualityLevel.GOOD if data_source == "bns_api" else DataQualityLevel.FAIR,
+                rows=len(mining_df),
+                notes=[
+                    f"Data source: {data_source}",
+                    f"Regions with data: {len(exposure)}",
+                    f"Regions in panel: {panel['region'].nunique()}",
+                ],
+            )
+
+            logger.info(
+                f"Computed E_oil_r from {data_source}. "
+                f"Range: [{panel['E_oil_r'].min():.3f}, {panel['E_oil_r'].max():.3f}]"
+            )
 
         return panel
+
+    def _load_alternative_mining_shares(self) -> tuple[pd.DataFrame, str]:
+        """
+        Load mining shares from alternative sources.
+
+        Returns:
+            Tuple of (DataFrame, source_description)
+        """
+        if not MINING_SHARES_FILE.exists():
+            logger.warning(f"Alternative mining shares file not found: {MINING_SHARES_FILE}")
+            return pd.DataFrame(), ""
+
+        logger.info(f"Loading alternative mining shares from {MINING_SHARES_FILE}")
+        df = pd.read_csv(MINING_SHARES_FILE)
+
+        # Validate required columns
+        if "region" not in df.columns or "mining_share" not in df.columns:
+            logger.error("Alternative mining shares file missing required columns")
+            return pd.DataFrame(), ""
+
+        # Build source description
+        sources = df["source"].unique().tolist() if "source" in df.columns else ["unknown"]
+        source_desc = f"alternative_sources: {', '.join(sources)}"
+
+        logger.info(
+            f"Loaded {len(df)} regions from alternative sources. "
+            f"Sources: {sources}"
+        )
+
+        return df, source_desc
 
     def _compute_debt_exposure(
         self,
@@ -358,9 +440,11 @@ class PanelBuilder:
         expenditure_df = bns_data.get(BNSDataType.EXPENDITURE_STRUCTURE, pd.DataFrame())
 
         if expenditure_df.empty:
-            logger.warning("No expenditure data available, using placeholder")
-            panel["E_debt_r"] = 0.1  # Placeholder
-            return panel
+            raise ValueError(
+                "CRITICAL: No expenditure data available. "
+                "Cannot compute debt exposure (E_debt_r) without real household expenditure data. "
+                "Run 'kzwelfare fetch-data bns' or check BNS API status."
+            )
 
         # Process and compute baseline average
         expenditure_df = expenditure_df.copy()
@@ -368,15 +452,37 @@ class PanelBuilder:
             expenditure_df["region"] = expenditure_df["region"].apply(self.harmonize_region)
 
         # Extract debt share if available
-        if "debt_share" in expenditure_df.columns and "year" in expenditure_df.columns:
-            baseline = expenditure_df[
-                (expenditure_df["year"] >= baseline_start)
-                & (expenditure_df["year"] <= baseline_end)
-            ]
-            exposure = baseline.groupby("region")["debt_share"].mean()
-            panel["E_debt_r"] = panel["region"].map(exposure).fillna(0.1)
-        else:
-            panel["E_debt_r"] = 0.1
+        if "debt_share" not in expenditure_df.columns:
+            raise ValueError(
+                f"CRITICAL: Expenditure data missing 'debt_share' column. "
+                f"Available columns: {list(expenditure_df.columns)}. "
+                "Cannot compute debt exposure without debt repayment share data."
+            )
+        if "year" not in expenditure_df.columns:
+            raise ValueError(
+                f"CRITICAL: Expenditure data missing 'year' column. "
+                f"Available columns: {list(expenditure_df.columns)}."
+            )
+
+        baseline = expenditure_df[
+            (expenditure_df["year"] >= baseline_start)
+            & (expenditure_df["year"] <= baseline_end)
+        ]
+        if baseline.empty:
+            raise ValueError(
+                f"CRITICAL: No expenditure data in baseline period ({baseline_start}-{baseline_end}). "
+                f"Data year range: {expenditure_df['year'].min()}-{expenditure_df['year'].max()}"
+            )
+        exposure = baseline.groupby("region")["debt_share"].mean()
+        panel["E_debt_r"] = panel["region"].map(exposure)
+
+        # Check for missing regions
+        missing = panel[panel["E_debt_r"].isna()]["region"].unique()
+        if len(missing) > 0:
+            raise ValueError(
+                f"CRITICAL: Debt exposure missing for regions: {list(missing)}. "
+                "Cannot proceed with incomplete exposure data."
+            )
 
         return panel
 
@@ -387,50 +493,94 @@ class PanelBuilder:
         baseline_start: int,
         baseline_end: int,
     ) -> pd.DataFrame:
-        """Compute cyclical employment exposure by region."""
+        """
+        Compute cyclical employment exposure by region.
+
+        STUDY DESIGN (v4):
+        - Main spec uses oil exposure only (E_oil_r)
+        - Cyclical exposure is OPTIONAL, used for robustness checks
+        - If BNS employment data unavailable, uses GRP-based proxy
+
+        Returns panel with:
+        - E_cyc_r: True cyclical exposure (if BNS data available)
+        - E_cyc_proxy_r: GRP-based proxy (for robustness checks)
+        """
         from src.data.kazakhstan_bns import BNSDataType
 
         employment_df = bns_data.get(BNSDataType.EMPLOYMENT, pd.DataFrame())
 
-        if employment_df.empty:
-            logger.warning("No employment data available, using placeholder")
-            # Stylized cyclical exposure varying by region
-            cyclical_exposures = {
-                "Almaty City": 0.55,
-                "Astana": 0.50,
-                "Karaganda": 0.40,
-                "Pavlodar": 0.38,
-                "East Kazakhstan": 0.35,
-                "Kostanay": 0.32,
-                "Aktobe": 0.30,
-                "Atyrau": 0.25,
-                "Mangystau": 0.22,
-                "West Kazakhstan": 0.28,
-                "Almaty Region": 0.35,
-                "Jambyl": 0.30,
-                "South Kazakhstan": 0.28,
-                "Kyzylorda": 0.26,
-                "North Kazakhstan": 0.33,
-                "Akmola": 0.32,
-            }
-            panel["E_cyc_r"] = panel["region"].map(cyclical_exposures).fillna(0.3)
+        # Try BNS employment data first
+        if not employment_df.empty:
+            employment_df = employment_df.copy()
+            if "region" in employment_df.columns:
+                employment_df["region"] = employment_df["region"].apply(self.harmonize_region)
+
+            if "cyclical_share" in employment_df.columns and "year" in employment_df.columns:
+                baseline = employment_df[
+                    (employment_df["year"] >= baseline_start)
+                    & (employment_df["year"] <= baseline_end)
+                ]
+                if not baseline.empty:
+                    exposure = baseline.groupby("region")["cyclical_share"].mean()
+                    panel["E_cyc_r"] = panel["region"].map(exposure)
+                    logger.info("Computed E_cyc_r from BNS employment data")
+
+        # Always add GRP-based proxy for robustness checks
+        panel = self._add_cyclical_proxy(panel)
+
+        # Log status
+        if "E_cyc_r" not in panel.columns:
+            logger.warning(
+                "No BNS employment data available. "
+                "Main spec uses oil exposure only (E_oil_r). "
+                "E_cyc_proxy_r available for robustness checks."
+            )
+
+        return panel
+
+    def _add_cyclical_proxy(self, panel: pd.DataFrame) -> pd.DataFrame:
+        """
+        Add GRP-based cyclical proxy for robustness checks.
+
+        This is NOT true cyclical employment exposure. Use only to verify
+        that the oil exposure coefficient (β) is stable when controlling
+        for (noisy) cyclical exposure.
+        """
+        if not CYCLICAL_PROXY_FILE.exists():
+            logger.warning(f"Cyclical proxy file not found: {CYCLICAL_PROXY_FILE}")
             return panel
 
-        # Process and compute baseline average
-        employment_df = employment_df.copy()
-        if "region" in employment_df.columns:
-            employment_df["region"] = employment_df["region"].apply(self.harmonize_region)
+        logger.info(f"Loading cyclical proxy from {CYCLICAL_PROXY_FILE}")
+        proxy_df = pd.read_csv(CYCLICAL_PROXY_FILE)
 
-        # Extract cyclical share if available
-        if "cyclical_share" in employment_df.columns and "year" in employment_df.columns:
-            baseline = employment_df[
-                (employment_df["year"] >= baseline_start)
-                & (employment_df["year"] <= baseline_end)
-            ]
-            exposure = baseline.groupby("region")["cyclical_share"].mean()
-            panel["E_cyc_r"] = panel["region"].map(exposure).fillna(0.3)
-        else:
-            panel["E_cyc_r"] = 0.3
+        if "region" not in proxy_df.columns or "cyclical_proxy" not in proxy_df.columns:
+            logger.error("Cyclical proxy file missing required columns")
+            return panel
+
+        # Harmonize region names
+        proxy_df["region"] = proxy_df["region"].apply(self.harmonize_region)
+
+        # Map to panel
+        proxy_map = proxy_df.set_index("region")["cyclical_proxy"]
+        panel["E_cyc_proxy_r"] = panel["region"].map(proxy_map).fillna(0.5)
+
+        # Record data lineage
+        record_source(
+            source_name="E_cyc_proxy_r (cyclical proxy)",
+            status=DataSourceStatus.CACHED,
+            quality=DataQualityLevel.FAIR,
+            rows=len(proxy_df),
+            notes=[
+                "GRP-based proxy, NOT true employment data",
+                "Use for robustness checks only",
+                "Source: stat.gov.kz GRP + structural estimates",
+            ],
+        )
+
+        logger.info(
+            f"Added E_cyc_proxy_r (GRP-based). "
+            f"Range: [{panel['E_cyc_proxy_r'].min():.2f}, {panel['E_cyc_proxy_r'].max():.2f}]"
+        )
 
         return panel
 
@@ -495,8 +645,15 @@ class PanelBuilder:
         return panel
 
     def _create_interactions(self, panel: pd.DataFrame) -> pd.DataFrame:
-        """Create exposure × shock interaction terms."""
-        # Oil exposure × oil supply shock
+        """
+        Create exposure × shock interaction terms.
+
+        Main spec (v4): Uses E_oil_r × oil shocks only
+        Robustness: Adds E_cyc_proxy_r × global activity
+        """
+        # === MAIN SPECIFICATION: Oil exposure interactions ===
+
+        # Oil exposure × oil supply shock (PRIMARY)
         if "E_oil_r" in panel.columns and "oil_supply_shock" in panel.columns:
             panel["E_oil_x_supply"] = panel["E_oil_r"] * panel["oil_supply_shock"]
 
@@ -504,13 +661,19 @@ class PanelBuilder:
         if "E_oil_r" in panel.columns and "aggregate_demand_shock" in panel.columns:
             panel["E_oil_x_demand"] = panel["E_oil_r"] * panel["aggregate_demand_shock"]
 
-        # Cyclical exposure × global activity
-        if "E_cyc_r" in panel.columns and "global_activity_shock" in panel.columns:
-            panel["E_cyc_x_activity"] = panel["E_cyc_r"] * panel["global_activity_shock"]
-
         # Oil exposure × VIX
         if "E_oil_r" in panel.columns and "vix_shock" in panel.columns:
             panel["E_oil_x_vix"] = panel["E_oil_r"] * panel["vix_shock"]
+
+        # === ROBUSTNESS: Cyclical exposure interactions ===
+
+        # True cyclical exposure × global activity (if BNS data available)
+        if "E_cyc_r" in panel.columns and "global_activity_shock" in panel.columns:
+            panel["E_cyc_x_activity"] = panel["E_cyc_r"] * panel["global_activity_shock"]
+
+        # Cyclical PROXY × global activity (for robustness checks)
+        if "E_cyc_proxy_r" in panel.columns and "global_activity_shock" in panel.columns:
+            panel["E_cyc_proxy_x_activity"] = panel["E_cyc_proxy_r"] * panel["global_activity_shock"]
 
         return panel
 

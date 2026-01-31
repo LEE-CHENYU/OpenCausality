@@ -5,6 +5,11 @@ Three-tier fallback strategy:
 1. Known iblock element IDs → direct file download
 2. Known docIds → getFile endpoint
 3. HTML link discovery → parse BNS pages to find correct iblock links
+
+Additionally supports loading from alternative sources when BNS API is unavailable:
+- USGS Mineral Industry Reports
+- EITI Kazakhstan Reports
+- stat.gov.kz GRP Publications (when main API fails)
 """
 
 import logging
@@ -22,6 +27,12 @@ from config.settings import get_settings
 from src.data.base import HTTPDataSource, DataSourceMetadata
 
 logger = logging.getLogger(__name__)
+
+
+# Alternative data source paths
+ALTERNATIVE_SOURCES_DIR = Path("data/raw/alternative_sources")
+MINING_SHARES_FILE = ALTERNATIVE_SOURCES_DIR / "mining_shares.csv"
+GRP_COMPOSITION_FILE = ALTERNATIVE_SOURCES_DIR / "grp_composition.csv"
 
 
 class BNSDataType(Enum):
@@ -382,3 +393,103 @@ class KazakhstanBNSClient(HTTPDataSource):
                 path = self.save_raw(df, f"{data_type.value}.parquet")
                 paths[data_type] = path
         return paths
+
+    def load_alternative_mining_shares(self) -> pd.DataFrame:
+        """
+        Load mining shares from alternative sources (USGS, EITI, stat.gov.kz GRP).
+
+        Used when BNS API is unavailable. Data is sourced from:
+        - USGS Mineral Industry Reports (2022)
+        - EITI Kazakhstan Reports (2020-2021)
+        - stat.gov.kz GRP Publications (2023)
+
+        Returns:
+            DataFrame with columns: region, mining_share, source, source_url, year, notes
+
+        Raises:
+            FileNotFoundError: If alternative sources file not found
+        """
+        if not MINING_SHARES_FILE.exists():
+            raise FileNotFoundError(
+                f"Alternative mining shares file not found: {MINING_SHARES_FILE}\n"
+                "Please create this file with regional mining shares data.\n"
+                "See data/raw/alternative_sources/README.md for format."
+            )
+
+        logger.info(f"Loading alternative mining shares from {MINING_SHARES_FILE}")
+        df = pd.read_csv(MINING_SHARES_FILE)
+
+        # Validate required columns
+        required_cols = ["region", "mining_share", "source"]
+        missing = [c for c in required_cols if c not in df.columns]
+        if missing:
+            raise ValueError(
+                f"Alternative mining shares file missing required columns: {missing}"
+            )
+
+        logger.info(
+            f"Loaded {len(df)} regions from alternative sources. "
+            f"Sources: {df['source'].unique().tolist()}"
+        )
+
+        return df
+
+    def load_alternative_grp_composition(self) -> pd.DataFrame:
+        """
+        Load GRP composition from alternative sources.
+
+        Returns:
+            DataFrame with regional GRP data including oil sector percentages
+        """
+        if not GRP_COMPOSITION_FILE.exists():
+            raise FileNotFoundError(
+                f"Alternative GRP composition file not found: {GRP_COMPOSITION_FILE}"
+            )
+
+        logger.info(f"Loading alternative GRP composition from {GRP_COMPOSITION_FILE}")
+        df = pd.read_csv(GRP_COMPOSITION_FILE)
+
+        return df
+
+    def fetch_mining_shares_with_fallback(self) -> tuple[pd.DataFrame, str]:
+        """
+        Try to fetch mining shares from BNS, fall back to alternative sources.
+
+        Returns:
+            Tuple of (DataFrame, source_description)
+            source_description indicates whether data is from BNS or alternative sources
+        """
+        # Try BNS first
+        try:
+            df = self.fetch_mining_shares()
+            if not df.empty:
+                logger.info("Successfully fetched mining shares from BNS API")
+                return df, "bns_api"
+        except Exception as e:
+            logger.warning(f"BNS mining shares fetch failed: {e}")
+
+        # Fall back to alternative sources
+        try:
+            alt_df = self.load_alternative_mining_shares()
+            logger.info("Using alternative mining shares (USGS/EITI/stat.gov.kz)")
+
+            # Transform to match expected format
+            df = alt_df[["region", "mining_share"]].copy()
+            df["year"] = alt_df["year"].iloc[0] if "year" in alt_df.columns else 2022
+
+            # Build source description
+            sources = alt_df["source"].unique().tolist()
+            source_desc = f"alternative_sources: {', '.join(sources)}"
+
+            return df, source_desc
+
+        except FileNotFoundError:
+            raise ValueError(
+                "CRITICAL: No mining sector data available.\n"
+                "BNS API failed and no alternative sources found.\n"
+                "\nTo resolve:\n"
+                "1. Download USGS Kazakhstan report: https://pubs.usgs.gov/myb/vol3/2022/myb3-2022-kazakhstan.pdf\n"
+                "2. Download EITI Kazakhstan report: https://eiti.org/countries/kazakhstan\n"
+                "3. Create data/raw/alternative_sources/mining_shares.csv with regional shares\n"
+                "4. See data/raw/alternative_sources/README.md for format requirements"
+            )
