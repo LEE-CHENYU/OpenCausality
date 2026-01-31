@@ -125,38 +125,56 @@ class ExchangeRateClient(HTTPDataSource):
         Fetch USD/KZT official rate from National Bank of Kazakhstan.
 
         NBK provides daily rates via their API/data portal.
+        Uses multiple API endpoints with fallback logic.
         """
+        import httpx
+
         if end_date is None:
             end_date = datetime.now().strftime("%Y-%m-%d")
 
-        # NBK API endpoint for exchange rates
-        # The NBK API accepts date range queries
-        url = f"{self.nbk_base_url}/ru/exchangerates/ezhednevnye-oficialnye-rynochnye-kursy-valyut"
-
         logger.info(f"Fetching NBK USD/KZT rates from {start_date} to {end_date}")
 
+        # Create a client with longer timeout for NBK API
+        nbk_client = httpx.Client(
+            timeout=httpx.Timeout(60.0, connect=30.0),
+            follow_redirects=True,
+            headers={"User-Agent": "Mozilla/5.0 (compatible; KazakhstanResearch/1.0)"},
+        )
+
         try:
-            # Try the NBK JSON API first
-            api_url = f"{self.nbk_base_url}/ru/api/exchangerates/rates"
+            # Try the NBK official rates API (newer endpoint)
+            api_url = f"{self.nbk_base_url}/rss/get_rates.cfm"
             params = {
-                "currency": "USD",
-                "dateFrom": start_date,
-                "dateTo": end_date,
+                "fdate": start_date.replace("-", "."),
             }
 
-            response = self.client.get(api_url, params=params)
+            response = nbk_client.get(api_url, params=params)
             response.raise_for_status()
 
-            data = response.json()
-            if isinstance(data, list) and len(data) > 0:
-                df = pd.DataFrame(data)
-                df = df.rename(columns={
-                    "date": "date",
-                    "value": "rate",
-                })
-                df["date"] = pd.to_datetime(df["date"])
+            # Parse XML response
+            from xml.etree import ElementTree as ET
+            root = ET.fromstring(response.content)
+
+            rates = []
+            for item in root.findall(".//item"):
+                title_elem = item.find("title")
+                desc_elem = item.find("description")
+                pub_date_elem = item.find("pubDate")
+
+                if title_elem is not None and "USD" in (title_elem.text or ""):
+                    if desc_elem is not None and pub_date_elem is not None:
+                        try:
+                            rate = float(desc_elem.text.strip())
+                            date = pd.to_datetime(pub_date_elem.text)
+                            rates.append({"date": date, "rate": rate})
+                        except (ValueError, TypeError):
+                            continue
+
+            if rates:
+                df = pd.DataFrame(rates)
                 df["source"] = "nbk"
                 df["currency_pair"] = "USD/KZT"
+                df = df.sort_values("date").reset_index(drop=True)
 
                 self._metadata.append(ExchangeRateMetadata(
                     source="NBK",
@@ -170,9 +188,74 @@ class ExchangeRateClient(HTTPDataSource):
                 return df[["date", "rate", "source", "currency_pair"]]
 
         except Exception as e:
+            logger.debug(f"NBK RSS API failed: {e}, trying JSON endpoint")
+
+        try:
+            # Try the NBK JSON API
+            api_url = f"{self.nbk_base_url}/ru/api/exchangerates/rates"
+            params = {
+                "currency": "USD",
+                "dateFrom": start_date,
+                "dateTo": end_date,
+            }
+
+            response = nbk_client.get(api_url, params=params)
+            response.raise_for_status()
+
+            data = response.json()
+
+            # Handle various response formats
+            if isinstance(data, dict):
+                # May have a "rates" or "data" key
+                data = data.get("rates") or data.get("data") or data.get("items") or []
+
+            if isinstance(data, list) and len(data) > 0:
+                df = pd.DataFrame(data)
+
+                # Flexible column mapping - find date and rate columns
+                date_col = None
+                rate_col = None
+                for col in df.columns:
+                    col_lower = col.lower()
+                    if "date" in col_lower or col_lower == "dt":
+                        date_col = col
+                    elif "value" in col_lower or "rate" in col_lower or col_lower == "val":
+                        rate_col = col
+
+                if date_col and rate_col:
+                    df = df.rename(columns={date_col: "date", rate_col: "rate"})
+                elif "date" not in df.columns or "rate" not in df.columns:
+                    # Try first two columns
+                    cols = df.columns.tolist()
+                    if len(cols) >= 2:
+                        df = df.rename(columns={cols[0]: "date", cols[1]: "rate"})
+
+                df["date"] = pd.to_datetime(df["date"], errors="coerce")
+                df["rate"] = pd.to_numeric(df["rate"], errors="coerce")
+                df = df.dropna(subset=["date", "rate"])
+                df["source"] = "nbk"
+                df["currency_pair"] = "USD/KZT"
+                df = df.sort_values("date").reset_index(drop=True)
+
+                if len(df) > 0:
+                    self._metadata.append(ExchangeRateMetadata(
+                        source="NBK",
+                        tier=1,
+                        frequency="daily",
+                        start_date=df["date"].min().strftime("%Y-%m-%d"),
+                        end_date=df["date"].max().strftime("%Y-%m-%d"),
+                        n_obs=len(df),
+                    ))
+
+                    return df[["date", "rate", "source", "currency_pair"]]
+
+        except Exception as e:
             logger.debug(f"NBK JSON API failed: {e}, trying XML endpoint")
 
-        # Fallback to XML/RSS endpoint
+        finally:
+            nbk_client.close()
+
+        # Fallback to XML/RSS endpoint for current rates
         try:
             rss_url = f"{self.nbk_base_url}/rss/rates_all.xml"
             response = self.client.get(rss_url)
@@ -185,7 +268,7 @@ class ExchangeRateClient(HTTPDataSource):
             rates = []
             for item in root.findall(".//item"):
                 title = item.find("title")
-                if title is not None and "USD" in title.text:
+                if title is not None and title.text and "USD" in title.text:
                     desc = item.find("description")
                     pub_date = item.find("pubDate")
                     if desc is not None and pub_date is not None:
@@ -200,7 +283,19 @@ class ExchangeRateClient(HTTPDataSource):
                 df = pd.DataFrame(rates)
                 df["source"] = "nbk"
                 df["currency_pair"] = "USD/KZT"
-                return df
+                df = df.sort_values("date").reset_index(drop=True)
+
+                self._metadata.append(ExchangeRateMetadata(
+                    source="NBK",
+                    tier=1,
+                    frequency="daily",
+                    start_date=df["date"].min().strftime("%Y-%m-%d"),
+                    end_date=df["date"].max().strftime("%Y-%m-%d"),
+                    n_obs=len(df),
+                    notes="Limited to recent rates from RSS feed",
+                ))
+
+                return df[["date", "rate", "source", "currency_pair"]]
 
         except Exception as e:
             logger.debug(f"NBK RSS feed failed: {e}")
@@ -275,15 +370,23 @@ class ExchangeRateClient(HTTPDataSource):
         Indicator: PX.REX.REER (Real effective exchange rate index)
         Frequency: Annual
         """
+        import httpx
+
         wb_url = "https://api.worldbank.org/v2/country/KZ/indicator/PX.REX.REER"
         params = {
             "format": "json",
-            "date": "2000:2025",
+            "date": "2000:2026",
             "per_page": 100,
         }
 
+        # Use longer timeout for World Bank API (known to be slow)
+        wb_client = httpx.Client(
+            timeout=httpx.Timeout(90.0, connect=30.0),
+            follow_redirects=True,
+        )
+
         try:
-            response = self.client.get(wb_url, params=params)
+            response = wb_client.get(wb_url, params=params)
             response.raise_for_status()
 
             data = response.json()
@@ -315,6 +418,8 @@ class ExchangeRateClient(HTTPDataSource):
 
         except Exception as e:
             logger.warning(f"World Bank API failed: {e}")
+        finally:
+            wb_client.close()
 
         raise RuntimeError("World Bank REER fetch failed")
 

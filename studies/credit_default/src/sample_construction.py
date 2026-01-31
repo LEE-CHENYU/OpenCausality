@@ -24,11 +24,13 @@ class SampleCriteria:
 
     # Origination restrictions
     origination_before: date
-    origination_after: date | None = None
 
     # Outcome window
     outcome_start: str  # YYYY-MM
     outcome_end: str  # YYYY-MM
+
+    # Optional: origination after date
+    origination_after: date | None = None
 
     # Loan status requirements
     require_active_at_treatment: bool = True

@@ -1,12 +1,16 @@
-# Kazakhstan Consumer Credit Default Sensitivity Study
+# Kazakhstan Credit Quality Study
 
 ## Overview
 
-This study estimates the **causal effect of disposable income changes on consumer credit default risk** in Kazakhstan, using natural experiments that create exogenous income variation.
+This study analyzes the relationship between **external shocks and aggregate credit quality** in Kazakhstan.
 
-**Research Question:** How sensitive is consumer credit default to changes in disposable income?
+**DESIGN REVISION (v2.0):** The original micro design (loan-level diff-in-discontinuities) required internal fintech data that is unavailable. The study was revised to use publicly available aggregate data.
 
-**Key Parameter:** Income-Default Elasticity (β) - the percentage point change in default probability for a 1% change in disposable income.
+**Current Design:** Reduced-form local projections: External Shocks → NPL Ratio
+
+**Research Question:** How do exogenous external shocks (oil, global risk) affect aggregate credit quality in Kazakhstan?
+
+**NOT estimated:** Causal income → default elasticity (requires micro loan-level data)
 
 ## Identification Strategies
 

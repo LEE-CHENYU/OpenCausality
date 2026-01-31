@@ -1,0 +1,53 @@
+{
+  "study": "fx_passthrough",
+  "generated": "2026-01-31T12:52:48.464988",
+  "data_summary": {
+    "cpi_panel": {
+      "n_obs": 2304,
+      "n_categories": 12,
+      "n_months": 192
+    },
+    "income_series": {
+      "n_obs": 64
+    },
+    "date_range": {
+      "start": "2010-01-01",
+      "end": "2025-12-01"
+    }
+  },
+  "block_a": {
+    "beta": 0.2525181329161943,
+    "beta_se": 0.023562700657293476,
+    "beta_pvalue": 0.0,
+    "n_categories": 8,
+    "n_months": 192,
+    "r2_within": 0.2061904634154924,
+    "significant_at_05": "True"
+  },
+  "block_b": {
+    "first_stage_f": 70.44430020556207,
+    "weak_iv": "False",
+    "impact_effect": NaN,
+    "impact_pvalue": NaN,
+    "cumulative_effect": 0.0
+  },
+  "block_e": {
+    "first_stage_f": 24.806452377842753,
+    "impact_effect": 0.7217411772634418,
+    "cumulative_effect": -0.11434866906638311
+  },
+  "structural_break": {
+    "break_date": "2015-08-01",
+    "pre_beta": -0.047258947162316225,
+    "pre_se": 0.16481893686441568,
+    "pre_pvalue": 0.7744459666899539,
+    "post_beta": 0.2625123558014643,
+    "post_se": 0.021938644861325997,
+    "post_pvalue": 0.0,
+    "beta_change_pct": 655.4765215141923
+  },
+  "falsification": {
+    "pre_trends_pass": "True",
+    "admin_prices_pass": "False"
+  }
+}

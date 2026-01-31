@@ -1,25 +1,25 @@
 #!/usr/bin/env python3
 """
-Comprehensive data download script for archiving all available API data.
+Systematic data download script with status tracking.
 
-This script downloads as much data as possible from all available sources:
-- FRED: Extensive set of economic indicators
-- Baumeister: Oil structural shocks
-- BNS Kazakhstan: Regional statistics
+Downloads all data sources required for research analysis and tracks
+download status in data/metadata/download_status.json.
 
-Run with: PYTHONPATH=. python scripts/download_all_data.py
+Run with: PYTHONPATH=. python scripts/download_all_data.py [--verify]
 """
 
+import argparse
 import json
 import logging
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
 from rich.console import Console
-from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.logging import RichHandler
+from rich.table import Table
 
 # Setup logging
 console = Console()
@@ -30,395 +30,429 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Backup directory
-BACKUP_DIR = Path("/Users/lichenyu/econometric-research/data/backup")
 
-
-class DataManifest:
-    """Track downloaded data with metadata."""
-
-    def __init__(self, path: Path):
-        self.path = path
-        self.entries: list[dict[str, Any]] = []
-
-    def add(
-        self,
-        source: str,
-        series: str,
-        filepath: Path,
-        rows: int,
-        date_range: tuple[str, str] | None = None,
-        notes: str = "",
-    ):
-        self.entries.append({
-            "source": source,
-            "series": series,
-            "filepath": str(filepath.relative_to(BACKUP_DIR)),
-            "rows": rows,
-            "date_range": date_range,
-            "notes": notes,
-            "downloaded_at": datetime.now().isoformat(),
-        })
-
-    def save(self):
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        with open(self.path, "w") as f:
-            json.dump({
-                "manifest_version": "1.0",
-                "created_at": datetime.now().isoformat(),
-                "total_datasets": len(self.entries),
-                "datasets": self.entries,
-            }, f, indent=2)
-        logger.info(f"Saved manifest with {len(self.entries)} entries to {self.path}")
-
-
-def download_fred_data(manifest: DataManifest) -> None:
-    """Download comprehensive FRED data."""
-    from fredapi import Fred
-
-    fred_dir = BACKUP_DIR / "fred"
-    fred_dir.mkdir(parents=True, exist_ok=True)
-
-    # Get API key
-    from config.settings import get_settings
-    settings = get_settings()
-
-    if not settings.fred_api_key:
-        logger.error("No FRED API key configured")
-        return
-
-    fred = Fred(api_key=settings.fred_api_key)
-
-    # Comprehensive list of FRED series to download
-    series_list = {
-        # Oil & Energy
-        "DCOILBRENTEU": "Brent Crude Oil Price",
-        "DCOILWTICO": "WTI Crude Oil Price",
-        "GASREGW": "US Regular Gasoline Prices",
-        "DHHNGSP": "Henry Hub Natural Gas Price",
-        "PNRGINDEXM": "Global Price of Energy Index",
-
-        # Global Activity & Trade
-        "IGREA": "Kilian Global Real Economic Activity Index",
-        "GSCPI": "Global Supply Chain Pressure Index",
-        "WTISPLC": "Spot Crude Oil Price: WTI",
-
-        # Financial Conditions
-        "VIXCLS": "CBOE Volatility Index (VIX)",
-        "STLFSI4": "St. Louis Fed Financial Stress Index",
-        "NFCI": "Chicago Fed Financial Conditions Index",
-        "TEDRATE": "TED Spread",
-        "BAMLH0A0HYM2": "ICE BofA US High Yield Index",
-
-        # Exchange Rates
-        "DEXUSEU": "US/Euro Exchange Rate",
-        "DEXUSUK": "US/UK Exchange Rate",
-        "DEXJPUS": "Japan/US Exchange Rate",
-        "DEXCHUS": "China/US Exchange Rate",
-        "DEXKZUS": "Kazakhstan Tenge/US Dollar (if available)",
-        "DTWEXBGS": "Trade Weighted US Dollar Index: Broad",
-
-        # Interest Rates
-        "FEDFUNDS": "Federal Funds Rate",
-        "DGS10": "10-Year Treasury Constant Maturity",
-        "DGS2": "2-Year Treasury Constant Maturity",
-        "T10Y2Y": "10-Year Minus 2-Year Treasury Spread",
-        "DFEDTARU": "Federal Funds Target Range Upper",
-
-        # Inflation
-        "CPIAUCSL": "Consumer Price Index for All Urban Consumers",
-        "CPILFESL": "Core CPI (Less Food and Energy)",
-        "PCEPI": "Personal Consumption Expenditures Price Index",
-        "PCEPILFE": "Core PCE Price Index",
-        "MICH": "University of Michigan Inflation Expectation",
-        "T5YIE": "5-Year Breakeven Inflation Rate",
-
-        # Labor Market
-        "UNRATE": "Unemployment Rate",
-        "PAYEMS": "Total Nonfarm Payrolls",
-        "ICSA": "Initial Jobless Claims",
-        "JTSJOL": "Job Openings: Total Nonfarm",
-
-        # GDP & Output
-        "GDPC1": "Real GDP",
-        "A191RL1Q225SBEA": "Real GDP Growth Rate",
-        "INDPRO": "Industrial Production Index",
-        "CAPACITY": "Capacity Utilization",
-
-        # Monetary Aggregates
-        "M2SL": "M2 Money Stock",
-        "BOGMBASE": "Monetary Base",
-        "WALCL": "Fed Total Assets",
-
-        # Commodity Prices
-        "PPIACO": "Producer Price Index: All Commodities",
-        "PCOPPUSDM": "Global Copper Price",
-        "GOLDAMGBD228NLBM": "Gold Fixing Price",
-        "PALLFNFINDEXM": "All Commodities Index",
-        "PFOODINDEXM": "Food Price Index",
-        "PMETAINDEXM": "Metals Price Index",
-
-        # Global Economy
-        "GEPUCURRENT": "Global Economic Policy Uncertainty Index",
-        "USEPUINDXD": "US Economic Policy Uncertainty Index",
-
-        # Consumer & Business Sentiment
-        "UMCSENT": "University of Michigan Consumer Sentiment",
-        "CSCICP03USM665S": "Consumer Confidence Index",
-        "BSCICP03USM665S": "Business Confidence Index",
-
-        # Housing
-        "CSUSHPISA": "Case-Shiller Home Price Index",
-        "HOUST": "Housing Starts",
-        "PERMIT": "Building Permits",
-
-        # Credit Spreads
-        "BAMLC0A0CM": "ICE BofA US Corporate Index",
-        "BAMLC0A4CBBB": "ICE BofA BBB US Corporate Index",
-        "BAMLH0A0HYM2EY": "ICE BofA High Yield Effective Yield",
-    }
-
-    console.print(f"\n[bold blue]Downloading {len(series_list)} FRED series...[/bold blue]")
-
-    for series_id, description in series_list.items():
-        try:
-            data = fred.get_series(series_id, observation_start="1960-01-01")
-
-            if data is not None and len(data) > 0:
-                df = pd.DataFrame({
-                    "date": data.index,
-                    "value": data.values,
-                })
-                df["series"] = series_id
-
-                filepath = fred_dir / f"{series_id}.parquet"
-                df.to_parquet(filepath, index=False)
-
-                date_range = (
-                    df["date"].min().strftime("%Y-%m-%d"),
-                    df["date"].max().strftime("%Y-%m-%d"),
-                )
-
-                manifest.add(
-                    source="FRED",
-                    series=series_id,
-                    filepath=filepath,
-                    rows=len(df),
-                    date_range=date_range,
-                    notes=description,
-                )
-
-                logger.info(f"  {series_id}: {len(df)} obs ({date_range[0]} to {date_range[1]})")
-            else:
-                logger.warning(f"  {series_id}: No data returned")
-
-        except Exception as e:
-            logger.warning(f"  {series_id}: Failed - {e}")
-
-
-def download_baumeister_data(manifest: DataManifest) -> None:
-    """Download Baumeister structural oil shocks."""
-    import httpx
-    import io
-
-    baumeister_dir = BACKUP_DIR / "baumeister"
-    baumeister_dir.mkdir(parents=True, exist_ok=True)
-
-    console.print("\n[bold blue]Downloading Baumeister oil shocks...[/bold blue]")
-
-    # Known Google Drive URLs
-    datasets = {
-        "oil_supply_shocks": "https://drive.google.com/uc?export=download&id=1OsA8btgm2rmDucUFngiLkwv4uywTDmya",
-        "oil_demand_shocks": "https://drive.google.com/uc?export=download&id=1neFXLrIvGwggebQRwjmtrWK-dfQZ9NH8",
-    }
-
-    client = httpx.Client(follow_redirects=True, timeout=60)
-
-    for name, url in datasets.items():
-        try:
-            response = client.get(url)
-            response.raise_for_status()
-
-            # Parse Excel (skip metadata row)
-            df = pd.read_excel(io.BytesIO(response.content), skiprows=1)
-
-            # Standardize columns
-            df = df.rename(columns={df.columns[0]: "date", df.columns[1]: "shock_value"})
-            df = df.iloc[:, :2]
-            df["date"] = pd.to_datetime(df["date"], errors="coerce")
-            df = df.dropna(subset=["date"])
-
-            filepath = baumeister_dir / f"{name}.parquet"
-            df.to_parquet(filepath, index=False)
-
-            date_range = (
-                df["date"].min().strftime("%Y-%m-%d"),
-                df["date"].max().strftime("%Y-%m-%d"),
-            )
-
-            manifest.add(
-                source="Baumeister",
-                series=name,
-                filepath=filepath,
-                rows=len(df),
-                date_range=date_range,
-                notes="Baumeister-Hamilton (2019) AER structural shocks",
-            )
-
-            logger.info(f"  {name}: {len(df)} obs ({date_range[0]} to {date_range[1]})")
-
-        except Exception as e:
-            logger.error(f"  {name}: Failed - {e}")
-
-
-def download_bns_data(manifest: DataManifest) -> None:
-    """Download Kazakhstan BNS data by exploring iblock IDs."""
-    import httpx
-    import io
-
-    bns_dir = BACKUP_DIR / "bns"
-    bns_dir.mkdir(parents=True, exist_ok=True)
-
-    console.print("\n[bold blue]Downloading Kazakhstan BNS data...[/bold blue]")
-
-    # Known working iblock IDs and their descriptions
-    known_ids = {
-        48953: "Per capita monetary income (quarterly)",
-        48510: "Per capita monetary income (annual)",
-        469805: "Household expenditure structure",
-    }
-
-    # Also try IDs in ranges around known ones
-    id_ranges = [
-        range(48500, 48560),  # Around income data
-        range(48900, 48960),
-        range(469800, 469810),
-    ]
-
-    # Collect all IDs to try
-    all_ids = set(known_ids.keys())
-    for r in id_ranges:
-        all_ids.update(r)
-
-    client = httpx.Client(follow_redirects=True, timeout=30)
-    base_url = "https://stat.gov.kz"
-
-    successful = 0
-    for iblock_id in sorted(all_ids):
-        try:
-            # Try CSV endpoint first
-            url = f"{base_url}/api/iblock/element/{iblock_id}/csv/file/en/"
-            response = client.get(url)
-
-            if response.status_code == 200 and len(response.content) > 100:
-                # Parse CSV
-                df = pd.read_csv(io.BytesIO(response.content), sep="\t")
-
-                if len(df) > 0 and len(df.columns) > 1:
-                    # Get description from NAM column if available
-                    desc = known_ids.get(iblock_id, "")
-                    if "NAM" in df.columns and len(df) > 0:
-                        desc = str(df["NAM"].iloc[0])[:100]
-
-                    filepath = bns_dir / f"iblock_{iblock_id}.parquet"
-                    df.to_parquet(filepath, index=False)
-
-                    manifest.add(
-                        source="BNS_Kazakhstan",
-                        series=f"iblock_{iblock_id}",
-                        filepath=filepath,
-                        rows=len(df),
-                        notes=desc,
-                    )
-
-                    successful += 1
-                    if iblock_id in known_ids:
-                        logger.info(f"  iblock/{iblock_id}: {len(df)} rows - {known_ids[iblock_id]}")
-                    else:
-                        logger.info(f"  iblock/{iblock_id}: {len(df)} rows (discovered)")
-
-        except Exception as e:
-            pass  # Silently skip failed IDs
-
-    logger.info(f"  Total BNS datasets: {successful}")
-
-
-def download_world_bank_data(manifest: DataManifest) -> None:
-    """Download World Bank indicators for Kazakhstan."""
-    console.print("\n[bold blue]Downloading World Bank data...[/bold blue]")
-
-    try:
-        import wbgapi as wb
-
-        wb_dir = BACKUP_DIR / "worldbank"
-        wb_dir.mkdir(parents=True, exist_ok=True)
-
-        # Key indicators for Kazakhstan
-        indicators = {
-            "NY.GDP.MKTP.CD": "GDP (current US$)",
-            "NY.GDP.MKTP.KD.ZG": "GDP growth (annual %)",
-            "NY.GDP.PCAP.CD": "GDP per capita (current US$)",
-            "FP.CPI.TOTL.ZG": "Inflation, consumer prices (annual %)",
-            "SL.UEM.TOTL.ZS": "Unemployment, total (% of labor force)",
-            "NE.EXP.GNFS.ZS": "Exports of goods and services (% of GDP)",
-            "NE.IMP.GNFS.ZS": "Imports of goods and services (% of GDP)",
-            "BX.KLT.DINV.WD.GD.ZS": "Foreign direct investment, net inflows (% of GDP)",
-            "PA.NUS.FCRF": "Official exchange rate (LCU per US$)",
-            "GC.REV.XGRT.GD.ZS": "Revenue, excluding grants (% of GDP)",
-            "EG.ELC.ACCS.ZS": "Access to electricity (% of population)",
-            "SI.POV.GINI": "Gini index",
-            "SI.POV.NAHC": "Poverty headcount ratio at national poverty lines",
+# Data source configuration
+DATA_SOURCES = {
+    # FRED data (already downloaded)
+    "fred_igrea": {
+        "path": "data/raw/fred/IGREA.parquet",
+        "fetcher": "FREDClient",
+        "series": "IGREA",
+        "description": "Kilian Global Real Economic Activity Index",
+        "optional": False,
+    },
+    "fred_vix": {
+        "path": "data/raw/fred/VIXCLS.parquet",
+        "fetcher": "FREDClient",
+        "series": "VIXCLS",
+        "description": "CBOE Volatility Index",
+        "optional": False,
+    },
+    "fred_brent": {
+        "path": "data/raw/fred/DCOILBRENTEU.parquet",
+        "fetcher": "FREDClient",
+        "series": "DCOILBRENTEU",
+        "description": "Brent Crude Oil Price",
+        "optional": False,
+    },
+    # Baumeister shocks
+    "baumeister_shocks": {
+        "path": "data/raw/baumeister_shocks/shocks.parquet",
+        "fetcher": "BaumeisterLoader",
+        "description": "Baumeister-Hamilton Oil Supply Shocks",
+        "optional": False,
+    },
+    # NBK Exchange Rate
+    "nbk_usd_kzt": {
+        "path": "data/raw/nbk/usd_kzt.parquet",
+        "fetcher": "ExchangeRateClient",
+        "tier": 1,
+        "description": "NBK USD/KZT Exchange Rate",
+        "optional": False,
+    },
+    # BNS Kazakhstan data
+    "bns_cpi_categories": {
+        "path": "data/raw/kazakhstan_bns/cpi_categories.parquet",
+        "fetcher": "BNSCPICategoriesClient",
+        "description": "BNS CPI by COICOP Category",
+        "optional": False,
+    },
+    "bns_national_income": {
+        "path": "data/raw/kazakhstan_bns/national_income.parquet",
+        "fetcher": "BNSNationalIncomeClient",
+        "description": "BNS National Income by Region",
+        "optional": False,
+    },
+    # World Bank (optional, annual only)
+    "worldbank_reer": {
+        "path": "data/raw/worldbank/reer_kz.parquet",
+        "fetcher": "ExchangeRateClient",
+        "tier": 3,
+        "description": "World Bank REER (annual, robustness only)",
+        "optional": True,
+    },
+}
+
+
+class DownloadStatusTracker:
+    """Track download status for all data sources."""
+
+    def __init__(self, status_file: Path):
+        self.status_file = status_file
+        self.status: dict[str, Any] = self._load_status()
+
+    def _load_status(self) -> dict[str, Any]:
+        """Load existing status file or create new."""
+        if self.status_file.exists():
+            with open(self.status_file) as f:
+                return json.load(f)
+        return {
+            "version": "1.0",
+            "last_updated": None,
+            "sources": {},
         }
 
-        for ind_id, description in indicators.items():
+    def save(self) -> None:
+        """Save status to file."""
+        self.status["last_updated"] = datetime.now().isoformat()
+        self.status_file.parent.mkdir(parents=True, exist_ok=True)
+        with open(self.status_file, "w") as f:
+            json.dump(self.status, f, indent=2)
+
+    def update_source(
+        self,
+        source_name: str,
+        status: str,
+        n_rows: int = 0,
+        date_range: tuple[str, str] | None = None,
+        error: str | None = None,
+    ) -> None:
+        """Update status for a data source."""
+        self.status["sources"][source_name] = {
+            "status": status,
+            "n_rows": n_rows,
+            "date_range": list(date_range) if date_range else None,
+            "last_download": datetime.now().isoformat(),
+            "error": error,
+        }
+
+    def get_source_status(self, source_name: str) -> dict[str, Any] | None:
+        """Get status for a specific source."""
+        return self.status["sources"].get(source_name)
+
+    def has_synthetic_data(self) -> bool:
+        """Check if any source has synthetic data."""
+        for source in self.status["sources"].values():
+            if source.get("status") == "synthetic":
+                return True
+        return False
+
+
+def download_fred_series(series_id: str, output_path: Path) -> tuple[pd.DataFrame, str | None]:
+    """Download a FRED series."""
+    from fredapi import Fred
+    from config.settings import get_settings
+
+    settings = get_settings()
+    if not settings.fred_api_key:
+        return pd.DataFrame(), "No FRED API key configured"
+
+    fred = Fred(api_key=settings.fred_api_key)
+    data = fred.get_series(series_id, observation_start="1960-01-01")
+
+    if data is None or len(data) == 0:
+        return pd.DataFrame(), f"No data returned for {series_id}"
+
+    df = pd.DataFrame({
+        "date": data.index,
+        "value": data.values,
+    })
+    df["series"] = series_id
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    df.to_parquet(output_path, index=False)
+
+    return df, None
+
+
+def download_baumeister_shocks(output_path: Path) -> tuple[pd.DataFrame, str | None]:
+    """Download Baumeister oil shocks."""
+    from shared.data.baumeister import BaumeisterLoader
+
+    loader = BaumeisterLoader()
+    df = loader.fetch_with_cache()
+
+    if df.empty:
+        return pd.DataFrame(), "No data returned from Baumeister"
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    df.to_parquet(output_path, index=False)
+
+    return df, None
+
+
+def download_exchange_rate(tier: int, output_path: Path) -> tuple[pd.DataFrame, str | None]:
+    """Download exchange rate data."""
+    from shared.data.exchange_rate import ExchangeRateClient
+
+    client = ExchangeRateClient()
+    df = client.fetch(tier=tier)
+
+    if df.empty:
+        return pd.DataFrame(), f"No data returned from tier {tier}"
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    df.to_parquet(output_path, index=False)
+
+    return df, None
+
+
+def download_bns_cpi(output_path: Path) -> tuple[pd.DataFrame, str | None]:
+    """Download BNS CPI categories."""
+    from shared.data.bns_cpi_categories import BNSCPICategoriesClient
+
+    client = BNSCPICategoriesClient()
+    df = client.fetch()
+
+    if df.empty:
+        return pd.DataFrame(), "No data returned from BNS CPI API"
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    df.to_parquet(output_path, index=False)
+
+    return df, None
+
+
+def download_bns_income(output_path: Path) -> tuple[pd.DataFrame, str | None]:
+    """Download BNS national income."""
+    from shared.data.bns_national_income import BNSNationalIncomeClient
+
+    client = BNSNationalIncomeClient()
+    df = client.fetch()
+
+    if df.empty:
+        return pd.DataFrame(), "No data returned from BNS income API"
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    df.to_parquet(output_path, index=False)
+
+    return df, None
+
+
+def download_source(source_name: str, config: dict[str, Any], project_root: Path) -> tuple[pd.DataFrame, str | None]:
+    """Download a single data source."""
+    output_path = project_root / config["path"]
+    fetcher = config["fetcher"]
+
+    try:
+        if fetcher == "FREDClient":
+            return download_fred_series(config["series"], output_path)
+        elif fetcher == "BaumeisterLoader":
+            return download_baumeister_shocks(output_path)
+        elif fetcher == "ExchangeRateClient":
+            return download_exchange_rate(config.get("tier", 1), output_path)
+        elif fetcher == "BNSCPICategoriesClient":
+            return download_bns_cpi(output_path)
+        elif fetcher == "BNSNationalIncomeClient":
+            return download_bns_income(output_path)
+        else:
+            return pd.DataFrame(), f"Unknown fetcher: {fetcher}"
+    except Exception as e:
+        return pd.DataFrame(), str(e)
+
+
+def verify_existing_data(project_root: Path, tracker: DownloadStatusTracker) -> None:
+    """Verify existing data files and update status."""
+    console.print("\n[bold blue]Verifying existing data files...[/bold blue]")
+
+    for source_name, config in DATA_SOURCES.items():
+        file_path = project_root / config["path"]
+
+        if file_path.exists():
             try:
-                df = wb.data.DataFrame(ind_id, "KAZ", time=range(1990, 2025))
-                if df is not None and len(df) > 0:
-                    df = df.reset_index()
-                    filepath = wb_dir / f"{ind_id.replace('.', '_')}.parquet"
-                    df.to_parquet(filepath, index=False)
+                df = pd.read_parquet(file_path)
+                n_rows = len(df)
 
-                    manifest.add(
-                        source="WorldBank",
-                        series=ind_id,
-                        filepath=filepath,
-                        rows=len(df),
-                        notes=f"Kazakhstan: {description}",
-                    )
+                # Try to get date range
+                date_range = None
+                if "date" in df.columns:
+                    df["date"] = pd.to_datetime(df["date"], errors="coerce")
+                    dates = df["date"].dropna()
+                    if len(dates) > 0:
+                        date_range = (
+                            dates.min().strftime("%Y-%m-%d"),
+                            dates.max().strftime("%Y-%m-%d"),
+                        )
 
-                    logger.info(f"  {ind_id}: {len(df)} obs")
+                tracker.update_source(
+                    source_name,
+                    status="downloaded",
+                    n_rows=n_rows,
+                    date_range=date_range,
+                )
+                logger.info(f"  {source_name}: {n_rows} rows")
 
             except Exception as e:
-                logger.warning(f"  {ind_id}: Failed - {e}")
+                tracker.update_source(
+                    source_name,
+                    status="error",
+                    error=f"Failed to read: {e}",
+                )
+                logger.warning(f"  {source_name}: Error reading file - {e}")
+        else:
+            tracker.update_source(
+                source_name,
+                status="not_downloaded",
+            )
+            logger.info(f"  {source_name}: Not downloaded")
 
-    except ImportError:
-        logger.warning("  wbgapi not installed, skipping World Bank data")
+
+def download_all(project_root: Path, tracker: DownloadStatusTracker, force: bool = False) -> None:
+    """Download all data sources."""
+    console.print("\n[bold blue]Downloading data sources...[/bold blue]")
+
+    for source_name, config in DATA_SOURCES.items():
+        file_path = project_root / config["path"]
+
+        # Skip if already downloaded and not forcing
+        if file_path.exists() and not force:
+            current_status = tracker.get_source_status(source_name)
+            if current_status and current_status.get("status") == "downloaded":
+                logger.info(f"  {source_name}: Already downloaded, skipping")
+                continue
+
+        logger.info(f"  {source_name}: Downloading...")
+
+        df, error = download_source(source_name, config, project_root)
+
+        if error:
+            if config.get("optional"):
+                logger.warning(f"  {source_name}: Failed (optional) - {error}")
+                tracker.update_source(source_name, status="failed_optional", error=error)
+            else:
+                logger.error(f"  {source_name}: FAILED - {error}")
+                tracker.update_source(source_name, status="failed", error=error)
+        else:
+            # Get date range
+            date_range = None
+            if "date" in df.columns:
+                df["date"] = pd.to_datetime(df["date"], errors="coerce")
+                dates = df["date"].dropna()
+                if len(dates) > 0:
+                    date_range = (
+                        dates.min().strftime("%Y-%m-%d"),
+                        dates.max().strftime("%Y-%m-%d"),
+                    )
+
+            tracker.update_source(
+                source_name,
+                status="downloaded",
+                n_rows=len(df),
+                date_range=date_range,
+            )
+            logger.info(f"  {source_name}: Downloaded {len(df)} rows")
+
+
+def print_status_table(tracker: DownloadStatusTracker) -> None:
+    """Print a summary table of download status."""
+    table = Table(title="Data Download Status")
+    table.add_column("Source", style="cyan")
+    table.add_column("Status", style="green")
+    table.add_column("Rows", justify="right")
+    table.add_column("Date Range")
+    table.add_column("Error", style="red")
+
+    for source_name, config in DATA_SOURCES.items():
+        status_info = tracker.get_source_status(source_name) or {}
+        status = status_info.get("status", "not_attempted")
+        n_rows = status_info.get("n_rows", 0)
+        date_range = status_info.get("date_range")
+        error = status_info.get("error")
+
+        # Style status
+        if status == "downloaded":
+            status_display = "[green]downloaded[/green]"
+        elif status == "synthetic":
+            status_display = "[bold red]SYNTHETIC[/bold red]"
+        elif status == "failed":
+            status_display = "[red]failed[/red]"
+        elif status == "failed_optional":
+            status_display = "[yellow]failed (optional)[/yellow]"
+        else:
+            status_display = f"[dim]{status}[/dim]"
+
+        date_str = f"{date_range[0]} to {date_range[1]}" if date_range else "-"
+        error_str = (error[:40] + "...") if error and len(error) > 40 else (error or "-")
+
+        table.add_row(
+            source_name,
+            status_display,
+            str(n_rows) if n_rows else "-",
+            date_str,
+            error_str,
+        )
+
+    console.print(table)
 
 
 def main():
-    """Run comprehensive data download."""
-    console.print("[bold green]Comprehensive Data Archive Download[/bold green]")
+    """Run data download with status tracking."""
+    parser = argparse.ArgumentParser(description="Download all research data sources")
+    parser.add_argument("--verify", action="store_true", help="Verify existing data only")
+    parser.add_argument("--force", action="store_true", help="Force re-download all sources")
+    parser.add_argument("--status", action="store_true", help="Show status only")
+    args = parser.parse_args()
+
+    from config.settings import get_settings
+    settings = get_settings()
+    project_root = settings.project_root
+
+    # Initialize tracker
+    status_file = project_root / "data/metadata/download_status.json"
+    tracker = DownloadStatusTracker(status_file)
+
+    console.print("[bold green]Research Data Download Tool[/bold green]")
     console.print("=" * 50)
 
-    # Create backup directory
-    BACKUP_DIR.mkdir(parents=True, exist_ok=True)
+    if args.status:
+        print_status_table(tracker)
+        return
 
-    # Initialize manifest
-    manifest = DataManifest(BACKUP_DIR / "manifest.json")
+    if args.verify:
+        verify_existing_data(project_root, tracker)
+    else:
+        # Verify existing first, then download missing
+        verify_existing_data(project_root, tracker)
+        download_all(project_root, tracker, force=args.force)
 
-    # Download from all sources
-    download_fred_data(manifest)
-    download_baumeister_data(manifest)
-    download_bns_data(manifest)
-    download_world_bank_data(manifest)
+    # Save status
+    tracker.save()
+    logger.info(f"\nStatus saved to: {status_file}")
 
-    # Save manifest
-    manifest.save()
+    # Print summary
+    print_status_table(tracker)
 
-    # Summary
-    console.print("\n[bold green]Download Complete![/bold green]")
-    console.print(f"Total datasets archived: {len(manifest.entries)}")
-    console.print(f"Location: {BACKUP_DIR}")
+    # Check for synthetic data
+    if tracker.has_synthetic_data():
+        console.print("\n[bold red]WARNING: Synthetic data detected![/bold red]")
+        console.print("Run with --force to re-download real data.")
+        sys.exit(1)
+
+    # Check for required failures
+    required_failures = []
+    for source_name, config in DATA_SOURCES.items():
+        if not config.get("optional"):
+            status_info = tracker.get_source_status(source_name)
+            if status_info and status_info.get("status") == "failed":
+                required_failures.append(source_name)
+
+    if required_failures:
+        console.print(f"\n[bold red]ERROR: {len(required_failures)} required sources failed to download[/bold red]")
+        for name in required_failures:
+            console.print(f"  - {name}")
+        sys.exit(1)
+
+    console.print("\n[bold green]All required data sources are available![/bold green]")
 
 
 if __name__ == "__main__":

@@ -1,167 +1,238 @@
-# Credit Default Sensitivity Model Specification
+# Credit Quality Sensitivity to External Shocks
 # ==============================================
+#
+# DESIGN CHANGE (January 2026):
+# Original design required loan-level data with cashflows (unavailable).
+# Revised design uses aggregate NBK credit quality data with external shocks.
+#
+# This is a REDUCED-FORM analysis: external shocks → credit quality
+# NOT a causal estimate of "income → default" (would require micro data)
 
-# Pre-specification: Commit to primary choices BEFORE seeing results
-prespecification:
-  primary_outcome: dpd30
-  primary_horizon_months: 3
-  secondary_outcomes:
-    - dpd15
-    - dpd60
-    - dpd90
-  multiple_testing_correction: fwer  # Bonferroni for secondary outcomes
+study_type: reduced_form_macro
+version: "2.0"
 
-# Sample restrictions
-sample:
-  # Origination window
-  origination_before: "2023-12-01"  # Avoid DSTI confound
+# Research question
+research_question: |
+  How do exogenous external shocks (oil, global risk, demand) affect
+  aggregate credit quality in Kazakhstan?
 
-  # Outcome window
-  outcome_start: "2024-01-01"
-  outcome_end: "2024-05-31"  # Avoid June 2024 DTI confound
+# Caveats (MUST be stated prominently)
+caveats:
+  - "This is reduced-form evidence, not causal income→default elasticity"
+  - "Aggregate NPL ≠ fintech consumer defaults (composition differs)"
+  - "Results apply to banking system, not specific loan products"
+  - "External shocks may affect credit through multiple channels (FX, inflation, fiscal)"
 
-  # Minimum wage design: payroll verification
-  mw_design:
-    require_payroll_inflow: true
-    min_payroll_months: 3
-    payroll_window_before_treatment: "2023-10-01"
-    payroll_window_end: "2023-12-31"
+# ============================================================================
+# DATA SOURCES
+# ============================================================================
 
-  # Pension RDD: age requirements
-  pension_design:
-    min_age_men: 60
-    max_age_men: 66
-    min_age_women: 58
-    max_age_women: 64
-    require_pension_inflow: true
+data_sources:
+  primary:
+    name: nbk_loan_portfolio_quality
+    url: "https://nationalbank.kz/en/news/banks-performance/rubrics/2186"
+    frequency: monthly
+    coverage: "2005-present"
+    variables:
+      - overdue_30_plus
+      - overdue_60_plus
+      - overdue_90_plus
+      - total_loans
 
-# Design 1: Minimum Wage Diff-in-Discontinuities
-mw_diff_in_discs:
-  # Treatment definition
-  old_minimum_wage: 70000
-  new_minimum_wage: 85000
-  treatment_date: "2024-01-01"
+  secondary:
+    - name: imf_fsi_npl
+      url: "https://data.imf.org/FSI"
+      frequency: quarterly
+      coverage: "2008-present"
+      variables:
+        - npl_ratio
 
-  # Running variable
-  running_var: pre_policy_monthly_payroll
-  cutoff: 70000  # Old MW
+    - name: worldbank_npl
+      url: "https://data.worldbank.org/indicator/FB.AST.NPER.ZS?locations=KZ"
+      frequency: annual
+      coverage: "2008-2023"
+      variables:
+        - npl_ratio
 
-  # Bandwidth
-  bandwidth_method: optimal  # MSE-minimizing
-  bandwidth_fallback: 15000  # If optimal unavailable
+  shocks:
+    - name: oil_supply_shock
+      source: baumeister_hamilton
+      frequency: monthly
 
-  # Polynomial
-  polynomial_order: 1
+    - name: oil_demand_shock
+      source: baumeister_hamilton
+      frequency: monthly
+
+    - name: global_risk
+      source: vix
+      frequency: monthly
+
+    - name: global_activity
+      source: igrea
+      frequency: monthly
+
+    - name: brent_price
+      source: fred
+      series: DCOILBRENTEU
+      frequency: monthly
+
+# ============================================================================
+# OUTCOMES (Credit Quality Measures)
+# ============================================================================
+
+outcomes:
+  primary:
+    name: npl_ratio
+    description: "Non-performing loans to gross loans (%)"
+    source: imf_fsi_or_nbk
+    frequency: quarterly_or_monthly
+
+  secondary:
+    - name: overdue_90_plus
+      description: "Loans 90+ days overdue (% of total)"
+      source: nbk
+
+    - name: overdue_30_plus
+      description: "Loans 30+ days overdue (% of total)"
+      source: nbk
+
+    - name: credit_growth
+      description: "Year-over-year credit growth (%)"
+      source: nbk
+
+# ============================================================================
+# ESTIMATION: LOCAL PROJECTIONS
+# ============================================================================
+
+local_projections:
+  # Horizons
+  max_horizon: 12  # months (or quarters if quarterly data)
+  horizons: [0, 1, 2, 3, 4, 6, 8, 12]
 
   # Specification
   specification: |
-    Y_it = alpha + beta1(Post_t) + beta2(Below_c_i) + beta3(Post_t x Below_c_i)
-         + f(wage_i - c) + g(wage_i - c) x Post_t + X_it'delta + epsilon_it
+    Δ CreditQuality_{t+h} = α_h + β^oil_h S^oil_t + β^risk_h S^risk_t
+                          + β^dem_h S^dem_t + Γ_h' X_{t-1} + u_{t,h}
 
-  # Alternative: Continuous intensity instrument
-  intensity_instrument:
-    name: predicted_statutory_raise
-    formula: "max(0, 85000 - wage_pre)"
-    specification: "Post_t x Z_i"
+  shocks:
+    - name: oil_supply_shock
+      expected_sign: positive  # Bad supply shock → worse credit
+      description: "Oil supply disruption"
 
-# Design 2: Pension Fuzzy RDD
-pension_rdd:
-  # Cutoffs
-  cutoff_men: 63
-  cutoff_women: 61
+    - name: oil_demand_shock
+      expected_sign: positive  # Bad demand shock → worse credit
+      description: "Global demand contraction"
 
-  # First stage
-  endogenous_var: pension_inflow_observed
-  instrument: age_above_cutoff
+    - name: vix_innovation
+      expected_sign: positive  # Higher risk → worse credit
+      description: "Global risk shock"
 
-  # Bandwidth
-  bandwidth_method: rdrobust  # MSE-optimal
-  kernel: triangular
+  controls:
+    - cpi_inflation
+    - policy_rate
+    - exchange_rate_depreciation
+    - credit_growth_lag
 
-  # Specification
-  first_stage: |
-    PensionInflow_i = gamma0 + gamma1(Age_i >= c) + f(Age_i - c) + X_i'delta + nu_i
-  second_stage: |
-    Default_i = alpha + beta(PensionInflow_hat_i) + f(Age_i - c) + X_i'delta + epsilon_i
+  inference:
+    method: newey_west
+    lags: 4  # For monthly data
+    confidence_level: 0.90
 
-# Validation checks
-validation:
-  # First-stage F threshold
-  first_stage_f_threshold: 10
+# ============================================================================
+# FALSIFICATION TESTS
+# ============================================================================
 
-  # Pre-trends
-  pre_trends:
-    pre_periods: 6
-    joint_f_alpha: 0.10
-    report_effect_bounds: true
+falsification:
+  # Leads test: shocks should not predict PAST credit quality
+  leads_test:
+    leads: [1, 2, 3]  # Test h = -1, -2, -3
+    null_hypothesis: "Future shocks do not predict current credit quality"
 
-  # Balance test at cutoff
-  balance_covariates:
-    - loan_amount
-    - loan_term_months
-    - employer_type
-    - region
+  # Alternative shock definitions
+  alternative_shocks:
+    - name: brent_returns
+      description: "Simple Brent price returns (not structural)"
+    - name: lag_shock
+      description: "Lagged shock (should be weaker)"
 
-  # McCrary density test
-  mccrary:
-    alpha: 0.05
+  # Backtests on known episodes
+  historical_episodes:
+    - name: oil_collapse_2014
+      start: "2014Q3"
+      end: "2015Q4"
+      expected: "NPL should rise with lag"
 
-  # Placebo cutoffs
-  placebo_cutoffs:
-    mw: [60000, 80000, 90000]
-    pension_men: [60, 62, 64]
-    pension_women: [58, 60, 62]
+    - name: pandemic_2020
+      start: "2020Q1"
+      end: "2020Q4"
+      expected: "Credit deterioration with policy response"
 
-# Policy confound calendar (CRITICAL)
-policy_confounds:
-  - date: "2023-03-01"
-    name: personal_bankruptcy_law
-    type: credit_policy
-    action: document_and_control
+    - name: 2022_energy_crisis
+      start: "2022Q1"
+      end: "2022Q4"
+      expected: "Moderate stress, global tightening"
 
-  - date: "2023-12-01"
-    name: dsti_limit_tightening
-    type: credit_policy
-    action: restrict_originations_before
-    critical: true
+# ============================================================================
+# SECONDARY ANALYSIS: IMPLIED INCOME SENSITIVITY
+# ============================================================================
 
-  - date: "2024-06-01"
-    name: dti_limit_introduction
-    type: credit_policy
-    action: truncate_outcomes_before
-    critical: true
+implied_income_sensitivity:
+  enabled: true
+  method: wald_ratio
 
-# Inference
-inference:
-  # Primary: cluster at borrower
-  primary_clustering: borrower
+  description: |
+    If we also estimate: Δlog(Income) = a + π S_t + ...
+    and: Δ NPL = b + ρ S_t + ...
+    then ρ/π is implied income→NPL sensitivity
+    UNDER STRONG ASSUMPTION that shock affects NPL only through income.
 
-  # Secondary: two-way clustering
-  two_way_clustering:
-    - borrower
-    - month
+  caveats:
+    - "Exclusion restriction unlikely to hold (FX, inflation, fiscal channels)"
+    - "Report as 'implied sensitivity under strong assumptions'"
+    - "NOT a causal income→default elasticity"
 
-  # Robustness: wild bootstrap
-  wild_bootstrap:
-    enabled: true
-    n_iterations: 999
-    cluster_var: borrower
+# ============================================================================
+# OUTPUTS
+# ============================================================================
 
-# Expected outputs
 outputs:
-  primary_estimate:
-    name: income_default_elasticity
-    description: "PP change in DPD30 probability per 1% income change"
-    interpretation: "LATE for compliers among low-wage formal workers"
+  irf_estimates:
+    name: "Credit Quality Response to External Shocks"
+    format: table_and_plot
+    horizons: [0, 1, 2, 4, 8, 12]
+    confidence_bands: 90
 
-  confidence_interval:
-    level: 0.95
-    method: clustered
+  event_study_plots:
+    - oil_collapse_2014
+    - pandemic_2020
 
-  diagnostics:
-    - first_stage_f
-    - pre_trends_joint_f
-    - pre_trends_event_study
-    - balance_at_cutoff
-    - mccrary_density
-    - placebo_cutoffs
+  summary_statistics:
+    - mean_npl
+    - std_npl
+    - correlation_with_oil
+
+  interpretation_document:
+    sections:
+      - executive_summary
+      - data_description
+      - methodology
+      - results
+      - falsification
+      - caveats
+      - implications
+
+# ============================================================================
+# WHAT THIS STUDY CANNOT DO (Important for framing)
+# ============================================================================
+
+limitations:
+  cannot_estimate:
+    - "Causal income→default elasticity (requires micro data)"
+    - "Consumer fintech default specifically (aggregate bank NPL)"
+    - "Regional heterogeneity (only national data available)"
+
+  can_estimate:
+    - "Reduced-form external shock → aggregate credit quality"
+    - "Lag structure of credit deterioration"
+    - "Asymmetry (bad vs good shocks)"
+    - "Regime differences (if enough data)"

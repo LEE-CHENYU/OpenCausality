@@ -1,0 +1,80 @@
+{
+  "version": "1.0",
+  "last_updated": "2026-01-31T13:32:35.978844",
+  "sources": {
+    "fred_igrea": {
+      "status": "downloaded",
+      "n_rows": 311,
+      "date_range": [
+        "2000-01-01",
+        "2025-11-01"
+      ],
+      "last_download": "2026-01-31T13:32:04.172821",
+      "error": null
+    },
+    "fred_vix": {
+      "status": "downloaded",
+      "n_rows": 6804,
+      "date_range": [
+        "2000-01-03",
+        "2026-01-29"
+      ],
+      "last_download": "2026-01-31T13:32:04.177561",
+      "error": null
+    },
+    "fred_brent": {
+      "status": "downloaded",
+      "n_rows": 6801,
+      "date_range": [
+        "2000-01-03",
+        "2026-01-26"
+      ],
+      "last_download": "2026-01-31T13:32:04.182387",
+      "error": null
+    },
+    "baumeister_shocks": {
+      "status": "downloaded",
+      "n_rows": 608,
+      "date_range": [
+        "1975-02-01",
+        "2025-09-01"
+      ],
+      "last_download": "2026-01-31T13:32:04.185021",
+      "error": null
+    },
+    "nbk_usd_kzt": {
+      "status": "downloaded",
+      "n_rows": 1,
+      "date_range": [
+        "2026-01-02",
+        "2026-01-02"
+      ],
+      "last_download": "2026-01-31T13:32:07.612065",
+      "error": null
+    },
+    "bns_cpi_categories": {
+      "status": "failed",
+      "n_rows": 0,
+      "date_range": null,
+      "last_download": "2026-01-31T13:32:11.645198",
+      "error": "CPI category data unavailable.\nBNS API failed and no local cache found.\nPlease download CPI by category data manually from:\nhttps://stat.gov.kz/en/industries/prices/stat-official-ind-prices/"
+    },
+    "bns_national_income": {
+      "status": "downloaded",
+      "n_rows": 1126,
+      "date_range": [
+        "2010-03-01",
+        "2025-09-01"
+      ],
+      "last_download": "2026-01-31T13:32:22.896342",
+      "error": null
+    },
+    "worldbank_reer": {
+      "status": "failed_optional",
+      "n_rows": 0,
+      "date_range": null,
+      "last_download": "2026-01-31T13:32:35.978755",
+      "error": "World Bank REER fetch failed"
+    }
+  }
+}

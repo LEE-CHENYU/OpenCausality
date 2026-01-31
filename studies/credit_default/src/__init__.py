@@ -1,9 +1,36 @@
 """
-Credit default study source modules.
+Credit quality study source modules.
 
-Estimates the causal effect of income changes on credit default risk
-using minimum wage and pension eligibility natural experiments.
+REVISED DESIGN (v2.0): Uses aggregate NBK credit data with external shocks.
+This is REDUCED-FORM analysis: external shocks → credit quality.
+
+Original micro design (loan-level diff-in-discs, fuzzy RDD) requires
+internal fintech data that is not available. Those modules are retained
+for future use if micro data becomes available.
+
+Current analysis:
+- credit_data_pipeline.py: Fetches NBK, IMF, FRED data
+- credit_lp.py: Local projections for shock → credit quality IRFs
 """
+
+# =============================================================================
+# AGGREGATE / REDUCED-FORM MODULES (Active)
+# =============================================================================
+
+from studies.credit_default.src.credit_data_pipeline import (
+    CreditDataPipeline,
+    build_credit_panel,
+)
+from studies.credit_default.src.credit_lp import (
+    CreditLocalProjections,
+    CreditLPResults,
+    LPResult,
+    estimate_credit_lp,
+)
+
+# =============================================================================
+# MICRO DESIGN MODULES (Retained for future use with loan-level data)
+# =============================================================================
 
 from studies.credit_default.src.panel_data import LoanPanelBuilder
 from studies.credit_default.src.sample_construction import SampleConstructor
@@ -40,13 +67,28 @@ from studies.credit_default.src.credit_bureau import (
 )
 
 __all__ = [
+    # ==========================================================================
+    # AGGREGATE ANALYSIS (v2.0 - Active)
+    # ==========================================================================
+    # Data pipeline
+    "CreditDataPipeline",
+    "build_credit_panel",
+    # Local projections
+    "CreditLocalProjections",
+    "CreditLPResults",
+    "LPResult",
+    "estimate_credit_lp",
+
+    # ==========================================================================
+    # MICRO DESIGN (Retained for future use)
+    # ==========================================================================
     # Panel construction
     "LoanPanelBuilder",
     "SampleConstructor",
     # Validation
     "ConfoundChecker",
     "check_confounds",
-    # Estimation
+    # Estimation (micro)
     "DiffInDiscsEstimator",
     "DiffInDiscsResult",
     "estimate_mw_effect",
