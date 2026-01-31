@@ -1,0 +1,256 @@
+# Kazakhstan Household Welfare Study - Dataset Metadata
+# Machine-readable metadata for all datasets used in the analysis
+
+version: "1.0"
+generated: "2026-01-30"
+study: "Kazakhstan Household Welfare Causal Econometric Study"
+
+datasets:
+  # ============================================================================
+  # FRED Economic Data
+  # ============================================================================
+
+  fred_igrea:
+    name: "Kilian Global Real Economic Activity Index"
+    source: "Federal Reserve Economic Data (FRED)"
+    source_url: "https://fred.stlouisfed.org/series/IGREA"
+    series_id: "IGREA"
+    frequency: "monthly"
+    date_range:
+      start: "1968-01-01"
+      end: "2025-12-01"
+    rows: 696  # approximate
+    quality: "verified"
+    units: "index"
+    transformation: "AR(1) innovation → global_activity_shock"
+    access:
+      method: "fredapi"
+      requires_api_key: true
+    file_location: "data/raw/fred/IGREA.parquet"
+    notes:
+      - "High-quality federal reserve data"
+      - "Updated monthly with 1-2 month lag"
+
+  fred_vix:
+    name: "CBOE Volatility Index"
+    source: "Federal Reserve Economic Data (FRED)"
+    source_url: "https://fred.stlouisfed.org/series/VIXCLS"
+    series_id: "VIXCLS"
+    frequency: "daily"
+    date_range:
+      start: "1990-01-02"
+      end: "2026-01-29"
+    rows: 8500  # approximate
+    quality: "verified"
+    units: "index"
+    transformation: "AR(1) innovation → vix_shock, aggregated to quarterly"
+    access:
+      method: "fredapi"
+      requires_api_key: true
+    file_location: "data/raw/fred/VIXCLS.parquet"
+
+  fred_brent:
+    name: "Brent Crude Oil Price"
+    source: "Federal Reserve Economic Data (FRED)"
+    source_url: "https://fred.stlouisfed.org/series/DCOILBRENTEU"
+    series_id: "DCOILBRENTEU"
+    frequency: "daily"
+    date_range:
+      start: "1987-05-20"
+      end: "2026-01-29"
+    rows: 9500  # approximate
+    quality: "verified"
+    units: "dollars_per_barrel"
+    transformation: "log returns → brent_shock, aggregated to quarterly"
+    access:
+      method: "fredapi"
+      requires_api_key: true
+    file_location: "data/raw/fred/DCOILBRENTEU.parquet"
+
+  # ============================================================================
+  # Baumeister-Hamilton Structural Oil Shocks
+  # ============================================================================
+
+  baumeister_supply_shock:
+    name: "Structural Oil Supply Shock"
+    source: "Christiane Baumeister Research Page"
+    source_url: "https://sites.google.com/site/cjsbaumeister/datasets"
+    citation: "Baumeister & Hamilton (2019), American Economic Review"
+    frequency: "monthly"
+    date_range:
+      start: "1975-02-01"
+      end: "2025-09-01"
+    rows: 608
+    quality: "verified"
+    units: "standard_deviations"
+    methodology: "Sign-restricted SVAR with informative priors"
+    access:
+      method: "google_drive_download"
+      file_id: "1OsA8btgm2rmDucUFngiLkwv4uywTDmya"
+    file_location: "data/raw/baumeister_shocks/shocks.parquet"
+    fallback_warning: "Silent fallback to synthetic data (seed=42) if download fails"
+
+  baumeister_demand_shock:
+    name: "Aggregate Demand Shock"
+    source: "Christiane Baumeister Research Page"
+    source_url: "https://sites.google.com/site/cjsbaumeister/datasets"
+    citation: "Baumeister & Hamilton (2019), American Economic Review"
+    frequency: "monthly"
+    date_range:
+      start: "1975-02-01"
+      end: "2025-09-01"
+    rows: 608
+    quality: "verified"
+    units: "standard_deviations"
+    methodology: "Sign-restricted SVAR with informative priors"
+    access:
+      method: "google_drive_download"
+      file_id: "1neFXLrIvGwggebQRwjmtrWK-dfQZ9NH8"
+    file_location: "data/raw/baumeister_shocks/shocks.parquet"
+
+  # ============================================================================
+  # Kazakhstan Bureau of National Statistics (BNS)
+  # ============================================================================
+
+  bns_income_per_capita:
+    name: "Per-Capita Monetary Income by Region"
+    source: "Kazakhstan Bureau of National Statistics"
+    source_url: "https://stat.gov.kz"
+    iblock_id: 48953
+    frequency: "quarterly"
+    date_range:
+      start: "2010Q1"
+      end: "2025Q2"
+    rows: 846
+    expected_rows: 868
+    missing_pct: 2.5
+    quality: "partial"
+    units: "tenge"
+    access:
+      method: "iblock_api"
+      endpoint: "/api/iblock/element/{ID}/csv/file/en/"
+    file_location: "data/raw/kazakhstan_bns/income_per_capita.parquet"
+    data_issues:
+      - "2 of 16 regions missing (West Kazakhstan, North Kazakhstan)"
+      - "Tab-delimited CSV format"
+      - "Space as thousands separator in values"
+      - "Region names require harmonization"
+
+  bns_expenditure_structure:
+    name: "Household Expenditure Structure"
+    source: "Kazakhstan Bureau of National Statistics"
+    source_url: "https://stat.gov.kz"
+    iblock_id: 469805
+    frequency: "quarterly"
+    date_range:
+      start: "2010Q1"
+      end: "2025Q2"
+    quality: "partial"
+    units: "percentage"
+    access:
+      method: "iblock_api"
+      endpoint: "/api/iblock/element/{ID}/csv/file/en/"
+    file_location: "data/raw/kazakhstan_bns/expenditure_structure.parquet"
+
+  bns_mining_shares:
+    name: "Mining Sector Shares by Region"
+    source: "Kazakhstan Bureau of National Statistics"
+    source_url: "https://stat.gov.kz"
+    status: "UNAVAILABLE"
+    quality: "unusable"
+    api_status: "HTTP 500 errors"
+    required_for: "Computing oil exposure (E_oil_r)"
+    fallback:
+      type: "hardcoded_values"
+      location: "src/model/panel_data.py:321-329"
+      source_citation: "NONE"
+      values:
+        Atyrau: 0.80
+        Mangystau: 0.70
+        West_Kazakhstan: 0.50
+        Kyzylorda: 0.30
+        Aktobe: 0.25
+        other_regions: 0.05
+    critical_warning: "Hardcoded values have NO empirical documentation"
+
+  bns_employment:
+    name: "Employment by Sector and Region"
+    source: "Kazakhstan Bureau of National Statistics"
+    source_url: "https://stat.gov.kz"
+    status: "UNAVAILABLE"
+    quality: "unusable"
+    required_for: "Computing cyclical exposure (E_cyc_r)"
+    fallback:
+      type: "hardcoded_values"
+      location: "src/model/panel_data.py:397-416"
+      source_citation: "NONE"
+
+  # ============================================================================
+  # Derived/Constructed Variables
+  # ============================================================================
+
+  oil_exposure:
+    name: "Oil/Mining Sector Exposure"
+    variable_name: "E_oil_r"
+    source: "HARDCODED"
+    quality: "poor"
+    description: "Regional oil sector exposure, pre-determined from 2010-2013"
+    construction_method: "Should be average mining share from BNS data, but hardcoded due to API failures"
+    critical_warning: "Values are not from empirical data"
+
+  cyclical_exposure:
+    name: "Cyclical Employment Exposure"
+    variable_name: "E_cyc_r"
+    source: "HARDCODED"
+    quality: "poor"
+    description: "Regional cyclical sector exposure"
+    construction_method: "Should be from employment data, but hardcoded due to unavailability"
+    critical_warning: "Values are not from empirical data"
+
+  debt_exposure:
+    name: "Debt Repayment Exposure"
+    variable_name: "E_debt_r"
+    source: "CONSTANT"
+    quality: "poor"
+    value: 0.1
+    description: "Set to constant 0.1 for all regions due to data unavailability"
+
+  # ============================================================================
+  # Reference Data
+  # ============================================================================
+
+  region_crosswalk:
+    name: "Region Crosswalk for Stable Geography"
+    file_location: "data/crosswalks/regions.csv"
+    description: "Maps new regions (post-2018, post-2022) to parent pre-split regions"
+    canonical_regions: 16
+    quality: "verified"
+    reforms_handled:
+      - year: 2018
+        change: "South Kazakhstan → Turkestan + Shymkent"
+      - year: 2022
+        change: "East Kazakhstan, Almaty Region, Karaganda → split regions"
+
+# ============================================================================
+# Quality Summary
+# ============================================================================
+
+quality_summary:
+  overall_grade: "D+"
+  verified_sources:
+    - "FRED (IGREA, VIX, Brent)"
+    - "Baumeister oil shocks"
+    - "BNS income (partial)"
+  problematic_sources:
+    - "BNS mining shares (unavailable, hardcoded)"
+    - "BNS employment (unavailable, hardcoded)"
+    - "Exposure variables (no empirical basis)"
+  critical_issues:
+    - "Oil exposure (E_oil_r) uses undocumented hardcoded values"
+    - "Cyclical exposure (E_cyc_r) uses undocumented hardcoded values"
+    - "West Kazakhstan region entirely missing from income data"
+  recommendations:
+    - "Obtain real mining share data from BNS or alternative sources"
+    - "Document source of any hardcoded values"
+    - "Add data lineage tracking to pipeline"
+    - "Fail loudly when real data unavailable"
