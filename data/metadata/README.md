@@ -12,12 +12,18 @@ This directory contains metadata and documentation for all datasets used in the 
 
 ## Pipeline Status
 
-**Current Status: READY**
+**Current Status: COMPLETED**
 
-Main specification (oil-only) is fully operational:
-```bash
-PYTHONPATH=. kzwelfare estimate all
-```
+Estimation has been run. Key results:
+
+| Specification | β (oil supply) | p-value | R² within |
+|---------------|----------------|---------|-----------|
+| Main (oil only) | 0.035 | 0.375 | -0.001 |
+| Robustness (+cyclical) | 0.051 | 0.244 | -0.010 |
+
+**Conclusion:** No significant oil effects. β unstable (changes 46%).
+
+Full results: `outputs/estimation_results.md`
 
 ---
 

@@ -10,15 +10,24 @@
 
 ## Executive Summary: Results Are NOT Statistically Significant
 
-The primary finding of this study is **null**. The baseline shift-share regression shows:
+The primary finding of this study is **null**. The shift-share regression shows:
 
+### Main Specification (Oil Only)
 | Interaction Term | Coefficient | Std. Error | p-value | Interpretation |
 |------------------|-------------|------------|---------|----------------|
-| Oil Exposure x Supply Shock | 0.017 | 0.019 | **0.37** | NOT significant |
-| Oil Exposure x Demand Shock | -0.006 | 0.055 | **0.92** | NOT significant |
-| Cyclical Exposure x Global Activity | -0.001 | 0.001 | **0.38** | NOT significant |
+| Oil Exposure × Supply Shock | 0.035 | 0.040 | **0.38** | NOT significant |
+| Oil Exposure × Demand Shock | -0.002 | 0.108 | **0.98** | NOT significant |
 
-**None of these p-values are below conventional thresholds (0.05 or 0.10).** The estimates are noisy and we cannot reject the null hypothesis that oil shocks have zero differential effect on high-exposure vs. low-exposure regions.
+### Robustness Specification (Add Cyclical Proxy)
+| Interaction Term | Coefficient | Std. Error | p-value | Interpretation |
+|------------------|-------------|------------|---------|----------------|
+| Oil Exposure × Supply Shock | 0.051 | 0.044 | **0.24** | NOT significant |
+| Oil Exposure × Demand Shock | -0.013 | 0.109 | **0.91** | NOT significant |
+| Cyclical Proxy × Global Activity | -0.003 | 0.002 | **0.09** | Marginal* |
+
+**Sample:** 746 observations (14 regions × ~53 quarters with non-missing income)
+
+**None of the oil coefficients are statistically significant.** The estimates are noisy and we cannot reject the null hypothesis that oil shocks have zero differential effect on high-exposure vs. low-exposure regions.
 
 ---
 
@@ -57,19 +66,19 @@ y_{r,t} = α_r + δ_t + β(E_oil_r × Shock_oil_t) + θ(E_cyc_proxy_r × Shock_c
 
 ---
 
-## Data Requirements (v4)
+## Data Summary (Actual)
 
-**Main spec requires only oil exposure. Cyclical is optional for robustness.**
+| Data | Source | Observations | Notes |
+|------|--------|--------------|-------|
+| Per-capita income | BNS | 846 rows, 14 regions | 2010Q1-2025Q3 |
+| Mining shares | USGS/EITI/stat.gov.kz | 16 regions | E_oil_r range: [0.00, 0.32] |
+| Cyclical proxy | GRP-based | 16 regions | E_cyc_proxy range: [0.25, 0.85] |
+| Oil shocks | Baumeister | 608 months | 1975-2025 |
+| Global activity | FRED IGREA | 311 months | AR(1) innovation |
 
-| Data Required | Source | Status | Used In |
-|---------------|--------|--------|---------|
-| Per-capita income | BNS | Available (partial) | Main + Robustness |
-| Mining sector shares | USGS/EITI | **AVAILABLE** | Main + Robustness |
-| Cyclical proxy | GRP-based | **AVAILABLE** (not employment) | Robustness only |
-| Baumeister oil shocks | Google Drive | Available | Main + Robustness |
-| FRED series | FRED API | Available | Main + Robustness |
+**Analysis sample:** 746 observations (14 regions × ~53 quarters after dropping missing)
 
-**Current Status:** Pipeline fully operational for main specification.
+**Missing regions in income data:** West Kazakhstan, North Kazakhstan
 
 ---
 
@@ -169,7 +178,8 @@ Our current results satisfy **none** of these criteria.
 
 From the estimation output:
 ```
-R-squared within: -0.0048
+Main specification:       R² within = -0.0008
+Robustness specification: R² within = -0.0102
 ```
 
 **A negative within-R-squared means the model explains less variation than a simple intercept.** The interaction terms are adding noise, not signal.
@@ -178,6 +188,29 @@ This strongly indicates that:
 - The effect sizes are genuinely small (close to zero)
 - The model specification is not capturing the true relationship
 - Or both
+
+---
+
+## Beta Stability Check: FAILED
+
+Comparing the oil supply coefficient across specifications:
+
+| Specification | β (Oil Supply) | Std. Error | p-value |
+|---------------|----------------|------------|---------|
+| Main (oil only) | 0.0351 | 0.0396 | 0.375 |
+| Robustness (+ cyclical) | 0.0513 | 0.0439 | 0.244 |
+| **Change** | +0.0161 | - | **46%** |
+
+**The oil coefficient changes by 46% when adding the cyclical proxy.** This exceeds the 20% stability threshold.
+
+### Interpretation
+
+The instability of β suggests:
+1. **Omitted variable bias**: The cyclical proxy is correlated with both oil exposure and the outcome
+2. **Multicollinearity**: Oil-exposed regions may also be cyclically sensitive (or the opposite)
+3. **Specification sensitivity**: Results are fragile to model specification
+
+However, since **neither coefficient is statistically significant**, this instability is less concerning for policy - both specifications agree that the effect is indistinguishable from zero.
 
 ---
 

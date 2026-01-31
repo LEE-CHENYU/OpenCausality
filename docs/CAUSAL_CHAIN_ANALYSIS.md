@@ -134,20 +134,30 @@ The joint test technically passes, but the pattern is concerning:
 
 **Status: EMPIRICALLY BROKEN**
 
-This is where the causal chain fails. The data do not show differential responses:
+This is where the causal chain fails. The data do not show significant differential responses:
 
-| Interaction | Coefficient | p-value | Economic Significance |
-|-------------|-------------|---------|----------------------|
-| E_oil x Supply | 0.017 | 0.37 | Indistinguishable from zero |
-| E_oil x Demand | -0.006 | 0.92 | Indistinguishable from zero |
-| E_cyc x Activity | -0.001 | 0.38 | Indistinguishable from zero |
+**Main Specification (n=746):**
+| Interaction | Coefficient | Std. Error | p-value |
+|-------------|-------------|------------|---------|
+| E_oil × Supply | 0.035 | 0.040 | 0.38 |
+| E_oil × Demand | -0.002 | 0.108 | 0.98 |
+
+**Robustness Specification (n=746):**
+| Interaction | Coefficient | Std. Error | p-value |
+|-------------|-------------|------------|---------|
+| E_oil × Supply | 0.051 | 0.044 | 0.24 |
+| E_oil × Demand | -0.013 | 0.109 | 0.91 |
+| E_cyc_proxy × Activity | -0.003 | 0.002 | 0.09* |
+
+**All oil coefficients are statistically insignificant.**
 
 **Why Might Transmission Be Zero?**
 
 1. **Fiscal stabilization**: Government transfers may offset income losses
 2. **Labor mobility**: Workers may relocate during downturns
 3. **Diversification**: Even "oil" regions may have diversified economies
-4. **True null**: The effect is genuinely zero
+4. **Measurement**: Income data missing for 2 key oil regions (West Kazakhstan, North Kazakhstan)
+5. **True null**: The effect is genuinely zero
 
 ---
 

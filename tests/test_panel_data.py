@@ -6,7 +6,7 @@ import pytest
 import pandas as pd
 import numpy as np
 
-from src.model.panel_data import (
+from studies.household_welfare.src.panel_data import (
     PanelBuilder,
     REGION_CROSSWALK,
     CANONICAL_REGIONS,

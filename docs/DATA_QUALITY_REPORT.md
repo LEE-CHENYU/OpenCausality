@@ -282,17 +282,60 @@ With v4 design:
 
 ---
 
+---
+
+## Estimation Results (Actual)
+
+### Sample
+- **Observations:** 746 (14 regions × ~53 quarters)
+- **Missing regions:** West Kazakhstan, North Kazakhstan
+
+### Main Specification Results
+```
+y_{r,t} = α_r + δ_t + β(E_oil_r × Shock_oil_t) + u_{r,t}
+```
+
+| Coefficient | Estimate | Std. Error | p-value |
+|-------------|----------|------------|---------|
+| E_oil × Supply | 0.035 | 0.040 | 0.375 |
+| E_oil × Demand | -0.002 | 0.108 | 0.983 |
+
+**R² within: -0.0008** (model adds noise, not signal)
+
+### Robustness Specification Results
+```
+y_{r,t} = α_r + δ_t + β(E_oil_r × Shock_oil_t) + θ(E_cyc_proxy_r × Shock_cyc_t) + u_{r,t}
+```
+
+| Coefficient | Estimate | Std. Error | p-value |
+|-------------|----------|------------|---------|
+| E_oil × Supply | 0.051 | 0.044 | 0.244 |
+| E_oil × Demand | -0.013 | 0.109 | 0.905 |
+| E_cyc_proxy × Activity | -0.003 | 0.002 | 0.086* |
+
+**R² within: -0.0102**
+
+### Beta Stability Check: FAILED
+- β (main): 0.035
+- β (robust): 0.051
+- **Change: 46%** (exceeds 20% threshold)
+
+### Conclusion
+**No significant oil effects detected.** The null cannot be rejected.
+
+---
+
 ## Conclusion
 
-**The data foundation is now complete for the main specification.**
+**The data foundation is complete and estimation has been run.**
 
-v4 changes ensure that:
-1. Main spec uses only oil exposure (cleanest identification)
-2. Cyclical exposure dropped from core model (no reliable regional data)
-3. GRP-based proxy available for robustness checks
-4. Pipeline is FULLY OPERATIONAL
+Key findings:
+1. All oil coefficients are statistically insignificant (p > 0.20)
+2. R² within is negative (model explains less than intercept)
+3. β is not stable across specifications (changes 46%)
+4. The null hypothesis cannot be rejected
 
-To run the analysis:
+To reproduce:
 ```bash
 PYTHONPATH=. kzwelfare build-panel
 PYTHONPATH=. kzwelfare estimate all
@@ -302,5 +345,5 @@ PYTHONPATH=. kzwelfare estimate all
 
 *Document version: 4.0*
 *Generated: January 2026*
-*Assessment: Pipeline fully operational*
-*Update: Revised study design - oil exposure only in main spec*
+*Assessment: Estimation complete - null results*
+*Update: Actual estimation results included*

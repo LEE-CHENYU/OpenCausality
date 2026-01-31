@@ -1,0 +1,167 @@
+# Credit Default Sensitivity Model Specification
+# ==============================================
+
+# Pre-specification: Commit to primary choices BEFORE seeing results
+prespecification:
+  primary_outcome: dpd30
+  primary_horizon_months: 3
+  secondary_outcomes:
+    - dpd15
+    - dpd60
+    - dpd90
+  multiple_testing_correction: fwer  # Bonferroni for secondary outcomes
+
+# Sample restrictions
+sample:
+  # Origination window
+  origination_before: "2023-12-01"  # Avoid DSTI confound
+
+  # Outcome window
+  outcome_start: "2024-01-01"
+  outcome_end: "2024-05-31"  # Avoid June 2024 DTI confound
+
+  # Minimum wage design: payroll verification
+  mw_design:
+    require_payroll_inflow: true
+    min_payroll_months: 3
+    payroll_window_before_treatment: "2023-10-01"
+    payroll_window_end: "2023-12-31"
+
+  # Pension RDD: age requirements
+  pension_design:
+    min_age_men: 60
+    max_age_men: 66
+    min_age_women: 58
+    max_age_women: 64
+    require_pension_inflow: true
+
+# Design 1: Minimum Wage Diff-in-Discontinuities
+mw_diff_in_discs:
+  # Treatment definition
+  old_minimum_wage: 70000
+  new_minimum_wage: 85000
+  treatment_date: "2024-01-01"
+
+  # Running variable
+  running_var: pre_policy_monthly_payroll
+  cutoff: 70000  # Old MW
+
+  # Bandwidth
+  bandwidth_method: optimal  # MSE-minimizing
+  bandwidth_fallback: 15000  # If optimal unavailable
+
+  # Polynomial
+  polynomial_order: 1
+
+  # Specification
+  specification: |
+    Y_it = alpha + beta1(Post_t) + beta2(Below_c_i) + beta3(Post_t x Below_c_i)
+         + f(wage_i - c) + g(wage_i - c) x Post_t + X_it'delta + epsilon_it
+
+  # Alternative: Continuous intensity instrument
+  intensity_instrument:
+    name: predicted_statutory_raise
+    formula: "max(0, 85000 - wage_pre)"
+    specification: "Post_t x Z_i"
+
+# Design 2: Pension Fuzzy RDD
+pension_rdd:
+  # Cutoffs
+  cutoff_men: 63
+  cutoff_women: 61
+
+  # First stage
+  endogenous_var: pension_inflow_observed
+  instrument: age_above_cutoff
+
+  # Bandwidth
+  bandwidth_method: rdrobust  # MSE-optimal
+  kernel: triangular
+
+  # Specification
+  first_stage: |
+    PensionInflow_i = gamma0 + gamma1(Age_i >= c) + f(Age_i - c) + X_i'delta + nu_i
+  second_stage: |
+    Default_i = alpha + beta(PensionInflow_hat_i) + f(Age_i - c) + X_i'delta + epsilon_i
+
+# Validation checks
+validation:
+  # First-stage F threshold
+  first_stage_f_threshold: 10
+
+  # Pre-trends
+  pre_trends:
+    pre_periods: 6
+    joint_f_alpha: 0.10
+    report_effect_bounds: true
+
+  # Balance test at cutoff
+  balance_covariates:
+    - loan_amount
+    - loan_term_months
+    - employer_type
+    - region
+
+  # McCrary density test
+  mccrary:
+    alpha: 0.05
+
+  # Placebo cutoffs
+  placebo_cutoffs:
+    mw: [60000, 80000, 90000]
+    pension_men: [60, 62, 64]
+    pension_women: [58, 60, 62]
+
+# Policy confound calendar (CRITICAL)
+policy_confounds:
+  - date: "2023-03-01"
+    name: personal_bankruptcy_law
+    type: credit_policy
+    action: document_and_control
+
+  - date: "2023-12-01"
+    name: dsti_limit_tightening
+    type: credit_policy
+    action: restrict_originations_before
+    critical: true
+
+  - date: "2024-06-01"
+    name: dti_limit_introduction
+    type: credit_policy
+    action: truncate_outcomes_before
+    critical: true
+
+# Inference
+inference:
+  # Primary: cluster at borrower
+  primary_clustering: borrower
+
+  # Secondary: two-way clustering
+  two_way_clustering:
+    - borrower
+    - month
+
+  # Robustness: wild bootstrap
+  wild_bootstrap:
+    enabled: true
+    n_iterations: 999
+    cluster_var: borrower
+
+# Expected outputs
+outputs:
+  primary_estimate:
+    name: income_default_elasticity
+    description: "PP change in DPD30 probability per 1% income change"
+    interpretation: "LATE for compliers among low-wage formal workers"
+
+  confidence_interval:
+    level: 0.95
+    method: clustered
+
+  diagnostics:
+    - first_stage_f
+    - pre_trends_joint_f
+    - pre_trends_event_study
+    - balance_at_cutoff
+    - mccrary_density
+    - placebo_cutoffs

@@ -308,12 +308,32 @@ quality_summary:
     main_spec:
       name: "main_oil_only"
       variables: ["E_oil_r", "oil_supply_shock", "aggregate_demand_shock"]
-      status: "READY"
+      status: "COMPLETED"
+      results:
+        n_obs: 746
+        r2_within: -0.0008
+        coefficients:
+          E_oil_x_supply: {estimate: 0.0351, se: 0.0396, pvalue: 0.375}
+          E_oil_x_demand: {estimate: -0.0024, se: 0.1075, pvalue: 0.983}
+        interpretation: "No significant oil effects"
     robustness_spec:
       name: "robustness_with_cyclical_proxy"
       variables: ["E_oil_r", "E_cyc_proxy_r", "global_activity_shock"]
-      status: "READY"
-      note: "E_cyc_proxy_r is GRP-based, NOT employment"
+      status: "COMPLETED"
+      results:
+        n_obs: 746
+        r2_within: -0.0102
+        coefficients:
+          E_oil_x_supply: {estimate: 0.0513, se: 0.0439, pvalue: 0.244}
+          E_oil_x_demand: {estimate: -0.0129, se: 0.1085, pvalue: 0.905}
+          E_cyc_proxy_x_activity: {estimate: -0.0030, se: 0.0017, pvalue: 0.086}
+        interpretation: "Oil effects still insignificant; cyclical marginally significant"
+    beta_stability:
+      main_beta: 0.0351
+      robust_beta: 0.0513
+      change_pct: 46.0
+      stable: false
+      interpretation: "β NOT stable - changes 46% when adding cyclical proxy"
 
   resolved_issues:
     - source: "Mining shares"

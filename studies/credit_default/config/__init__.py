@@ -1,0 +1,1 @@
+"""Credit default study configuration."""

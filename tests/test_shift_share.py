@@ -6,7 +6,7 @@ import pytest
 import pandas as pd
 import numpy as np
 
-from src.model.shift_share import ShiftShareModel, ShiftShareSpec, BASELINE_SPEC
+from studies.household_welfare.src.shift_share import ShiftShareModel, ShiftShareSpec, MAIN_SPEC as BASELINE_SPEC
 
 
 class TestShiftShareModel:

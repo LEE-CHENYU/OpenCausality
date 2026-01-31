@@ -1,7 +1,7 @@
 [project]
-name = "kazakhstan-welfare-model"
-version = "0.1.0"
-description = "Causal econometric model for Kazakhstan household welfare analysis"
+name = "kazakhstan-econometric-research"
+version = "0.2.0"
+description = "Causal econometric research platform for Kazakhstan studies"
 readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "MIT"}
@@ -10,20 +10,32 @@ authors = [
 ]
 
 dependencies = [
+    # Data handling
     "pandas>=2.1.0",
     "numpy>=1.24.0",
     "pyarrow>=14.0.0",
+    # HTTP clients
     "httpx>=0.25.0",
+    # External data sources
     "fredapi>=0.5.0",
+    # Econometrics
     "linearmodels>=6.0",
     "statsmodels>=0.14.0",
+    "scipy>=1.11.0",
+    # Database (for credit default study)
+    "sqlalchemy>=2.0.0",
+    # Web scraping
     "beautifulsoup4>=4.12.0",
+    # Configuration
     "pydantic>=2.0.0",
     "pydantic-settings>=2.0.0",
+    # Caching
     "diskcache>=5.6.0",
+    # CLI
     "typer>=0.9.0",
     "rich>=13.0.0",
-    "scipy>=1.11.0",
+    # YAML parsing
+    "pyyaml>=6.0.0",
 ]
 
 [project.optional-dependencies]
@@ -36,15 +48,24 @@ dev = [
     "jupyter>=1.0.0",
 ]
 
+rdd = [
+    # RDD estimation (optional, install separately if needed)
+    # "rdrobust>=1.0.0",  # May require R installation
+]
+
 [project.scripts]
-kzwelfare = "src.cli:app"
+# Unified CLI
+kzresearch = "scripts.cli:app"
+# Legacy/study-specific CLIs
+kzwelfare = "studies.household_welfare.src.cli:app"
+kzcredit = "studies.credit_default.src.cli:app"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src", "config"]
+packages = ["shared", "studies", "scripts", "config"]
 
 [tool.ruff]
 line-length = 100
@@ -60,5 +81,5 @@ strict = true
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
-addopts = "-v --cov=src --cov-report=term-missing"
+testpaths = ["tests", "studies/*/tests"]
+addopts = "-v --cov=shared --cov=studies --cov-report=term-missing"
