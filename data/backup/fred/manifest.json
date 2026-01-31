@@ -1,0 +1,775 @@
+{
+  "downloaded_at": "2026-01-30T20:09:03.104523",
+  "total_series": 87,
+  "successful": 83,
+  "failed": 4,
+  "series": [
+    {
+      "series_id": "GDP",
+      "description": "Gross Domestic Product",
+      "observations": 263,
+      "start_date": "1960-01-01",
+      "end_date": "2025-07-01",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/GDP.json",
+      "status": "success"
+    },
+    {
+      "series_id": "GDPC1",
+      "description": "Real Gross Domestic Product",
+      "observations": 263,
+      "start_date": "1960-01-01",
+      "end_date": "2025-07-01",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/GDPC1.json",
+      "status": "success"
+    },
+    {
+      "series_id": "GDPPOT",
+      "description": "Real Potential GDP",
+      "observations": 304,
+      "start_date": "1960-01-01",
+      "end_date": "2035-10-01",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/GDPPOT.json",
+      "status": "success"
+    },
+    {
+      "series_id": "GDPDEF",
+      "description": "GDP Implicit Price Deflator",
+      "observations": 263,
+      "start_date": "1960-01-01",
+      "end_date": "2025-07-01",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/GDPDEF.json",
+      "status": "success"
+    },
+    {
+      "series_id": "A191RL1Q225SBEA",
+      "description": "Real GDP Growth Rate",
+      "observations": 263,
+      "start_date": "1960-01-01",
+      "end_date": "2025-07-01",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/A191RL1Q225SBEA.json",
+      "status": "success"
+    },
+    {
+      "series_id": "UNRATE",
+      "description": "Unemployment Rate",
+      "observations": 792,
+      "start_date": "1960-01-01",
+      "end_date": "2025-12-01",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/UNRATE.json",
+      "status": "success"
+    },
+    {
+      "series_id": "PAYEMS",
+      "description": "Total Nonfarm Payrolls",
+      "observations": 792,
+      "start_date": "1960-01-01",
+      "end_date": "2025-12-01",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/PAYEMS.json",
+      "status": "success"
+    },
+    {
+      "series_id": "CIVPART",
+      "description": "Labor Force Participation Rate",
+      "observations": 792,
+      "start_date": "1960-01-01",
+      "end_date": "2025-12-01",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/CIVPART.json",
+      "status": "success"
+    },
+    {
+      "series_id": "U6RATE",
+      "description": "U-6 Unemployment Rate",
+      "observations": 384,
+      "start_date": "1994-01-01",
+      "end_date": "2025-12-01",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/U6RATE.json",
+      "status": "success"
+    },
+    {
+      "series_id": "ICSA",
+      "description": "Initial Claims",
+      "observations": 3082,
+      "start_date": "1967-01-07",
+      "end_date": "2026-01-24",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/ICSA.json",
+      "status": "success"
+    },
+    {
+      "series_id": "JTSJOL",
+      "description": "Job Openings",
+      "observations": 300,
+      "start_date": "2000-12-01",
+      "end_date": "2025-11-01",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/JTSJOL.json",
+      "status": "success"
+    },
+    {
+      "series_id": "AWHAETP",
+      "description": "Average Weekly Hours",
+      "observations": 238,
+      "start_date": "2006-03-01",
+      "end_date": "2025-12-01",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/AWHAETP.json",
+      "status": "success"
+    },
+    {
+      "series_id": "CES0500000003",
+      "description": "Average Hourly Earnings",
+      "observations": 238,
+      "start_date": "2006-03-01",
+      "end_date": "2025-12-01",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/CES0500000003.json",
+      "status": "success"
+    },
+    {
+      "series_id": "CPIAUCSL",
+      "description": "CPI All Items",
+      "observations": 792,
+      "start_date": "1960-01-01",
+      "end_date": "2025-12-01",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/CPIAUCSL.json",
+      "status": "success"
+    },
+    {
+      "series_id": "CPILFESL",
+      "description": "Core CPI",
+      "observations": 792,
+      "start_date": "1960-01-01",
+      "end_date": "2025-12-01",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/CPILFESL.json",
+      "status": "success"
+    },
+    {
+      "series_id": "PCEPI",
+      "description": "PCE Price Index",
+      "observations": 791,
+      "start_date": "1960-01-01",
+      "end_date": "2025-11-01",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/PCEPI.json",
+      "status": "success"
+    },
+    {
+      "series_id": "PCEPILFE",
+      "description": "Core PCE Price Index",
+      "observations": 791,
+      "start_date": "1960-01-01",
+      "end_date": "2025-11-01",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/PCEPILFE.json",
+      "status": "success"
+    },
+    {
+      "series_id": "PPIFIS",
+      "description": "Producer Price Index",
+      "observations": 194,
+      "start_date": "2009-11-01",
+      "end_date": "2025-12-01",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/PPIFIS.json",
+      "status": "success"
+    },
+    {
+      "series_id": "MICH",
+      "description": "Michigan Inflation Expectations",
+      "observations": 576,
+      "start_date": "1978-01-01",
+      "end_date": "2025-12-01",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/MICH.json",
+      "status": "success"
+    },
+    {
+      "series_id": "T5YIE",
+      "description": "5-Year Breakeven Inflation Rate",
+      "observations": 6022,
+      "start_date": "2003-01-02",
+      "end_date": "2026-01-30",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/T5YIE.json",
+      "status": "success"
+    },
+    {
+      "series_id": "T10YIE",
+      "description": "10-Year Breakeven Inflation Rate",
+      "observations": 6022,
+      "start_date": "2003-01-02",
+      "end_date": "2026-01-30",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/T10YIE.json",
+      "status": "success"
+    },
+    {
+      "series_id": "FEDFUNDS",
+      "description": "Federal Funds Rate",
+      "observations": 792,
+      "start_date": "1960-01-01",
+      "end_date": "2025-12-01",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/FEDFUNDS.json",
+      "status": "success"
+    },
+    {
+      "series_id": "DFF",
+      "description": "Federal Funds Effective Rate Daily",
+      "observations": 24136,
+      "start_date": "1960-01-01",
+      "end_date": "2026-01-29",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/DFF.json",
+      "status": "success"
+    },
+    {
+      "series_id": "DFEDTARU",
+      "description": "Fed Funds Target Upper",
+      "observations": 6255,
+      "start_date": "2008-12-16",
+      "end_date": "2026-01-30",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/DFEDTARU.json",
+      "status": "success"
+    },
+    {
+      "series_id": "DFEDTARL",
+      "description": "Fed Funds Target Lower",
+      "observations": 6255,
+      "start_date": "2008-12-16",
+      "end_date": "2026-01-30",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/DFEDTARL.json",
+      "status": "success"
+    },
+    {
+      "series_id": "DGS1",
+      "description": "1-Year Treasury Rate",
+      "observations": 16718,
+      "start_date": "1962-01-02",
+      "end_date": "2026-01-29",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/DGS1.json",
+      "status": "success"
+    },
+    {
+      "series_id": "DGS2",
+      "description": "2-Year Treasury Rate",
+      "observations": 12958,
+      "start_date": "1976-06-01",
+      "end_date": "2026-01-29",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/DGS2.json",
+      "status": "success"
+    },
+    {
+      "series_id": "DGS5",
+      "description": "5-Year Treasury Rate",
+      "observations": 16718,
+      "start_date": "1962-01-02",
+      "end_date": "2026-01-29",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/DGS5.json",
+      "status": "success"
+    },
+    {
+      "series_id": "DGS10",
+      "description": "10-Year Treasury Rate",
+      "observations": 16718,
+      "start_date": "1962-01-02",
+      "end_date": "2026-01-29",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/DGS10.json",
+      "status": "success"
+    },
+    {
+      "series_id": "DGS30",
+      "description": "30-Year Treasury Rate",
+      "observations": 12773,
+      "start_date": "1977-02-15",
+      "end_date": "2026-01-29",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/DGS30.json",
+      "status": "success"
+    },
+    {
+      "series_id": "T10Y2Y",
+      "description": "10Y-2Y Spread",
+      "observations": 12959,
+      "start_date": "1976-06-01",
+      "end_date": "2026-01-30",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/T10Y2Y.json",
+      "status": "success"
+    },
+    {
+      "series_id": "T10Y3M",
+      "description": "10Y-3M Spread",
+      "observations": 11500,
+      "start_date": "1982-01-04",
+      "end_date": "2026-01-30",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/T10Y3M.json",
+      "status": "success"
+    },
+    {
+      "series_id": "MORTGAGE30US",
+      "description": "30-Year Mortgage Rate",
+      "observations": 2862,
+      "start_date": "1971-04-02",
+      "end_date": "2026-01-29",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/MORTGAGE30US.json",
+      "status": "success"
+    },
+    {
+      "series_id": "AAA",
+      "description": "Moody's AAA Corporate Bond Yield",
+      "observations": 792,
+      "start_date": "1960-01-01",
+      "end_date": "2025-12-01",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/AAA.json",
+      "status": "success"
+    },
+    {
+      "series_id": "BAA",
+      "description": "Moody's BAA Corporate Bond Yield",
+      "observations": 792,
+      "start_date": "1960-01-01",
+      "end_date": "2025-12-01",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/BAA.json",
+      "status": "success"
+    },
+    {
+      "series_id": "BAMLH0A0HYM2",
+      "description": "High Yield Spread",
+      "observations": 7686,
+      "start_date": "1996-12-31",
+      "end_date": "2026-01-29",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/BAMLH0A0HYM2.json",
+      "status": "success"
+    },
+    {
+      "series_id": "M1SL",
+      "description": "M1 Money Stock",
+      "observations": 792,
+      "start_date": "1960-01-01",
+      "end_date": "2025-12-01",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/M1SL.json",
+      "status": "success"
+    },
+    {
+      "series_id": "M2SL",
+      "description": "M2 Money Stock",
+      "observations": 792,
+      "start_date": "1960-01-01",
+      "end_date": "2025-12-01",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/M2SL.json",
+      "status": "success"
+    },
+    {
+      "series_id": "BOGMBASE",
+      "description": "Monetary Base",
+      "observations": 792,
+      "start_date": "1960-01-01",
+      "end_date": "2025-12-01",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/BOGMBASE.json",
+      "status": "success"
+    },
+    {
+      "series_id": "WALCL",
+      "description": "Fed Total Assets",
+      "observations": 1207,
+      "start_date": "2002-12-18",
+      "end_date": "2026-01-28",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/WALCL.json",
+      "status": "success"
+    },
+    {
+      "series_id": "DEXUSEU",
+      "description": "USD/EUR Exchange Rate",
+      "observations": 7060,
+      "start_date": "1999-01-04",
+      "end_date": "2026-01-23",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/DEXUSEU.json",
+      "status": "success"
+    },
+    {
+      "series_id": "DEXJPUS",
+      "description": "JPY/USD Exchange Rate",
+      "observations": 14365,
+      "start_date": "1971-01-04",
+      "end_date": "2026-01-23",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/DEXJPUS.json",
+      "status": "success"
+    },
+    {
+      "series_id": "DEXUSUK",
+      "description": "USD/GBP Exchange Rate",
+      "observations": 14365,
+      "start_date": "1971-01-04",
+      "end_date": "2026-01-23",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/DEXUSUK.json",
+      "status": "success"
+    },
+    {
+      "series_id": "DEXCHUS",
+      "description": "CNY/USD Exchange Rate",
+      "observations": 11756,
+      "start_date": "1981-01-02",
+      "end_date": "2026-01-23",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/DEXCHUS.json",
+      "status": "success"
+    },
+    {
+      "series_id": "DTWEXBGS",
+      "description": "Trade Weighted Dollar Index Broad",
+      "observations": 5235,
+      "start_date": "2006-01-02",
+      "end_date": "2026-01-23",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/DTWEXBGS.json",
+      "status": "success"
+    },
+    {
+      "series_id": "DTWEXAFEGS",
+      "description": "Trade Weighted Dollar Index Advanced",
+      "observations": 5235,
+      "start_date": "2006-01-02",
+      "end_date": "2026-01-23",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/DTWEXAFEGS.json",
+      "status": "success"
+    },
+    {
+      "series_id": "DCOILWTICO",
+      "description": "WTI Crude Oil",
+      "observations": 10453,
+      "start_date": "1986-01-02",
+      "end_date": "2026-01-26",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/DCOILWTICO.json",
+      "status": "success"
+    },
+    {
+      "series_id": "DCOILBRENTEU",
+      "description": "Brent Crude Oil",
+      "observations": 10094,
+      "start_date": "1987-05-20",
+      "end_date": "2026-01-26",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/DCOILBRENTEU.json",
+      "status": "success"
+    },
+    {
+      "series_id": "DHHNGSP",
+      "description": "Henry Hub Natural Gas",
+      "observations": 7580,
+      "start_date": "1997-01-07",
+      "end_date": "2026-01-26",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/DHHNGSP.json",
+      "status": "success"
+    },
+    {
+      "series_id": "GOLDAMGBD228NLBM",
+      "description": "Gold Price",
+      "status": "http_error_400"
+    },
+    {
+      "series_id": "PPIACO",
+      "description": "All Commodities PPI",
+      "observations": 792,
+      "start_date": "1960-01-01",
+      "end_date": "2025-12-01",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/PPIACO.json",
+      "status": "success"
+    },
+    {
+      "series_id": "WPU0561",
+      "description": "Gasoline PPI",
+      "observations": 792,
+      "start_date": "1960-01-01",
+      "end_date": "2025-12-01",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/WPU0561.json",
+      "status": "success"
+    },
+    {
+      "series_id": "PCOPPUSDM",
+      "description": "Global Copper Price",
+      "observations": 552,
+      "start_date": "1980-01-01",
+      "end_date": "2025-12-01",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/PCOPPUSDM.json",
+      "status": "success"
+    },
+    {
+      "series_id": "VIXCLS",
+      "description": "VIX",
+      "observations": 9413,
+      "start_date": "1990-01-02",
+      "end_date": "2026-01-29",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/VIXCLS.json",
+      "status": "success"
+    },
+    {
+      "series_id": "UMCSENT",
+      "description": "Consumer Sentiment",
+      "observations": 792,
+      "start_date": "1960-01-01",
+      "end_date": "2025-12-01",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/UMCSENT.json",
+      "status": "success"
+    },
+    {
+      "series_id": "CSCICP03USM665S",
+      "description": "Consumer Confidence",
+      "observations": 769,
+      "start_date": "1960-01-01",
+      "end_date": "2024-01-01",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/CSCICP03USM665S.json",
+      "status": "success"
+    },
+    {
+      "series_id": "USEPUINDXD",
+      "description": "Economic Policy Uncertainty",
+      "observations": 15004,
+      "start_date": "1985-01-01",
+      "end_date": "2026-01-29",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/USEPUINDXD.json",
+      "status": "success"
+    },
+    {
+      "series_id": "HOUST",
+      "description": "Housing Starts",
+      "observations": 790,
+      "start_date": "1960-01-01",
+      "end_date": "2025-10-01",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/HOUST.json",
+      "status": "success"
+    },
+    {
+      "series_id": "PERMIT",
+      "description": "Building Permits",
+      "observations": 790,
+      "start_date": "1960-01-01",
+      "end_date": "2025-10-01",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/PERMIT.json",
+      "status": "success"
+    },
+    {
+      "series_id": "HSN1F",
+      "description": "New Home Sales",
+      "observations": 754,
+      "start_date": "1963-01-01",
+      "end_date": "2025-10-01",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/HSN1F.json",
+      "status": "success"
+    },
+    {
+      "series_id": "EXHOSLUSM495S",
+      "description": "Existing Home Sales",
+      "observations": 14,
+      "start_date": "2024-11-01",
+      "end_date": "2025-12-01",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/EXHOSLUSM495S.json",
+      "status": "success"
+    },
+    {
+      "series_id": "CSUSHPINSA",
+      "description": "Case-Shiller Home Price Index",
+      "observations": 611,
+      "start_date": "1975-01-01",
+      "end_date": "2025-11-01",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/CSUSHPINSA.json",
+      "status": "success"
+    },
+    {
+      "series_id": "MSPUS",
+      "description": "Median Sales Price of Houses",
+      "observations": 250,
+      "start_date": "1963-01-01",
+      "end_date": "2025-04-01",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/MSPUS.json",
+      "status": "success"
+    },
+    {
+      "series_id": "BOPGSTB",
+      "description": "Trade Balance",
+      "observations": 407,
+      "start_date": "1992-01-01",
+      "end_date": "2025-11-01",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/BOPGSTB.json",
+      "status": "success"
+    },
+    {
+      "series_id": "EXPGS",
+      "description": "Exports of Goods and Services",
+      "observations": 263,
+      "start_date": "1960-01-01",
+      "end_date": "2025-07-01",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/EXPGS.json",
+      "status": "success"
+    },
+    {
+      "series_id": "IMPGS",
+      "description": "Imports of Goods and Services",
+      "observations": 263,
+      "start_date": "1960-01-01",
+      "end_date": "2025-07-01",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/IMPGS.json",
+      "status": "success"
+    },
+    {
+      "series_id": "IR",
+      "description": "Import Price Index",
+      "observations": 519,
+      "start_date": "1982-09-01",
+      "end_date": "2025-11-01",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/IR.json",
+      "status": "success"
+    },
+    {
+      "series_id": "IQ",
+      "description": "Export Price Index",
+      "observations": 507,
+      "start_date": "1983-09-01",
+      "end_date": "2025-11-01",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/IQ.json",
+      "status": "success"
+    },
+    {
+      "series_id": "INDPRO",
+      "description": "Industrial Production Index",
+      "observations": 792,
+      "start_date": "1960-01-01",
+      "end_date": "2025-12-01",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/INDPRO.json",
+      "status": "success"
+    },
+    {
+      "series_id": "IPMAN",
+      "description": "Manufacturing Production",
+      "observations": 648,
+      "start_date": "1972-01-01",
+      "end_date": "2025-12-01",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/IPMAN.json",
+      "status": "success"
+    },
+    {
+      "series_id": "TCU",
+      "description": "Capacity Utilization",
+      "observations": 708,
+      "start_date": "1967-01-01",
+      "end_date": "2025-12-01",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/TCU.json",
+      "status": "success"
+    },
+    {
+      "series_id": "DGORDER",
+      "description": "Durable Goods Orders",
+      "observations": 791,
+      "start_date": "1960-01-01",
+      "end_date": "2025-11-01",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/DGORDER.json",
+      "status": "success"
+    },
+    {
+      "series_id": "NEWORDER",
+      "description": "Manufacturers New Orders",
+      "observations": 694,
+      "start_date": "1968-02-01",
+      "end_date": "2025-11-01",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/NEWORDER.json",
+      "status": "success"
+    },
+    {
+      "series_id": "GEPUCURRENT",
+      "description": "Global Economic Policy Uncertainty",
+      "observations": 346,
+      "start_date": "1997-01-01",
+      "end_date": "2025-10-01",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/GEPUCURRENT.json",
+      "status": "success"
+    },
+    {
+      "series_id": "NGDPRSAXDCCNQ",
+      "description": "China Real GDP",
+      "status": "http_error_400"
+    },
+    {
+      "series_id": "LRUNTTTTEZM156S",
+      "description": "Euro Area Unemployment",
+      "status": "http_error_400"
+    },
+    {
+      "series_id": "CLVMNACSCAB1GQEA19",
+      "description": "Euro Area Real GDP",
+      "observations": 124,
+      "start_date": "1995-01-01",
+      "end_date": "2025-10-01",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/CLVMNACSCAB1GQEA19.json",
+      "status": "success"
+    },
+    {
+      "series_id": "NFCI",
+      "description": "Chicago Fed National Financial Conditions",
+      "observations": 2873,
+      "start_date": "1971-01-08",
+      "end_date": "2026-01-23",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/NFCI.json",
+      "status": "success"
+    },
+    {
+      "series_id": "STLFSI4",
+      "description": "St. Louis Fed Financial Stress Index",
+      "observations": 1674,
+      "start_date": "1993-12-31",
+      "end_date": "2026-01-23",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/STLFSI4.json",
+      "status": "success"
+    },
+    {
+      "series_id": "TEDRATE",
+      "description": "TED Spread",
+      "observations": 9407,
+      "start_date": "1986-01-02",
+      "end_date": "2022-01-21",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/TEDRATE.json",
+      "status": "success"
+    },
+    {
+      "series_id": "NGDPRSAXDCCKZQ",
+      "description": "Kazakhstan Real GDP",
+      "status": "http_error_400"
+    },
+    {
+      "series_id": "DDOI01KZA156NWDB",
+      "description": "Kazakhstan Oil Dependence",
+      "observations": 26,
+      "start_date": "1996-01-01",
+      "end_date": "2021-01-01",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/DDOI01KZA156NWDB.json",
+      "status": "success"
+    },
+    {
+      "series_id": "IGREA",
+      "description": "Global Real Economic Activity",
+      "observations": 695,
+      "start_date": "1968-01-01",
+      "end_date": "2025-11-01",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/IGREA.json",
+      "status": "success"
+    },
+    {
+      "series_id": "WTISPLC",
+      "description": "WTI Spot Price",
+      "observations": 792,
+      "start_date": "1960-01-01",
+      "end_date": "2025-12-01",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/WTISPLC.json",
+      "status": "success"
+    },
+    {
+      "series_id": "MCOILWTICO",
+      "description": "WTI Monthly",
+      "observations": 480,
+      "start_date": "1986-01-01",
+      "end_date": "2025-12-01",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/MCOILWTICO.json",
+      "status": "success"
+    },
+    {
+      "series_id": "POILWTIUSDM",
+      "description": "WTI USD Monthly",
+      "observations": 552,
+      "start_date": "1980-01-01",
+      "end_date": "2025-12-01",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/POILWTIUSDM.json",
+      "status": "success"
+    },
+    {
+      "series_id": "POILBREUSDM",
+      "description": "Brent USD Monthly",
+      "observations": 552,
+      "start_date": "1980-01-01",
+      "end_date": "2025-12-01",
+      "file": "/Users/lichenyu/econometric-research/data/backup/fred/POILBREUSDM.json",
+      "status": "success"
+    }
+  ]
+}

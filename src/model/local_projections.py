@@ -175,8 +175,14 @@ class LocalProjections:
                 nobs=0,
             )
 
-        # Set up panel
-        data = data.set_index(["region", "quarter"])
+        # Set up panel - convert quarter to numeric for linearmodels
+        if data["quarter"].dtype == object:
+            data["time_idx"] = data["quarter"].apply(
+                lambda q: int(q[:4]) * 10 + int(q[-1])
+            )
+        else:
+            data["time_idx"] = data["quarter"]
+        data = data.set_index(["region", "time_idx"])
 
         # Prepare regressors
         X_cols = [interaction_name] + [c for c in spec.controls if c in data.columns]
@@ -189,6 +195,7 @@ class LocalProjections:
             X,
             entity_effects=spec.entity_effects,
             time_effects=spec.time_effects,
+            drop_absorbed=True,
         )
 
         # Driscoll-Kraay for serial correlation in LP errors

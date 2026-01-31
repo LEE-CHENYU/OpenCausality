@@ -65,19 +65,24 @@ class BaumeisterLoader(HTTPDataSource):
     Loader for Baumeister-Hamilton structural oil shocks.
 
     Primary source: Christiane Baumeister's research page
-    Data updated through May 2025.
+    https://sites.google.com/site/cjsbaumeister/datasets
+    Data updated through September 2025.
     """
 
-    # URLs for Baumeister data (may need updating)
-    DATA_URLS = [
-        "https://sites.google.com/site/caboreas/data",
-        "https://christiane-baumeister.netlify.app/data",
+    # Google Drive direct download URLs (current as of Jan 2026)
+    # From https://sites.google.com/site/cjsbaumeister/datasets
+    SUPPLY_SHOCK_URL = "https://drive.google.com/uc?export=download&id=1OsA8btgm2rmDucUFngiLkwv4uywTDmya"
+    DEMAND_SHOCK_URL = "https://drive.google.com/uc?export=download&id=1neFXLrIvGwggebQRwjmtrWK-dfQZ9NH8"
+
+    # Direct download URLs (primary)
+    DIRECT_URLS = [
+        SUPPLY_SHOCK_URL,
+        DEMAND_SHOCK_URL,
     ]
 
-    # Direct download URLs (when available)
-    DIRECT_URLS = [
-        "https://www.christiane-baumeister.com/data/shocks_monthly.xlsx",
-        "https://www.christiane-baumeister.com/data/oil_shocks.csv",
+    # Fallback URLs
+    DATA_URLS = [
+        "https://sites.google.com/site/cjsbaumeister/datasets",
     ]
 
     @property
@@ -91,17 +96,43 @@ class BaumeisterLoader(HTTPDataSource):
         Returns:
             DataFrame with date and shock columns
         """
-        # Try direct downloads first
-        for url in self.DIRECT_URLS:
-            try:
-                logger.info(f"Trying direct download: {url}")
-                df = self._fetch_from_url(url)
-                if not df.empty:
-                    return df
-            except Exception as e:
-                logger.debug(f"Direct download failed: {e}")
+        # Try fetching supply and demand shocks separately from Google Drive
+        supply_df = None
+        demand_df = None
 
-        # Try discovery from data pages
+        try:
+            logger.info("Fetching oil supply shocks from Google Drive...")
+            supply_df = self._fetch_from_url(self.SUPPLY_SHOCK_URL)
+            if not supply_df.empty:
+                logger.info(f"Fetched supply shocks: {len(supply_df)} rows")
+        except Exception as e:
+            logger.warning(f"Supply shock download failed: {e}")
+
+        try:
+            logger.info("Fetching oil demand shocks from Google Drive...")
+            demand_df = self._fetch_from_url(self.DEMAND_SHOCK_URL)
+            if not demand_df.empty:
+                logger.info(f"Fetched demand shocks: {len(demand_df)} rows")
+        except Exception as e:
+            logger.warning(f"Demand shock download failed: {e}")
+
+        # Merge if we got both
+        if supply_df is not None and not supply_df.empty:
+            # Rename shock_value to appropriate name
+            supply_df = supply_df.rename(columns={'shock_value': 'oil_supply_shock'})
+
+            if demand_df is not None and not demand_df.empty:
+                demand_df = demand_df.rename(columns={'shock_value': 'aggregate_demand_shock'})
+                # Merge on date
+                df = pd.merge(supply_df, demand_df, on="date", how="outer")
+            else:
+                df = supply_df
+            return df
+        elif demand_df is not None and not demand_df.empty:
+            demand_df = demand_df.rename(columns={'shock_value': 'aggregate_demand_shock'})
+            return demand_df
+
+        # Try discovery from data pages as fallback
         for page_url in self.DATA_URLS:
             try:
                 logger.info(f"Discovering data links at: {page_url}")
@@ -122,20 +153,30 @@ class BaumeisterLoader(HTTPDataSource):
 
         content = response.content
 
-        # Try parsing as Excel
-        if url.endswith((".xlsx", ".xls")):
-            df = pd.read_excel(io.BytesIO(content))
-        # Try parsing as CSV
-        elif url.endswith(".csv"):
-            df = pd.read_csv(io.BytesIO(content))
-        else:
-            # Try both
-            try:
-                df = pd.read_excel(io.BytesIO(content))
-            except Exception:
-                df = pd.read_csv(io.BytesIO(content))
+        # Try parsing as Excel first (Google Drive files are often Excel)
+        try:
+            # Skip first row which has metadata, use row 1 as header
+            df = pd.read_excel(io.BytesIO(content), skiprows=1)
+            # Clean up column names
+            df = df.rename(columns={df.columns[0]: 'date'})
+            # Keep only first two columns (date and shock values)
+            df = df.iloc[:, :2]
+            df.columns = ['date', 'shock_value']
+            # Convert date column
+            df['date'] = pd.to_datetime(df['date'], errors='coerce')
+            df = df.dropna(subset=['date'])
+            return df
+        except Exception as e:
+            logger.debug(f"Excel parsing failed: {e}")
 
-        return self._standardize_columns(df)
+        # Try parsing as CSV
+        try:
+            df = pd.read_csv(io.BytesIO(content))
+            return self._standardize_columns(df)
+        except Exception as e:
+            logger.debug(f"CSV parsing failed: {e}")
+
+        raise ValueError("Could not parse response as Excel or CSV")
 
     def _discover_and_fetch(self, page_url: str) -> pd.DataFrame:
         """Discover data links on a page and fetch."""
@@ -255,7 +296,13 @@ class BaumeisterLoader(HTTPDataSource):
         quarterly = df[shock_cols].resample("QE").mean()
 
         result = quarterly.reset_index()
-        result = result.rename(columns={"date": "quarter"})
+        # Convert datetime to quarter string format (e.g., "2010Q1")
+        result["quarter"] = (
+            result["date"].dt.year.astype(str)
+            + "Q"
+            + result["date"].dt.quarter.astype(str)
+        )
+        result = result.drop(columns=["date"])
 
         return result
 

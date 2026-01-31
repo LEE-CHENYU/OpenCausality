@@ -50,32 +50,35 @@ class BNSEndpoint:
 KNOWN_ENDPOINTS: dict[BNSDataType, BNSEndpoint] = {
     BNSDataType.INCOME_PER_CAPITA: BNSEndpoint(
         data_type=BNSDataType.INCOME_PER_CAPITA,
-        discovery_url="/official/industry/14/statistic/5",
-        file_pattern=r"monetary.*income.*region",
+        iblock_id=48953,  # Quarterly per capita income
+        discovery_url="/en/industries/labor-and-income/stat-life/",
+        file_pattern=r"monetary.*income.*region|income.*capita",
         description="Per-capita monetary income by region (quarterly)",
     ),
     BNSDataType.EXPENDITURE_STRUCTURE: BNSEndpoint(
         data_type=BNSDataType.EXPENDITURE_STRUCTURE,
-        discovery_url="/official/industry/14/statistic/5",
-        file_pattern=r"expenditure.*structure|structure.*expenditure",
+        iblock_id=469805,  # Household expenses and income
+        discovery_url="/en/industries/labor-and-income/stat-life/",
+        file_pattern=r"expenditure.*structure|expense|household",
         description="Household expenditure structure (quarterly)",
     ),
     BNSDataType.MINING_SHARES: BNSEndpoint(
         data_type=BNSDataType.MINING_SHARES,
-        discovery_url="/official/industry/11/statistic/7",
+        discovery_url="/en/industries/business-statistics/stat-industry/",
         file_pattern=r"mining|extractive.*industr",
         description="Mining sector shares by region (annual)",
     ),
     BNSDataType.GRP_BY_REGION: BNSEndpoint(
         data_type=BNSDataType.GRP_BY_REGION,
-        discovery_url="/official/industry/11/statistic/6",
+        iblock_id=48510,  # Annual income data
+        discovery_url="/en/industries/economy/national-accounts/",
         file_pattern=r"gross.*regional.*product|grp.*region",
         description="GRP by region (annual)",
     ),
     BNSDataType.EMPLOYMENT: BNSEndpoint(
         data_type=BNSDataType.EMPLOYMENT,
-        discovery_url="/official/industry/13/statistic/8",
-        file_pattern=r"employment.*region|labor.*force",
+        discovery_url="/en/industries/labor-and-income/stat-occupancy/",
+        file_pattern=r"employment.*region|labor.*force|employed",
         description="Employment by region (quarterly)",
     ),
 }
@@ -128,14 +131,110 @@ class KazakhstanBNSClient(HTTPDataSource):
         raise RuntimeError(f"No valid fetch method for {data_type}")
 
     def _fetch_iblock(self, element_id: int) -> pd.DataFrame:
-        """Fetch file directly via iblock API."""
+        """Fetch file directly via iblock API (prefer CSV for structured data)."""
+        import io
+
+        # Try CSV endpoint first (better structured)
+        csv_url = f"{self.base_url}/api/iblock/element/{element_id}/csv/file/en/"
+        logger.info(f"Fetching iblock element {element_id} (CSV)")
+
+        try:
+            response = self.client.get(csv_url)
+            response.raise_for_status()
+            df = pd.read_csv(io.BytesIO(response.content), sep='\t')
+            return self._standardize_bns_data(df)
+        except Exception as e:
+            logger.debug(f"CSV fetch failed: {e}, trying Excel")
+
+        # Fallback to Excel
         url = f"{self.base_url}/api/iblock/element/{element_id}/file/en/"
-        logger.info(f"Fetching iblock element {element_id}")
+        logger.info(f"Fetching iblock element {element_id} (Excel)")
 
         response = self.client.get(url)
         response.raise_for_status()
 
         return self._parse_excel_response(response.content)
+
+    def _standardize_bns_data(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Standardize BNS CSV data to common format."""
+        # Find region column (contains 'каталог' in Kazakh)
+        region_col = None
+        for col in df.columns:
+            if 'каталог' in col.lower() or 'region' in col.lower():
+                region_col = col
+                break
+
+        if region_col is None:
+            return df
+
+        # Rename columns
+        df = df.rename(columns={
+            region_col: 'region_raw',
+            'VAL': 'value',
+            'PERIOD': 'period',
+            'DAT': 'date_raw',
+        })
+
+        # Parse value (remove space separator)
+        if 'value' in df.columns:
+            df['value'] = df['value'].astype(str).str.replace(' ', '').str.replace(',', '.')
+            df['value'] = pd.to_numeric(df['value'], errors='coerce')
+
+        # Parse period to quarter (YYYYMM -> YYYYQ#)
+        if 'period' in df.columns:
+            df['period'] = df['period'].astype(str)
+            df['year'] = df['period'].str[:4].astype(int)
+            df['month'] = df['period'].str[4:6].astype(int)
+            df['q'] = ((df['month'] - 1) // 3) + 1
+            df['quarter'] = df['year'].astype(str) + 'Q' + df['q'].astype(str)
+
+        # Standardize region names
+        df['region'] = df['region_raw'].apply(self._normalize_bns_region)
+
+        # Filter out national totals
+        df = df[~df['region_raw'].str.contains('REPUBLIC|KAZAKHSTAN', case=False, na=False)]
+
+        return df
+
+    def _normalize_bns_region(self, region: str) -> str:
+        """Normalize BNS region names to canonical form."""
+        if pd.isna(region):
+            return region
+
+        region = str(region).strip().upper()
+
+        # BNS region name mappings
+        bns_mapping = {
+            'AKMOLA REGION': 'Akmola',
+            'AKTOBE REGION': 'Aktobe',
+            'ALMATY REGION': 'Almaty Region',
+            'ALMATY CITY': 'Almaty City',
+            'ASTANA CITY': 'Astana',
+            'ATYRAU REGION': 'Atyrau',
+            'BATYS-KAZAKHSTAN REGION': 'West Kazakhstan',
+            'BATYS KAZAKHSTAN REGION': 'West Kazakhstan',
+            'WEST KAZAKHSTAN REGION': 'West Kazakhstan',
+            'ZHAMBYL REGION': 'Jambyl',
+            'KARAGANDY REGION': 'Karaganda',
+            'KARAGANDA REGION': 'Karaganda',
+            'KOSTANAY REGION': 'Kostanay',
+            'KYZYLORDA REGION': 'Kyzylorda',
+            'MANGYSTAU REGION': 'Mangystau',
+            'PAVLODAR REGION': 'Pavlodar',
+            'SOLTUSTIK KAZAKHSTAN REGION': 'North Kazakhstan',
+            'NORTH KAZAKHSTAN REGION': 'North Kazakhstan',
+            'SHYGYS KAZAKHSTAN REGION': 'East Kazakhstan',
+            'EAST KAZAKHSTAN REGION': 'East Kazakhstan',
+            'SOUTH-KAZAKHSTAN REGION': 'South Kazakhstan',
+            'SOUTH KAZAKHSTAN REGION': 'South Kazakhstan',
+            'TURKISTAN REGION': 'South Kazakhstan',  # Harmonize
+            'SHYMKENT CITY': 'South Kazakhstan',  # Harmonize
+            'ABAY REGION': 'East Kazakhstan',  # Harmonize 2022 split
+            'ZHETISU REGION': 'Almaty Region',  # Harmonize 2022 split
+            'ULYTAU REGION': 'Karaganda',  # Harmonize 2022 split
+        }
+
+        return bns_mapping.get(region, region)
 
     def _fetch_getfile(self, doc_id: str) -> pd.DataFrame:
         """Fetch file via getFile endpoint."""

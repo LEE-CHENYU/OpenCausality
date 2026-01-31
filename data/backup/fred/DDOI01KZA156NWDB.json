@@ -1,0 +1,172 @@
+{
+  "realtime_start": "2026-01-30",
+  "realtime_end": "2026-01-30",
+  "observation_start": "1960-01-01",
+  "observation_end": "9999-12-31",
+  "units": "lin",
+  "output_type": 1,
+  "file_type": "json",
+  "order_by": "observation_date",
+  "sort_order": "asc",
+  "count": 26,
+  "offset": 0,
+  "limit": 100000,
+  "observations": [
+    {
+      "realtime_start": "2026-01-30",
+      "realtime_end": "2026-01-30",
+      "date": "1996-01-01",
+      "value": "."
+    },
+    {
+      "realtime_start": "2026-01-30",
+      "realtime_end": "2026-01-30",
+      "date": "1997-01-01",
+      "value": "."
+    },
+    {
+      "realtime_start": "2026-01-30",
+      "realtime_end": "2026-01-30",
+      "date": "1998-01-01",
+      "value": "."
+    },
+    {
+      "realtime_start": "2026-01-30",
+      "realtime_end": "2026-01-30",
+      "date": "1999-01-01",
+      "value": "."
+    },
+    {
+      "realtime_start": "2026-01-30",
+      "realtime_end": "2026-01-30",
+      "date": "2000-01-01",
+      "value": "75.76032"
+    },
+    {
+      "realtime_start": "2026-01-30",
+      "realtime_end": "2026-01-30",
+      "date": "2001-01-01",
+      "value": "77.00166"
+    },
+    {
+      "realtime_start": "2026-01-30",
+      "realtime_end": "2026-01-30",
+      "date": "2002-01-01",
+      "value": "68.98626999999999"
+    },
+    {
+      "realtime_start": "2026-01-30",
+      "realtime_end": "2026-01-30",
+      "date": "2003-01-01",
+      "value": "55.78785"
+    },
+    {
+      "realtime_start": "2026-01-30",
+      "realtime_end": "2026-01-30",
+      "date": "2004-01-01",
+      "value": "52.08017"
+    },
+    {
+      "realtime_start": "2026-01-30",
+      "realtime_end": "2026-01-30",
+      "date": "2005-01-01",
+      "value": "65.73843000000001"
+    },
+    {
+      "realtime_start": "2026-01-30",
+      "realtime_end": "2026-01-30",
+      "date": "2006-01-01",
+      "value": "73.27368"
+    },
+    {
+      "realtime_start": "2026-01-30",
+      "realtime_end": "2026-01-30",
+      "date": "2007-01-01",
+      "value": "67.04762"
+    },
+    {
+      "realtime_start": "2026-01-30",
+      "realtime_end": "2026-01-30",
+      "date": "2008-01-01",
+      "value": "64.00027"
+    },
+    {
+      "realtime_start": "2026-01-30",
+      "realtime_end": "2026-01-30",
+      "date": "2009-01-01",
+      "value": "66.0012"
+    },
+    {
+      "realtime_start": "2026-01-30",
+      "realtime_end": "2026-01-30",
+      "date": "2010-01-01",
+      "value": "62.474"
+    },
+    {
+      "realtime_start": "2026-01-30",
+      "realtime_end": "2026-01-30",
+      "date": "2011-01-01",
+      "value": "54.522009999999995"
+    },
+    {
+      "realtime_start": "2026-01-30",
+      "realtime_end": "2026-01-30",
+      "date": "2012-01-01",
+      "value": "46.07724"
+    },
+    {
+      "realtime_start": "2026-01-30",
+      "realtime_end": "2026-01-30",
+      "date": "2013-01-01",
+      "value": "42.37981"
+    },
+    {
+      "realtime_start": "2026-01-30",
+      "realtime_end": "2026-01-30",
+      "date": "2014-01-01",
+      "value": "43.52652"
+    },
+    {
+      "realtime_start": "2026-01-30",
+      "realtime_end": "2026-01-30",
+      "date": "2015-01-01",
+      "value": "52.0218"
+    },
+    {
+      "realtime_start": "2026-01-30",
+      "realtime_end": "2026-01-30",
+      "date": "2016-01-01",
+      "value": "49.38545"
+    },
+    {
+      "realtime_start": "2026-01-30",
+      "realtime_end": "2026-01-30",
+      "date": "2017-01-01",
+      "value": "52.35868"
+    },
+    {
+      "realtime_start": "2026-01-30",
+      "realtime_end": "2026-01-30",
+      "date": "2018-01-01",
+      "value": "55.48562"
+    },
+    {
+      "realtime_start": "2026-01-30",
+      "realtime_end": "2026-01-30",
+      "date": "2019-01-01",
+      "value": "52.17348"
+    },
+    {
+      "realtime_start": "2026-01-30",
+      "realtime_end": "2026-01-30",
+      "date": "2020-01-01",
+      "value": "54.369209999999995"
+    },
+    {
+      "realtime_start": "2026-01-30",
+      "realtime_end": "2026-01-30",
+      "date": "2021-01-01",
+      "value": "60.320730000000005"
+    }
+  ]
+}

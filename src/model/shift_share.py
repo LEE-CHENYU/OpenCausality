@@ -152,6 +152,7 @@ class ShiftShareModel:
             X,
             entity_effects=spec.entity_effects,
             time_effects=spec.time_effects,
+            drop_absorbed=True,
         )
 
         # Fit with Driscoll-Kraay or clustered SEs

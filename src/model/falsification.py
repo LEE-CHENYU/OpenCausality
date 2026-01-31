@@ -154,14 +154,20 @@ class FalsificationTests:
         all_vars = [outcome, main_interaction] + interaction_cols
         data = data.dropna(subset=all_vars)
 
-        # Set up panel
-        data = data.set_index(["region", "quarter"])
+        # Set up panel - convert quarter to numeric for linearmodels
+        if data["quarter"].dtype == object:
+            data["time_idx"] = data["quarter"].apply(
+                lambda q: int(q[:4]) * 10 + int(q[-1])
+            )
+        else:
+            data["time_idx"] = data["quarter"]
+        data = data.set_index(["region", "time_idx"])
 
         # Fit model with leads
         X = data[[main_interaction] + interaction_cols]
         y = data[outcome]
 
-        model = PanelOLS(y, X, entity_effects=True, time_effects=True)
+        model = PanelOLS(y, X, entity_effects=True, time_effects=True, drop_absorbed=True)
         result = model.fit(cov_type="kernel")
 
         # Extract lead coefficients
@@ -240,14 +246,20 @@ class FalsificationTests:
         # Drop missing
         data = data.dropna(subset=[outcome, placebo_interaction])
 
-        # Set up panel
-        data = data.set_index(["region", "quarter"])
+        # Set up panel - convert quarter to numeric for linearmodels
+        if data["quarter"].dtype == object:
+            data["time_idx"] = data["quarter"].apply(
+                lambda q: int(q[:4]) * 10 + int(q[-1])
+            )
+        else:
+            data["time_idx"] = data["quarter"]
+        data = data.set_index(["region", "time_idx"])
 
         # Fit model
         X = data[[placebo_interaction]]
         y = data[outcome]
 
-        model = PanelOLS(y, X, entity_effects=True, time_effects=True)
+        model = PanelOLS(y, X, entity_effects=True, time_effects=True, drop_absorbed=True)
         result = model.fit(cov_type="kernel")
 
         coef = result.params[placebo_interaction]
@@ -335,14 +347,20 @@ class FalsificationTests:
                 passed=False,
             )
 
-        # Set up panel
-        data = data.set_index(["region", "quarter"])
+        # Set up panel - convert quarter to numeric for linearmodels
+        if data["quarter"].dtype == object:
+            data["time_idx"] = data["quarter"].apply(
+                lambda q: int(q[:4]) * 10 + int(q[-1])
+            )
+        else:
+            data["time_idx"] = data["quarter"]
+        data_indexed = data.set_index(["region", "time_idx"])
 
         # DiD regression
-        X = data[["affected_post"]]
-        y = data[outcome]
+        X = data_indexed[["affected_post"]]
+        y = data_indexed[outcome]
 
-        model = PanelOLS(y, X, entity_effects=True, time_effects=True)
+        model = PanelOLS(y, X, entity_effects=True, time_effects=True, drop_absorbed=True)
         result = model.fit(cov_type="kernel")
 
         diff = result.params["affected_post"]
@@ -350,7 +368,6 @@ class FalsificationTests:
         pval = result.pvalues["affected_post"]
 
         # Compute pre/post means for affected regions
-        data = data.reset_index()
         affected_data = data[data["affected"] == 1]
         pre_mean = affected_data[affected_data["post"] == 0][outcome].mean()
         post_mean = affected_data[affected_data["post"] == 1][outcome].mean()

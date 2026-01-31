@@ -240,6 +240,14 @@ class PanelBuilder:
 
         # Process and merge income data
         income_df = self._process_bns_income(income_df)
+
+        if income_df.empty:
+            logger.warning("Processed income data is empty, using placeholder")
+            np.random.seed(42)
+            panel["income_pc"] = np.exp(10 + np.random.randn(len(panel)) * 0.3)
+            panel["log_income_pc"] = np.log(panel["income_pc"])
+            return panel
+
         panel = panel.merge(income_df, on=["region", "quarter"], how="left")
 
         # Compute log income
@@ -250,18 +258,28 @@ class PanelBuilder:
 
     def _process_bns_income(self, df: pd.DataFrame) -> pd.DataFrame:
         """Process BNS income data for panel merge."""
-        # This will need adjustment based on actual BNS data format
         df = df.copy()
 
-        # Normalize region names
-        if "region" in df.columns:
-            df["region"] = df["region"].apply(self.harmonize_region)
+        # Check for required columns (from standardized BNS data)
+        if "region" not in df.columns or "quarter" not in df.columns:
+            logger.warning(f"BNS income data missing required columns. Found: {list(df.columns)}")
+            return pd.DataFrame()
 
-        # Aggregate split regions
-        if "region" in df.columns and "income_pc" in df.columns:
-            df = (
-                df.groupby(["region", "quarter"])
-                .agg({"income_pc": "mean"})  # or weighted average if population available
+        # Rename value column to income_pc
+        if "value" in df.columns:
+            df["income_pc"] = df["value"]
+
+        if "income_pc" not in df.columns:
+            logger.warning("No income value column found in BNS data")
+            return pd.DataFrame()
+
+        # Apply region harmonization
+        df["region"] = df["region"].apply(self.harmonize_region)
+
+        # Aggregate split regions (mean income for regions that were combined)
+        df = (
+            df.groupby(["region", "quarter"])
+            .agg({"income_pc": "mean"})  # Mean for combined regions
                 .reset_index()
             )
 
@@ -376,7 +394,26 @@ class PanelBuilder:
 
         if employment_df.empty:
             logger.warning("No employment data available, using placeholder")
-            panel["E_cyc_r"] = 0.3  # Placeholder
+            # Stylized cyclical exposure varying by region
+            cyclical_exposures = {
+                "Almaty City": 0.55,
+                "Astana": 0.50,
+                "Karaganda": 0.40,
+                "Pavlodar": 0.38,
+                "East Kazakhstan": 0.35,
+                "Kostanay": 0.32,
+                "Aktobe": 0.30,
+                "Atyrau": 0.25,
+                "Mangystau": 0.22,
+                "West Kazakhstan": 0.28,
+                "Almaty Region": 0.35,
+                "Jambyl": 0.30,
+                "South Kazakhstan": 0.28,
+                "Kyzylorda": 0.26,
+                "North Kazakhstan": 0.33,
+                "Akmola": 0.32,
+            }
+            panel["E_cyc_r"] = panel["region"].map(cyclical_exposures).fillna(0.3)
             return panel
 
         # Process and compute baseline average

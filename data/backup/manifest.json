@@ -1,0 +1,777 @@
+{
+  "manifest_version": "1.0",
+  "created_at": "2026-01-30T20:21:02.276994",
+  "total_datasets": 68,
+  "datasets": [
+    {
+      "source": "FRED",
+      "series": "DCOILBRENTEU",
+      "filepath": "fred/DCOILBRENTEU.parquet",
+      "rows": 10094,
+      "date_range": [
+        "1987-05-20",
+        "2026-01-26"
+      ],
+      "notes": "Brent Crude Oil Price",
+      "downloaded_at": "2026-01-30T20:17:52.172535"
+    },
+    {
+      "source": "FRED",
+      "series": "DCOILWTICO",
+      "filepath": "fred/DCOILWTICO.parquet",
+      "rows": 10453,
+      "date_range": [
+        "1986-01-02",
+        "2026-01-26"
+      ],
+      "notes": "WTI Crude Oil Price",
+      "downloaded_at": "2026-01-30T20:17:52.892511"
+    },
+    {
+      "source": "FRED",
+      "series": "GASREGW",
+      "filepath": "fred/GASREGW.parquet",
+      "rows": 1850,
+      "date_range": [
+        "1990-08-20",
+        "2026-01-26"
+      ],
+      "notes": "US Regular Gasoline Prices",
+      "downloaded_at": "2026-01-30T20:17:53.293567"
+    },
+    {
+      "source": "FRED",
+      "series": "DHHNGSP",
+      "filepath": "fred/DHHNGSP.parquet",
+      "rows": 7580,
+      "date_range": [
+        "1997-01-07",
+        "2026-01-26"
+      ],
+      "notes": "Henry Hub Natural Gas Price",
+      "downloaded_at": "2026-01-30T20:17:53.873293"
+    },
+    {
+      "source": "FRED",
+      "series": "PNRGINDEXM",
+      "filepath": "fred/PNRGINDEXM.parquet",
+      "rows": 408,
+      "date_range": [
+        "1992-01-01",
+        "2025-12-01"
+      ],
+      "notes": "Global Price of Energy Index",
+      "downloaded_at": "2026-01-30T20:17:54.220477"
+    },
+    {
+      "source": "FRED",
+      "series": "IGREA",
+      "filepath": "fred/IGREA.parquet",
+      "rows": 695,
+      "date_range": [
+        "1968-01-01",
+        "2025-11-01"
+      ],
+      "notes": "Kilian Global Real Economic Activity Index",
+      "downloaded_at": "2026-01-30T20:17:54.892483"
+    },
+    {
+      "source": "FRED",
+      "series": "WTISPLC",
+      "filepath": "fred/WTISPLC.parquet",
+      "rows": 792,
+      "date_range": [
+        "1960-01-01",
+        "2025-12-01"
+      ],
+      "notes": "Spot Crude Oil Price: WTI",
+      "downloaded_at": "2026-01-30T20:17:55.814787"
+    },
+    {
+      "source": "FRED",
+      "series": "VIXCLS",
+      "filepath": "fred/VIXCLS.parquet",
+      "rows": 9413,
+      "date_range": [
+        "1990-01-02",
+        "2026-01-29"
+      ],
+      "notes": "CBOE Volatility Index (VIX)",
+      "downloaded_at": "2026-01-30T20:17:56.580448"
+    },
+    {
+      "source": "FRED",
+      "series": "STLFSI4",
+      "filepath": "fred/STLFSI4.parquet",
+      "rows": 1674,
+      "date_range": [
+        "1993-12-31",
+        "2026-01-23"
+      ],
+      "notes": "St. Louis Fed Financial Stress Index",
+      "downloaded_at": "2026-01-30T20:17:57.354556"
+    },
+    {
+      "source": "FRED",
+      "series": "NFCI",
+      "filepath": "fred/NFCI.parquet",
+      "rows": 2873,
+      "date_range": [
+        "1971-01-08",
+        "2026-01-23"
+      ],
+      "notes": "Chicago Fed Financial Conditions Index",
+      "downloaded_at": "2026-01-30T20:18:12.173156"
+    },
+    {
+      "source": "FRED",
+      "series": "TEDRATE",
+      "filepath": "fred/TEDRATE.parquet",
+      "rows": 9407,
+      "date_range": [
+        "1986-01-02",
+        "2022-01-21"
+      ],
+      "notes": "TED Spread",
+      "downloaded_at": "2026-01-30T20:18:12.797737"
+    },
+    {
+      "source": "FRED",
+      "series": "BAMLH0A0HYM2",
+      "filepath": "fred/BAMLH0A0HYM2.parquet",
+      "rows": 7686,
+      "date_range": [
+        "1996-12-31",
+        "2026-01-29"
+      ],
+      "notes": "ICE BofA US High Yield Index",
+      "downloaded_at": "2026-01-30T20:18:13.462921"
+    },
+    {
+      "source": "FRED",
+      "series": "DEXUSEU",
+      "filepath": "fred/DEXUSEU.parquet",
+      "rows": 7060,
+      "date_range": [
+        "1999-01-04",
+        "2026-01-23"
+      ],
+      "notes": "US/Euro Exchange Rate",
+      "downloaded_at": "2026-01-30T20:18:14.725674"
+    },
+    {
+      "source": "FRED",
+      "series": "DEXUSUK",
+      "filepath": "fred/DEXUSUK.parquet",
+      "rows": 14365,
+      "date_range": [
+        "1971-01-04",
+        "2026-01-23"
+      ],
+      "notes": "US/UK Exchange Rate",
+      "downloaded_at": "2026-01-30T20:18:15.729209"
+    },
+    {
+      "source": "FRED",
+      "series": "DEXJPUS",
+      "filepath": "fred/DEXJPUS.parquet",
+      "rows": 14365,
+      "date_range": [
+        "1971-01-04",
+        "2026-01-23"
+      ],
+      "notes": "Japan/US Exchange Rate",
+      "downloaded_at": "2026-01-30T20:18:16.657271"
+    },
+    {
+      "source": "FRED",
+      "series": "DEXCHUS",
+      "filepath": "fred/DEXCHUS.parquet",
+      "rows": 11756,
+      "date_range": [
+        "1981-01-02",
+        "2026-01-23"
+      ],
+      "notes": "China/US Exchange Rate",
+      "downloaded_at": "2026-01-30T20:18:17.608891"
+    },
+    {
+      "source": "FRED",
+      "series": "DTWEXBGS",
+      "filepath": "fred/DTWEXBGS.parquet",
+      "rows": 5235,
+      "date_range": [
+        "2006-01-02",
+        "2026-01-23"
+      ],
+      "notes": "Trade Weighted US Dollar Index: Broad",
+      "downloaded_at": "2026-01-30T20:18:18.486475"
+    },
+    {
+      "source": "FRED",
+      "series": "FEDFUNDS",
+      "filepath": "fred/FEDFUNDS.parquet",
+      "rows": 792,
+      "date_range": [
+        "1960-01-01",
+        "2025-12-01"
+      ],
+      "notes": "Federal Funds Rate",
+      "downloaded_at": "2026-01-30T20:18:18.901144"
+    },
+    {
+      "source": "FRED",
+      "series": "DGS10",
+      "filepath": "fred/DGS10.parquet",
+      "rows": 16718,
+      "date_range": [
+        "1962-01-02",
+        "2026-01-29"
+      ],
+      "notes": "10-Year Treasury Constant Maturity",
+      "downloaded_at": "2026-01-30T20:18:20.013072"
+    },
+    {
+      "source": "FRED",
+      "series": "DGS2",
+      "filepath": "fred/DGS2.parquet",
+      "rows": 12958,
+      "date_range": [
+        "1976-06-01",
+        "2026-01-29"
+      ],
+      "notes": "2-Year Treasury Constant Maturity",
+      "downloaded_at": "2026-01-30T20:18:20.840518"
+    },
+    {
+      "source": "FRED",
+      "series": "T10Y2Y",
+      "filepath": "fred/T10Y2Y.parquet",
+      "rows": 12959,
+      "date_range": [
+        "1976-06-01",
+        "2026-01-30"
+      ],
+      "notes": "10-Year Minus 2-Year Treasury Spread",
+      "downloaded_at": "2026-01-30T20:18:21.919829"
+    },
+    {
+      "source": "FRED",
+      "series": "DFEDTARU",
+      "filepath": "fred/DFEDTARU.parquet",
+      "rows": 6255,
+      "date_range": [
+        "2008-12-16",
+        "2026-01-30"
+      ],
+      "notes": "Federal Funds Target Range Upper",
+      "downloaded_at": "2026-01-30T20:18:23.099620"
+    },
+    {
+      "source": "FRED",
+      "series": "CPIAUCSL",
+      "filepath": "fred/CPIAUCSL.parquet",
+      "rows": 792,
+      "date_range": [
+        "1960-01-01",
+        "2025-12-01"
+      ],
+      "notes": "Consumer Price Index for All Urban Consumers",
+      "downloaded_at": "2026-01-30T20:18:23.969630"
+    },
+    {
+      "source": "FRED",
+      "series": "CPILFESL",
+      "filepath": "fred/CPILFESL.parquet",
+      "rows": 792,
+      "date_range": [
+        "1960-01-01",
+        "2025-12-01"
+      ],
+      "notes": "Core CPI (Less Food and Energy)",
+      "downloaded_at": "2026-01-30T20:18:24.832981"
+    },
+    {
+      "source": "FRED",
+      "series": "PCEPI",
+      "filepath": "fred/PCEPI.parquet",
+      "rows": 791,
+      "date_range": [
+        "1960-01-01",
+        "2025-11-01"
+      ],
+      "notes": "Personal Consumption Expenditures Price Index",
+      "downloaded_at": "2026-01-30T20:18:25.741070"
+    },
+    {
+      "source": "FRED",
+      "series": "PCEPILFE",
+      "filepath": "fred/PCEPILFE.parquet",
+      "rows": 791,
+      "date_range": [
+        "1960-01-01",
+        "2025-11-01"
+      ],
+      "notes": "Core PCE Price Index",
+      "downloaded_at": "2026-01-30T20:18:26.266685"
+    },
+    {
+      "source": "FRED",
+      "series": "MICH",
+      "filepath": "fred/MICH.parquet",
+      "rows": 576,
+      "date_range": [
+        "1978-01-01",
+        "2025-12-01"
+      ],
+      "notes": "University of Michigan Inflation Expectation",
+      "downloaded_at": "2026-01-30T20:18:26.788358"
+    },
+    {
+      "source": "FRED",
+      "series": "T5YIE",
+      "filepath": "fred/T5YIE.parquet",
+      "rows": 6022,
+      "date_range": [
+        "2003-01-02",
+        "2026-01-30"
+      ],
+      "notes": "5-Year Breakeven Inflation Rate",
+      "downloaded_at": "2026-01-30T20:18:28.456109"
+    },
+    {
+      "source": "FRED",
+      "series": "UNRATE",
+      "filepath": "fred/UNRATE.parquet",
+      "rows": 792,
+      "date_range": [
+        "1960-01-01",
+        "2025-12-01"
+      ],
+      "notes": "Unemployment Rate",
+      "downloaded_at": "2026-01-30T20:18:29.200805"
+    },
+    {
+      "source": "FRED",
+      "series": "PAYEMS",
+      "filepath": "fred/PAYEMS.parquet",
+      "rows": 792,
+      "date_range": [
+        "1960-01-01",
+        "2025-12-01"
+      ],
+      "notes": "Total Nonfarm Payrolls",
+      "downloaded_at": "2026-01-30T20:18:29.459267"
+    },
+    {
+      "source": "FRED",
+      "series": "ICSA",
+      "filepath": "fred/ICSA.parquet",
+      "rows": 3082,
+      "date_range": [
+        "1967-01-07",
+        "2026-01-24"
+      ],
+      "notes": "Initial Jobless Claims",
+      "downloaded_at": "2026-01-30T20:18:29.861914"
+    },
+    {
+      "source": "FRED",
+      "series": "JTSJOL",
+      "filepath": "fred/JTSJOL.parquet",
+      "rows": 300,
+      "date_range": [
+        "2000-12-01",
+        "2025-11-01"
+      ],
+      "notes": "Job Openings: Total Nonfarm",
+      "downloaded_at": "2026-01-30T20:18:30.220168"
+    },
+    {
+      "source": "FRED",
+      "series": "GDPC1",
+      "filepath": "fred/GDPC1.parquet",
+      "rows": 263,
+      "date_range": [
+        "1960-01-01",
+        "2025-07-01"
+      ],
+      "notes": "Real GDP",
+      "downloaded_at": "2026-01-30T20:18:30.425343"
+    },
+    {
+      "source": "FRED",
+      "series": "A191RL1Q225SBEA",
+      "filepath": "fred/A191RL1Q225SBEA.parquet",
+      "rows": 263,
+      "date_range": [
+        "1960-01-01",
+        "2025-07-01"
+      ],
+      "notes": "Real GDP Growth Rate",
+      "downloaded_at": "2026-01-30T20:18:30.760994"
+    },
+    {
+      "source": "FRED",
+      "series": "INDPRO",
+      "filepath": "fred/INDPRO.parquet",
+      "rows": 792,
+      "date_range": [
+        "1960-01-01",
+        "2025-12-01"
+      ],
+      "notes": "Industrial Production Index",
+      "downloaded_at": "2026-01-30T20:18:31.019071"
+    },
+    {
+      "source": "FRED",
+      "series": "M2SL",
+      "filepath": "fred/M2SL.parquet",
+      "rows": 792,
+      "date_range": [
+        "1960-01-01",
+        "2025-12-01"
+      ],
+      "notes": "M2 Money Stock",
+      "downloaded_at": "2026-01-30T20:18:32.159981"
+    },
+    {
+      "source": "FRED",
+      "series": "BOGMBASE",
+      "filepath": "fred/BOGMBASE.parquet",
+      "rows": 792,
+      "date_range": [
+        "1960-01-01",
+        "2025-12-01"
+      ],
+      "notes": "Monetary Base",
+      "downloaded_at": "2026-01-30T20:18:32.632682"
+    },
+    {
+      "source": "FRED",
+      "series": "WALCL",
+      "filepath": "fred/WALCL.parquet",
+      "rows": 1207,
+      "date_range": [
+        "2002-12-18",
+        "2026-01-28"
+      ],
+      "notes": "Fed Total Assets",
+      "downloaded_at": "2026-01-30T20:18:33.160806"
+    },
+    {
+      "source": "FRED",
+      "series": "PPIACO",
+      "filepath": "fred/PPIACO.parquet",
+      "rows": 792,
+      "date_range": [
+        "1960-01-01",
+        "2025-12-01"
+      ],
+      "notes": "Producer Price Index: All Commodities",
+      "downloaded_at": "2026-01-30T20:18:33.623282"
+    },
+    {
+      "source": "FRED",
+      "series": "PCOPPUSDM",
+      "filepath": "fred/PCOPPUSDM.parquet",
+      "rows": 552,
+      "date_range": [
+        "1980-01-01",
+        "2025-12-01"
+      ],
+      "notes": "Global Copper Price",
+      "downloaded_at": "2026-01-30T20:18:33.906256"
+    },
+    {
+      "source": "FRED",
+      "series": "PALLFNFINDEXM",
+      "filepath": "fred/PALLFNFINDEXM.parquet",
+      "rows": 408,
+      "date_range": [
+        "1992-01-01",
+        "2025-12-01"
+      ],
+      "notes": "All Commodities Index",
+      "downloaded_at": "2026-01-30T20:18:34.593740"
+    },
+    {
+      "source": "FRED",
+      "series": "PFOODINDEXM",
+      "filepath": "fred/PFOODINDEXM.parquet",
+      "rows": 420,
+      "date_range": [
+        "1991-01-01",
+        "2025-12-01"
+      ],
+      "notes": "Food Price Index",
+      "downloaded_at": "2026-01-30T20:18:34.953056"
+    },
+    {
+      "source": "FRED",
+      "series": "PMETAINDEXM",
+      "filepath": "fred/PMETAINDEXM.parquet",
+      "rows": 552,
+      "date_range": [
+        "1980-01-01",
+        "2025-12-01"
+      ],
+      "notes": "Metals Price Index",
+      "downloaded_at": "2026-01-30T20:18:35.180437"
+    },
+    {
+      "source": "FRED",
+      "series": "GEPUCURRENT",
+      "filepath": "fred/GEPUCURRENT.parquet",
+      "rows": 346,
+      "date_range": [
+        "1997-01-01",
+        "2025-10-01"
+      ],
+      "notes": "Global Economic Policy Uncertainty Index",
+      "downloaded_at": "2026-01-30T20:18:35.471465"
+    },
+    {
+      "source": "FRED",
+      "series": "USEPUINDXD",
+      "filepath": "fred/USEPUINDXD.parquet",
+      "rows": 15004,
+      "date_range": [
+        "1985-01-01",
+        "2026-01-29"
+      ],
+      "notes": "US Economic Policy Uncertainty Index",
+      "downloaded_at": "2026-01-30T20:18:36.546766"
+    },
+    {
+      "source": "FRED",
+      "series": "UMCSENT",
+      "filepath": "fred/UMCSENT.parquet",
+      "rows": 792,
+      "date_range": [
+        "1960-01-01",
+        "2025-12-01"
+      ],
+      "notes": "University of Michigan Consumer Sentiment",
+      "downloaded_at": "2026-01-30T20:18:37.229950"
+    },
+    {
+      "source": "FRED",
+      "series": "CSCICP03USM665S",
+      "filepath": "fred/CSCICP03USM665S.parquet",
+      "rows": 769,
+      "date_range": [
+        "1960-01-01",
+        "2024-01-01"
+      ],
+      "notes": "Consumer Confidence Index",
+      "downloaded_at": "2026-01-30T20:18:37.721349"
+    },
+    {
+      "source": "FRED",
+      "series": "BSCICP03USM665S",
+      "filepath": "fred/BSCICP03USM665S.parquet",
+      "rows": 769,
+      "date_range": [
+        "1960-01-01",
+        "2024-01-01"
+      ],
+      "notes": "Business Confidence Index",
+      "downloaded_at": "2026-01-30T20:18:38.643964"
+    },
+    {
+      "source": "FRED",
+      "series": "CSUSHPISA",
+      "filepath": "fred/CSUSHPISA.parquet",
+      "rows": 611,
+      "date_range": [
+        "1975-01-01",
+        "2025-11-01"
+      ],
+      "notes": "Case-Shiller Home Price Index",
+      "downloaded_at": "2026-01-30T20:18:38.904308"
+    },
+    {
+      "source": "FRED",
+      "series": "HOUST",
+      "filepath": "fred/HOUST.parquet",
+      "rows": 790,
+      "date_range": [
+        "1960-01-01",
+        "2025-10-01"
+      ],
+      "notes": "Housing Starts",
+      "downloaded_at": "2026-01-30T20:18:39.343457"
+    },
+    {
+      "source": "FRED",
+      "series": "PERMIT",
+      "filepath": "fred/PERMIT.parquet",
+      "rows": 790,
+      "date_range": [
+        "1960-01-01",
+        "2025-10-01"
+      ],
+      "notes": "Building Permits",
+      "downloaded_at": "2026-01-30T20:18:39.729617"
+    },
+    {
+      "source": "FRED",
+      "series": "BAMLC0A0CM",
+      "filepath": "fred/BAMLC0A0CM.parquet",
+      "rows": 7686,
+      "date_range": [
+        "1996-12-31",
+        "2026-01-29"
+      ],
+      "notes": "ICE BofA US Corporate Index",
+      "downloaded_at": "2026-01-30T20:18:40.537130"
+    },
+    {
+      "source": "FRED",
+      "series": "BAMLC0A4CBBB",
+      "filepath": "fred/BAMLC0A4CBBB.parquet",
+      "rows": 7686,
+      "date_range": [
+        "1996-12-31",
+        "2026-01-29"
+      ],
+      "notes": "ICE BofA BBB US Corporate Index",
+      "downloaded_at": "2026-01-30T20:18:41.513760"
+    },
+    {
+      "source": "FRED",
+      "series": "BAMLH0A0HYM2EY",
+      "filepath": "fred/BAMLH0A0HYM2EY.parquet",
+      "rows": 7686,
+      "date_range": [
+        "1996-12-31",
+        "2026-01-29"
+      ],
+      "notes": "ICE BofA High Yield Effective Yield",
+      "downloaded_at": "2026-01-30T20:18:42.092266"
+    },
+    {
+      "source": "Baumeister",
+      "series": "oil_supply_shocks",
+      "filepath": "baumeister/oil_supply_shocks.parquet",
+      "rows": 608,
+      "date_range": [
+        "1975-02-01",
+        "2025-09-01"
+      ],
+      "notes": "Baumeister-Hamilton (2019) AER structural shocks",
+      "downloaded_at": "2026-01-30T20:18:44.249474"
+    },
+    {
+      "source": "Baumeister",
+      "series": "oil_demand_shocks",
+      "filepath": "baumeister/oil_demand_shocks.parquet",
+      "rows": 608,
+      "date_range": [
+        "1975-02-01",
+        "2025-09-01"
+      ],
+      "notes": "Baumeister-Hamilton (2019) AER structural shocks",
+      "downloaded_at": "2026-01-30T20:18:45.698542"
+    },
+    {
+      "source": "BNS_Kazakhstan",
+      "series": "iblock_48510",
+      "filepath": "bns/iblock_48510.parquet",
+      "rows": 441,
+      "date_range": null,
+      "notes": "Average per capita nominal monetary income of the population()",
+      "downloaded_at": "2026-01-30T20:18:52.465105"
+    },
+    {
+      "source": "BNS_Kazakhstan",
+      "series": "iblock_48953",
+      "filepath": "bns/iblock_48953.parquet",
+      "rows": 1126,
+      "date_range": null,
+      "notes": "Average per capita nominal monetary income of the population()",
+      "downloaded_at": "2026-01-30T20:19:48.342293"
+    },
+    {
+      "source": "WorldBank",
+      "series": "NY.GDP.MKTP.CD",
+      "filepath": "worldbank/NY_GDP_MKTP_CD.parquet",
+      "rows": 7,
+      "notes": "Central Asia: GDP (current US$)",
+      "downloaded_at": "2026-01-30T20:20:57.601871"
+    },
+    {
+      "source": "WorldBank",
+      "series": "NY.GDP.MKTP.KD.ZG",
+      "filepath": "worldbank/NY_GDP_MKTP_KD_ZG.parquet",
+      "rows": 7,
+      "notes": "Central Asia: GDP growth (annual %)",
+      "downloaded_at": "2026-01-30T20:20:58.091659"
+    },
+    {
+      "source": "WorldBank",
+      "series": "NY.GDP.PCAP.CD",
+      "filepath": "worldbank/NY_GDP_PCAP_CD.parquet",
+      "rows": 7,
+      "notes": "Central Asia: GDP per capita (current US$)",
+      "downloaded_at": "2026-01-30T20:20:58.742839"
+    },
+    {
+      "source": "WorldBank",
+      "series": "FP.CPI.TOTL.ZG",
+      "filepath": "worldbank/FP_CPI_TOTL_ZG.parquet",
+      "rows": 7,
+      "notes": "Central Asia: Inflation, consumer prices (annual %)",
+      "downloaded_at": "2026-01-30T20:20:59.140768"
+    },
+    {
+      "source": "WorldBank",
+      "series": "SL.UEM.TOTL.ZS",
+      "filepath": "worldbank/SL_UEM_TOTL_ZS.parquet",
+      "rows": 7,
+      "notes": "Central Asia: Unemployment, total (% of labor force)",
+      "downloaded_at": "2026-01-30T20:20:59.488444"
+    },
+    {
+      "source": "WorldBank",
+      "series": "NE.EXP.GNFS.ZS",
+      "filepath": "worldbank/NE_EXP_GNFS_ZS.parquet",
+      "rows": 7,
+      "notes": "Central Asia: Exports of goods and services (% of GDP)",
+      "downloaded_at": "2026-01-30T20:21:00.247064"
+    },
+    {
+      "source": "WorldBank",
+      "series": "NE.IMP.GNFS.ZS",
+      "filepath": "worldbank/NE_IMP_GNFS_ZS.parquet",
+      "rows": 7,
+      "notes": "Central Asia: Imports of goods and services (% of GDP)",
+      "downloaded_at": "2026-01-30T20:21:00.864546"
+    },
+    {
+      "source": "WorldBank",
+      "series": "BX.KLT.DINV.WD.GD.ZS",
+      "filepath": "worldbank/BX_KLT_DINV_WD_GD_ZS.parquet",
+      "rows": 7,
+      "notes": "Central Asia: FDI net inflows (% of GDP)",
+      "downloaded_at": "2026-01-30T20:21:01.231774"
+    },
+    {
+      "source": "WorldBank",
+      "series": "PA.NUS.FCRF",
+      "filepath": "worldbank/PA_NUS_FCRF.parquet",
+      "rows": 7,
+      "notes": "Central Asia: Official exchange rate (LCU per US$)",
+      "downloaded_at": "2026-01-30T20:21:01.758718"
+    },
+    {
+      "source": "WorldBank",
+      "series": "SI.POV.GINI",
+      "filepath": "worldbank/SI_POV_GINI.parquet",
+      "rows": 7,
+      "notes": "Central Asia: Gini index",
+      "downloaded_at": "2026-01-30T20:21:02.276167"
+    }
+  ]
+}
