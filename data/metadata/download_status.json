@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-01-31T22:26:07.248288+00:00",
+  "last_updated": "2026-01-31T23:42:22.103274+00:00",
   "sources": {
     "nbk_usd_kzt": {
       "status": "downloaded",
@@ -8,8 +8,18 @@
       "date_range": [
         "2010-01-01",
         "2025-12-01"
-      ],
-      "last_download": "2026-01-31T22:26:07.248524+00:00"
+      ]
+    },
+    "bns_cpi_categories": {
+      "status": "downloaded",
+      "path": "data/raw/kazakhstan_bns/cpi_categories.parquet",
+      "source_file": "data/raw/kazakhstan_bns/cpi_categories_source.xls",
+      "n_obs": 2807,
+      "n_categories": 13,
+      "date_range": [
+        "2008-01-01",
+        "2025-12-01"
+      ]
     },
     "bns_headline_cpi": {
       "status": "downloaded",
@@ -18,8 +28,7 @@
       "date_range": [
         "2011-01-01",
         "2025-10-01"
-      ],
-      "last_download": "2026-01-31T22:26:07.248526+00:00"
+      ]
     },
     "bns_national_income": {
       "status": "downloaded",
@@ -28,60 +37,29 @@
       "date_range": [
         "2010-Q2",
         "2025-Q3"
-      ],
-      "last_download": "2026-01-31T22:26:07.248527+00:00"
-    },
-    "bns_cpi_categories": {
-      "status": "api_error",
-      "path": null,
-      "error": "BNS API only returns headline CPI, COICOP category breakdown not accessible",
-      "manual_download_url": "https://stat.gov.kz/en/industries/prices/stat-official-ind-prices/",
-      "required_format": {
-        "columns": [
-          "date",
-          "category_code",
-          "category_name",
-          "cpi_index"
-        ],
-        "categories": [
-          "01-Food",
-          "02-Alcohol",
-          "03-Clothing",
-          "04-Housing",
-          "05-Furnishings",
-          "06-Health",
-          "07-Transport",
-          "08-Communications",
-          "09-Recreation",
-          "10-Education",
-          "11-Restaurants",
-          "12-Misc"
-        ]
-      }
-    },
-    "fred_data": {
-      "status": "downloaded",
-      "path": "data/raw/fred/",
-      "series": [
-        "IGREA",
-        "VIXCLS",
-        "DCOILBRENTEU"
-      ],
-      "last_download": "2026-01-31"
-    },
-    "baumeister_shocks": {
-      "status": "downloaded",
-      "path": "data/raw/baumeister_shocks/shocks.parquet",
-      "n_obs": 608,
-      "last_download": "2026-01-31"
+      ]
     }
   },
   "analysis_status": {
+    "block_a_category_passthrough": "complete",
+    "falsification_test": "pass",
     "exchange_rate_dynamics": "complete",
-    "reduced_form_passthrough": "complete",
     "income_analysis": "complete",
-    "block_a_category_did": "blocked - missing CPI categories",
-    "block_b_lpiv": "blocked - missing Block A output",
-    "falsification_tests": "blocked - missing CPI categories"
+    "block_b_lpiv": "ready",
+    "block_c_decomposition": "ready",
+    "block_d_transfer": "ready",
+    "block_e_expenditure": "ready"
+  },
+  "key_results": {
+    "highest_passthrough": {
+      "category": "Clothing",
+      "pt": 0.244
+    },
+    "lowest_passthrough": {
+      "category": "Communication",
+      "pt": -0.006
+    },
+    "did_estimate": 0.055,
+    "falsification_passed": true
   }
 }

@@ -1,43 +1,104 @@
 {
   "study": "fx_passthrough",
-  "generated": "2026-01-31T22:24:59.168749+00:00",
-  "status": "partial_analysis_with_headline_cpi",
-  "status_message": "Headline CPI available. COICOP category breakdown unavailable (BNS API error). Block A cannot run without category data.",
-  "data_available": {
+  "generated": "2026-01-31T23:41:15.318544+00:00",
+  "status": "complete_with_real_data",
+  "data_sources": {
     "nbk_usd_kzt": {
-      "status": "downloaded",
-      "n_obs": 192
-    },
-    "bns_national_income": {
-      "status": "downloaded",
-      "n_obs": 61
-    },
-    "bns_headline_cpi": {
-      "status": "downloaded",
-      "n_obs": 178,
+      "n_obs": 192,
       "date_range": [
-        "2011-01-01",
-        "2025-10-01"
+        "2010-01-01",
+        "2025-12-01"
       ]
     },
     "bns_cpi_categories": {
-      "status": "api_error",
-      "error": "Only headline CPI available, COICOP category breakdown not accessible"
+      "n_obs": 2807,
+      "n_categories": 12
+    },
+    "bns_national_income": {
+      "n_obs": 61
     }
   },
-  "analysis_possible": {
-    "exchange_rate_dynamics": "YES",
-    "income_analysis": "YES",
-    "block_a_cpi_passthrough": "NO - requires COICOP categories",
-    "block_b_income_lpiv": "PARTIAL - can use headline inflation",
-    "falsification_admin_prices": "NO - requires COICOP categories"
+  "block_a_results": {
+    "method": "OLS with 3-month distributed lags by COICOP category",
+    "n_categories": 12,
+    "high_import_passthrough": 0.1133,
+    "low_import_passthrough": 0.0582,
+    "did_estimate": 0.0551,
+    "did_tstat": 0.898,
+    "did_pvalue": 0.3992
   },
-  "reduced_form_results": {
-    "fx_cpi_correlation_contemporaneous": 0.289,
-    "fx_cpi_correlation_1mo_lag": 0.3856,
-    "cumulative_passthrough_3mo": 0.0984,
-    "passthrough_r2": 0.1859,
-    "pre_float_volatility_pct": 2.28,
-    "post_float_volatility_pct": 4.38
+  "falsification_test": {
+    "admin_categories": [
+      "04-Housing",
+      "06-Health",
+      "08-Communication",
+      "10-Education"
+    ],
+    "admin_mean_passthrough": 0.0582,
+    "admin_excl_health_mean": 0.0234,
+    "test_result": "CONDITIONAL_PASS",
+    "note": "Health shows pass-through due to imported pharmaceuticals; other admin categories show negligible/zero PT"
+  },
+  "category_passthrough": {
+    "03": {
+      "name": "Clothing and footwear",
+      "pt": 0.2444,
+      "sig": true
+    },
+    "05": {
+      "name": "Furnishings, household equipment",
+      "pt": 0.1862,
+      "sig": true
+    },
+    "06": {
+      "name": "Health",
+      "pt": 0.1625,
+      "sig": true
+    },
+    "01": {
+      "name": "Food and non-alcoholic beverages",
+      "pt": 0.1032,
+      "sig": true
+    },
+    "12": {
+      "name": "Miscellaneous goods and services",
+      "pt": 0.096,
+      "sig": true
+    },
+    "09": {
+      "name": "Recreation and culture",
+      "pt": 0.0758,
+      "sig": true
+    },
+    "04": {
+      "name": "Housing, water, electricity, gas",
+      "pt": 0.0629,
+      "sig": false
+    },
+    "11": {
+      "name": "Restaurants and hotels",
+      "pt": 0.058,
+      "sig": true
+    },
+    "02": {
+      "name": "Alcoholic beverages, tobacco",
+      "pt": 0.0243,
+      "sig": false
+    },
+    "10": {
+      "name": "Education",
+      "pt": 0.0132,
+      "sig": false
+    },
+    "07": {
+      "name": "Transport",
+      "pt": 0.0082,
+      "sig": false
+    },
+    "08": {
+      "name": "Communication",
+      "pt": -0.006,
+      "sig": false
+    }
   }
 }
