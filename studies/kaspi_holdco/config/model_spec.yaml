@@ -1,0 +1,135 @@
+# Kaspi.kz Holding Company Capital Adequacy Model Specification
+# =============================================================
+
+study:
+  name: "Kaspi.kz HoldCo Capital Adequacy"
+  version: "1.0.0"
+  description: |
+    Holding company capital adequacy sensitivity analysis for Kaspi.kz.
+    Focuses on parent-level solvency and liquidity, not Basel bank ratios.
+
+# Data source: FY2024 20-F filing
+data_source:
+  filing: "20-F"
+  fiscal_year: 2024
+  filing_date: "2025-03-XX"
+
+# Bank-level parameters (NBK framework)
+bank:
+  # Regulatory ratios
+  k1_2_minimum: 0.105  # 10.5%
+  k2_minimum: 0.12     # 12.0%
+
+  # FY2024 actuals (KZT bn)
+  baseline:
+    rwa: 8059
+    tier1_capital: 1016
+    total_capital: 1027
+    k1_2_ratio: 0.126   # 12.6%
+    k2_ratio: 0.127     # 12.7%
+    k2_headroom: 60     # ~60 bn above minimum
+
+  # Funding (KZT bn)
+  funding:
+    retail_deposits: 6250
+    corporate_deposits: 312
+    total_deposits: 6562
+
+  # Liquidity (KZT bn)
+  liquidity:
+    cash: 619
+    mandatory_cash: 57
+    due_from_banks: 38
+    securities: 1507
+
+  # Credit (KZT bn)
+  credit:
+    gross_loans: 5747
+
+  # NBK vs Basel III notes
+  rwa_methodology:
+    nbk_rwa: 8059
+    basel_iii_rwa: 5577  # Estimated
+    ratio: 1.45  # NBK is ~45% higher
+    reason: "Consumer lending risk weights 150%+ for unsecured"
+
+# HoldCo parameters (parent-only)
+holdco:
+  # FY2024 actuals (KZT bn)
+  baseline:
+    cash: 324.993
+    annual_gna: 20.810
+    parent_liabilities: 0.155
+
+  # Dividend flows (KZT bn)
+  dividends:
+    from_bank: 285.206
+    from_other_subs: 467.500
+    to_shareholders: 646.056
+
+  # Constraints
+  constraints:
+    bank_lending_limit: 0.10  # Bank can only lend 10% of capital to parent
+    dividend_restriction: "K2 must stay above 12% for dividends"
+
+# Passthrough configuration
+passthrough:
+  # Dividend payout formula: payout = ((k2 - k2_min) / (k2_baseline - k2_min)) ^ gamma
+  # Linear interpolation from 100% at baseline to 0% at minimum
+  default_gamma: 1.0
+
+  # Capital call formula: call = shortfall * multiplier
+  default_multiplier: 1.0
+
+  # Alternative parameterizations for sensitivity
+  gamma_range: [0.5, 1.0, 1.5, 2.0]
+  multiplier_range: [1.0, 1.25, 1.5]
+
+# Stress scenarios
+stress_scenarios:
+  bank:
+    baseline:
+      profit_multiplier: 1.0
+      credit_loss_rate: 0.01
+      rwa_multiplier: 1.0
+      retail_run_rate: 0.05
+
+    mild:
+      profit_multiplier: 0.8
+      credit_loss_rate: 0.02
+      rwa_multiplier: 1.05
+      retail_run_rate: 0.10
+
+    moderate:
+      profit_multiplier: 0.5
+      credit_loss_rate: 0.03
+      rwa_multiplier: 1.10
+      retail_run_rate: 0.15
+
+    severe:
+      profit_multiplier: 0.0
+      credit_loss_rate: 0.05
+      rwa_multiplier: 1.15
+      retail_run_rate: 0.25
+
+    oil_crisis:
+      profit_multiplier: 0.0
+      credit_loss_rate: 0.07
+      rwa_multiplier: 1.25
+      retail_run_rate: 0.30
+      securities_mtm_shock: 0.15
+
+  holdco:
+    baseline: "FY2024 actuals"
+    no_bank_dividend: "Bank retains all earnings"
+    no_dividends: "All subs retain earnings"
+    dividend_stop_no_payout: "Full freeze"
+    moderate_capital_call: "50% haircut + 100bn injection"
+    severe_capital_call: "No dividend + 200bn injection"
+
+# Output configuration
+outputs:
+  directory: "outputs/"
+  formats:
+    - json
+    - csv

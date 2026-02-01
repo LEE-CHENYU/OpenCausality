@@ -32,6 +32,7 @@ class PolicyType(Enum):
     REGIONAL_REFORM = "regional_reform"
     FISCAL = "fiscal"
     MONETARY = "monetary"
+    FX_DEPRECIATION = "fx_depreciation"
     OTHER = "other"
 
 
@@ -323,6 +324,85 @@ def get_kazakhstan_policy_calendar() -> PolicyCalendar:
         },
     ))
 
+    # =========================================================================
+    # FX DEPRECIATION EVENTS (FOR BLOCK F BACKTEST)
+    # =========================================================================
+
+    # Clean events (minimal confounds - use for primary backtest)
+    calendar.add_event(PolicyEvent(
+        name="2014 Devaluation",
+        policy_type=PolicyType.FX_DEPRECIATION,
+        effective_date=date(2014, 2, 11),
+        description="First major devaluation of tenge since 2009; ~19% depreciation",
+        source="NBK",
+        source_url="https://nationalbank.kz",
+        impact_description="Immediate imported inflation; reduced purchasing power",
+        affected_groups=["all_households", "importers"],
+        metadata={
+            "magnitude": 0.19,
+            "clean_event": True,
+            "quarter": "2014Q1",
+            "previous_rate": 155,
+            "new_rate": 185,
+        },
+    ))
+
+    calendar.add_event(PolicyEvent(
+        name="Float to Flexible Regime",
+        policy_type=PolicyType.FX_DEPRECIATION,
+        effective_date=date(2015, 8, 20),
+        description="NBK moves to flexible exchange rate regime; ~30% depreciation",
+        source="NBK",
+        source_url="https://nationalbank.kz",
+        impact_description="Regime change to inflation targeting; major price adjustment",
+        affected_groups=["all_households", "importers", "exporters"],
+        metadata={
+            "magnitude": 0.30,
+            "clean_event": True,
+            "quarter": "2015Q3",
+            "previous_rate": 188,
+            "new_rate": 255,
+            "regime_change": True,
+        },
+    ))
+
+    # Compound events (multiple confounds - use with caution, report separately)
+    calendar.add_event(PolicyEvent(
+        name="COVID + Oil Price Collapse",
+        policy_type=PolicyType.FX_DEPRECIATION,
+        effective_date=date(2020, 3, 9),
+        description="FX depreciation during COVID pandemic and oil price war",
+        source="NBK",
+        source_url="https://nationalbank.kz",
+        impact_description="Multiple shocks: COVID lockdowns, fiscal transfers, oil collapse",
+        affected_groups=["all_households"],
+        metadata={
+            "magnitude": 0.15,
+            "clean_event": False,
+            "quarter": "2020Q1",
+            "confounds": ["covid_lockdowns", "fiscal_transfers", "oil_price_collapse"],
+            "note": "Compound event - interpret with caution",
+        },
+    ))
+
+    calendar.add_event(PolicyEvent(
+        name="Russia-Ukraine War Spillover",
+        policy_type=PolicyType.FX_DEPRECIATION,
+        effective_date=date(2022, 2, 28),
+        description="FX depreciation during Russia-Ukraine war",
+        source="NBK",
+        source_url="https://nationalbank.kz",
+        impact_description="Trade disruption, sanctions spillover, refugee flows",
+        affected_groups=["all_households", "trade_sector"],
+        metadata={
+            "magnitude": 0.20,
+            "clean_event": False,
+            "quarter": "2022Q1",
+            "confounds": ["trade_disruption", "sanctions_spillover", "refugee_flows"],
+            "note": "Compound event - interpret with caution",
+        },
+    ))
+
     return calendar
 
 
@@ -402,3 +482,85 @@ def get_pension_age(gender: str, year: int) -> int:
 
     # After 2028, may increase (not yet specified)
     return 61
+
+
+def get_fx_depreciation_events(clean_only: bool = False) -> list[PolicyEvent]:
+    """
+    Get FX depreciation events for Block F backtest.
+
+    Args:
+        clean_only: If True, return only clean events (no confounds)
+
+    Returns:
+        List of FX depreciation events
+
+    Example:
+        >>> events = get_fx_depreciation_events(clean_only=True)
+        >>> for e in events:
+        ...     print(f"{e.effective_date}: {e.name} ({e.metadata['magnitude']:.0%})")
+        2014-02-11: 2014 Devaluation (19%)
+        2015-08-20: Float to Flexible Regime (30%)
+    """
+    calendar = get_kazakhstan_policy_calendar()
+    events = [
+        e for e in calendar.events
+        if e.policy_type == PolicyType.FX_DEPRECIATION
+    ]
+
+    if clean_only:
+        events = [
+            e for e in events
+            if e.metadata.get("clean_event", False)
+        ]
+
+    return events
+
+
+def get_fx_event_dates(
+    clean_only: bool = False,
+    as_quarters: bool = False,
+) -> list[date | str]:
+    """
+    Get FX depreciation event dates.
+
+    Args:
+        clean_only: If True, return only clean events
+        as_quarters: If True, return quarter strings (e.g., "2014Q1")
+
+    Returns:
+        List of dates or quarter strings
+
+    Example:
+        >>> get_fx_event_dates(clean_only=True, as_quarters=True)
+        ['2014Q1', '2015Q3']
+    """
+    events = get_fx_depreciation_events(clean_only=clean_only)
+
+    if as_quarters:
+        return [e.metadata.get("quarter") for e in events]
+    return [e.effective_date for e in events]
+
+
+def check_fx_confounds(
+    analysis_start: date,
+    analysis_end: date,
+) -> list[PolicyEvent]:
+    """
+    Check for FX depreciation events in analysis window.
+
+    Useful for identifying periods that may be affected by
+    FX shocks when running other analyses.
+
+    Args:
+        analysis_start: Analysis start date
+        analysis_end: Analysis end date
+
+    Returns:
+        List of FX events in the window
+    """
+    calendar = get_kazakhstan_policy_calendar()
+    return calendar.get_events_in_window(
+        analysis_start,
+        analysis_end,
+        policy_types=[PolicyType.FX_DEPRECIATION],
+    )

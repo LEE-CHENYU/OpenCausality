@@ -1,0 +1,286 @@
+# Block F: Spending Response to FX-Driven Purchasing Power Shocks
+# Pre-specified parameters for MPC-like ratio estimation
+#
+# CRITICAL INTERPRETATION:
+#   This is NOT a universal MPC. The MPC-like ratio captures spending response
+#   to EXTERNALLY-DRIVEN purchasing power shocks (imported inflation via FX).
+#   Multiple channels operate simultaneously (relative prices, credit, timing).
+
+version: "1.0"
+block: "F"
+name: "Spending Response to Purchasing Power Shocks"
+
+estimand: |
+  MPC-like ratio = IRF_C(h) / IRF_Y(0)
+  where IRF_C(h) is expenditure response at horizon h
+  and IRF_Y(0) is income response at impact
+
+caveat: |
+  This is NOT a universal MPC. It captures spending response to
+  externally-driven purchasing power shocks (imported inflation via FX),
+  which affect expenditure through multiple channels beyond income:
+  - Real income erosion
+  - Relative price changes (tradables vs non-tradables)
+  - Credit constraints
+  - Consumption timing shifts
+  - Uncertainty effects
+
+# =============================================================================
+# Research Design
+# =============================================================================
+
+research_question: |
+  How does household spending respond to FX-driven real purchasing power shocks?
+
+design:
+  primary: "LP IRFs with MPC-like ratio"
+  validation: "Event study backtest"
+
+  lp_approach:
+    description: |
+      Estimate local-projection IRFs for both income and expenditure to the
+      same shock, then compute the MPC-like ratio.
+
+    income_irf: "IRF_Y(h): delta_Y^R_{t+h} = alpha_h + beta_h * Z_t + controls + eps"
+    expenditure_irf: "IRF_C(h): delta_C^R_{t+h} = alpha_h + gamma_h * Z_t + controls + u"
+
+    mpc_ratio:
+      instantaneous: "MPC(h) = IRF_C(h) / IRF_Y(0)"
+      cumulative: "MPC(h) = sum_{j=0}^h IRF_C(j) / sum_{j=0}^h IRF_Y(j)"
+
+# =============================================================================
+# Outcome Variables
+# =============================================================================
+
+outcomes:
+  primary:
+    name: "real_consumption_expenditure"
+    description: "Real household consumption expenditure (NOT monetary expenses)"
+    source: "BNS: Household consumption expenditure, average per household (quarter)"
+    deflator: "CPI"
+    note: "Excludes debt repayment, transfers, taxes"
+
+  secondary:
+    - name: "real_cash_expenditures"
+      description: "Real cash expenditures"
+      source: "BNS: Household cash expenditures, average per household (quarter)"
+
+    - name: "real_food_spending"
+      description: "Real cash expenditure on food"
+      source: "BNS: Household cash expenditure on food (quarter)"
+
+    - name: "real_nonfood_spending"
+      description: "Real cash expenditure on non-food"
+      source: "BNS: Household cash expenditure on non-food (quarter)"
+
+    - name: "real_services_spending"
+      description: "Real cash expenditure on paid services"
+      source: "BNS: Household cash expenditure on paid services (quarter)"
+
+income_variable:
+  name: "real_per_capita_income"
+  description: "Real per-capita nominal monetary income"
+  source: "BNS: Average per capita nominal monetary income of the population (quarter)"
+  deflator: "CPI"
+  alternative: "real_money_income_index"
+
+# =============================================================================
+# Shock Construction
+# =============================================================================
+
+shock:
+  primary:
+    type: "tradable_pressure"
+    description: |
+      Predicted tradable inflation pressure using Block A estimates:
+      Z_t = sum_{k=1}^3 pi_hat^{tradable}_{t-k}
+      where pi_hat^{tradable} uses category pass-through coefficients
+      on high-import categories (clothing, furnishings, food)
+    lags: 3
+    block_a_categories:
+      - "01"  # Food and non-alcoholic beverages
+      - "03"  # Clothing and footwear
+      - "05"  # Furnishings, household equipment
+      - "09"  # Recreation and culture (partial)
+
+  alternative:
+    type: "fx_lagged"
+    description: |
+      Sum of lagged FX changes (minimal, non-heroic):
+      Z_t = sum_{k=1}^3 delta_FX_{t-k}
+    source: "NBK official USD/KZT rates"
+    lags: 3
+
+# =============================================================================
+# Estimation Specification
+# =============================================================================
+
+specification:
+  sample_period:
+    start: "2010-Q2"
+    end: "2024-Q4"
+
+  frequency: "quarterly"
+
+  horizons: [0, 1, 2, 3, 4]  # quarters
+
+  controls:
+    - "oil_price_growth_lag"      # Global commodity exposure
+    - "global_gdp_growth_lag"     # External demand
+
+  inference:
+    se_type: "newey-west"
+    hac_maxlags: 4
+    confidence_level: 0.95
+
+# =============================================================================
+# Backtest Events
+# =============================================================================
+
+backtest_events:
+  clean:
+    description: "Clean FX events for primary backtest (minimal confounds)"
+    events:
+      - date: "2014-03"
+        name: "2014 Devaluation"
+        magnitude: 0.19  # ~19% depreciation
+        notes: "First major devaluation since 2009"
+
+      - date: "2015-09"
+        name: "Float to Flexible"
+        magnitude: 0.30  # ~30% depreciation
+        notes: "Regime change to flexible exchange rate"
+
+  compound:
+    description: "Compound events (use with caution, report separately)"
+    events:
+      - date: "2020-04"
+        name: "COVID + Oil Collapse"
+        magnitude: 0.15  # ~15% depreciation
+        confounds:
+          - "COVID lockdowns"
+          - "Fiscal transfers"
+          - "Oil price collapse"
+
+      - date: "2022-03"
+        name: "Russia-Ukraine War"
+        magnitude: 0.20  # ~20% depreciation
+        confounds:
+          - "Trade disruption"
+          - "Sanctions spillover"
+          - "Refugee flows"
+
+  window: [-4, 4]  # quarters around event
+
+# =============================================================================
+# Falsification Tests
+# =============================================================================
+
+falsification:
+  leads_test:
+    description: "Shock shouldn't predict past income/expenditure"
+    specification: "Y_{t-k} = alpha + beta * Z_t + eps for k > 0"
+    pass_criterion: "Joint p > 0.10"
+    leads: [1, 2, 3]  # quarters ahead of treatment
+
+  admin_price_check:
+    description: "First-stage: shock should predict tradable > admin inflation"
+    specification: "Compare beta^{tradable} vs beta^{admin}"
+    pass_criterion: "beta^{tradable} > beta^{admin}"
+    admin_categories:
+      - "04"  # Housing, utilities
+      - "06"  # Health
+      - "08"  # Communications
+      - "10"  # Education
+
+  regime_split:
+    description: "Pre/post-2015 regime split"
+    break_date: "2015-08"
+    specification: "Estimate separately for pre and post float"
+    pass_criterion: "Similar direction in both periods"
+
+  alternative_deflators:
+    description: "Robustness to deflator choice"
+    deflators:
+      - "overall_cpi"
+      - "food_cpi"
+      - "nonfood_cpi"
+    pass_criterion: "Qualitatively similar results"
+
+  definition_sensitivity:
+    description: "Robustness to outcome definition"
+    outcomes:
+      - "consumption_expenditure"  # Primary (goods + services)
+      - "monetary_expenses"        # Includes debt repayment
+    pass_criterion: "Similar MPC-like ratios"
+
+  series_break_check:
+    description: "Check for BNS methodology/rebasing breaks"
+    known_breaks:
+      - date: "2018-01"
+        description: "Potential rebasing of income series"
+    pass_criterion: "No discontinuity at break dates"
+
+# =============================================================================
+# Expected Results & Interpretation
+# =============================================================================
+
+expected_results:
+  income_irf:
+    sign: "negative"  # Depreciation reduces real income
+    interpretation: |
+      IRF_Y(0) < 0: FX depreciation causes immediate real income decline
+      through imported inflation eroding purchasing power.
+
+  expenditure_irf:
+    sign: "negative"  # Spending also declines
+    interpretation: |
+      IRF_C(h) < 0: Real consumption falls following FX shock.
+      The timing (h) shows adjustment speed.
+
+  mpc_ratio:
+    typical_range: [0.3, 0.8]
+    interpretation: |
+      MPC(h) = 0.6 means:
+      "For an FX-driven purchasing power shock that reduces real income by 1%,
+       real consumption falls by 0.6%."
+
+      This is NOT:
+      "For any income shock, consumption falls by 0.6%."
+
+      Multiple channels operate: relative prices, credit, uncertainty.
+
+  cumulative_mpc:
+    interpretation: |
+      Sum of IRF_C / Sum of IRF_Y shows total spending adjustment
+      relative to total income adjustment over the horizon window.
+
+# =============================================================================
+# Output Format
+# =============================================================================
+
+output:
+  tables:
+    - name: "irf_table"
+      description: "IRF estimates by horizon with SEs and CIs"
+      columns: ["horizon", "income_irf", "income_se", "exp_irf", "exp_se", "mpc_ratio"]
+
+    - name: "diagnostics"
+      description: "Diagnostic test results"
+      columns: ["test", "statistic", "p_value", "pass"]
+
+  figures:
+    - name: "irf_plot"
+      description: "IRF plots with confidence bands"
+
+    - name: "backtest_plot"
+      description: "Event study around depreciation episodes"
+
+  report:
+    file: "outputs/block_f_results.md"
+    sections:
+      - "Estimation Results"
+      - "MPC-like Ratio Interpretation"
+      - "Backtest Validation"
+      - "Falsification Tests"
+      - "Caveats and Limitations"

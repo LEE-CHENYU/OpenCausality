@@ -59,6 +59,7 @@ kzresearch = "scripts.cli:app"
 # Legacy/study-specific CLIs
 kzwelfare = "studies.household_welfare.src.cli:app"
 kzcredit = "studies.credit_default.src.cli:app"
+kzkaspi = "studies.kaspi_holdco.src.cli:app"
 
 [build-system]
 requires = ["hatchling"]

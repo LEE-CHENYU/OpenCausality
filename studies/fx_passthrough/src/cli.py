@@ -195,7 +195,7 @@ def build_expenditure_series(
 def estimate(
     block: str = typer.Argument(
         "all",
-        help="Block to estimate: block-a, block-b, block-c, block-d, block-e, all",
+        help="Block to estimate: block-a, block-b, block-c, block-d, block-e, block-f, all",
     ),
     exclude_admin: bool = typer.Option(True, help="Exclude admin prices (Block A)"),
     max_horizon: int = typer.Option(12, help="Maximum horizon"),
@@ -305,6 +305,249 @@ def estimate(
             console.print(result.summary())
         else:
             console.print("[red]Expenditure/income data not found.[/red]")
+
+    if block in ["block-f", "all"]:
+        console.print("\n[bold]Estimating Block F: Spending Response to FX Shocks...[/bold]")
+
+        # Try spending_series first, fallback to income_series
+        spending_path = data_dir / "spending_series.parquet"
+        if not spending_path.exists():
+            spending_path = data_dir / "income_series.parquet"
+
+        if spending_path.exists():
+            spending_data = pd.read_parquet(spending_path)
+
+            from studies.fx_passthrough.src.spending_response import (
+                SpendingResponseModel,
+                SpendingResponseSpec,
+            )
+
+            model = SpendingResponseModel(spending_data)
+            result = model.fit()
+            console.print(result.summary())
+
+            # Run diagnostics
+            diagnostics = model.run_diagnostics()
+            if diagnostics.get("pre_trends", {}).get("pass") is False:
+                console.print(
+                    "[yellow]WARNING: Pre-trends test failed. "
+                    "See falsification tests for details.[/yellow]"
+                )
+        else:
+            console.print("[red]Spending/income data not found.[/red]")
+
+
+# =============================================================================
+# Block F Commands
+# =============================================================================
+
+@app.command("block-f")
+def block_f(
+    subcommand: str = typer.Argument(
+        "run-all",
+        help="Subcommand: run-all, build-panel, estimate-irfs, compute-mpc, backtest, falsification",
+    ),
+    shock_type: str = typer.Option("fx_lagged", help="Shock type: fx_lagged, tradable_pressure"),
+    max_horizon: int = typer.Option(4, help="Maximum IRF horizon (quarters)"),
+    clean_events_only: bool = typer.Option(False, help="Use only clean events for backtest"),
+):
+    """Block F: Spending Response to FX-Driven Purchasing Power Shocks."""
+    setup_logging()
+
+    import pandas as pd
+    from config.settings import get_settings
+
+    settings = get_settings()
+    data_dir = settings.project_root / settings.processed_data_dir / "fx_passthrough"
+
+    # Load data
+    spending_path = data_dir / "spending_series.parquet"
+    if not spending_path.exists():
+        spending_path = data_dir / "income_series.parquet"
+
+    if not spending_path.exists():
+        console.print("[red]Data not found. Run 'build-income-series' first.[/red]")
+        raise typer.Exit(1)
+
+    spending_data = pd.read_parquet(spending_path)
+
+    from studies.fx_passthrough.src.spending_response import (
+        SpendingResponseModel,
+        SpendingResponseSpec,
+        ShockType,
+    )
+
+    # Map shock type string to enum
+    shock_enum = ShockType.FX_LAGGED
+    if shock_type == "tradable_pressure":
+        shock_enum = ShockType.TRADABLE_PRESSURE
+
+    spec = SpendingResponseSpec(
+        shock_type=shock_enum,
+        max_horizon=max_horizon,
+    )
+
+    if subcommand == "run-all":
+        console.print("[bold cyan]BLOCK F: SPENDING RESPONSE ANALYSIS[/bold cyan]")
+        console.print("=" * 70)
+        console.print(
+            "\n[yellow]INTERPRETATION CAVEAT:[/yellow]"
+            "\nMPC-like ratio is NOT a universal MPC. It captures spending response"
+            "\nto externally-driven FX/purchasing power shocks.\n"
+        )
+
+        # 1. Build panel
+        console.print("[bold]1. Building panel...[/bold]")
+        model = SpendingResponseModel(spending_data)
+        panel = model.build_panel(spec)
+        console.print(f"   Panel shape: {panel.shape}")
+
+        # 2. Estimate IRFs
+        console.print("\n[bold]2. Estimating IRFs...[/bold]")
+        result = model.fit(spec)
+        console.print(result.summary())
+
+        # 3. Run backtest
+        console.print("\n[bold]3. Running depreciation backtest...[/bold]")
+        from studies.fx_passthrough.src.depreciation_backtest import (
+            DepreciationBacktest,
+            DepreciationBacktestSpec,
+        )
+
+        backtest = DepreciationBacktest(spending_data)
+        backtest_spec = DepreciationBacktestSpec(use_clean_only=clean_events_only)
+        backtest_results = backtest.run_backtest(backtest_spec)
+        console.print(backtest.summary())
+
+        # 4. Compare backtest to LP
+        comparison = backtest.compare_to_lp(result)
+        if comparison.get("overall_consistent"):
+            console.print("\n[green]Backtest CONSISTENT with LP-IRF results[/green]")
+        else:
+            console.print("\n[yellow]Backtest shows some inconsistencies with LP-IRF[/yellow]")
+
+        # 5. Run falsification
+        console.print("\n[bold]4. Running falsification tests...[/bold]")
+        from studies.fx_passthrough.src.block_f_falsification import BlockFFalsification
+
+        cpi_path = data_dir / "cpi_panel.parquet"
+        cpi_panel = pd.read_parquet(cpi_path) if cpi_path.exists() else None
+
+        falsification = BlockFFalsification(spending_data, cpi_panel)
+        falsification_results = falsification.run_all(spec)
+        console.print(falsification_results.summary())
+
+    elif subcommand == "build-panel":
+        console.print("[bold]Building Block F panel...[/bold]")
+        model = SpendingResponseModel(spending_data)
+        panel = model.build_panel(spec)
+        console.print(f"Panel shape: {panel.shape}")
+        console.print(f"Columns: {list(panel.columns)}")
+
+    elif subcommand == "estimate-irfs":
+        console.print("[bold]Estimating Block F IRFs...[/bold]")
+        model = SpendingResponseModel(spending_data)
+        result = model.fit(spec)
+        console.print(result.summary())
+
+    elif subcommand == "compute-mpc":
+        console.print("[bold]Computing MPC-like ratio...[/bold]")
+        model = SpendingResponseModel(spending_data)
+        result = model.fit(spec)
+
+        table = Table(title="MPC-like Ratio by Horizon")
+        table.add_column("Horizon", style="cyan")
+        table.add_column("MPC(h)", style="white")
+        table.add_column("SE", style="white")
+        table.add_column("Cumulative", style="green")
+
+        for i, h in enumerate(result.horizons):
+            table.add_row(
+                str(h),
+                f"{result.mpc_ratio[i]:.4f}",
+                f"{result.mpc_ratio_se[i]:.4f}",
+                f"{result.cumulative_mpc[i]:.4f}",
+            )
+
+        console.print(table)
+
+    elif subcommand == "backtest":
+        console.print("[bold]Running depreciation backtest...[/bold]")
+        from studies.fx_passthrough.src.depreciation_backtest import (
+            DepreciationBacktest,
+            DepreciationBacktestSpec,
+        )
+
+        backtest = DepreciationBacktest(spending_data)
+        backtest_spec = DepreciationBacktestSpec(use_clean_only=clean_events_only)
+        results = backtest.run_backtest(backtest_spec)
+
+        for event_name, result in results.items():
+            console.print(result.summary())
+
+    elif subcommand == "falsification":
+        console.print("[bold]Running Block F falsification tests...[/bold]")
+        from studies.fx_passthrough.src.block_f_falsification import BlockFFalsification
+
+        cpi_path = data_dir / "cpi_panel.parquet"
+        cpi_panel = pd.read_parquet(cpi_path) if cpi_path.exists() else None
+
+        falsification = BlockFFalsification(spending_data, cpi_panel)
+        results = falsification.run_all(spec)
+        console.print(results.summary())
+
+    else:
+        console.print(f"[red]Unknown subcommand: {subcommand}[/red]")
+        console.print("Available: run-all, build-panel, estimate-irfs, compute-mpc, backtest, falsification")
+        raise typer.Exit(1)
+
+
+@app.command("build-spending-series")
+def build_spending_series(
+    start_date: str = typer.Option("2010-01-01", help="Start date"),
+    end_date: Optional[str] = typer.Option(None, help="End date"),
+    output: Optional[Path] = typer.Option(None, help="Output path"),
+):
+    """Build spending series for Block F (income + expenditure panel)."""
+    setup_logging()
+
+    from studies.fx_passthrough.src.national_panel import NationalPanelBuilder
+
+    builder = NationalPanelBuilder()
+
+    console.print(f"[bold]Building spending series from {start_date}...[/bold]")
+
+    # Build income series as base
+    series = builder.build_income_series(start_date, end_date, frequency="quarterly")
+
+    # Ensure FX change is computed for shock construction
+    if "fx_change" not in series.columns:
+        try:
+            fx_data = builder.pipeline.exchange_rate_client.fetch_with_cache()
+            fx_data = builder.pipeline.exchange_rate_client.aggregate_to_monthly(fx_data)
+            fx_data = builder.pipeline.exchange_rate_client.compute_fx_change(fx_data)
+
+            # Aggregate to quarterly
+            fx_data["quarter"] = (
+                fx_data["date"].dt.year.astype(str) + "Q" +
+                fx_data["date"].dt.quarter.astype(str)
+            )
+            fx_quarterly = fx_data.groupby("quarter")["fx_change"].mean().reset_index()
+            series = series.merge(fx_quarterly, on="quarter", how="left")
+        except Exception as e:
+            console.print(f"[yellow]Could not add FX change: {e}[/yellow]")
+
+    if output:
+        series.to_parquet(output)
+        console.print(f"Saved to {output}")
+    else:
+        paths = builder.save_panels({"spending_series": series})
+        console.print(f"Saved to {paths['spending_series']}")
+
+    console.print(f"\nSeries shape: {series.shape}")
+    console.print(f"Columns: {list(series.columns)}")
+
+    builder.print_quality_summary()
 
 
 # =============================================================================
@@ -524,17 +767,32 @@ def info():
     table.add_row("C", "Real Income", "Accounting Identity")
     table.add_row("D", "Transfer Mechanism", "IV Tests")
     table.add_row("E", "Expenditure Response", "LP-IV")
+    table.add_row("F", "Spending Response to FX Shocks", "LP-IRF + MPC Ratio")
 
     console.print(table)
 
+    console.print("\n[bold]Block F: Spending Response[/bold]")
+    console.print("  Research question: How does spending respond to FX-driven")
+    console.print("  purchasing power shocks?")
+    console.print("  Key parameter: MPC-like ratio = IRF_C(h) / IRF_Y(0)")
+    console.print("  [yellow]CAVEAT: NOT a universal MPC - captures externally-driven shocks[/yellow]")
+
     console.print("\nCommands:")
-    console.print("  fetch-data          Fetch raw data")
-    console.print("  build-cpi-panel     Build CPI panel for Block A")
-    console.print("  build-income-series Build income series for Blocks B-D")
-    console.print("  estimate            Estimate blocks")
-    console.print("  falsification       Run falsification tests")
-    console.print("  structural-break    Pre/post 2015 analysis")
-    console.print("  run-full-chain      Run complete analysis")
+    console.print("  fetch-data            Fetch raw data")
+    console.print("  build-cpi-panel       Build CPI panel for Block A")
+    console.print("  build-income-series   Build income series for Blocks B-D")
+    console.print("  build-spending-series Build spending series for Block F")
+    console.print("  estimate              Estimate blocks (A-F)")
+    console.print("  block-f               Block F specific commands")
+    console.print("  falsification         Run falsification tests (Block A)")
+    console.print("  structural-break      Pre/post 2015 analysis")
+    console.print("  run-full-chain        Run complete analysis")
+    console.print("\nBlock F subcommands (via 'block-f <subcommand>'):")
+    console.print("  run-all       Run full Block F analysis")
+    console.print("  estimate-irfs Estimate income and expenditure IRFs")
+    console.print("  compute-mpc   Compute MPC-like ratio")
+    console.print("  backtest      Event study around FX depreciation episodes")
+    console.print("  falsification Falsification tests for Block F")
 
 
 if __name__ == "__main__":
