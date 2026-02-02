@@ -1,0 +1,79 @@
+# DAG schema v1 for agentic causal identification
+# This file describes the expected structure for DAG specifications.
+# It is not a JSON-schema; it is a human-readable contract.
+
+schema_version: 1
+metadata:
+  name: "<study_name>"
+  description: "<short description>"
+  target_node: "<node_id>"
+  created: "YYYY-MM-DD"
+  owner: "<team_or_owner>"
+  tags: ["macro", "micro", "banking"]
+
+# Nodes define variables and how they map to data assets.
+nodes:
+  - id: "<node_id>"
+    name: "<display_name>"
+    description: "<what this variable represents>"
+    unit: "<level|log|pct|growth|index>"
+    frequency: "<daily|monthly|quarterly|annual|event>"
+    type: "<continuous|binary|count|share|index|exposure>"
+    observed: true
+    latent: false
+    source:
+      preferred:
+        - connector: "<bns|fred|nbk_credit|imf_fsi|custom>"
+          dataset: "<dataset_id>"
+          series: "<series_id>"
+          notes: "<optional mapping notes>"
+      fallback:
+        - connector: "<connector_name>"
+          dataset: "<dataset_id>"
+          series: "<series_id>"
+    transforms:
+      - "<log|diff|deflate|seasonal_adjust|zscore>"
+    identities:
+      - name: "<derived_name>"
+        formula: "<human_readable_formula>"
+    tags: ["macro", "bank", "household"]
+
+# Edges define estimands and identification constraints for each causal link.
+edges:
+  - id: "<edge_id>"
+    from: "<node_id>"
+    to: "<node_id>"
+    estimand:
+      type: "<ATE|ATT|elasticity|IRF|ATE(h)>"
+      horizon: 0
+      scale: "<level|log|pct>"
+    allowed_designs:
+      - "PANEL_FE_BACKDOOR"
+      - "DID_EVENT_STUDY"
+      - "IV_2SLS"
+      - "LOCAL_PROJECTIONS"
+      - "RDD"
+    design_priority: ["PANEL_FE_BACKDOOR", "IV_2SLS"]
+    required_adjustments: ["<node_id>"]
+    forbidden_controls: ["<node_id>"]
+    instruments: ["<node_id>"]
+    diagnostics_required:
+      - "pre_trends"
+      - "placebo"
+      - "weak_iv"
+    acceptance_criteria:
+      min_tstat: 1.96
+      max_pretrend_p: 0.10
+      max_missing_rate: 0.05
+    notes: "<assumptions or caveats>"
+
+# Optional global assumptions and latent confounders.
+assumptions:
+  - id: "<assumption_id>"
+    statement: "<explicit causal assumption>"
+    applies_to_edges: ["<edge_id>"]
+
+latents:
+  - id: "<latent_id>"
+    description: "<unobserved confounder>"
+    affects: ["<node_id>"]

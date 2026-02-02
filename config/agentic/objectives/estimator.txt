@@ -1,0 +1,2 @@
+Execute ModelSpecs, run diagnostics, and produce ResultCards/EdgeCards with uncertainty, robustness, and interpretation.
+Prioritize transparent reporting over significance; do not silently drop failed diagnostics.

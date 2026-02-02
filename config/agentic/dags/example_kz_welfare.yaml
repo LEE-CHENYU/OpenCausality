@@ -1,0 +1,163 @@
+schema_version: 1
+metadata:
+  name: "kz_household_welfare"
+  description: "Oil shocks and global activity shocks affecting regional household income."
+  target_node: "log_income_pc"
+  created: "2026-02-02"
+  owner: "research_team"
+  tags: ["kazakhstan", "household", "oil"]
+
+nodes:
+  - id: "log_income_pc"
+    name: "Log per-capita monetary income"
+    description: "Regional household monetary income per capita, log-transformed."
+    unit: "log"
+    frequency: "quarterly"
+    type: "continuous"
+    observed: true
+    latent: false
+    source:
+      preferred:
+        - connector: "bns"
+          dataset: "household_income"
+          series: "log_income_pc"
+    transforms: ["log"]
+    tags: ["household"]
+
+  - id: "E_oil_r"
+    name: "Oil exposure"
+    description: "Pre-period regional mining share exposure."
+    unit: "share"
+    frequency: "static"
+    type: "exposure"
+    observed: true
+    latent: false
+    source:
+      preferred:
+        - connector: "bns"
+          dataset: "regional_accounts"
+          series: "mining_share"
+    transforms: []
+    tags: ["exposure"]
+
+  - id: "E_cyc_r"
+    name: "Cyclical exposure"
+    description: "Pre-period cyclical employment/GRP shares."
+    unit: "share"
+    frequency: "static"
+    type: "exposure"
+    observed: true
+    latent: false
+    source:
+      preferred:
+        - connector: "bns"
+          dataset: "regional_accounts"
+          series: "cyclical_share"
+    transforms: []
+    tags: ["exposure"]
+
+  - id: "oil_supply_shock"
+    name: "Oil supply shock"
+    description: "Baumeister oil supply shock."
+    unit: "sd"
+    frequency: "monthly"
+    type: "continuous"
+    observed: true
+    latent: false
+    source:
+      preferred:
+        - connector: "baumeister"
+          dataset: "oil_shocks"
+          series: "oil_supply_shock"
+    transforms: ["aggregate_mean_to_quarter"]
+    tags: ["oil", "shock"]
+
+  - id: "oil_demand_shock"
+    name: "Oil demand shock"
+    description: "Baumeister oil demand shock."
+    unit: "sd"
+    frequency: "monthly"
+    type: "continuous"
+    observed: true
+    latent: false
+    source:
+      preferred:
+        - connector: "baumeister"
+          dataset: "oil_shocks"
+          series: "oil_demand_shock"
+    transforms: ["aggregate_mean_to_quarter"]
+    tags: ["oil", "shock"]
+
+  - id: "global_activity_innovation"
+    name: "Global activity innovation"
+    description: "Innovation in global activity index (IGREA)."
+    unit: "innovation"
+    frequency: "monthly"
+    type: "continuous"
+    observed: true
+    latent: false
+    source:
+      preferred:
+        - connector: "fred"
+          dataset: "global_activity"
+          series: "IGREA"
+    transforms: ["innovation", "aggregate_mean_to_quarter"]
+    tags: ["global", "shock"]
+
+edges:
+  - id: "oil_supply_to_income"
+    from: "oil_supply_shock"
+    to: "log_income_pc"
+    estimand:
+      type: "elasticity"
+      horizon: 0
+      scale: "log"
+    allowed_designs: ["PANEL_FE_BACKDOOR", "LOCAL_PROJECTIONS"]
+    design_priority: ["PANEL_FE_BACKDOOR", "LOCAL_PROJECTIONS"]
+    required_adjustments: ["E_oil_r"]
+    forbidden_controls: []
+    instruments: []
+    diagnostics_required: ["pre_trends", "placebo"]
+    acceptance_criteria:
+      min_tstat: 1.96
+      max_pretrend_p: 0.10
+      max_missing_rate: 0.05
+    notes: "Exposure-weighted shock."
+
+  - id: "oil_demand_to_income"
+    from: "oil_demand_shock"
+    to: "log_income_pc"
+    estimand:
+      type: "elasticity"
+      horizon: 0
+      scale: "log"
+    allowed_designs: ["PANEL_FE_BACKDOOR", "LOCAL_PROJECTIONS"]
+    design_priority: ["PANEL_FE_BACKDOOR", "LOCAL_PROJECTIONS"]
+    required_adjustments: ["E_oil_r"]
+    forbidden_controls: []
+    instruments: []
+    diagnostics_required: ["pre_trends", "placebo"]
+    acceptance_criteria:
+      min_tstat: 1.96
+      max_pretrend_p: 0.10
+      max_missing_rate: 0.05
+    notes: "Exposure-weighted shock."
+
+  - id: "global_activity_to_income"
+    from: "global_activity_innovation"
+    to: "log_income_pc"
+    estimand:
+      type: "elasticity"
+      horizon: 0
+      scale: "log"
+    allowed_designs: ["PANEL_FE_BACKDOOR", "LOCAL_PROJECTIONS"]
+    design_priority: ["PANEL_FE_BACKDOOR", "LOCAL_PROJECTIONS"]
+    required_adjustments: ["E_cyc_r"]
+    forbidden_controls: []
+    instruments: []
+    diagnostics_required: ["pre_trends", "placebo"]
+    acceptance_criteria:
+      min_tstat: 1.96
+      max_pretrend_p: 0.10
+      max_missing_rate: 0.05
+    notes: "Exposure-weighted shock."

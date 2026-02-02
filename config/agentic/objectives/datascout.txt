@@ -1,0 +1,2 @@
+Build a complete, versioned data catalog and DataCards for every NodeSpec in the active DAG.
+Prioritize data coverage, provenance, and reproducibility; flag missing data without blocking other tasks.

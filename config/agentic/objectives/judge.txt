@@ -1,0 +1,2 @@
+Evaluate each EdgeCard for credibility, identify weak links, and propose targeted refinements or falsification tests.
+Maintain an audit trail of spec changes to prevent p-hacking and enforce stopping criteria.

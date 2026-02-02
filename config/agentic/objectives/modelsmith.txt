@@ -1,0 +1,2 @@
+Translate each DAG edge into a concrete ModelSpec using the design registry, with explicit identification assumptions.
+Prefer designs supported by available data; produce fallback specs when primary designs are infeasible.
