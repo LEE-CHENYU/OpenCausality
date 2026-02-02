@@ -1,8 +1,16 @@
-# DAG schema v1 for agentic causal identification
+# DAG schema v2 for agentic causal identification
 # This file describes the expected structure for DAG specifications.
 # It is not a JSON-schema; it is a human-readable contract.
+#
+# V2 CHANGES:
+# - Added temporal semantics (timing, release_lag)
+# - Added credibility-based acceptance criteria (removed min_tstat)
+# - Added derived node tracking (identity, depends_on)
+# - Added aggregation configuration
+# - Added null_acceptance for preventing p-hacking
 
-schema_version: 1
+schema_version: 2
+
 metadata:
   name: "<study_name>"
   description: "<short description>"
@@ -11,19 +19,52 @@ metadata:
   owner: "<team_or_owner>"
   tags: ["macro", "micro", "banking"]
 
+# =============================================================================
+# NODES
+# =============================================================================
 # Nodes define variables and how they map to data assets.
+# V2 adds: release_lag, derived, identity, depends_on, aggregation, role_constraints
+
 nodes:
   - id: "<node_id>"
     name: "<display_name>"
     description: "<what this variable represents>"
-    unit: "<level|log|pct|growth|index>"
-    frequency: "<daily|monthly|quarterly|annual|event>"
+    unit: "<level|log|pct|growth|index|sd>"
+    frequency: "<daily|monthly|quarterly|annual|static|event>"
     type: "<continuous|binary|count|share|index|exposure>"
     observed: true
     latent: false
+
+    # NEW v2: Publication timing
+    # Data for period t is released at t + periods
+    release_lag:
+      periods: 1                    # Number of lag periods
+      lag_unit: "month"             # day|month|quarter|year
+
+    # NEW v2: Derived node tracking
+    # Mark nodes that are computed from other nodes
+    derived: false                  # true if defined by identity formula
+    identity:
+      name: "<derived_name>"
+      formula: "<human_readable_formula>"  # e.g., "nominal_income - cpi"
+      depends_on: ["<node_id>", "<node_id>"]  # Auto-computed from formula
+
+    # NEW v2: Aggregation configuration (for mixed-frequency alignment)
+    aggregation:
+      method: "average"             # end_of_period|average|sum|last
+      seasonal_adjust: false        # Apply seasonal adjustment
+      deflator: "<node_id>"         # Deflate using this price index
+      deflator_timing: "same"       # same|lagged
+
+    # NEW v2: Role constraints
+    role_constraints:
+      never_control: false          # e.g., outcome nodes
+      never_instrument: false       # e.g., endogenous nodes
+
+    # Data source configuration
     source:
       preferred:
-        - connector: "<bns|fred|nbk_credit|imf_fsi|custom>"
+        - connector: "<bns|fred|nbk_credit|imf_fsi|baumeister|custom>"
           dataset: "<dataset_id>"
           series: "<series_id>"
           notes: "<optional mapping notes>"
@@ -31,49 +72,153 @@ nodes:
         - connector: "<connector_name>"
           dataset: "<dataset_id>"
           series: "<series_id>"
+
+    # Transforms to apply after fetching
     transforms:
-      - "<log|diff|deflate|seasonal_adjust|zscore>"
+      - "<log|diff|deflate|seasonal_adjust|zscore|aggregate_mean_to_quarter|innovation>"
+
+    # Legacy identities field (use identity above for new DAGs)
     identities:
       - name: "<derived_name>"
         formula: "<human_readable_formula>"
-    tags: ["macro", "bank", "household"]
 
+    tags: ["macro", "bank", "household", "shock", "exposure"]
+
+# =============================================================================
+# EDGES
+# =============================================================================
 # Edges define estimands and identification constraints for each causal link.
+# V2 adds: timing block, credibility-based acceptance_criteria
+
 edges:
   - id: "<edge_id>"
     from: "<node_id>"
     to: "<node_id>"
+
+    # NEW v2: Temporal semantics
+    # Specifies the timing relationship between treatment and outcome
+    timing:
+      lag: 1                        # treatment[t] → outcome[t+lag], default=1
+      lag_unit: "quarter"           # day|month|quarter|year
+      contemporaneous: false        # if true, treatment[t] → outcome[t]
+      max_anticipation: 0           # leads allowed (usually 0)
+
+    # Estimand specification
     estimand:
       type: "<ATE|ATT|elasticity|IRF|ATE(h)>"
-      horizon: 0
+      horizon: 0                    # or [0, 1, 2, 3, 4] for IRFs
       scale: "<level|log|pct>"
+
+    # Design constraints
     allowed_designs:
       - "PANEL_FE_BACKDOOR"
       - "DID_EVENT_STUDY"
       - "IV_2SLS"
       - "LOCAL_PROJECTIONS"
       - "RDD"
-    design_priority: ["PANEL_FE_BACKDOOR", "IV_2SLS"]
-    required_adjustments: ["<node_id>"]
-    forbidden_controls: ["<node_id>"]
-    instruments: ["<node_id>"]
+
+    design_priority: ["PANEL_FE_BACKDOOR", "IV_2SLS"]  # Order of preference
+
+    # Adjustment sets
+    required_adjustments: ["<node_id>"]    # Must include as controls
+    forbidden_controls: ["<node_id>"]      # Cannot include (auto-computed for descendants)
+    instruments: ["<node_id>"]             # For IV designs
+
+    # Diagnostics to run
     diagnostics_required:
       - "pre_trends"
       - "placebo"
       - "weak_iv"
+      - "residual_checks"
+
+    # NEW v2: Credibility-based acceptance criteria
+    # IMPORTANT: Does NOT include min_tstat to prevent p-hacking
     acceptance_criteria:
-      min_tstat: 1.96
-      max_pretrend_p: 0.10
-      max_missing_rate: 0.05
+      # Diagnostics thresholds (tests must NOT reject)
+      diagnostics:
+        pretrend_p_min: 0.10        # Pre-trends p-value must exceed this
+        first_stage_f_min: 10.0     # IV first-stage F must exceed this
+        placebo_p_min: 0.10         # Placebo test p-value must exceed this
+        density_p_min: 0.10         # McCrary density test (RDD)
+
+      # Data quality requirements
+      data:
+        max_missing_rate: 0.05      # Maximum allowed missing rate
+        min_obs: 50                 # Minimum observations
+        min_pre_periods: 4          # Minimum pre-treatment periods (for event studies)
+
+      # Plausibility constraints
+      plausibility:
+        expected_sign: "any"        # positive|negative|any
+        magnitude_range: [-2.0, 2.0]  # Elasticity bounds [min, max]
+
+      # Stability requirements
+      stability:
+        regime_split_date: null     # e.g., "2015-08" for structural break test
+        max_coefficient_change: 0.5 # Max |β_pre - β_post| / |β_pooled|
+
+      # NULL ACCEPTANCE (critical for avoiding p-hacking)
+      # A null result with tight standard errors is a valid finding!
+      null_acceptance:
+        enabled: true
+        equivalence_bound: 0.1      # "precisely null" if |β| < bound and CI tight
+
     notes: "<assumptions or caveats>"
 
-# Optional global assumptions and latent confounders.
+# =============================================================================
+# CREDIBILITY SCORING
+# =============================================================================
+# How EdgeCard credibility scores are computed.
+# IMPORTANT: Does NOT use statistical significance.
+
+credibility_score:
+  weights:
+    diagnostics_pass_rate: 0.40     # % of required diagnostics that pass
+    plausibility_check: 0.20        # Does estimate have expected sign/magnitude?
+    stability_across_specs: 0.20    # Robust to specification changes?
+    data_coverage: 0.10             # Data quality and coverage
+    design_strength: 0.10           # Panel FE < DiD < RDD < IV
+
+  thresholds:
+    A: 0.80   # High confidence
+    B: 0.60   # Moderate confidence
+    C: 0.40   # Suggestive
+    D: 0.00   # Not identified / association only
+
+# =============================================================================
+# ASSUMPTIONS & LATENTS
+# =============================================================================
+
 assumptions:
   - id: "<assumption_id>"
     statement: "<explicit causal assumption>"
     applies_to_edges: ["<edge_id>"]
+    testable: false
+    test_method: "<description of how to test if testable>"
 
 latents:
   - id: "<latent_id>"
     description: "<unobserved confounder>"
     affects: ["<node_id>"]
+
+# =============================================================================
+# GOVERNANCE
+# =============================================================================
+# Specification changes allowed during exploration mode.
+
+allowed_refinements:
+  - id: "add_control"
+    allowed_controls: ["<node_id>", "<node_id>"]
+
+  - id: "change_lag_length"
+    range: [1, 6]
+
+  - id: "regime_split"
+    allowed_dates: ["2015-08", "2020-03"]
+
+  - id: "swap_instrument"
+    allowed_instruments: ["<node_id>", "<node_id>"]
+
+  - id: "bandwidth_change"
+    design: "RDD"
+    range: [0.5, 2.0]

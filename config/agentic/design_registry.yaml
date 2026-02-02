@@ -1,7 +1,12 @@
-# Design registry v1 for estimator selection.
+# Design registry v2 for estimator selection.
 # Maps identification strategies to templates, diagnostics, and data requirements.
+#
+# V2 CHANGES:
+# - Added credibility_weight per design (higher = more credible)
+# - Designs sorted by credibility: RDD > IV > DiD > LP > Panel FE
+# - Removed significance-based criteria from design selection
 
-schema_version: 1
+schema_version: 2
 registry_name: "default_designs"
 
 # Global defaults applied when a design does not override.
@@ -10,11 +15,142 @@ _defaults:
   missing_rate_max: 0.10
   min_obs: 30
 
+# =============================================================================
+# DESIGN SPECIFICATIONS
+# =============================================================================
 # Each design is referenced by id in DAG edge specs.
+# Sorted by credibility weight (highest first).
+
 designs:
+  # -------------------------------------------------------------------------
+  # RDD: Regression Discontinuity Design
+  # Credibility: 1.0 (Gold standard for local causal effects)
+  # -------------------------------------------------------------------------
+  - id: "RDD"
+    name: "Regression Discontinuity"
+    description: "Local linear RD with density and bandwidth checks."
+    credibility_weight: 1.0
+    requirements:
+      data:
+        running_variable: true
+        min_obs: 200
+      variables:
+        treatment_type: ["binary"]
+        outcome_type: ["continuous", "share", "index"]
+    template:
+      model: "y = beta * 1[x >= c] + f(x) + e"
+      standard_errors: "robust"
+    diagnostics:
+      required:
+        - "density"           # McCrary test for manipulation
+        - "bandwidth_sensitivity"  # Robust to bandwidth choice
+      optional:
+        - "covariate_balance" # Balance at cutoff
+        - "placebo_cutoffs"   # No effect at fake cutoffs
+    outputs:
+      edge_card_fields: ["beta", "se", "bandwidth", "density_p"]
+    notes: "Strongest design when valid; identifies LATE at cutoff only."
+
+  # -------------------------------------------------------------------------
+  # IV_2SLS: Instrumental Variables
+  # Credibility: 0.9 (Strong if exclusion restriction holds)
+  # -------------------------------------------------------------------------
+  - id: "IV_2SLS"
+    name: "Instrumental Variables 2SLS"
+    description: "Two-stage least squares with explicit exclusion restriction notes."
+    credibility_weight: 0.9
+    requirements:
+      data:
+        min_obs: 50
+      variables:
+        treatment_type: ["continuous"]
+        outcome_type: ["continuous", "share", "index"]
+        instrument_count_min: 1
+    template:
+      model: "x_it = pi * z_it + controls_it + u_it; y_it = beta * xhat_it + controls_it + v_it"
+      standard_errors: "robust"
+    diagnostics:
+      required:
+        - "weak_iv"           # F > 10 rule
+        - "first_stage_f"     # First-stage strength
+        - "exclusion_narrative"  # Must document exclusion argument
+      optional:
+        - "overid"            # Sargan/Hansen test if over-identified
+        - "placebo_outcomes"  # Z should not predict placebo Y
+    outputs:
+      edge_card_fields: ["beta", "se", "first_stage_f", "overid_p"]
+    notes: "Requires careful argument for exclusion restriction."
+
+  # -------------------------------------------------------------------------
+  # DID_EVENT_STUDY: Difference-in-Differences Event Study
+  # Credibility: 0.8 (Good with parallel trends evidence)
+  # -------------------------------------------------------------------------
+  - id: "DID_EVENT_STUDY"
+    name: "Difference-in-Differences Event Study"
+    description: "TWFE event study with pre-trend checks."
+    credibility_weight: 0.8
+    requirements:
+      data:
+        panel: true
+        min_periods: 12
+        min_pre_periods: 4
+      variables:
+        treatment_type: ["binary"]
+        outcome_type: ["continuous", "share", "index"]
+    template:
+      model: "y_it = sum_k beta_k * 1[t = k] * treated_i + alpha_i + tau_t + e_it"
+      fixed_effects: ["unit", "time"]
+      standard_errors: "cluster(unit)"
+    diagnostics:
+      required:
+        - "pre_trends"        # Pre-treatment coefficients not significant
+        - "placebo_event"     # No effect at fake event dates
+      optional:
+        - "balanced_panel"    # Composition stability
+        - "never_treated"     # Clean control group
+        - "staggered_robust"  # Robust to heterogeneous treatment timing
+    outputs:
+      edge_card_fields: ["event_time_betas", "pretrend_p", "ci_bands", "att"]
+    notes: "Pre-trends are necessary but not sufficient for parallel trends."
+
+  # -------------------------------------------------------------------------
+  # LOCAL_PROJECTIONS: Jorda Local Projections
+  # Credibility: 0.7 (Good for dynamic effects)
+  # -------------------------------------------------------------------------
+  - id: "LOCAL_PROJECTIONS"
+    name: "Local Projections IRF"
+    description: "Jorda local projections for dynamic impulse responses."
+    credibility_weight: 0.7
+    requirements:
+      data:
+        time_series: true
+        min_periods: 20
+      variables:
+        treatment_type: ["continuous"]
+        outcome_type: ["continuous", "share", "index"]
+    template:
+      model: "y_{t+h} = beta_h * shock_t + controls_t + e_{t+h}"
+      horizon_max: 12
+      standard_errors: "hac"
+    diagnostics:
+      required:
+        - "stability"         # IRF stable across specifications
+        - "lag_sensitivity"   # Robust to lag structure
+      optional:
+        - "structural_breaks" # No breaks in sample
+        - "shock_exogeneity"  # Shock is truly exogenous
+    outputs:
+      edge_card_fields: ["irf", "ci_bands", "horizon", "cumulative"]
+    notes: "Flexible but requires well-identified shock."
+
+  # -------------------------------------------------------------------------
+  # PANEL_FE_BACKDOOR: Panel Fixed Effects
+  # Credibility: 0.6 (Common but requires strong assumptions)
+  # -------------------------------------------------------------------------
   - id: "PANEL_FE_BACKDOOR"
     name: "Panel FE Backdoor"
     description: "Fixed effects panel regression using a backdoor adjustment set."
+    credibility_weight: 0.6
     requirements:
       data:
         panel: true
@@ -28,84 +164,39 @@ designs:
       fixed_effects: ["unit", "time"]
       standard_errors: "cluster(unit)"
     diagnostics:
-      required: ["residual_checks", "influence" ]
-      optional: ["placebo_exposure", "pre_trends"]
+      required:
+        - "residual_checks"   # No patterns in residuals
+        - "influence"         # No outlier driving results
+      optional:
+        - "placebo_exposure"  # No effect on placebo outcomes
+        - "pre_trends"        # Pre-treatment balance
+        - "sensitivity"       # Omitted variable bias bounds
     outputs:
-      edge_card_fields: ["beta", "se", "ci", "fixed_effects", "controls"]
+      edge_card_fields: ["beta", "se", "ci", "fixed_effects", "controls", "r2_within"]
+    notes: "Relies on selection on observables; document backdoor path."
 
-  - id: "DID_EVENT_STUDY"
-    name: "Difference-in-Differences Event Study"
-    description: "TWFE event study with pre-trend checks."
-    requirements:
-      data:
-        panel: true
-        min_periods: 12
-      variables:
-        treatment_type: ["binary"]
-        outcome_type: ["continuous", "share", "index"]
-    template:
-      model: "y_it = sum_k beta_k * 1[t = k] * treated_i + alpha_i + tau_t + e_it"
-      standard_errors: "cluster(unit)"
-    diagnostics:
-      required: ["pre_trends", "placebo_event"]
-      optional: ["balanced_panel"]
-    outputs:
-      edge_card_fields: ["event_time_betas", "pretrend_p", "ci_bands"]
+# =============================================================================
+# CREDIBILITY RANKING
+# =============================================================================
+# Summary of design credibility for reference.
 
-  - id: "IV_2SLS"
-    name: "Instrumental Variables 2SLS"
-    description: "Two-stage least squares with explicit exclusion restriction notes."
-    requirements:
-      data:
-        min_obs: 50
-      variables:
-        treatment_type: ["continuous"]
-        outcome_type: ["continuous", "share", "index"]
-        instrument_count_min: 1
-    template:
-      model: "x_it = pi * z_it + controls_it + u_it; y_it = beta * xhat_it + controls_it + v_it"
-      standard_errors: "robust"
-    diagnostics:
-      required: ["weak_iv", "first_stage_f", "exclusion_narrative"]
-      optional: ["overid"]
-    outputs:
-      edge_card_fields: ["beta", "se", "first_stage_f", "overid_p"]
+credibility_ranking:
+  - design: "RDD"
+    weight: 1.0
+    reason: "Cleanest identification at cutoff"
 
-  - id: "LOCAL_PROJECTIONS"
-    name: "Local Projections IRF"
-    description: "Jorda local projections for dynamic impulse responses."
-    requirements:
-      data:
-        time_series: true
-        min_periods: 20
-      variables:
-        treatment_type: ["continuous"]
-        outcome_type: ["continuous", "share", "index"]
-    template:
-      model: "y_{t+h} = beta_h * shock_t + controls_t + e_{t+h}"
-      horizon_max: 12
-      standard_errors: "hac"
-    diagnostics:
-      required: ["stability", "lag_sensitivity"]
-      optional: ["structural_breaks"]
-    outputs:
-      edge_card_fields: ["irf", "ci_bands", "horizon"]
+  - design: "IV_2SLS"
+    weight: 0.9
+    reason: "Strong if exclusion restriction is credible"
 
-  - id: "RDD"
-    name: "Regression Discontinuity"
-    description: "Local linear RD with density and bandwidth checks."
-    requirements:
-      data:
-        running_variable: true
-        min_obs: 200
-      variables:
-        treatment_type: ["binary"]
-        outcome_type: ["continuous", "share", "index"]
-    template:
-      model: "y = beta * 1[x >= c] + f(x) + e"
-      standard_errors: "robust"
-    diagnostics:
-      required: ["density", "bandwidth_sensitivity"]
-      optional: ["covariate_balance"]
-    outputs:
-      edge_card_fields: ["beta", "se", "bandwidth"]
+  - design: "DID_EVENT_STUDY"
+    weight: 0.8
+    reason: "Good with pre-trends evidence"
+
+  - design: "LOCAL_PROJECTIONS"
+    weight: 0.7
+    reason: "Flexible dynamics, requires exogenous shock"
+
+  - design: "PANEL_FE_BACKDOOR"
+    weight: 0.6
+    reason: "Common but selection-on-observables assumption"
