@@ -1,0 +1,70 @@
+edge_id: loan_portfolio_to_rwa
+dag_version_hash: a0d5c383631c52aa262f288704c6f7868d48b73d5034761245939de8eeea1d72
+created_at: '2026-02-05T14:50:58.341680'
+data_provenance:
+  treatment_source: null
+  outcome_source: null
+  control_sources: {}
+  instrument_sources: {}
+  combined_row_count: null
+  combined_date_range: null
+  missing_rate: null
+  panel_dimensions: null
+  entity_boundary_note: null
+  kpi_definitions: null
+spec_hash: 1dd3f83caf2c01ce39a6cdece5af917045523595f5feffa7e940b3b0405bd6f5
+spec_details:
+  design: ACCOUNTING_BRIDGE
+  controls: []
+  instruments: []
+  fixed_effects: []
+  se_method: deterministic
+  sample_filter: null
+  horizon: null
+  bandwidth: null
+estimates:
+  point: 0.5714285714285714
+  se: 0.0
+  ci_95:
+  - 0.5714285714285714
+  - 0.5714285714285714
+  pvalue: null
+diagnostics:
+  identity_consistency:
+    name: identity_consistency
+    passed: true
+    value: 0.5714285714285714
+    threshold: null
+    pvalue: null
+    message: 'Accounting bridge: d(RWA)/d(loans) = avg_risk_weight = RWA / total_loans'
+all_diagnostics_pass: true
+interpretation:
+  estimand: 'Accounting sensitivity: d(RWA)/d(loans) = avg_risk_weight = RWA / total_loans'
+  is_not: Causal effect; this is a near-mechanical accounting relationship
+  channels:
+  - accounting/mechanical
+  population: ''
+  conditions: 'Evaluated at: {''loans'': 2800.0, ''rwa'': 1600.0, ''avg_risk_weight'':
+    0.5714285714285714}'
+  allowed_uses: []
+  forbidden_uses: []
+failure_flags:
+  weak_identification: false
+  potential_bad_control: false
+  mechanical_identity_risk: true
+  regime_break_detected: false
+  small_sample: false
+  high_missing_rate: false
+  entity_boundary_change: false
+  definition_inconsistency: false
+counterfactual:
+  supports_shock_path: true
+  supports_policy_intervention: true
+  intervention_note: Accounting bridge; holds by construction under current risk weights
+    / tax regime
+  external_validity: ''
+credibility_rating: A
+credibility_score: 0.9299999999999999
+companion_edge_id: null
+is_precisely_null: false
+null_equivalence_bound: null

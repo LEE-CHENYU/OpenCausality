@@ -90,13 +90,20 @@ class Interpretation:
     Interpretation boundary for the estimate.
 
     CRITICAL: This prevents overclaiming of causal effects.
+
+    Supports both legacy format (is_not: str) and extended format
+    (is_not: list, allowed_uses, forbidden_uses).
     """
 
     estimand: str  # What we're actually estimating
-    is_not: str  # What this is NOT
+    is_not: str | list[str] = ""  # What this is NOT (str for legacy, list for extended)
     channels: list[str] = field(default_factory=list)  # Possible channels
     population: str = ""  # Population the estimate applies to
     conditions: str = ""  # Conditions under which estimate holds
+
+    # Extended interpretation boundary enforcement (v2)
+    allowed_uses: list[str] = field(default_factory=list)  # Allowed use cases
+    forbidden_uses: list[str] = field(default_factory=list)  # Forbidden use cases
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
@@ -106,7 +113,68 @@ class Interpretation:
             "channels": self.channels,
             "population": self.population,
             "conditions": self.conditions,
+            "allowed_uses": self.allowed_uses,
+            "forbidden_uses": self.forbidden_uses,
         }
+
+    def is_use_allowed(self, use_case: str) -> bool:
+        """
+        Check if a use case is allowed for this edge.
+
+        Args:
+            use_case: The intended use case (e.g., "shock_counterfactual",
+                      "policy_counterfactual", "scenario_only")
+
+        Returns:
+            True if allowed, False if forbidden
+        """
+        # Explicitly forbidden takes precedence
+        if use_case in self.forbidden_uses:
+            return False
+
+        # If allowed_uses is empty, allow any non-forbidden use
+        if not self.allowed_uses:
+            return True
+
+        # Check if in allowed list
+        return use_case in self.allowed_uses
+
+    def check_use(self, use_case: str) -> tuple[bool, str]:
+        """
+        Check if a use case is allowed and return explanation.
+
+        Args:
+            use_case: The intended use case
+
+        Returns:
+            Tuple of (is_allowed, explanation_message)
+        """
+        if use_case in self.forbidden_uses:
+            return False, f"Use case '{use_case}' is explicitly forbidden for this edge"
+
+        if self.allowed_uses and use_case not in self.allowed_uses:
+            return False, (
+                f"Use case '{use_case}' not in allowed uses: {self.allowed_uses}"
+            )
+
+        return True, f"Use case '{use_case}' is permitted"
+
+    def get_is_not_list(self) -> list[str]:
+        """Get is_not as a list (handles both legacy str and new list format)."""
+        if isinstance(self.is_not, list):
+            return self.is_not
+        elif self.is_not:
+            return [self.is_not]
+        return []
+
+
+class UseNotAllowedError(Exception):
+    """Exception raised when an edge is used for a forbidden purpose."""
+
+    def __init__(self, edge_id: str, use_case: str, message: str):
+        self.edge_id = edge_id
+        self.use_case = use_case
+        super().__init__(f"Edge '{edge_id}': {message}")
 
 
 @dataclass
@@ -124,6 +192,8 @@ class FailureFlags:
     regime_break_detected: bool = False
     small_sample: bool = False
     high_missing_rate: bool = False
+    entity_boundary_change: bool = False  # Entity definition changed across sample
+    definition_inconsistency: bool = False  # KPI definitions differ across panel units
 
     def any_flagged(self) -> bool:
         """Check if any flags are raised."""
@@ -134,6 +204,8 @@ class FailureFlags:
             self.regime_break_detected,
             self.small_sample,
             self.high_missing_rate,
+            self.entity_boundary_change,
+            self.definition_inconsistency,
         ])
 
     def to_dict(self) -> dict[str, bool]:
@@ -145,6 +217,8 @@ class FailureFlags:
             "regime_break_detected": self.regime_break_detected,
             "small_sample": self.small_sample,
             "high_missing_rate": self.high_missing_rate,
+            "entity_boundary_change": self.entity_boundary_change,
+            "definition_inconsistency": self.definition_inconsistency,
         }
 
 
@@ -215,6 +289,9 @@ class EdgeCard:
     credibility_rating: Literal["A", "B", "C", "D"] = "D"
     credibility_score: float = 0.0
 
+    # Companion edge (links KSPI-only ↔ sector panel estimates)
+    companion_edge_id: str | None = None
+
     # Null acceptance
     is_precisely_null: bool = False
     null_equivalence_bound: float | None = None
@@ -222,6 +299,37 @@ class EdgeCard:
     def all_diagnostics_pass(self) -> bool:
         """Check if all diagnostics pass."""
         return all(d.passed for d in self.diagnostics.values())
+
+    def check_use_allowed(self, use_case: str) -> tuple[bool, str]:
+        """
+        Check if this edge can be used for a given purpose.
+
+        Uses the interpretation boundary to determine allowability.
+
+        Args:
+            use_case: The intended use case (e.g., "shock_counterfactual",
+                      "policy_counterfactual", "scenario_only")
+
+        Returns:
+            Tuple of (is_allowed, explanation_message)
+        """
+        return self.interpretation.check_use(use_case)
+
+    def assert_use_allowed(self, use_case: str) -> None:
+        """
+        Assert that this edge can be used for a given purpose.
+
+        Raises UseNotAllowedError if the use case is forbidden.
+
+        Args:
+            use_case: The intended use case
+
+        Raises:
+            UseNotAllowedError: If the use case is not allowed
+        """
+        allowed, message = self.check_use_allowed(use_case)
+        if not allowed:
+            raise UseNotAllowedError(self.edge_id, use_case, message)
 
     def compute_result_hash(self) -> str:
         """Compute hash of results for audit."""
@@ -262,6 +370,7 @@ class EdgeCard:
             "counterfactual": self.counterfactual.to_dict(),
             "credibility_rating": self.credibility_rating,
             "credibility_score": self.credibility_score,
+            "companion_edge_id": self.companion_edge_id,
             "is_precisely_null": self.is_precisely_null,
             "null_equivalence_bound": self.null_equivalence_bound,
         }
@@ -327,10 +436,20 @@ class EdgeCard:
         lines.append("")
         lines.append(f"**Estimand:** {self.interpretation.estimand}")
         lines.append("")
-        lines.append(f"**This is NOT:** {self.interpretation.is_not}")
+        is_not_list = self.interpretation.get_is_not_list()
+        if is_not_list:
+            lines.append("**This is NOT:**")
+            for item in is_not_list:
+                lines.append(f"- {item}")
         if self.interpretation.channels:
             lines.append("")
             lines.append(f"**Possible channels:** {', '.join(self.interpretation.channels)}")
+        if self.interpretation.allowed_uses:
+            lines.append("")
+            lines.append(f"**Allowed uses:** {', '.join(self.interpretation.allowed_uses)}")
+        if self.interpretation.forbidden_uses:
+            lines.append("")
+            lines.append(f"**Forbidden uses:** {', '.join(self.interpretation.forbidden_uses)}")
         lines.append("")
 
         # Failure Flags

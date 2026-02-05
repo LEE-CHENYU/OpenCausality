@@ -13,7 +13,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
-from threading import Lock
+from threading import RLock
 from typing import Iterator
 
 from shared.agentic.dag.parser import DAGSpec, EdgeSpec
@@ -87,8 +87,8 @@ class TaskQueue:
         # Priority computer
         self._priority_computer = PriorityComputer(dag)
 
-        # Thread safety
-        self._lock = Lock()
+        # Thread safety (RLock for reentrant locking in mark_complete -> mark_artifact_available)
+        self._lock = RLock()
 
         # Asset locks for idempotency
         self._asset_locks: dict[str, str] = {}  # asset_id -> locker_id

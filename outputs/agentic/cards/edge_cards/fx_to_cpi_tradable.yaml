@@ -1,0 +1,76 @@
+edge_id: fx_to_cpi_tradable
+dag_version_hash: a0d5c383631c52aa262f288704c6f7868d48b73d5034761245939de8eeea1d72
+created_at: '2026-02-05T14:50:55.297513'
+data_provenance:
+  treatment_source: null
+  outcome_source: null
+  control_sources: {}
+  instrument_sources: {}
+  combined_row_count: null
+  combined_date_range: null
+  missing_rate: null
+  panel_dimensions: null
+  entity_boundary_note: null
+  kpi_definitions: null
+spec_hash: 3cd8d61ed8c8fce944339d672111bfc406d15a3e7db2cecade9100f86d2c9383
+spec_details:
+  design: IMMUTABLE_EVIDENCE
+  controls: []
+  instruments: []
+  fixed_effects: []
+  se_method: from_source_block
+  sample_filter: null
+  horizon: null
+  bandwidth: null
+estimates:
+  point: 0.113
+  se: 0.028
+  ci_95:
+  - 0.058
+  - 0.168
+  pvalue: 0.0001
+diagnostics:
+  validated_evidence:
+    name: validated_evidence
+    passed: true
+    value: 1.0
+    threshold: null
+    pvalue: null
+    message: Validated from Block A DiD
+  effective_obs:
+    name: effective_obs
+    passed: true
+    value: 1200.0
+    threshold: 20.0
+    pvalue: null
+    message: ''
+all_diagnostics_pass: true
+interpretation:
+  estimand: FX pass-through to tradable CPI from difference-in-differences estimation.
+    11.3% pass-through at 6 months post-shock.
+  is_not: Re-estimated result; this is locked validated evidence
+  channels:
+  - as identified in source block
+  population: ''
+  conditions: 'Source: Block A DiD'
+  allowed_uses: []
+  forbidden_uses: []
+failure_flags:
+  weak_identification: false
+  potential_bad_control: false
+  mechanical_identity_risk: false
+  regime_break_detected: false
+  small_sample: false
+  high_missing_rate: false
+  entity_boundary_change: false
+  definition_inconsistency: false
+counterfactual:
+  supports_shock_path: true
+  supports_policy_intervention: false
+  intervention_note: Validated evidence from Block A DiD
+  external_validity: ''
+credibility_rating: A
+credibility_score: 0.99
+companion_edge_id: null
+is_precisely_null: false
+null_equivalence_bound: null

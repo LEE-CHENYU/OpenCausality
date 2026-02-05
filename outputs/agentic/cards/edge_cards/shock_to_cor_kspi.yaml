@@ -1,0 +1,144 @@
+edge_id: shock_to_cor_kspi
+dag_version_hash: a0d5c383631c52aa262f288704c6f7868d48b73d5034761245939de8eeea1d72
+created_at: '2026-02-05T14:50:55.334947'
+data_provenance:
+  treatment_source:
+    connector: parquet_file
+    dataset: cpi_tradable
+    series: null
+    retrieval_time: null
+    file_path: null
+    file_checksum: null
+    row_count: 27
+    column_count: null
+    date_range:
+    - '2011-10-01'
+    - '2024-07-01'
+    cache_key: null
+  outcome_source:
+    connector: parquet_file
+    dataset: cor_kspi
+    series: null
+    retrieval_time: null
+    file_path: null
+    file_checksum: null
+    row_count: 27
+    column_count: null
+    date_range:
+    - '2011-10-01'
+    - '2024-07-01'
+    cache_key: null
+  control_sources: {}
+  instrument_sources: {}
+  combined_row_count: 27
+  combined_date_range:
+  - '2011-10-01'
+  - '2024-07-01'
+  missing_rate: null
+  panel_dimensions: null
+  entity_boundary_note: kaspi_bank subsidiary level
+  kpi_definitions: null
+spec_hash: c3c5071ebab1b83d9c2359a2c1302f42ef68b238b6d340b4b6d51b5ad93bd75f
+spec_details:
+  design: LOCAL_PROJECTIONS
+  controls:
+  - y_lag1
+  - y_lag2
+  - x_lag1
+  - x_lag2
+  instruments: []
+  fixed_effects: []
+  se_method: HAC_newey_west
+  sample_filter: null
+  horizon: &id001
+  - 0
+  - 1
+  - 2
+  bandwidth: null
+estimates:
+  point: 85.95725782265167
+  se: 7.402203593864903
+  ci_95:
+  - 71.44893877867646
+  - 100.46557686662688
+  pvalue: 3.565189467437848e-31
+  horizons: *id001
+  irf:
+  - 85.95725782265167
+  - 10.823135904350785
+  - -22.56473883694128
+  irf_ci_lower:
+  - 71.4492053724435
+  - -10.958247377940442
+  - -45.72621895995319
+  irf_ci_upper:
+  - 100.46531027285984
+  - 32.60451918664201
+  - 0.5967412860706212
+diagnostics:
+  hac_bandwidth:
+    name: hac_bandwidth
+    passed: true
+    value: 2.0
+    threshold: null
+    pvalue: null
+    message: 'Newey-West bandwidth: 2'
+  effective_obs:
+    name: effective_obs
+    passed: true
+    value: 26.0
+    threshold: 20.0
+    pvalue: null
+    message: 26 observations
+  r_squared_h0:
+    name: r_squared_h0
+    passed: true
+    value: 0.814587640425887
+    threshold: null
+    pvalue: null
+    message: 'R-squared at h=0: 0.8146'
+  residual_ac1:
+    name: residual_ac1
+    passed: true
+    value: -0.1860324663220933
+    threshold: 0.5
+    pvalue: null
+    message: 'AR(1) residual autocorrelation: -0.186'
+  sign_consistency:
+    name: sign_consistency
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: No expected sign specified
+all_diagnostics_pass: true
+interpretation:
+  estimand: IRF of cor_kspi to a unit shock in cpi_tradable
+  is_not: Structural causal effect under all interventions
+  channels:
+  - direct
+  - indirect through unobserved channels
+  population: Kazakhstan aggregate time-series (Kaspi Bank)
+  conditions: Sample period, no regime changes
+  allowed_uses: []
+  forbidden_uses: []
+failure_flags:
+  weak_identification: false
+  potential_bad_control: false
+  mechanical_identity_risk: false
+  regime_break_detected: false
+  small_sample: true
+  high_missing_rate: false
+  entity_boundary_change: false
+  definition_inconsistency: false
+counterfactual:
+  supports_shock_path: true
+  supports_policy_intervention: false
+  intervention_note: Reduced-form LP estimate; valid for shock propagation, not policy
+    counterfactuals
+  external_validity: ''
+credibility_rating: B
+credibility_score: 0.79
+companion_edge_id: shock_to_cor_sector
+is_precisely_null: false
+null_equivalence_bound: null

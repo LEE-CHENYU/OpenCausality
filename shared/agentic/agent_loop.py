@@ -243,17 +243,47 @@ class AgentLoop:
         self.audit_log.data_hash = self._data_hash
 
     def _catalog_data(self) -> None:
-        """Catalog data availability without fetching."""
+        """Catalog data availability by probing actual data sources."""
+        from shared.engine.data_assembler import NODE_LOADERS
+
         for node in self.dag.nodes:
-            # For now, assume all data is available
-            # In production, this would check the actual data sources
+            connector = ""
+            dataset = ""
+            if node.source and node.source.preferred:
+                connector = node.source.preferred[0].connector
+                dataset = node.source.preferred[0].dataset
+
+            # Check if we have a real loader for this node
+            has_loader = node.id in NODE_LOADERS
+            is_fetched = False
+            row_count = None
+            date_range = None
+            data_ref = None
+
+            if has_loader:
+                try:
+                    s = NODE_LOADERS[node.id]()
+                    is_fetched = True
+                    row_count = len(s)
+                    if hasattr(s, 'index') and len(s) > 0:
+                        date_range = (str(s.index.min()), str(s.index.max()))
+                    data_ref = f"loader:{node.id}"
+                except Exception as e:
+                    logger.warning(f"Data probe failed for {node.id}: {e}")
+                    is_fetched = False
+            else:
+                # No loader; mark as available but not fetched if latent
+                is_fetched = getattr(node, 'observed', True)
+
             asset = DataAsset(
                 node_id=node.id,
-                connector=node.source.preferred[0].connector if node.source and node.source.preferred else "",
-                dataset=node.source.preferred[0].dataset if node.source and node.source.preferred else "",
-                is_available=True,
-                is_fetched=True,  # Simplified for now
-                data_ref=f"cache:{node.id}",
+                connector=connector,
+                dataset=dataset,
+                is_available=has_loader or is_fetched,
+                is_fetched=is_fetched,
+                row_count=row_count,
+                date_range=date_range,
+                data_ref=data_ref,
             )
             self.catalog.add(asset)
 
@@ -284,7 +314,9 @@ class AgentLoop:
             self._process_task(task)
 
     def _process_task(self, task: LinkageTask) -> None:
-        """Process a single task."""
+        """Process a single task using real estimators."""
+        from shared.engine.data_assembler import get_edge_group, EDGE_NODE_MAP
+
         logger.info(f"Processing task: {task.edge_id}")
         task.start()
         self.queue.update_status(task.edge_id, TaskStatus.RUNNING)
@@ -295,43 +327,43 @@ class AgentLoop:
             if not edge:
                 raise ValueError(f"Edge not found: {task.edge_id}")
 
-            # Get forbidden controls from validation
-            forbidden_controls = set()
-            if self.validation_report and task.edge_id in self.validation_report.forbidden_controls:
-                forbidden_controls = self.validation_report.forbidden_controls[task.edge_id].total_forbidden
+            # Determine edge group and dispatch to appropriate estimator
+            group = get_edge_group(task.edge_id)
 
-            # Create data report (simplified for now)
-            data_report = DataReport(
-                is_panel=True,
-                is_time_series=True,
-                n_obs=100,
-                n_periods=40,
-                n_units=10,
-                treatment_type="continuous",
-                outcome_type="continuous",
-                n_instruments=len(edge.instruments),
-            )
+            if group == "IMMUTABLE":
+                edge_card = self._create_immutable_card(task)
+            elif group == "IDENTITY":
+                edge_card = self._create_identity_card(task)
+            elif group in ("MONTHLY_LP", "QUARTERLY_LP"):
+                edge_card = self._create_lp_card(task, is_quarterly=(group == "QUARTERLY_LP"))
+            else:
+                # Fallback: try LP estimation if edge is in EDGE_NODE_MAP
+                if task.edge_id in EDGE_NODE_MAP:
+                    edge_card = self._create_lp_card(task, is_quarterly=False)
+                else:
+                    # Get forbidden controls from validation
+                    forbidden_controls = set()
+                    if self.validation_report and task.edge_id in self.validation_report.forbidden_controls:
+                        forbidden_controls = self.validation_report.forbidden_controls[task.edge_id].total_forbidden
 
-            # Select design
-            result = self.design_selector.select(
-                edge=edge,
-                data_report=data_report,
-                forbidden_controls=forbidden_controls,
-            )
-
-            if isinstance(result, NotIdentified):
-                # Edge cannot be identified
-                self.queue.mark_blocked(task.edge_id, result.reason, TaskStatus.BLOCKED_ID)
-                logger.warning(f"Edge {task.edge_id} not identified: {result.reason}")
-                return
-
-            selected_design = result
+                    data_report = DataReport(
+                        is_panel=True, is_time_series=True,
+                        n_obs=100, n_periods=40, n_units=10,
+                        treatment_type="continuous", outcome_type="continuous",
+                        n_instruments=len(edge.instruments),
+                    )
+                    result = self.design_selector.select(
+                        edge=edge, data_report=data_report,
+                        forbidden_controls=forbidden_controls,
+                    )
+                    if isinstance(result, NotIdentified):
+                        self.queue.mark_blocked(task.edge_id, result.reason, TaskStatus.BLOCKED_ID)
+                        logger.warning(f"Edge {task.edge_id} not identified: {result.reason}")
+                        return
+                    edge_card = self._create_edge_card(task, result, edge)
 
             # Log initial specification
-            self.audit_log.log_initial(task.edge_id, selected_design.spec_hash)
-
-            # Create EdgeCard (simplified - actual estimation would happen here)
-            edge_card = self._create_edge_card(task, selected_design, edge)
+            self.audit_log.log_initial(task.edge_id, edge_card.spec_hash)
 
             # Save artifact
             results_ref = str(self.artifact_store.save_edge_card(edge_card))
@@ -347,6 +379,242 @@ class AgentLoop:
         except Exception as e:
             logger.error(f"Task {task.edge_id} failed: {e}")
             self.queue.mark_failed(task.edge_id, str(e))
+
+    def _create_immutable_card(self, task: LinkageTask) -> EdgeCard:
+        """Create EdgeCard from validated evidence (immutable blocks)."""
+        from shared.engine.ts_estimator import get_immutable_result
+        from shared.agentic.output.edge_card import (
+            Estimates, DiagnosticResult, Interpretation,
+            FailureFlags, CounterfactualApplicability,
+        )
+        from shared.agentic.output.provenance import SpecDetails
+
+        ir = get_immutable_result(task.edge_id)
+
+        estimates = Estimates(
+            point=ir.point_estimate,
+            se=ir.se,
+            ci_95=(ir.ci_lower, ir.ci_upper),
+            pvalue=ir.pvalue,
+        )
+        diagnostics = {
+            "validated_evidence": DiagnosticResult(
+                name="validated_evidence", passed=True, value=1.0,
+                message=f"Validated from {ir.source_block}",
+            ),
+        }
+        spec_details = SpecDetails(
+            design="IMMUTABLE_EVIDENCE",
+            se_method="from_source_block",
+        )
+        score, rating = compute_credibility_score(
+            diagnostics=diagnostics,
+            failure_flags=FailureFlags(),
+            design_weight=0.9,
+            data_coverage=1.0,
+        )
+        return EdgeCard(
+            edge_id=task.edge_id,
+            dag_version_hash=self._dag_hash,
+            spec_hash=spec_details.compute_hash(),
+            spec_details=spec_details,
+            estimates=estimates,
+            diagnostics=diagnostics,
+            interpretation=Interpretation(
+                estimand=ir.source_description,
+                is_not="Re-estimated result; locked validated evidence",
+            ),
+            failure_flags=FailureFlags(),
+            counterfactual=CounterfactualApplicability(
+                supports_shock_path=True,
+                supports_policy_intervention=False,
+                intervention_note=f"Validated evidence from {ir.source_block}",
+            ),
+            credibility_rating=rating,
+            credibility_score=score,
+            is_precisely_null=(ir.point_estimate == 0.0),
+            null_equivalence_bound=float(2 * ir.se) if ir.point_estimate == 0.0 else None,
+        )
+
+    def _create_identity_card(self, task: LinkageTask) -> EdgeCard:
+        """Create EdgeCard from identity (mechanical) sensitivity."""
+        from shared.engine.ts_estimator import compute_identity_sensitivity
+        from shared.engine.data_assembler import _load_kspi_quarterly
+        from shared.agentic.output.edge_card import (
+            Estimates, DiagnosticResult, Interpretation,
+            FailureFlags, CounterfactualApplicability,
+        )
+        from shared.agentic.output.provenance import SpecDetails
+
+        kspi_df = _load_kspi_quarterly()
+        latest = kspi_df.iloc[-1]
+        capital = float(latest["total_capital"])
+        rwa = float(latest["rwa"])
+
+        id_results = compute_identity_sensitivity(capital, rwa)
+        ir = id_results[task.edge_id]
+
+        estimates = Estimates(
+            point=ir.sensitivity,
+            se=0.0,
+            ci_95=(ir.sensitivity, ir.sensitivity),
+            pvalue=None,
+        )
+        diagnostics = {
+            "identity_check": DiagnosticResult(
+                name="identity_check", passed=True,
+                value=ir.sensitivity,
+                message=f"Deterministic: {ir.formula}",
+            ),
+        }
+        failure_flags = FailureFlags(mechanical_identity_risk=True)
+        spec_details = SpecDetails(design="IDENTITY", se_method="deterministic")
+
+        score, rating = compute_credibility_score(
+            diagnostics=diagnostics,
+            failure_flags=failure_flags,
+            design_weight=1.0,
+            data_coverage=1.0,
+        )
+        return EdgeCard(
+            edge_id=task.edge_id,
+            dag_version_hash=self._dag_hash,
+            spec_hash=spec_details.compute_hash(),
+            spec_details=spec_details,
+            estimates=estimates,
+            diagnostics=diagnostics,
+            interpretation=Interpretation(
+                estimand=f"Sensitivity: {ir.formula}",
+                is_not="Causal effect; this is a mechanical identity",
+            ),
+            failure_flags=failure_flags,
+            counterfactual=CounterfactualApplicability(
+                supports_shock_path=True,
+                supports_policy_intervention=True,
+                intervention_note="Mechanical identity; always holds by definition",
+            ),
+            credibility_rating=rating,
+            credibility_score=score,
+        )
+
+    def _create_lp_card(
+        self,
+        task: LinkageTask,
+        is_quarterly: bool = False,
+    ) -> EdgeCard:
+        """Create EdgeCard from Local Projections estimation."""
+        import numpy as np_
+        from shared.engine.data_assembler import assemble_edge_data, EDGE_NODE_MAP
+        from shared.engine.ts_estimator import estimate_lp, check_sign_consistency
+        from shared.agentic.output.edge_card import (
+            Estimates, DiagnosticResult, Interpretation,
+            FailureFlags, CounterfactualApplicability,
+        )
+        from shared.agentic.output.provenance import SpecDetails, DataProvenance, SourceProvenance
+
+        data = assemble_edge_data(task.edge_id)
+        max_h = 2 if is_quarterly else 6
+        n_lags = 1 if is_quarterly else 2
+
+        lp = estimate_lp(
+            y=data["outcome"],
+            x=data["treatment"],
+            max_horizon=max_h,
+            n_lags=n_lags,
+            edge_id=task.edge_id,
+        )
+
+        point = lp.impact_estimate
+        se = lp.impact_se
+        n_obs = lp.nobs[0] if lp.nobs else 0
+        ci_lo = point - 1.96 * se if not np_.isnan(se) else 0.0
+        ci_hi = point + 1.96 * se if not np_.isnan(se) else 0.0
+        pval = lp.pvalues[0] if lp.pvalues and not np_.isnan(lp.pvalues[0]) else None
+
+        estimates = Estimates(
+            point=float(point) if not np_.isnan(point) else 0.0,
+            se=float(se) if not np_.isnan(se) else 0.0,
+            ci_95=(float(ci_lo), float(ci_hi)),
+            pvalue=float(pval) if pval is not None else None,
+            horizons=lp.horizons,
+            irf=lp.coefficients,
+            irf_ci_lower=lp.ci_lower,
+            irf_ci_upper=lp.ci_upper,
+        )
+
+        diagnostics: dict[str, DiagnosticResult] = {}
+        if lp.hac_bandwidth:
+            diagnostics["hac_bandwidth"] = DiagnosticResult(
+                name="hac_bandwidth", passed=True,
+                value=float(lp.hac_bandwidth[0]),
+                message=f"Newey-West bandwidth: {lp.hac_bandwidth[0]}",
+            )
+        diagnostics["effective_obs"] = DiagnosticResult(
+            name="effective_obs", passed=n_obs >= 20,
+            value=float(n_obs), threshold=20.0,
+        )
+        sign_ok, sign_msg = check_sign_consistency(lp)
+        diagnostics["sign_consistency"] = DiagnosticResult(
+            name="sign_consistency", passed=sign_ok, message=sign_msg,
+        )
+
+        failure_flags = FailureFlags(small_sample=is_quarterly or n_obs < 30)
+        treatment_node, outcome_node = EDGE_NODE_MAP[task.edge_id]
+        spec_details = SpecDetails(
+            design="LOCAL_PROJECTIONS",
+            controls=[f"y_lag{i}" for i in range(1, n_lags + 1)] + [f"x_lag{i}" for i in range(1, n_lags + 1)],
+            se_method="HAC_newey_west",
+            horizon=lp.horizons,
+        )
+        design_weight = 0.5 if is_quarterly else 0.7
+        data_coverage = min(1.0, n_obs / 17) if is_quarterly else min(1.0, n_obs / 100)
+        score, rating = compute_credibility_score(
+            diagnostics=diagnostics, failure_flags=failure_flags,
+            design_weight=design_weight, data_coverage=data_coverage,
+        )
+        if is_quarterly and rating == "A":
+            rating = "B"
+            score = min(score, 0.79)
+
+        # Null detection
+        is_null = False
+        null_bound = None
+        if pval is not None and pval > 0.10 and abs(point) < 2 * se:
+            is_null = True
+            null_bound = float(2 * se)
+
+        date_range = (str(data.index.min().date()), str(data.index.max().date())) if len(data) > 0 else None
+        provenance = DataProvenance(
+            treatment_source=SourceProvenance(connector="parquet_file", dataset=treatment_node, row_count=len(data), date_range=date_range),
+            outcome_source=SourceProvenance(connector="parquet_file", dataset=outcome_node, row_count=len(data), date_range=date_range),
+            combined_row_count=len(data),
+            combined_date_range=date_range,
+        )
+
+        return EdgeCard(
+            edge_id=task.edge_id,
+            dag_version_hash=self._dag_hash,
+            spec_hash=spec_details.compute_hash(),
+            spec_details=spec_details,
+            data_provenance=provenance,
+            estimates=estimates,
+            diagnostics=diagnostics,
+            interpretation=Interpretation(
+                estimand=f"IRF of {outcome_node} to a unit shock in {treatment_node}",
+                is_not="Structural causal effect under all interventions",
+                channels=["direct", "indirect"],
+            ),
+            failure_flags=failure_flags,
+            counterfactual=CounterfactualApplicability(
+                supports_shock_path=True,
+                supports_policy_intervention=False,
+                intervention_note="Reduced-form LP estimate",
+            ),
+            credibility_rating=rating,
+            credibility_score=score,
+            is_precisely_null=is_null,
+            null_equivalence_bound=null_bound,
+        )
 
     def _create_edge_card(
         self,

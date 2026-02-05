@@ -1,0 +1,160 @@
+edge_id: oil_demand_to_fx
+dag_version_hash: a0d5c383631c52aa262f288704c6f7868d48b73d5034761245939de8eeea1d72
+created_at: '2026-02-05T14:50:55.223171'
+data_provenance:
+  treatment_source:
+    connector: parquet_file
+    dataset: oil_demand_shock
+    series: null
+    retrieval_time: null
+    file_path: null
+    file_checksum: null
+    row_count: 189
+    column_count: null
+    date_range:
+    - '2010-01-01'
+    - '2025-09-01'
+    cache_key: null
+  outcome_source:
+    connector: parquet_file
+    dataset: kzt_usd
+    series: null
+    retrieval_time: null
+    file_path: null
+    file_checksum: null
+    row_count: 189
+    column_count: null
+    date_range:
+    - '2010-01-01'
+    - '2025-09-01'
+    cache_key: null
+  control_sources: {}
+  instrument_sources: {}
+  combined_row_count: 189
+  combined_date_range:
+  - '2010-01-01'
+  - '2025-09-01'
+  missing_rate: null
+  panel_dimensions: null
+  entity_boundary_note: null
+  kpi_definitions: null
+spec_hash: b327b4b58bb76c861cb9ea83d801f78185de731f39d0cf1487f8bfe48ffdf5b0
+spec_details:
+  design: LOCAL_PROJECTIONS
+  controls:
+  - y_lag1
+  - y_lag2
+  - x_lag1
+  - x_lag2
+  instruments: []
+  fixed_effects: []
+  se_method: HAC_newey_west
+  sample_filter: null
+  horizon: &id001
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  bandwidth: null
+estimates:
+  point: -0.2982569763930919
+  se: 0.1610839343672633
+  ci_95:
+  - -0.6139814877529279
+  - 0.017467534966744136
+  pvalue: 0.06408866840834679
+  horizons: *id001
+  irf:
+  - -0.2982569763930919
+  - -0.2237287748523582
+  - -0.04469772497763243
+  - -0.10447753300757512
+  - -0.0671375068585484
+  - -0.08211091091092432
+  - -0.18278644114446624
+  irf_ci_lower:
+  - -0.6139756862409418
+  - -0.6026608018339237
+  - -0.38832460449422107
+  - -0.4418880954447188
+  - -0.4644393418687388
+  - -0.4609755419372921
+  - -0.5460803058824222
+  irf_ci_upper:
+  - 0.01746173345475799
+  - 0.15520325212920721
+  - 0.29892915453895624
+  - 0.23293302942956856
+  - 0.330164328151642
+  - 0.2967537201154435
+  - 0.1805074235934897
+diagnostics:
+  hac_bandwidth:
+    name: hac_bandwidth
+    passed: true
+    value: 4.0
+    threshold: null
+    pvalue: null
+    message: 'Newey-West bandwidth: 4'
+  effective_obs:
+    name: effective_obs
+    passed: true
+    value: 187.0
+    threshold: 20.0
+    pvalue: null
+    message: 187 observations
+  r_squared_h0:
+    name: r_squared_h0
+    passed: true
+    value: 0.9917230293833517
+    threshold: null
+    pvalue: null
+    message: 'R-squared at h=0: 0.9917'
+  residual_ac1:
+    name: residual_ac1
+    passed: true
+    value: 0.003531468716949729
+    threshold: 0.5
+    pvalue: null
+    message: 'AR(1) residual autocorrelation: 0.004'
+  sign_consistency:
+    name: sign_consistency
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'Sign consistent: expected -, got -0.2983'
+all_diagnostics_pass: true
+interpretation:
+  estimand: IRF of kzt_usd to a unit shock in oil_demand_shock
+  is_not: Structural causal effect under all interventions
+  channels:
+  - direct
+  - indirect through unobserved channels
+  population: Kazakhstan aggregate time-series (Kaspi Bank)
+  conditions: Sample period, no regime changes
+  allowed_uses: []
+  forbidden_uses: []
+failure_flags:
+  weak_identification: false
+  potential_bad_control: false
+  mechanical_identity_risk: false
+  regime_break_detected: false
+  small_sample: false
+  high_missing_rate: false
+  entity_boundary_change: false
+  definition_inconsistency: false
+counterfactual:
+  supports_shock_path: true
+  supports_policy_intervention: false
+  intervention_note: Reduced-form LP estimate; valid for shock propagation, not policy
+    counterfactuals
+  external_validity: ''
+credibility_rating: A
+credibility_score: 0.97
+companion_edge_id: null
+is_precisely_null: false
+null_equivalence_bound: null

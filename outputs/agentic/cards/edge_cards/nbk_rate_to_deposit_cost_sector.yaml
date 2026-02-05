@@ -1,0 +1,122 @@
+edge_id: nbk_rate_to_deposit_cost_sector
+dag_version_hash: a0d5c383631c52aa262f288704c6f7868d48b73d5034761245939de8eeea1d72
+created_at: '2026-02-05T14:50:57.918560'
+data_provenance:
+  treatment_source: null
+  outcome_source: null
+  control_sources: {}
+  instrument_sources: {}
+  combined_row_count: 30
+  combined_date_range: null
+  missing_rate: null
+  panel_dimensions:
+    n_units: 4
+    n_periods: 20
+    balance: unbalanced
+  entity_boundary_note: 'Multi-bank panel: kaspi, halyk, forte, bcc'
+  kpi_definitions: null
+spec_hash: e19a69de52014bfee37b9ba7706c0bf94d42389f35e1bcfff1ee6f214a5baeb0
+spec_details:
+  design: PANEL_LP_EXPOSURE_FE
+  controls:
+  - outcome_lag1
+  - interaction_lag1
+  instruments: []
+  fixed_effects:
+  - bank
+  - time
+  se_method: clustered
+  sample_filter: null
+  horizon: &id001
+  - 0
+  - 1
+  - 2
+  bandwidth: null
+estimates:
+  point: -0.5763318037731248
+  se: 0.5260813886161481
+  ci_95:
+  - -1.607451325460775
+  - 0.4547877179145253
+  pvalue: 0.3153039909733131
+  horizons: *id001
+  irf:
+  - -0.5763318037731248
+  - -0.3776648650662448
+  - .nan
+  irf_ci_lower:
+  - -1.8636065882447794
+  - -1.2148143305315975
+  - .nan
+  irf_ci_upper:
+  - 0.71094298069853
+  - 0.4594846003991078
+  - .nan
+diagnostics:
+  effective_obs:
+    name: effective_obs
+    passed: true
+    value: 30.0
+    threshold: 20.0
+    pvalue: null
+    message: 30 panel observations (4 banks x 20 periods)
+  leave_one_bank_out:
+    name: leave_one_bank_out
+    passed: true
+    value: 1.0
+    threshold: null
+    pvalue: null
+    message: Sign stable across all bank exclusions
+  exposure_variation:
+    name: exposure_variation
+    passed: true
+    value: 0.2700308624336609
+    threshold: 0.1
+    pvalue: null
+    message: CV of exposure = 0.270, range = [0.30, 0.55]
+  regime_break:
+    name: regime_break
+    passed: true
+    value: 1.0
+    threshold: null
+    pvalue: null
+    message: Coefficient stable across regime breaks
+  r_squared_within:
+    name: r_squared_within
+    passed: true
+    value: -1.022206093531016
+    threshold: null
+    pvalue: null
+    message: 'R-squared within at h=0: -1.0222'
+all_diagnostics_pass: true
+interpretation:
+  estimand: Differential bank response per unit E_demand_dep, per unit shock (shift-share
+    Exposure x Shock)
+  is_not: Aggregate causal effect of shock on outcome; this is a differential effect
+    by exposure level
+  channels:
+  - cross-bank exposure variation
+  population: Kazakhstan banking sector (4 banks)
+  conditions: Predetermined exposure; common shock; entity + time FE
+  allowed_uses: []
+  forbidden_uses: []
+failure_flags:
+  weak_identification: false
+  potential_bad_control: false
+  mechanical_identity_risk: false
+  regime_break_detected: false
+  small_sample: false
+  high_missing_rate: false
+  entity_boundary_change: false
+  definition_inconsistency: false
+counterfactual:
+  supports_shock_path: true
+  supports_policy_intervention: false
+  intervention_note: Shift-share panel LP; valid for differential shock propagation
+    across banks
+  external_validity: ''
+credibility_rating: A
+credibility_score: 0.89
+companion_edge_id: nbk_rate_to_deposit_cost
+is_precisely_null: true
+null_equivalence_bound: 1.0521627772322961

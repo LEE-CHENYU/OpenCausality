@@ -7,6 +7,10 @@ Validates DAG specifications for:
 3. Identity dependency consistency
 4. Forbidden controls (auto-mark descendants of treatment)
 5. Backdoor adjustment set candidates
+6. Scope consistency (BNS + KSPI scope matching)
+7. Bidirectional policy rate modeling
+8. RWA mechanism validation (no direct CPI -> RWA)
+9. Immutable evidence artifact protection
 """
 
 from __future__ import annotations
@@ -163,6 +167,13 @@ class DAGValidator:
         self._check_instrument_validity()
         self._check_design_feasibility()
         self._check_acceptance_criteria()
+
+        # New checks for KSPI K2 DAG requirements
+        self._check_scope_consistency()
+        self._check_bidirectional_policy_rate()
+        self._check_rwa_mechanism()
+        self._check_immutable_evidence()
+        self._check_edge_timing_defaults()
 
         # Compute constraints
         forbidden_controls = self._compute_all_forbidden_controls()
@@ -489,6 +500,177 @@ class DAGValidator:
         explicit = set(edge.forbidden_controls)
 
         return descendants | explicit
+
+    # =========================================================================
+    # New validation methods for KSPI K2 DAG requirements
+    # =========================================================================
+
+    def _check_scope_consistency(self) -> None:
+        """
+        Check that node scopes are consistent across edges.
+
+        Warns when BNS household data (kazakhstan_only) is combined
+        with consolidated KSPI data, as this creates external validity risk.
+        """
+        # Build scope lookup from node attributes
+        node_scopes: dict[str, str] = {}
+        for node in self.dag.nodes:
+            # Check for scope in node spec (stored as custom attribute)
+            scope = getattr(node, 'scope', None)
+            if scope is None:
+                # Try to infer from tags or source
+                if node.source and node.source.preferred:
+                    connector = node.source.preferred[0].connector
+                    if connector == "bns":
+                        scope = "kazakhstan_only"
+                    elif connector == "kspi_quarterly":
+                        scope = "kazakhstan_only"
+                    elif connector in ["fred", "baumeister"]:
+                        scope = "global"
+            node_scopes[node.id] = scope or "unknown"
+
+        # Check edges for scope mismatches
+        for edge in self.dag.edges:
+            from_scope = node_scopes.get(edge.from_node, "unknown")
+            to_scope = node_scopes.get(edge.to_node, "unknown")
+
+            # Warn about BNS + consolidated KSPI combinations
+            if from_scope == "kazakhstan_only" and to_scope == "consolidated":
+                self._add_warning(
+                    code="SCOPE_MISMATCH",
+                    message=f"Edge combines kazakhstan_only source with consolidated target",
+                    location=f"edge:{edge.id}",
+                    suggestion="Document as external validity caveat in interpretation",
+                )
+            elif from_scope == "consolidated" and to_scope == "kazakhstan_only":
+                self._add_warning(
+                    code="SCOPE_MISMATCH",
+                    message=f"Edge combines consolidated source with kazakhstan_only target",
+                    location=f"edge:{edge.id}",
+                    suggestion="Use kazakhstan_only data for both nodes",
+                )
+
+    def _check_bidirectional_policy_rate(self) -> None:
+        """
+        Check that policy rate is modeled bidirectionally if present.
+
+        The policy rate is endogenous to inflation and FX conditions,
+        so both reaction (conditions -> rate) and transmission (rate -> bank)
+        directions must be modeled.
+        """
+        # Find policy rate node
+        policy_rate_nodes = [
+            n.id for n in self.dag.nodes
+            if "policy_rate" in n.id.lower() or "nbk_rate" in n.id.lower()
+        ]
+
+        if not policy_rate_nodes:
+            return  # No policy rate in this DAG
+
+        for policy_node in policy_rate_nodes:
+            # Check for edges TO policy rate (reaction function)
+            edges_to_rate = self.dag.get_edges_to(policy_node)
+            # Check for edges FROM policy rate (transmission)
+            edges_from_rate = self.dag.get_edges_from(policy_node)
+
+            has_reaction = len(edges_to_rate) > 0
+            has_transmission = len(edges_from_rate) > 0
+
+            if has_transmission and not has_reaction:
+                self._add_error(
+                    code="POLICY_RATE_NOT_BIDIRECTIONAL",
+                    message=f"Policy rate '{policy_node}' has transmission but no reaction edges",
+                    location=f"node:{policy_node}",
+                    suggestion="Add edges for NBK reaction function (cpi -> rate, fx -> rate)",
+                )
+
+            if has_reaction and not has_transmission:
+                self._add_warning(
+                    code="POLICY_RATE_REACTION_ONLY",
+                    message=f"Policy rate '{policy_node}' has reaction but no transmission edges",
+                    location=f"node:{policy_node}",
+                    suggestion="Add transmission edges if policy effects on bank are relevant",
+                )
+
+    def _check_rwa_mechanism(self) -> None:
+        """
+        Check that RWA is not directly linked from CPI.
+
+        For unsecured consumer lending, the RWA mechanism is:
+        - loan_portfolio -> rwa (volume effect)
+        - portfolio_mix -> rwa (composition effect)
+        - regulatory_changes -> rwa (rule changes)
+
+        CPI -> RWA is incorrect for unsecured books (no collateral channel).
+        """
+        # Find RWA nodes
+        rwa_nodes = [
+            n.id for n in self.dag.nodes
+            if "rwa" in n.id.lower()
+        ]
+
+        # Find CPI nodes
+        cpi_nodes = [
+            n.id for n in self.dag.nodes
+            if "cpi" in n.id.lower()
+        ]
+
+        for rwa_node in rwa_nodes:
+            edges_to_rwa = self.dag.get_edges_to(rwa_node)
+
+            for edge in edges_to_rwa:
+                if edge.from_node in cpi_nodes:
+                    self._add_warning(
+                        code="RWA_CPI_DIRECT_LINK",
+                        message=f"CPI '{edge.from_node}' directly linked to RWA '{rwa_node}'",
+                        location=f"edge:{edge.id}",
+                        suggestion="Remove direct CPI->RWA edge. "
+                                   "Use portfolio volume/mix for unsecured consumer books.",
+                    )
+
+    def _check_immutable_evidence(self) -> None:
+        """
+        Check that validated evidence artifacts are not re-estimable.
+
+        Edges with validated_evidence.immutable=True should not be
+        re-estimated by the agentic loop.
+        """
+        for edge in self.dag.edges:
+            # Check for validated_evidence in edge spec (custom field)
+            validated = getattr(edge, 'validated_evidence', None)
+            if validated is None:
+                # Check in notes field for indication
+                if "immutable" in edge.notes.lower() or "block_" in edge.notes.lower():
+                    self._add_info(
+                        code="EVIDENCE_IN_NOTES",
+                        message=f"Edge mentions validated evidence in notes but lacks validated_evidence field",
+                        location=f"edge:{edge.id}",
+                        suggestion="Add validated_evidence block to formally mark as immutable",
+                    )
+
+    def _check_edge_timing_defaults(self) -> None:
+        """
+        Check that all edges have explicit timing.
+
+        If timing.lag is at default (0) without contemporaneous=True,
+        emit warning and suggest default of lag=1.
+        """
+        for edge in self.dag.edges:
+            timing = edge.timing
+
+            # Already checked in _check_temporal_cycles, but add more specific message
+            if timing.lag == 0 and not timing.contemporaneous:
+                # Check if this looks like an identity edge (no designs)
+                if not edge.allowed_designs:
+                    # Identity edges can have lag=0
+                    continue
+
+                self._add_warning(
+                    code="MISSING_TIMING_LAG",
+                    message=f"Edge has no explicit timing lag (defaulting to 0)",
+                    location=f"edge:{edge.id}",
+                    suggestion="Set timing.lag=1 or timing.contemporaneous=True explicitly",
+                )
 
 
 def validate_dag(dag: DAGSpec, raise_on_error: bool = True) -> ValidationReport:

@@ -175,6 +175,80 @@ designs:
       edge_card_fields: ["beta", "se", "ci", "fixed_effects", "controls", "r2_within"]
     notes: "Relies on selection on observables; document backdoor path."
 
+  # -------------------------------------------------------------------------
+  # PANEL_LP_EXPOSURE_FE: Panel LP with Exposure x Shock and Fixed Effects
+  # Credibility: 0.7 (Shift-share identification via cross-bank exposure variation)
+  # -------------------------------------------------------------------------
+  - id: "PANEL_LP_EXPOSURE_FE"
+    name: "Panel LP with Exposure x Shock and Fixed Effects"
+    description: >
+      Shift-share panel LP: differential bank response by predetermined exposure.
+      Canonical model (first-differenced outcome):
+        Δy_{b,t+h} = α_b + δ_t + β_h (E_b × shock_t) + Σ_ℓ ρ_{ℓ,h} Δy_{b,t-ℓ} + ε
+      Time FE absorb ALL common macro events. Identification comes ONLY from (E_b × shock_t).
+      Exposure E_b must be PREDETERMINED (fixed baseline average, not rolling/endogenous).
+      Shock must be INNOVATION (unexpected component), not level.
+    credibility_weight: 0.70
+    requirements:
+      data:
+        panel: true
+        min_periods: 8
+        min_units: 3
+      variables:
+        treatment_type: ["interaction"]
+        outcome_type: ["continuous", "share"]
+        exposure_required: true
+        exposure_fixed: true  # Baseline average, not rolling
+        shock_type: "innovation"  # Must be AR residual or instrument, not level
+    template:
+      model: "Δy_{b,t+h} = α_b + δ_t + β_h (E_b × shock_t) + Σ_ℓ ρ_{ℓ,h} Δy_{b,t-ℓ} + ε"
+      dependent_variable: "first_difference"  # Δy = y_{t+h} - y_{t-1}
+      fixed_effects: ["bank", "time"]
+      standard_errors: "driscoll_kraay"  # Or kernel HAC over time
+    diagnostics:
+      required:
+        - "leads_test"             # Pre-trends: (E_b × shock_{t+k}) for k>0 should be insignificant
+        - "leave_one_bank_out"     # β stable sign/magnitude when any bank dropped
+        - "exposure_variation"     # CV of exposure >= 0.10 across banks
+      optional:
+        - "placebo_exposure"       # Unrelated exposure (e.g., fee_income_share) should not load
+        - "regime_break"           # Pre/post stability (2015 tenge float, 2018 IFRS 9, 2020 COVID)
+        - "definition_harmonization"  # KPI definitions consistent across banks
+    outputs:
+      edge_card_fields: ["beta_h", "se", "ci_bands", "n_units", "n_periods", "exposure_variable", "leads_test_passed"]
+    interpretation:
+      is: "Differential bank response per unit exposure, per unit shock"
+      is_not: "Aggregate causal effect of shock on outcome; this is DIFFERENTIAL effect by exposure level"
+    notes: >
+      CRITICAL: If shock is common macro (same for all banks at time t) and you include time FE,
+      time FE absorbs the shock level. Must identify off cross-bank heterogeneity in EXPOSURE.
+      Rule: never use LEVEL of CPI or policy rate as 'shock' - use innovation/residual.
+
+  # -------------------------------------------------------------------------
+  # ACCOUNTING_BRIDGE: Mechanical accounting identity
+  # Credibility: 0.9 (Deterministic by construction)
+  # -------------------------------------------------------------------------
+  - id: "ACCOUNTING_BRIDGE"
+    name: "Accounting Bridge / Mechanical Identity"
+    description: "Deterministic or near-mechanical accounting relationship."
+    credibility_weight: 0.90
+    requirements:
+      data:
+        min_obs: 1
+      variables:
+        treatment_type: ["continuous"]
+        outcome_type: ["continuous"]
+    template:
+      model: "y = f(x) by accounting definition"
+      standard_errors: "deterministic"
+    diagnostics:
+      required:
+        - "identity_consistency"   # Verify the accounting relationship holds in data
+      optional: []
+    outputs:
+      edge_card_fields: ["sensitivity", "formula", "at_values"]
+    notes: "Not a causal estimate. Mechanical sensitivity at current values. Near-zero uncertainty by construction."
+
 # =============================================================================
 # CREDIBILITY RANKING
 # =============================================================================
@@ -200,3 +274,11 @@ credibility_ranking:
   - design: "PANEL_FE_BACKDOOR"
     weight: 0.6
     reason: "Common but selection-on-observables assumption"
+
+  - design: "ACCOUNTING_BRIDGE"
+    weight: 0.9
+    reason: "Deterministic accounting identity, near-zero uncertainty"
+
+  - design: "PANEL_LP_EXPOSURE_FE"
+    weight: 0.7
+    reason: "Shift-share identification via predetermined cross-bank exposure variation"

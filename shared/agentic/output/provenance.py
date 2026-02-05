@@ -65,6 +65,11 @@ class DataProvenance:
     combined_date_range: tuple[str, str] | None = None
     missing_rate: float | None = None
 
+    # Panel-specific provenance
+    panel_dimensions: dict[str, Any] | None = None  # {"n_units": 4, "n_periods": 13, "balance": "unbalanced"}
+    entity_boundary_note: str | None = None  # Documents entity definition consistency
+    kpi_definitions: dict[str, str] | None = None  # {"npl": "90+ DPD per IFRS 9", ...}
+
     def compute_hash(self) -> str:
         """Compute hash of provenance for versioning."""
         content = json.dumps(self.to_dict(), sort_keys=True, default=str)
@@ -80,6 +85,9 @@ class DataProvenance:
             "combined_row_count": self.combined_row_count,
             "combined_date_range": list(self.combined_date_range) if self.combined_date_range else None,
             "missing_rate": self.missing_rate,
+            "panel_dimensions": self.panel_dimensions,
+            "entity_boundary_note": self.entity_boundary_note,
+            "kpi_definitions": self.kpi_definitions,
         }
 
 

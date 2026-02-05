@@ -116,6 +116,71 @@ class RoleConstraints:
 
 
 @dataclass
+class ValidatedEvidence:
+    """
+    Validated evidence artifact for an edge or node.
+
+    Used to mark Block A/B/F results as immutable to prevent
+    re-estimation or optimization by the agentic loop.
+    """
+
+    block_id: str  # e.g., "block_a_fx_passthrough"
+    description: str = ""
+    estimate: float | None = None
+    se: float | None = None
+    result_hash: str | None = None  # SHA256 hash of original results
+    immutable: bool = True  # Agent cannot re-estimate
+
+    def to_dict(self) -> dict:
+        d = {
+            "block_id": self.block_id,
+            "description": self.description,
+            "immutable": self.immutable,
+        }
+        if self.estimate is not None:
+            d["estimate"] = self.estimate
+        if self.se is not None:
+            d["se"] = self.se
+        if self.result_hash:
+            d["result_hash"] = self.result_hash
+        return d
+
+
+@dataclass
+class EdgeInterpretation:
+    """
+    Interpretation boundary for a causal edge.
+
+    Enforces what the edge estimate can and cannot be used for.
+    """
+
+    is_field: str = ""  # What the estimate IS (stored as 'is' in YAML)
+    is_not: list[str] = field(default_factory=list)  # What this is NOT
+    allowed_uses: list[str] = field(default_factory=list)  # Permitted use cases
+    forbidden_uses: list[str] = field(default_factory=list)  # Forbidden use cases
+
+    def to_dict(self) -> dict:
+        d = {}
+        if self.is_field:
+            d["is"] = self.is_field
+        if self.is_not:
+            d["is_not"] = self.is_not
+        if self.allowed_uses:
+            d["allowed_uses"] = self.allowed_uses
+        if self.forbidden_uses:
+            d["forbidden_uses"] = self.forbidden_uses
+        return d
+
+    def is_use_allowed(self, use_case: str) -> bool:
+        """Check if a use case is allowed."""
+        if use_case in self.forbidden_uses:
+            return False
+        if not self.allowed_uses:
+            return True
+        return use_case in self.allowed_uses
+
+
+@dataclass
 class NodeSpec:
     """
     Specification for a DAG node (variable).
@@ -137,6 +202,9 @@ class NodeSpec:
     observed: bool = True
     latent: bool = False
 
+    # Scope boundary (v2)
+    scope: Literal["kazakhstan_only", "consolidated", "global", "unknown"] = "unknown"
+
     # Temporal semantics
     release_lag: ReleaseLag | None = None
     derived: bool = False
@@ -154,6 +222,9 @@ class NodeSpec:
 
     # Role constraints
     role_constraints: RoleConstraints | None = None
+
+    # Validated evidence (for immutable Block A/B/F results)
+    validated_evidence: ValidatedEvidence | None = None
 
     # Legacy identities field (for backward compatibility)
     identities: list[IdentityDef] = field(default_factory=list)
@@ -193,6 +264,8 @@ class NodeSpec:
             "latent": self.latent,
         }
 
+        if self.scope != "unknown":
+            d["scope"] = self.scope
         if self.release_lag:
             d["release_lag"] = self.release_lag.to_dict()
         if self.derived:
@@ -209,6 +282,8 @@ class NodeSpec:
             d["aggregation"] = self.aggregation.to_dict()
         if self.role_constraints:
             d["role_constraints"] = self.role_constraints.to_dict()
+        if self.validated_evidence:
+            d["validated_evidence"] = self.validated_evidence.to_dict()
         if self.identities:
             d["identities"] = [i.to_dict() for i in self.identities]
         if self.tags:
@@ -383,6 +458,9 @@ class EdgeSpec:
     - estimand: what we're estimating
     - allowed_designs: feasible identification strategies
     - acceptance_criteria: credibility-based thresholds
+    - interpretation: boundary enforcement (v2)
+    - validated_evidence: immutable evidence artifacts (v2)
+    - edge_status: classification for estimation (v2)
     """
 
     id: str
@@ -410,6 +488,16 @@ class EdgeSpec:
     # Acceptance criteria
     acceptance_criteria: AcceptanceCriteria = field(default_factory=AcceptanceCriteria)
 
+    # Interpretation boundary (v2)
+    interpretation: EdgeInterpretation | None = None
+
+    # Validated evidence artifact (v2)
+    validated_evidence: ValidatedEvidence | None = None
+
+    # Edge status classification (v2)
+    # IMMUTABLE, ESTIMABLE_REDUCED_FORM, BLOCKED_DECOMPOSITION, NEEDS_CONNECTOR, IDENTITY
+    edge_status: str = ""
+
     notes: str = ""
 
     def to_dict(self) -> dict:
@@ -436,10 +524,33 @@ class EdgeSpec:
 
         d["acceptance_criteria"] = self.acceptance_criteria.to_dict()
 
+        if self.interpretation:
+            d["interpretation"] = self.interpretation.to_dict()
+        if self.validated_evidence:
+            d["validated_evidence"] = self.validated_evidence.to_dict()
+        if self.edge_status:
+            d["edge_status"] = self.edge_status
         if self.notes:
             d["notes"] = self.notes
 
         return d
+
+    def is_immutable(self) -> bool:
+        """Check if this edge is marked as immutable (validated evidence)."""
+        if self.validated_evidence:
+            return self.validated_evidence.immutable
+        if self.edge_status == "IMMUTABLE":
+            return True
+        return False
+
+    def is_estimable(self) -> bool:
+        """Check if this edge can be estimated (not blocked or identity)."""
+        blocked_statuses = {"BLOCKED_DECOMPOSITION", "IDENTITY", "IMMUTABLE"}
+        if self.edge_status in blocked_statuses:
+            return False
+        if self.is_immutable():
+            return False
+        return True
 
 
 @dataclass
@@ -653,6 +764,38 @@ def _parse_role_constraints(data: dict | None) -> RoleConstraints | None:
     )
 
 
+def _parse_validated_evidence(data: dict | None) -> ValidatedEvidence | None:
+    """Parse validated evidence from YAML data."""
+    if not data:
+        return None
+    return ValidatedEvidence(
+        block_id=data.get("block_id", ""),
+        description=data.get("description", ""),
+        estimate=data.get("estimate"),
+        se=data.get("se"),
+        result_hash=data.get("result_hash"),
+        immutable=data.get("immutable", True),
+    )
+
+
+def _parse_edge_interpretation(data: dict | None) -> EdgeInterpretation | None:
+    """Parse edge interpretation from YAML data."""
+    if not data:
+        return None
+
+    # Handle is_not as either string or list
+    is_not = data.get("is_not", [])
+    if isinstance(is_not, str):
+        is_not = [is_not] if is_not else []
+
+    return EdgeInterpretation(
+        is_field=data.get("is", ""),
+        is_not=is_not,
+        allowed_uses=data.get("allowed_uses", []),
+        forbidden_uses=data.get("forbidden_uses", []),
+    )
+
+
 def _parse_node(data: dict) -> NodeSpec:
     """Parse a node specification from YAML data."""
     # Parse identities list (legacy format)
@@ -674,6 +817,7 @@ def _parse_node(data: dict) -> NodeSpec:
         type=data.get("type", "continuous"),
         observed=data.get("observed", True),
         latent=data.get("latent", False),
+        scope=data.get("scope", "unknown"),
         release_lag=_parse_release_lag(data.get("release_lag")),
         derived=data.get("derived", False),
         identity=_parse_identity(data.get("identity")),
@@ -682,6 +826,7 @@ def _parse_node(data: dict) -> NodeSpec:
         transforms=data.get("transforms", []),
         aggregation=_parse_aggregation(data.get("aggregation")),
         role_constraints=_parse_role_constraints(data.get("role_constraints")),
+        validated_evidence=_parse_validated_evidence(data.get("validated_evidence")),
         identities=identities,
         tags=data.get("tags", []),
     )
@@ -803,6 +948,9 @@ def _parse_edge(data: dict) -> EdgeSpec:
         instruments=data.get("instruments", []),
         diagnostics_required=data.get("diagnostics_required", []),
         acceptance_criteria=_parse_acceptance_criteria(data.get("acceptance_criteria")),
+        interpretation=_parse_edge_interpretation(data.get("interpretation")),
+        validated_evidence=_parse_validated_evidence(data.get("validated_evidence")),
+        edge_status=data.get("edge_status", ""),
         notes=data.get("notes", ""),
     )
 

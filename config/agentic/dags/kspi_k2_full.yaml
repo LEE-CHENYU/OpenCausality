@@ -1,0 +1,1770 @@
+# KSPI K2 Ratio Comprehensive DAG
+# Global shocks -> KZ macro -> household welfare -> KSPI balance sheet -> K2
+#
+# This DAG implements the full causal chain with:
+# - Temporal semantics (explicit lags on all edges)
+# - Scope boundaries (kazakhstan_only vs consolidated)
+# - Validated evidence artifacts (Block A/B/F immutable)
+# - Interpretation boundaries (allowed_uses enforcement)
+# - Correct RWA mechanism (portfolio/mix, not CPI)
+# - Bidirectional policy rate modeling
+
+schema_version: 2
+metadata:
+  name: "kspi_k2_stress"
+  description: "Global shocks -> KZ macro -> KSPI balance sheet -> K2 capital ratio"
+  target_node: "k2_ratio_kspi"
+  created: "2026-02-02"
+  owner: "research_team"
+  scope_default: "kazakhstan_only"
+  tags: ["kspi", "capital", "stress_test", "k2"]
+
+# =============================================================================
+# NODES
+# =============================================================================
+
+nodes:
+  # ---------------------------------------------------------------------------
+  # Layer 1: Global Shocks (Exogenous)
+  # ---------------------------------------------------------------------------
+  - id: "oil_supply_shock"
+    name: "Oil supply shock"
+    description: "Baumeister oil supply shock (exogenous to Kazakhstan)."
+    unit: "sd"
+    frequency: "monthly"
+    type: "continuous"
+    observed: true
+    latent: false
+    scope: "global"
+    release_lag:
+      periods: 1
+      lag_unit: "month"
+    source:
+      preferred:
+        - connector: "baumeister"
+          dataset: "oil_shocks"
+          series: "oil_supply_shock"
+    transforms: ["aggregate_mean_to_quarter"]
+    aggregation:
+      method: "average"
+      seasonal_adjust: false
+    role_constraints:
+      never_control: true
+    tags: ["oil", "shock", "exogenous"]
+
+  - id: "oil_demand_shock"
+    name: "Oil demand shock"
+    description: "Baumeister oil demand shock (global demand-driven)."
+    unit: "sd"
+    frequency: "monthly"
+    type: "continuous"
+    observed: true
+    latent: false
+    scope: "global"
+    release_lag:
+      periods: 1
+      lag_unit: "month"
+    source:
+      preferred:
+        - connector: "baumeister"
+          dataset: "oil_shocks"
+          series: "oil_demand_shock"
+    transforms: ["aggregate_mean_to_quarter"]
+    aggregation:
+      method: "average"
+      seasonal_adjust: false
+    role_constraints:
+      never_control: true
+    tags: ["oil", "shock", "exogenous"]
+
+  - id: "global_activity_shock"
+    name: "Global activity innovation"
+    description: "Innovation in global activity index (IGREA)."
+    unit: "innovation"
+    frequency: "monthly"
+    type: "continuous"
+    observed: true
+    latent: false
+    scope: "global"
+    release_lag:
+      periods: 1
+      lag_unit: "month"
+    source:
+      preferred:
+        - connector: "fred"
+          dataset: "global_activity"
+          series: "IGREA"
+    transforms: ["innovation", "aggregate_mean_to_quarter"]
+    aggregation:
+      method: "average"
+      seasonal_adjust: false
+    role_constraints:
+      never_control: true
+    tags: ["global", "shock", "exogenous"]
+
+  - id: "vix_shock"
+    name: "VIX shock"
+    description: "Innovation in VIX (risk aversion shock)."
+    unit: "innovation"
+    frequency: "daily"
+    type: "continuous"
+    observed: true
+    latent: false
+    scope: "global"
+    release_lag:
+      periods: 0
+      lag_unit: "day"
+    source:
+      preferred:
+        - connector: "fred"
+          dataset: "financial"
+          series: "VIXCLS"
+    transforms: ["innovation", "aggregate_mean_to_month"]
+    aggregation:
+      method: "average"
+      seasonal_adjust: false
+    role_constraints:
+      never_control: true
+    tags: ["financial", "shock", "exogenous"]
+
+  # ---------------------------------------------------------------------------
+  # Layer 2: Transmission (FX, Oil Price)
+  # ---------------------------------------------------------------------------
+  - id: "kzt_usd"
+    name: "KZT/USD exchange rate"
+    description: "Kazakh tenge per US dollar, log level."
+    unit: "log"
+    frequency: "daily"
+    type: "continuous"
+    observed: true
+    latent: false
+    scope: "kazakhstan_only"
+    release_lag:
+      periods: 0
+      lag_unit: "day"
+    source:
+      preferred:
+        - connector: "nbk"
+          dataset: "exchange_rates"
+          series: "kzt_usd"
+      fallback:
+        - connector: "fred"
+          dataset: "exchange_rates"
+          series: "DEXKZUS"
+    transforms: ["log"]
+    aggregation:
+      method: "end_of_period"
+      seasonal_adjust: false
+    role_constraints:
+      never_control: false
+    tags: ["fx", "transmission"]
+
+  - id: "brent_price"
+    name: "Brent crude oil price"
+    description: "Brent spot price, USD per barrel, log level."
+    unit: "log"
+    frequency: "daily"
+    type: "continuous"
+    observed: true
+    latent: false
+    scope: "global"
+    release_lag:
+      periods: 0
+      lag_unit: "day"
+    source:
+      preferred:
+        - connector: "fred"
+          dataset: "commodities"
+          series: "DCOILBRENTEU"
+    transforms: ["log"]
+    aggregation:
+      method: "average"
+      seasonal_adjust: false
+    role_constraints:
+      never_control: false
+    tags: ["oil", "commodity"]
+
+  - id: "nbk_policy_rate"
+    name: "NBK base rate"
+    description: "National Bank of Kazakhstan policy rate."
+    unit: "pct"
+    frequency: "event"
+    type: "continuous"
+    observed: true
+    latent: false
+    scope: "kazakhstan_only"
+    release_lag:
+      periods: 0
+      lag_unit: "day"
+    source:
+      preferred:
+        - connector: "nbk_policy_rate"
+          dataset: "base_rate"
+          series: "rate"
+          notes: "Requires nbk_policy_rate connector"
+    transforms: []
+    aggregation:
+      method: "end_of_period"
+      seasonal_adjust: false
+    role_constraints:
+      never_control: false
+      never_instrument: true  # Endogenous to macro conditions
+    tags: ["monetary_policy", "transmission"]
+
+  # ---------------------------------------------------------------------------
+  # Layer 3: Prices (CPI)
+  # ---------------------------------------------------------------------------
+  - id: "cpi_headline"
+    name: "Headline CPI"
+    description: "Kazakhstan headline CPI index, log level."
+    unit: "log"
+    frequency: "monthly"
+    type: "index"
+    observed: true
+    latent: false
+    scope: "kazakhstan_only"
+    release_lag:
+      periods: 1
+      lag_unit: "month"
+    source:
+      preferred:
+        - connector: "bns"
+          dataset: "prices"
+          series: "cpi_headline"
+    transforms: ["log"]
+    aggregation:
+      method: "end_of_period"
+      seasonal_adjust: true
+    role_constraints:
+      never_control: false
+    tags: ["prices", "inflation"]
+
+  - id: "cpi_tradable"
+    name: "Tradable CPI"
+    description: "CPI for tradable goods (import-weighted). Block A validated."
+    unit: "log"
+    frequency: "monthly"
+    type: "index"
+    observed: true
+    latent: false
+    scope: "kazakhstan_only"
+    release_lag:
+      periods: 1
+      lag_unit: "month"
+    source:
+      preferred:
+        - connector: "bns"
+          dataset: "prices"
+          series: "cpi_tradable"
+    transforms: ["log"]
+    aggregation:
+      method: "end_of_period"
+      seasonal_adjust: true
+    role_constraints:
+      never_control: false
+    validated_evidence:
+      block_id: "block_a_fx_passthrough"
+      description: "11.3% FX pass-through to tradable CPI"
+      immutable: true
+    tags: ["prices", "inflation", "block_a"]
+
+  - id: "cpi_nontradable"
+    name: "Non-tradable CPI"
+    description: "CPI for non-tradable goods (services). Block A falsification."
+    unit: "log"
+    frequency: "monthly"
+    type: "index"
+    observed: true
+    latent: false
+    scope: "kazakhstan_only"
+    release_lag:
+      periods: 1
+      lag_unit: "month"
+    source:
+      preferred:
+        - connector: "bns"
+          dataset: "prices"
+          series: "cpi_nontradable"
+    transforms: ["log"]
+    aggregation:
+      method: "end_of_period"
+      seasonal_adjust: true
+    role_constraints:
+      never_control: false
+    validated_evidence:
+      block_id: "block_a_fx_passthrough_falsification"
+      description: "Near-zero FX pass-through to non-tradable CPI"
+      immutable: true
+    tags: ["prices", "inflation", "block_a", "falsification"]
+
+  - id: "imported_inflation_instrument"
+    name: "Imported inflation IV"
+    description: "Constructed instrument for imported inflation (FX change × pre-period import share)."
+    unit: "pct"
+    frequency: "monthly"
+    type: "continuous"
+    observed: true
+    latent: false
+    scope: "kazakhstan_only"
+    derived: true
+    identity:
+      name: "imported_inflation_iv"
+      formula: "diff(log(kzt_usd)) * E_import_share"
+      depends_on: ["kzt_usd", "E_import_share"]
+    release_lag:
+      periods: 1
+      lag_unit: "month"
+    role_constraints:
+      never_control: true
+    tags: ["instrument", "inflation"]
+
+  - id: "E_import_share"
+    name: "Pre-period import share"
+    description: "Pre-period regional import intensity (static exposure)."
+    unit: "share"
+    frequency: "static"
+    type: "exposure"
+    observed: true
+    latent: false
+    scope: "kazakhstan_only"
+    source:
+      preferred:
+        - connector: "bns"
+          dataset: "regional_accounts"
+          series: "import_share"
+    role_constraints:
+      never_control: false
+    tags: ["exposure", "import"]
+
+  # ---------------------------------------------------------------------------
+  # Layer 4: Household Sector
+  # ---------------------------------------------------------------------------
+  - id: "nominal_income"
+    name: "Nominal monetary income"
+    description: "Regional household nominal monetary income. Block B validated."
+    unit: "log"
+    frequency: "quarterly"
+    type: "continuous"
+    observed: true
+    latent: false
+    scope: "kazakhstan_only"
+    release_lag:
+      periods: 1
+      lag_unit: "quarter"
+    source:
+      preferred:
+        - connector: "bns"
+          dataset: "household_income"
+          series: "nominal_income_pc"
+    transforms: ["log"]
+    aggregation:
+      method: "sum"
+      seasonal_adjust: true
+    role_constraints:
+      never_control: false
+    validated_evidence:
+      block_id: "block_b_income_response"
+      description: "LP-IV estimate of nominal income response to external inflation"
+      immutable: true
+    tags: ["household", "income", "block_b"]
+
+  - id: "real_income"
+    name: "Real monetary income"
+    description: "Nominal income deflated by CPI. Identity node."
+    unit: "log"
+    frequency: "quarterly"
+    type: "continuous"
+    observed: true
+    latent: false
+    scope: "kazakhstan_only"
+    derived: true
+    identity:
+      name: "real_income_identity"
+      formula: "log(nominal_income) - log(cpi_headline)"
+      depends_on: ["nominal_income", "cpi_headline"]
+    release_lag:
+      periods: 1
+      lag_unit: "quarter"
+    role_constraints:
+      never_control: false
+    tags: ["household", "income"]
+
+  - id: "wage_income"
+    name: "Wage income"
+    description: "Household income from wages and salaries."
+    unit: "log"
+    frequency: "quarterly"
+    type: "continuous"
+    observed: true
+    latent: false
+    scope: "kazakhstan_only"
+    release_lag:
+      periods: 1
+      lag_unit: "quarter"
+    source:
+      preferred:
+        - connector: "bns"
+          dataset: "household_income"
+          series: "wage_income_pc"
+    transforms: ["log"]
+    aggregation:
+      method: "sum"
+      seasonal_adjust: true
+    role_constraints:
+      never_control: false
+    tags: ["household", "income", "channel"]
+
+  - id: "transfer_income"
+    name: "Transfer income"
+    description: "Household income from government transfers."
+    unit: "log"
+    frequency: "quarterly"
+    type: "continuous"
+    observed: true
+    latent: false
+    scope: "kazakhstan_only"
+    release_lag:
+      periods: 1
+      lag_unit: "quarter"
+    source:
+      preferred:
+        - connector: "bns"
+          dataset: "household_income"
+          series: "transfer_income_pc"
+    transforms: ["log"]
+    aggregation:
+      method: "sum"
+      seasonal_adjust: true
+    role_constraints:
+      never_control: false
+    tags: ["household", "income", "channel"]
+
+  - id: "nominal_expenditure"
+    name: "Nominal consumption expenditure"
+    description: "Household nominal consumption expenditure. Block F validated."
+    unit: "log"
+    frequency: "quarterly"
+    type: "continuous"
+    observed: true
+    latent: false
+    scope: "kazakhstan_only"
+    release_lag:
+      periods: 1
+      lag_unit: "quarter"
+    source:
+      preferred:
+        - connector: "bns"
+          dataset: "household_budget"
+          series: "consumption_expenditure_pc"
+    transforms: ["log"]
+    aggregation:
+      method: "sum"
+      seasonal_adjust: true
+    role_constraints:
+      never_control: false
+    validated_evidence:
+      block_id: "block_f_expenditure"
+      description: "MPC-like response to FX shocks"
+      immutable: true
+    tags: ["household", "expenditure", "block_f"]
+
+  - id: "real_expenditure"
+    name: "Real consumption expenditure"
+    description: "Nominal expenditure deflated by CPI. Block F validated."
+    unit: "log"
+    frequency: "quarterly"
+    type: "continuous"
+    observed: true
+    latent: false
+    scope: "kazakhstan_only"
+    derived: true
+    identity:
+      name: "real_expenditure_identity"
+      formula: "log(nominal_expenditure) - log(cpi_headline)"
+      depends_on: ["nominal_expenditure", "cpi_headline"]
+    release_lag:
+      periods: 1
+      lag_unit: "quarter"
+    role_constraints:
+      never_control: false
+    validated_evidence:
+      block_id: "block_f_real_expenditure"
+      description: "IRF(0) = -0.10 for real expenditure response to FX"
+      immutable: true
+    tags: ["household", "expenditure", "block_f"]
+
+  # ---------------------------------------------------------------------------
+  # Layer 5: Credit Quality (Aggregate / KSPI-specific)
+  # ---------------------------------------------------------------------------
+  - id: "npl_aggregate"
+    name: "Aggregate NPL ratio"
+    description: "Banking sector NPL ratio from NBK."
+    unit: "pct"
+    frequency: "monthly"
+    type: "share"
+    observed: true
+    latent: false
+    scope: "kazakhstan_only"
+    release_lag:
+      periods: 1
+      lag_unit: "month"
+    source:
+      preferred:
+        - connector: "nbk_credit"
+          dataset: "credit_quality"
+          series: "npl_ratio"
+    transforms: []
+    aggregation:
+      method: "end_of_period"
+      seasonal_adjust: false
+    role_constraints:
+      never_control: false
+    tags: ["credit_quality", "banking"]
+
+  - id: "npl_kspi"
+    name: "KSPI NPL ratio"
+    description: "Kaspi.kz non-performing loan ratio."
+    unit: "pct"
+    frequency: "quarterly"
+    type: "share"
+    observed: true
+    latent: false
+    scope: "kazakhstan_only"
+    release_lag:
+      periods: 2
+      lag_unit: "month"
+    source:
+      preferred:
+        - connector: "kspi_quarterly"
+          dataset: "credit_quality"
+          series: "npl_ratio"
+          notes: "From IR quarterly PDFs"
+    transforms: []
+    aggregation:
+      method: "end_of_period"
+      seasonal_adjust: false
+    role_constraints:
+      never_control: false
+    tags: ["credit_quality", "kspi"]
+
+  - id: "cor_kspi"
+    name: "KSPI cost of risk"
+    description: "Kaspi.kz cost of risk (annualized provisions / avg loans)."
+    unit: "pct"
+    frequency: "quarterly"
+    type: "continuous"
+    observed: true
+    latent: false
+    scope: "kazakhstan_only"
+    release_lag:
+      periods: 2
+      lag_unit: "month"
+    source:
+      preferred:
+        - connector: "kspi_quarterly"
+          dataset: "credit_quality"
+          series: "cor"
+          notes: "From IR quarterly PDFs"
+    transforms: []
+    aggregation:
+      method: "average"
+      seasonal_adjust: false
+    role_constraints:
+      never_control: false
+    tags: ["credit_quality", "kspi", "provisioning"]
+
+  # ---------------------------------------------------------------------------
+  # Layer 6: KSPI Balance Sheet
+  # ---------------------------------------------------------------------------
+  - id: "loan_portfolio_kspi"
+    name: "KSPI net loan portfolio"
+    description: "Kaspi.kz net loan portfolio level (bn KZT)."
+    unit: "log"
+    frequency: "quarterly"
+    type: "continuous"
+    observed: true
+    latent: false
+    scope: "kazakhstan_only"
+    release_lag:
+      periods: 2
+      lag_unit: "month"
+    source:
+      preferred:
+        - connector: "kspi_quarterly"
+          dataset: "balance_sheet"
+          series: "net_loans"
+          notes: "From IR quarterly PDFs"
+    transforms: ["log"]
+    aggregation:
+      method: "end_of_period"
+      seasonal_adjust: false
+    role_constraints:
+      never_control: false
+    tags: ["balance_sheet", "kspi"]
+
+  - id: "portfolio_mix_kspi"
+    name: "KSPI portfolio mix"
+    description: "Shares by product type (BNPL, car loans, merchant)."
+    unit: "share"
+    frequency: "quarterly"
+    type: "share"
+    observed: true
+    latent: false
+    scope: "kazakhstan_only"
+    release_lag:
+      periods: 2
+      lag_unit: "month"
+    source:
+      preferred:
+        - connector: "kspi_quarterly"
+          dataset: "balance_sheet"
+          series: "portfolio_mix"
+          notes: "Derived from segment revenues as proxy"
+    transforms: []
+    aggregation:
+      method: "end_of_period"
+      seasonal_adjust: false
+    role_constraints:
+      never_control: false
+    tags: ["balance_sheet", "kspi", "composition"]
+
+  - id: "deposits_kspi"
+    name: "KSPI deposits"
+    description: "Kaspi.kz total deposits (bn KZT)."
+    unit: "log"
+    frequency: "quarterly"
+    type: "continuous"
+    observed: true
+    latent: false
+    scope: "kazakhstan_only"
+    release_lag:
+      periods: 2
+      lag_unit: "month"
+    source:
+      preferred:
+        - connector: "kspi_quarterly"
+          dataset: "balance_sheet"
+          series: "deposits"
+          notes: "From IR quarterly PDFs"
+    transforms: ["log"]
+    aggregation:
+      method: "end_of_period"
+      seasonal_adjust: false
+    role_constraints:
+      never_control: false
+    tags: ["balance_sheet", "kspi", "funding"]
+
+  - id: "deposit_cost_kspi"
+    name: "KSPI deposit cost"
+    description: "Kaspi.kz average deposit rate."
+    unit: "pct"
+    frequency: "quarterly"
+    type: "continuous"
+    observed: true
+    latent: false
+    scope: "kazakhstan_only"
+    release_lag:
+      periods: 2
+      lag_unit: "month"
+    source:
+      preferred:
+        - connector: "kspi_quarterly"
+          dataset: "income_statement"
+          series: "deposit_rate"
+          notes: "Implied from interest expense / avg deposits"
+    transforms: []
+    aggregation:
+      method: "average"
+      seasonal_adjust: false
+    role_constraints:
+      never_control: false
+    tags: ["balance_sheet", "kspi", "funding"]
+
+  - id: "rwa_kspi"
+    name: "KSPI risk-weighted assets"
+    description: "Kaspi.kz risk-weighted assets for regulatory capital."
+    unit: "log"
+    frequency: "quarterly"
+    type: "continuous"
+    observed: true
+    latent: false
+    scope: "kazakhstan_only"
+    release_lag:
+      periods: 2
+      lag_unit: "month"
+    source:
+      preferred:
+        - connector: "kspi_quarterly"
+          dataset: "capital"
+          series: "rwa"
+          notes: "May require 20-F for NBK figures"
+    transforms: ["log"]
+    aggregation:
+      method: "end_of_period"
+      seasonal_adjust: false
+    role_constraints:
+      never_control: false
+    tags: ["capital", "kspi"]
+
+  - id: "ppop_kspi"
+    name: "KSPI pre-provision operating profit"
+    description: "Kaspi.kz PPOP (revenue - opex, before provisions)."
+    unit: "log"
+    frequency: "quarterly"
+    type: "continuous"
+    observed: true
+    latent: false
+    scope: "kazakhstan_only"
+    release_lag:
+      periods: 2
+      lag_unit: "month"
+    source:
+      preferred:
+        - connector: "kspi_quarterly"
+          dataset: "income_statement"
+          series: "ppop"
+          notes: "From IR quarterly PDFs"
+    transforms: ["log"]
+    aggregation:
+      method: "sum"
+      seasonal_adjust: false
+    role_constraints:
+      never_control: false
+    tags: ["income_statement", "kspi"]
+
+  - id: "total_capital_kspi"
+    name: "KSPI total capital"
+    description: "Kaspi.kz total regulatory capital (Tier 1 + Tier 2)."
+    unit: "log"
+    frequency: "quarterly"
+    type: "continuous"
+    observed: true
+    latent: false
+    scope: "kazakhstan_only"
+    release_lag:
+      periods: 2
+      lag_unit: "month"
+    source:
+      preferred:
+        - connector: "kspi_quarterly"
+          dataset: "capital"
+          series: "total_capital"
+          notes: "May require 20-F for NBK figures"
+    transforms: ["log"]
+    aggregation:
+      method: "end_of_period"
+      seasonal_adjust: false
+    role_constraints:
+      never_control: false
+    tags: ["capital", "kspi"]
+
+  - id: "k2_ratio_kspi"
+    name: "KSPI K2 capital ratio"
+    description: "Kaspi.kz K2 capital adequacy ratio (Total Capital / RWA)."
+    unit: "pct"
+    frequency: "quarterly"
+    type: "share"
+    observed: true
+    latent: false
+    scope: "kazakhstan_only"
+    derived: true
+    identity:
+      name: "k2_identity"
+      formula: "total_capital_kspi / rwa_kspi"
+      depends_on: ["total_capital_kspi", "rwa_kspi"]
+    release_lag:
+      periods: 2
+      lag_unit: "month"
+    source:
+      preferred:
+        - connector: "kspi_quarterly"
+          dataset: "capital"
+          series: "k2_ratio"
+          notes: "May require 20-F for NBK figures"
+    role_constraints:
+      never_control: false
+    tags: ["capital", "kspi", "target"]
+
+  # ---------------------------------------------------------------------------
+  # Segment Revenue Nodes (for expenditure -> KSPI revenue channel)
+  # ---------------------------------------------------------------------------
+  - id: "payments_revenue_kspi"
+    name: "KSPI Payments revenue"
+    description: "Kaspi.kz payments segment revenue."
+    unit: "log"
+    frequency: "quarterly"
+    type: "continuous"
+    observed: true
+    latent: false
+    scope: "kazakhstan_only"
+    release_lag:
+      periods: 2
+      lag_unit: "month"
+    source:
+      preferred:
+        - connector: "kspi_quarterly"
+          dataset: "segment"
+          series: "payments_revenue"
+    transforms: ["log"]
+    aggregation:
+      method: "sum"
+      seasonal_adjust: false
+    role_constraints:
+      never_control: false
+    tags: ["segment", "kspi"]
+
+  - id: "marketplace_revenue_kspi"
+    name: "KSPI Marketplace revenue"
+    description: "Kaspi.kz marketplace segment revenue."
+    unit: "log"
+    frequency: "quarterly"
+    type: "continuous"
+    observed: true
+    latent: false
+    scope: "kazakhstan_only"
+    release_lag:
+      periods: 2
+      lag_unit: "month"
+    source:
+      preferred:
+        - connector: "kspi_quarterly"
+          dataset: "segment"
+          series: "marketplace_revenue"
+    transforms: ["log"]
+    aggregation:
+      method: "sum"
+      seasonal_adjust: false
+    role_constraints:
+      never_control: false
+    tags: ["segment", "kspi"]
+
+  - id: "fintech_revenue_kspi"
+    name: "KSPI Fintech revenue"
+    description: "Kaspi.kz fintech (lending) segment revenue."
+    unit: "log"
+    frequency: "quarterly"
+    type: "continuous"
+    observed: true
+    latent: false
+    scope: "kazakhstan_only"
+    release_lag:
+      periods: 2
+      lag_unit: "month"
+    source:
+      preferred:
+        - connector: "kspi_quarterly"
+          dataset: "segment"
+          series: "fintech_revenue"
+    transforms: ["log"]
+    aggregation:
+      method: "sum"
+      seasonal_adjust: false
+    role_constraints:
+      never_control: false
+    tags: ["segment", "kspi"]
+
+# =============================================================================
+# EDGES
+# =============================================================================
+
+edges:
+  # ---------------------------------------------------------------------------
+  # Layer 1 -> Layer 2: Global Shocks to Transmission
+  # ---------------------------------------------------------------------------
+  - id: "oil_supply_to_brent"
+    from: "oil_supply_shock"
+    to: "brent_price"
+    timing:
+      lag: 0
+      lag_unit: "month"
+      contemporaneous: true
+      max_anticipation: 0
+    estimand:
+      type: "IRF"
+      horizon: [0, 1, 2, 3]
+      scale: "log"
+    allowed_designs: ["LOCAL_PROJECTIONS"]
+    design_priority: ["LOCAL_PROJECTIONS"]
+    required_adjustments: []
+    forbidden_controls: []
+    diagnostics_required: ["pre_trends", "placebo"]
+    acceptance_criteria:
+      diagnostics:
+        pretrend_p_min: 0.10
+        placebo_p_min: 0.10
+      data:
+        max_missing_rate: 0.05
+        min_obs: 100
+        min_pre_periods: 12
+      plausibility:
+        expected_sign: "negative"  # Supply shock reduces price
+        magnitude_range: [-0.5, 0.0]
+      null_acceptance:
+        enabled: true
+        equivalence_bound: 0.05
+    interpretation:
+      is: "Oil price response to supply shock"
+      is_not: ["Demand-driven price movements"]
+      allowed_uses: ["shock_counterfactual"]
+      forbidden_uses: ["policy_counterfactual"]
+    notes: "Exogenous supply shock identification from Baumeister."
+
+  - id: "oil_supply_to_fx"
+    from: "oil_supply_shock"
+    to: "kzt_usd"
+    timing:
+      lag: 0
+      lag_unit: "month"
+      contemporaneous: true
+      max_anticipation: 0
+    estimand:
+      type: "IRF"
+      horizon: [0, 1, 2, 3]
+      scale: "log"
+    allowed_designs: ["LOCAL_PROJECTIONS"]
+    design_priority: ["LOCAL_PROJECTIONS"]
+    required_adjustments: []
+    forbidden_controls: []
+    diagnostics_required: ["pre_trends", "placebo"]
+    acceptance_criteria:
+      diagnostics:
+        pretrend_p_min: 0.10
+        placebo_p_min: 0.10
+      data:
+        max_missing_rate: 0.05
+        min_obs: 100
+        min_pre_periods: 12
+      plausibility:
+        expected_sign: "positive"  # Supply shock depreciates KZT
+        magnitude_range: [0.0, 0.5]
+      null_acceptance:
+        enabled: true
+        equivalence_bound: 0.05
+    interpretation:
+      is: "KZT response to oil supply shock"
+      is_not: ["Response to domestic factors"]
+      allowed_uses: ["shock_counterfactual"]
+      forbidden_uses: ["policy_counterfactual"]
+    edge_status: "ESTIMABLE_REDUCED_FORM"
+    notes: "Oil exporter commodity currency dynamics."
+
+  - id: "oil_demand_to_fx"
+    from: "oil_demand_shock"
+    to: "kzt_usd"
+    timing:
+      lag: 0
+      lag_unit: "month"
+      contemporaneous: true
+      max_anticipation: 0
+    estimand:
+      type: "IRF"
+      horizon: [0, 1, 2, 3]
+      scale: "log"
+    allowed_designs: ["LOCAL_PROJECTIONS"]
+    design_priority: ["LOCAL_PROJECTIONS"]
+    required_adjustments: []
+    forbidden_controls: []
+    diagnostics_required: ["pre_trends", "placebo"]
+    acceptance_criteria:
+      diagnostics:
+        pretrend_p_min: 0.10
+        placebo_p_min: 0.10
+      data:
+        max_missing_rate: 0.05
+        min_obs: 100
+        min_pre_periods: 12
+      plausibility:
+        expected_sign: "negative"  # Demand shock appreciates KZT
+        magnitude_range: [-0.5, 0.0]
+      null_acceptance:
+        enabled: true
+        equivalence_bound: 0.05
+    interpretation:
+      is: "KZT response to oil demand shock"
+      is_not: ["Response to domestic factors"]
+      allowed_uses: ["shock_counterfactual"]
+      forbidden_uses: ["policy_counterfactual"]
+    edge_status: "ESTIMABLE_REDUCED_FORM"
+    notes: "Commodity currency responds to global demand."
+
+  - id: "vix_to_fx"
+    from: "vix_shock"
+    to: "kzt_usd"
+    timing:
+      lag: 0
+      lag_unit: "month"
+      contemporaneous: true
+      max_anticipation: 0
+    estimand:
+      type: "IRF"
+      horizon: [0, 1, 2, 3]
+      scale: "log"
+    allowed_designs: ["LOCAL_PROJECTIONS"]
+    design_priority: ["LOCAL_PROJECTIONS"]
+    required_adjustments: []
+    forbidden_controls: []
+    diagnostics_required: ["pre_trends", "placebo"]
+    acceptance_criteria:
+      diagnostics:
+        pretrend_p_min: 0.10
+        placebo_p_min: 0.10
+      data:
+        max_missing_rate: 0.05
+        min_obs: 100
+        min_pre_periods: 12
+      plausibility:
+        expected_sign: "positive"  # Risk-off depreciates EM currencies
+        magnitude_range: [0.0, 0.3]
+      null_acceptance:
+        enabled: true
+        equivalence_bound: 0.05
+    interpretation:
+      is: "KZT response to global risk aversion"
+      is_not: ["Response to Kazakhstan-specific risk"]
+      allowed_uses: ["shock_counterfactual"]
+      forbidden_uses: ["policy_counterfactual"]
+    edge_status: "ESTIMABLE_REDUCED_FORM"
+    notes: "EM risk-off channel."
+
+  # ---------------------------------------------------------------------------
+  # Layer 2 -> Layer 3: Transmission to Prices
+  # ---------------------------------------------------------------------------
+  - id: "fx_to_cpi_tradable"
+    from: "kzt_usd"
+    to: "cpi_tradable"
+    timing:
+      lag: 1
+      lag_unit: "month"
+      contemporaneous: false
+      max_anticipation: 0
+    estimand:
+      type: "elasticity"
+      horizon: [0, 1, 2, 3, 6]
+      scale: "log"
+    allowed_designs: ["LOCAL_PROJECTIONS", "PANEL_FE_BACKDOOR"]
+    design_priority: ["LOCAL_PROJECTIONS"]
+    required_adjustments: []
+    forbidden_controls: []
+    diagnostics_required: ["pre_trends", "placebo", "stability"]
+    acceptance_criteria:
+      diagnostics:
+        pretrend_p_min: 0.10
+        placebo_p_min: 0.10
+      data:
+        max_missing_rate: 0.05
+        min_obs: 80
+        min_pre_periods: 12
+      plausibility:
+        expected_sign: "positive"
+        magnitude_range: [0.05, 0.25]
+      stability:
+        regime_split_date: "2015-08"
+        max_coefficient_change: 0.5
+      null_acceptance:
+        enabled: true
+        equivalence_bound: 0.03
+    interpretation:
+      is: "Differential inflation response by import intensity"
+      is_not:
+        - "Full pass-through including indirect effects"
+        - "Policy counterfactual"
+      allowed_uses: ["shock_counterfactual", "scenario_only"]
+      forbidden_uses: ["policy_counterfactual"]
+    validated_evidence:
+      block_id: "block_a_fx_passthrough"
+      estimate: 0.113
+      se: null
+      immutable: true
+    edge_status: "IMMUTABLE"
+    notes: "Block A validated result: 11.3% FX pass-through to tradable CPI."
+
+  - id: "fx_to_cpi_nontradable"
+    from: "kzt_usd"
+    to: "cpi_nontradable"
+    timing:
+      lag: 1
+      lag_unit: "month"
+      contemporaneous: false
+      max_anticipation: 0
+    estimand:
+      type: "elasticity"
+      horizon: [0, 1, 2, 3, 6]
+      scale: "log"
+    allowed_designs: ["LOCAL_PROJECTIONS", "PANEL_FE_BACKDOOR"]
+    design_priority: ["LOCAL_PROJECTIONS"]
+    required_adjustments: []
+    forbidden_controls: []
+    diagnostics_required: ["pre_trends", "placebo", "stability"]
+    acceptance_criteria:
+      diagnostics:
+        pretrend_p_min: 0.10
+        placebo_p_min: 0.10
+      data:
+        max_missing_rate: 0.05
+        min_obs: 80
+        min_pre_periods: 12
+      plausibility:
+        expected_sign: "any"
+        magnitude_range: [-0.05, 0.10]
+      null_acceptance:
+        enabled: true
+        equivalence_bound: 0.05
+    interpretation:
+      is: "Falsification test for FX pass-through"
+      is_not:
+        - "Primary transmission channel"
+      allowed_uses: ["falsification_evidence"]
+      forbidden_uses: ["shock_counterfactual", "policy_counterfactual"]
+    validated_evidence:
+      block_id: "block_a_fx_passthrough_falsification"
+      estimate: 0.0
+      se: null
+      immutable: true
+    edge_status: "IMMUTABLE"
+    notes: "Block A falsification: Near-zero pass-through to non-tradable CPI."
+
+  # ---------------------------------------------------------------------------
+  # Policy Rate Channel (BIDIRECTIONAL - Reaction + Transmission)
+  # ---------------------------------------------------------------------------
+  # Reaction Function: Macro conditions -> Policy rate
+  - id: "cpi_to_nbk_rate"
+    from: "cpi_headline"
+    to: "nbk_policy_rate"
+    timing:
+      lag: 1
+      lag_unit: "month"
+      contemporaneous: false
+      max_anticipation: 0
+    estimand:
+      type: "elasticity"
+      horizon: [0, 1, 2, 3]
+      scale: "level"
+    allowed_designs: ["LOCAL_PROJECTIONS"]
+    design_priority: ["LOCAL_PROJECTIONS"]
+    required_adjustments: []
+    forbidden_controls: []
+    diagnostics_required: ["stability"]
+    acceptance_criteria:
+      diagnostics:
+        pretrend_p_min: 0.10
+      data:
+        max_missing_rate: 0.10
+        min_obs: 50
+        min_pre_periods: 6
+      plausibility:
+        expected_sign: "positive"  # NBK raises rate when inflation rises
+        magnitude_range: [0.0, 2.0]
+      null_acceptance:
+        enabled: true
+        equivalence_bound: 0.1
+    interpretation:
+      is: "NBK reaction function to inflation"
+      is_not:
+        - "Causal effect of policy on inflation"
+        - "Taylor rule structural parameter"
+      allowed_uses: ["scenario_only"]
+      forbidden_uses: ["policy_counterfactual"]
+    edge_status: "NEEDS_CONNECTOR"
+    notes: "NBK responds to inflation. Requires nbk_policy_rate connector."
+
+  - id: "fx_to_nbk_rate"
+    from: "kzt_usd"
+    to: "nbk_policy_rate"
+    timing:
+      lag: 1
+      lag_unit: "month"
+      contemporaneous: false
+      max_anticipation: 0
+    estimand:
+      type: "elasticity"
+      horizon: [0, 1, 2, 3]
+      scale: "level"
+    allowed_designs: ["LOCAL_PROJECTIONS"]
+    design_priority: ["LOCAL_PROJECTIONS"]
+    required_adjustments: []
+    forbidden_controls: []
+    diagnostics_required: ["stability"]
+    acceptance_criteria:
+      diagnostics:
+        pretrend_p_min: 0.10
+      data:
+        max_missing_rate: 0.10
+        min_obs: 50
+        min_pre_periods: 6
+      plausibility:
+        expected_sign: "positive"  # NBK raises rate when KZT depreciates
+        magnitude_range: [0.0, 5.0]
+      null_acceptance:
+        enabled: true
+        equivalence_bound: 0.1
+    interpretation:
+      is: "NBK reaction function to FX depreciation"
+      is_not:
+        - "Causal effect of policy on FX"
+      allowed_uses: ["scenario_only"]
+      forbidden_uses: ["policy_counterfactual"]
+    edge_status: "NEEDS_CONNECTOR"
+    notes: "NBK responds to FX conditions. Requires nbk_policy_rate connector."
+
+  # Transmission: Policy rate -> Bank outcomes
+  - id: "nbk_rate_to_deposit_cost"
+    from: "nbk_policy_rate"
+    to: "deposit_cost_kspi"
+    timing:
+      lag: 1
+      lag_unit: "quarter"
+      contemporaneous: false
+      max_anticipation: 0
+    estimand:
+      type: "elasticity"
+      horizon: [0, 1, 2, 3, 4]
+      scale: "level"
+    allowed_designs: ["LOCAL_PROJECTIONS"]
+    design_priority: ["LOCAL_PROJECTIONS"]
+    required_adjustments: []
+    forbidden_controls: []
+    diagnostics_required: ["stability"]
+    acceptance_criteria:
+      diagnostics:
+        pretrend_p_min: 0.10
+      data:
+        max_missing_rate: 0.10
+        min_obs: 30
+        min_pre_periods: 4
+      plausibility:
+        expected_sign: "positive"  # Higher policy rate -> higher deposit cost
+        magnitude_range: [0.0, 1.5]
+      null_acceptance:
+        enabled: true
+        equivalence_bound: 0.1
+    interpretation:
+      is: "Association between policy rate and KSPI funding cost"
+      is_not:
+        - "Causal monetary policy effect"
+        - "Structural transmission coefficient"
+      allowed_uses: ["scenario_only"]
+      forbidden_uses: ["policy_counterfactual"]
+    edge_status: "NEEDS_CONNECTOR"
+    notes: "Funding cost channel. Requires both connectors."
+
+  - id: "nbk_rate_to_cor"
+    from: "nbk_policy_rate"
+    to: "cor_kspi"
+    timing:
+      lag: 2
+      lag_unit: "quarter"
+      contemporaneous: false
+      max_anticipation: 0
+    estimand:
+      type: "elasticity"
+      horizon: [0, 1, 2, 3, 4]
+      scale: "level"
+    allowed_designs: ["LOCAL_PROJECTIONS"]
+    design_priority: ["LOCAL_PROJECTIONS"]
+    required_adjustments: []
+    forbidden_controls: []
+    diagnostics_required: ["stability"]
+    acceptance_criteria:
+      diagnostics:
+        pretrend_p_min: 0.10
+      data:
+        max_missing_rate: 0.10
+        min_obs: 30
+        min_pre_periods: 4
+      plausibility:
+        expected_sign: "positive"  # Higher rates -> higher borrower stress
+        magnitude_range: [0.0, 0.5]
+      null_acceptance:
+        enabled: true
+        equivalence_bound: 0.05
+    interpretation:
+      is: "Association between policy rate and KSPI credit losses"
+      is_not:
+        - "Causal monetary policy effect"
+        - "Counterfactual policy simulation"
+      allowed_uses: ["scenario_only"]
+      forbidden_uses: ["policy_counterfactual"]
+    edge_status: "NEEDS_CONNECTOR"
+    notes: "Borrower stress channel. Lagged 2Q for credit deterioration."
+
+  # ---------------------------------------------------------------------------
+  # Layer 3 -> Layer 4: Prices to Household Sector
+  # ---------------------------------------------------------------------------
+  - id: "cpi_to_nominal_income"
+    from: "cpi_headline"
+    to: "nominal_income"
+    timing:
+      lag: 1
+      lag_unit: "quarter"
+      contemporaneous: false
+      max_anticipation: 0
+    estimand:
+      type: "elasticity"
+      horizon: [0, 1, 2, 3, 4]
+      scale: "log"
+    allowed_designs: ["LOCAL_PROJECTIONS", "IV_2SLS"]
+    design_priority: ["IV_2SLS", "LOCAL_PROJECTIONS"]
+    required_adjustments: []
+    forbidden_controls: []
+    instruments: ["imported_inflation_instrument"]
+    diagnostics_required: ["first_stage", "placebo", "stability"]
+    acceptance_criteria:
+      diagnostics:
+        pretrend_p_min: 0.10
+        first_stage_f_min: 10.0
+        placebo_p_min: 0.10
+      data:
+        max_missing_rate: 0.05
+        min_obs: 50
+        min_pre_periods: 4
+      plausibility:
+        expected_sign: "positive"
+        magnitude_range: [0.0, 1.5]
+      stability:
+        regime_split_date: "2015-08"
+        max_coefficient_change: 0.5
+      null_acceptance:
+        enabled: true
+        equivalence_bound: 0.1
+    interpretation:
+      is: "Nominal income response to external inflation (IV)"
+      is_not:
+        - "Response to demand-driven inflation"
+        - "Real wage elasticity"
+      allowed_uses: ["shock_counterfactual"]
+      forbidden_uses: ["policy_counterfactual"]
+    validated_evidence:
+      block_id: "block_b_income_response"
+      immutable: true
+    edge_status: "IMMUTABLE"
+    notes: "Block B validated: LP-IV estimate using imported inflation IV."
+
+  - id: "fx_to_real_expenditure"
+    from: "kzt_usd"
+    to: "real_expenditure"
+    timing:
+      lag: 1
+      lag_unit: "quarter"
+      contemporaneous: false
+      max_anticipation: 0
+    estimand:
+      type: "elasticity"
+      horizon: [0, 1, 2, 3, 4]
+      scale: "log"
+    allowed_designs: ["LOCAL_PROJECTIONS"]
+    design_priority: ["LOCAL_PROJECTIONS"]
+    required_adjustments: []
+    forbidden_controls: []
+    diagnostics_required: ["pre_trends", "placebo", "stability"]
+    acceptance_criteria:
+      diagnostics:
+        pretrend_p_min: 0.10
+        placebo_p_min: 0.10
+      data:
+        max_missing_rate: 0.05
+        min_obs: 50
+        min_pre_periods: 4
+      plausibility:
+        expected_sign: "negative"  # FX depreciation reduces real spending
+        magnitude_range: [-0.3, 0.0]
+      stability:
+        regime_split_date: "2015-08"
+        max_coefficient_change: 0.5
+      null_acceptance:
+        enabled: true
+        equivalence_bound: 0.05
+    interpretation:
+      is: "MPC-like ratio to FX shocks"
+      is_not:
+        - "Universal MPC (channels conflated)"
+        - "Demand-side consumption function"
+      allowed_uses: ["shock_counterfactual", "scenario_only"]
+      forbidden_uses: ["policy_counterfactual"]
+    validated_evidence:
+      block_id: "block_f_real_expenditure"
+      estimate: -0.10
+      se: null
+      immutable: true
+    edge_status: "IMMUTABLE"
+    notes: "Block F validated: IRF(0) = -0.10 for real expenditure."
+
+  # ---------------------------------------------------------------------------
+  # Layer 4/5: Macro to Credit Quality (REDUCED FORM)
+  # ---------------------------------------------------------------------------
+  - id: "shock_to_npl_kspi"
+    from: "imported_inflation_instrument"
+    to: "npl_kspi"
+    timing:
+      lag: 2
+      lag_unit: "quarter"
+      contemporaneous: false
+      max_anticipation: 0
+    estimand:
+      type: "elasticity"
+      horizon: [0, 1, 2, 3, 4]
+      scale: "level"
+    allowed_designs: ["LOCAL_PROJECTIONS"]
+    design_priority: ["LOCAL_PROJECTIONS"]
+    required_adjustments: []
+    forbidden_controls: []
+    diagnostics_required: ["pre_trends", "stability"]
+    acceptance_criteria:
+      diagnostics:
+        pretrend_p_min: 0.10
+      data:
+        max_missing_rate: 0.10
+        min_obs: 30
+        min_pre_periods: 4
+      plausibility:
+        expected_sign: "positive"  # Inflation shock worsens credit quality
+        magnitude_range: [0.0, 0.5]
+      null_acceptance:
+        enabled: true
+        equivalence_bound: 0.05
+    interpretation:
+      is: "Aggregate NPL response to imported inflation shock"
+      is_not:
+        - "Micro income-default elasticity"
+        - "IFRS 9 overlay component"
+      allowed_uses: ["shock_counterfactual", "scenario_only"]
+      forbidden_uses: ["policy_counterfactual"]
+    edge_status: "ESTIMABLE_REDUCED_FORM"
+    notes: "Reduced-form NPL response. Cannot decompose channels without loan-level data."
+
+  - id: "shock_to_cor_kspi"
+    from: "imported_inflation_instrument"
+    to: "cor_kspi"
+    timing:
+      lag: 1
+      lag_unit: "quarter"
+      contemporaneous: false
+      max_anticipation: 0
+    estimand:
+      type: "elasticity"
+      horizon: [0, 1, 2, 3, 4]
+      scale: "level"
+    allowed_designs: ["LOCAL_PROJECTIONS"]
+    design_priority: ["LOCAL_PROJECTIONS"]
+    required_adjustments: []
+    forbidden_controls: []
+    diagnostics_required: ["pre_trends", "stability"]
+    acceptance_criteria:
+      diagnostics:
+        pretrend_p_min: 0.10
+      data:
+        max_missing_rate: 0.10
+        min_obs: 30
+        min_pre_periods: 4
+      plausibility:
+        expected_sign: "positive"  # Inflation shock increases provisions
+        magnitude_range: [0.0, 0.5]
+      null_acceptance:
+        enabled: true
+        equivalence_bound: 0.05
+    interpretation:
+      is: "Total provisioning response to imported inflation shock"
+      is_not:
+        - "IFRS 9 macro overlay component"
+        - "Realized credit loss component"
+      allowed_uses: ["shock_counterfactual", "scenario_only"]
+      forbidden_uses: ["policy_counterfactual"]
+    edge_status: "ESTIMABLE_REDUCED_FORM"
+    notes: "Reduced-form CoR response. IFRS 9 overlay is latent."
+
+  # ---------------------------------------------------------------------------
+  # Layer 4 -> Segment Revenue (Expenditure Channel)
+  # ---------------------------------------------------------------------------
+  - id: "expenditure_to_payments_revenue"
+    from: "real_expenditure"
+    to: "payments_revenue_kspi"
+    timing:
+      lag: 0
+      lag_unit: "quarter"
+      contemporaneous: true
+      max_anticipation: 0
+    estimand:
+      type: "elasticity"
+      horizon: [0, 1, 2]
+      scale: "log"
+    allowed_designs: ["LOCAL_PROJECTIONS"]
+    design_priority: ["LOCAL_PROJECTIONS"]
+    required_adjustments: []
+    forbidden_controls: []
+    diagnostics_required: ["stability"]
+    acceptance_criteria:
+      diagnostics:
+        pretrend_p_min: 0.10
+      data:
+        max_missing_rate: 0.10
+        min_obs: 20
+        min_pre_periods: 4
+      plausibility:
+        expected_sign: "positive"
+        magnitude_range: [0.0, 2.0]
+      null_acceptance:
+        enabled: true
+        equivalence_bound: 0.1
+    interpretation:
+      is: "Association between spending and KSPI payments revenue"
+      is_not:
+        - "Causal effect without confounding"
+        - "KSPI market share dynamics"
+      allowed_uses: ["scenario_only"]
+      forbidden_uses: ["shock_counterfactual", "policy_counterfactual"]
+    edge_status: "NEEDS_CONNECTOR"
+    notes: "Spending -> GMV -> Interchange -> Revenue. Requires KSPI connector."
+
+  # ---------------------------------------------------------------------------
+  # Layer 5 -> Layer 6: Credit Quality to Balance Sheet
+  # ---------------------------------------------------------------------------
+  - id: "cor_to_capital"
+    from: "cor_kspi"
+    to: "total_capital_kspi"
+    timing:
+      lag: 0
+      lag_unit: "quarter"
+      contemporaneous: true
+      max_anticipation: 0
+    estimand:
+      type: "elasticity"
+      horizon: [0, 1, 2]
+      scale: "log"
+    allowed_designs: ["LOCAL_PROJECTIONS"]
+    design_priority: ["LOCAL_PROJECTIONS"]
+    required_adjustments: ["ppop_kspi"]
+    forbidden_controls: []
+    diagnostics_required: ["stability"]
+    acceptance_criteria:
+      diagnostics:
+        pretrend_p_min: 0.10
+      data:
+        max_missing_rate: 0.10
+        min_obs: 20
+        min_pre_periods: 4
+      plausibility:
+        expected_sign: "negative"  # Higher CoR reduces capital
+        magnitude_range: [-1.0, 0.0]
+      null_acceptance:
+        enabled: true
+        equivalence_bound: 0.1
+    interpretation:
+      is: "Capital impact from provisioning"
+      is_not:
+        - "Net income effect (ignores PPOP)"
+      allowed_uses: ["scenario_only"]
+      forbidden_uses: ["shock_counterfactual", "policy_counterfactual"]
+    edge_status: "NEEDS_CONNECTOR"
+    notes: "Provisioning reduces capital. Control for PPOP."
+
+  # ---------------------------------------------------------------------------
+  # RWA Drivers (CORRECTED MECHANISM)
+  # ---------------------------------------------------------------------------
+  - id: "loan_portfolio_to_rwa"
+    from: "loan_portfolio_kspi"
+    to: "rwa_kspi"
+    timing:
+      lag: 0
+      lag_unit: "quarter"
+      contemporaneous: true
+      max_anticipation: 0
+    estimand:
+      type: "elasticity"
+      horizon: [0]
+      scale: "log"
+    allowed_designs: ["LOCAL_PROJECTIONS"]
+    design_priority: ["LOCAL_PROJECTIONS"]
+    required_adjustments: []
+    forbidden_controls: []
+    diagnostics_required: []
+    acceptance_criteria:
+      data:
+        max_missing_rate: 0.10
+        min_obs: 20
+      plausibility:
+        expected_sign: "positive"
+        magnitude_range: [0.5, 1.5]  # Near 1:1 for volume effect
+      null_acceptance:
+        enabled: false
+    interpretation:
+      is: "Mechanical volume effect on RWA"
+      is_not:
+        - "Risk-weight changes"
+      allowed_uses: ["scenario_only"]
+      forbidden_uses: []
+    edge_status: "NEEDS_CONNECTOR"
+    notes: "Volume × avg RW. Mechanical relationship."
+
+  - id: "portfolio_mix_to_rwa"
+    from: "portfolio_mix_kspi"
+    to: "rwa_kspi"
+    timing:
+      lag: 0
+      lag_unit: "quarter"
+      contemporaneous: true
+      max_anticipation: 0
+    estimand:
+      type: "elasticity"
+      horizon: [0]
+      scale: "log"
+    allowed_designs: ["LOCAL_PROJECTIONS"]
+    design_priority: ["LOCAL_PROJECTIONS"]
+    required_adjustments: ["loan_portfolio_kspi"]
+    forbidden_controls: []
+    diagnostics_required: []
+    acceptance_criteria:
+      data:
+        max_missing_rate: 0.10
+        min_obs: 20
+      plausibility:
+        expected_sign: "any"
+        magnitude_range: [-0.5, 0.5]
+      null_acceptance:
+        enabled: true
+        equivalence_bound: 0.1
+    interpretation:
+      is: "RWA composition effect from product mix shifts"
+      is_not:
+        - "Volume effect"
+        - "Regulatory changes"
+      allowed_uses: ["scenario_only"]
+      forbidden_uses: []
+    edge_status: "NEEDS_CONNECTOR"
+    notes: "Product mix shifts risk weights. NBK uses 150%+ for unsecured."
+
+  # ---------------------------------------------------------------------------
+  # K2 Identity (Capital / RWA)
+  # ---------------------------------------------------------------------------
+  - id: "capital_to_k2"
+    from: "total_capital_kspi"
+    to: "k2_ratio_kspi"
+    timing:
+      lag: 0
+      lag_unit: "quarter"
+      contemporaneous: true
+      max_anticipation: 0
+    estimand:
+      type: "elasticity"
+      horizon: [0]
+      scale: "level"
+    allowed_designs: []  # Identity, no estimation
+    interpretation:
+      is: "K2 identity: Capital / RWA"
+      is_not:
+        - "Causal relationship"
+      allowed_uses: ["scenario_only"]
+      forbidden_uses: []
+    edge_status: "IDENTITY"
+    notes: "K2 = Total Capital / RWA. Mechanical identity."
+
+  - id: "rwa_to_k2"
+    from: "rwa_kspi"
+    to: "k2_ratio_kspi"
+    timing:
+      lag: 0
+      lag_unit: "quarter"
+      contemporaneous: true
+      max_anticipation: 0
+    estimand:
+      type: "elasticity"
+      horizon: [0]
+      scale: "level"
+    allowed_designs: []  # Identity, no estimation
+    interpretation:
+      is: "K2 identity: Capital / RWA"
+      is_not:
+        - "Causal relationship"
+      allowed_uses: ["scenario_only"]
+      forbidden_uses: []
+    edge_status: "IDENTITY"
+    notes: "K2 = Total Capital / RWA. Mechanical identity."
+
+# =============================================================================
+# ASSUMPTIONS
+# =============================================================================
+
+assumptions:
+  - id: "oil_shock_exogeneity"
+    statement: "Baumeister oil shocks are exogenous to Kazakhstan macro conditions."
+    applies_to_edges: ["oil_supply_to_brent", "oil_supply_to_fx", "oil_demand_to_fx"]
+    testable: false
+
+  - id: "vix_exogeneity"
+    statement: "VIX innovations are exogenous to Kazakhstan-specific factors."
+    applies_to_edges: ["vix_to_fx"]
+    testable: false
+
+  - id: "imported_inflation_exclusion"
+    statement: "Imported inflation IV affects income only through price changes."
+    applies_to_edges: ["cpi_to_nominal_income"]
+    testable: true
+    test_method: "Placebo test on non-tradable-intensive sectors."
+
+  - id: "block_a_validity"
+    statement: "Block A FX pass-through estimates are unconfounded by omitted variables."
+    applies_to_edges: ["fx_to_cpi_tradable", "fx_to_cpi_nontradable"]
+    testable: true
+    test_method: "Pre-trends and falsification on non-tradables."
+
+  - id: "scope_consistency"
+    statement: "BNS household data and KSPI Kazakhstan operations share population."
+    applies_to_edges: ["shock_to_npl_kspi", "shock_to_cor_kspi"]
+    testable: false
+
+# =============================================================================
+# LATENT CONFOUNDERS
+# =============================================================================
+
+latents:
+  - id: "ifrs9_overlay"
+    description: "Forward-looking macro overlay in IFRS 9 ECL provisioning."
+    affects: ["cor_kspi"]
+
+  - id: "regulatory_changes"
+    description: "NBK RW rule changes affecting unsecured consumer loans."
+    affects: ["rwa_kspi"]
+
+  - id: "kspi_customer_composition"
+    description: "Unobserved changes in KSPI customer risk profile."
+    affects: ["npl_kspi", "cor_kspi"]
+
+  - id: "migration"
+    description: "Labor migration affecting regional income dynamics."
+    affects: ["nominal_income", "real_income"]
+
+  - id: "fiscal_policy"
+    description: "Unobserved fiscal policy responses to shocks."
+    affects: ["transfer_income", "nominal_income"]
+
+# =============================================================================
+# BLOCKED DECOMPOSITION DOCUMENTATION
+# =============================================================================
+# The following edges are documented as BLOCKED_DECOMPOSITION:
+#
+# 1. real_income -> default_kspi
+#    Status: BLOCKED_DECOMPOSITION
+#    Reason: Cannot isolate micro income-default elasticity without loan-level data
+#    What's estimable instead: shock_to_npl_kspi, shock_to_cor_kspi (reduced form)
+#
+# 2. ifrs9_overlay -> cor_kspi
+#    Status: BLOCKED_DECOMPOSITION
+#    Reason: Forward-looking macro overlay is unobservable
+#    What's estimable instead: shock_to_cor_kspi (total provisioning response)
+#
+# 3. bns_income -> kspi_customer_income
+#    Status: BLOCKED_DECOMPOSITION
+#    Reason: Definition mismatch (BNS monetary income ≠ KSPI transaction income)
+#    Mitigation: Document as external validity caveat
+
+# =============================================================================
+# GOVERNANCE
+# =============================================================================
+
+allowed_refinements:
+  - id: "add_control"
+    allowed_controls: ["lag_cpi", "lag_oil_price", "lag_nbk_rate"]
+
+  - id: "change_lag_length"
+    range: [1, 8]
+
+  - id: "regime_split"
+    allowed_dates: ["2015-08", "2020-03", "2022-02"]
