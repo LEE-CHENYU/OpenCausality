@@ -1,0 +1,36 @@
+# Confirmation Freeze Manifest Template
+#
+# Before entering CONFIRMATION mode, this manifest must be populated
+# with the exact hashes and sample windows that define the frozen spec.
+
+freeze_manifest:
+  required_hashes:
+    dag_hash: ""           # SHA-256 of the DAG specification
+    design_assignments_hash: ""  # SHA-256 of design assignments
+    data_hash: ""          # SHA-256 of the data catalog
+
+  sample_windows:
+    exploration_sample:
+      start: ""            # e.g., "2011-01-01"
+      end: ""              # e.g., "2022-12-31"
+    confirmation_sample:
+      start: ""            # e.g., "2023-01-01"
+      end: ""              # e.g., "2024-12-31"
+    overlap_policy: "FORBIDDEN"
+    # For TS edges: exploration and confirmation samples MUST NOT overlap.
+    # For panel edges: leave-one-period-out or rolling-window acceptable.
+
+  holdout_rule: |
+    For time-series edges: confirmation runs on a pre-specified holdout window
+    not used during exploration refinement. For panel edges: leave-one-period-out
+    or rolling-window evaluation acceptable.
+
+  edgecard_fields_required:
+    - "spec_hash"
+    - "data_hash"
+    - "sample_window"
+
+  # Populated at freeze time:
+  frozen_at: ""
+  frozen_by: ""
+  exploration_run_id: ""

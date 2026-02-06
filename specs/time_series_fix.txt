@@ -1,0 +1,290 @@
+You’re exactly right to call this out. In macro/finance settings, time series makes the “regression will happily output numbers” problem strictly worse, because dynamics + persistence create spurious significance in many ways even when identification is absent.
+
+Below is how to bake this into the main design framework (the six dynamic features), and how Codex/Claude should remind you everywhere—even when threats are not testable—so you don’t fall into loopholes.
+
+⸻
+
+0) Why time series is uniquely dangerous
+
+In time series, “significant” often means:
+
+Common trends / nonstationarity
+	•	Two series drift together (trend, inflation level, exchange rate level), producing a high t‑stat even if there’s no causal link.
+	•	Differencing/log growth helps, but can also amplify noise.
+
+Autocorrelated errors
+	•	Residuals are serially correlated; OLS SEs are too small → fake significance.
+	•	HAC helps but is not a magic wand, especially in small samples.
+
+Regime changes
+	•	Post‑2015 float, COVID, IFRS 9 adoption, NBK policy frameworks: coefficients are not stable.
+	•	A model “averaging” regimes can look significant but be meaningless for counterfactuals.
+
+Delayed responses / timing misspecification
+	•	Economic responses happen with lags; if you miss timing, you can:
+	•	attribute the effect to the wrong edge,
+	•	get wrong sign at h=0,
+	•	or see “effects” before the shock (a huge red flag).
+
+Key principle for the framework:
+
+Any time-series edge estimate must come with a dynamics validity package (stationarity risk + autocorr risk + regime stability + timing plausibility). If not, it cannot be “identified causal,” regardless of p-values.
+
+⸻
+
+1) Make “Dynamics Safety” a first-class module (TSGuard)
+
+Add a deterministic component that runs for any edge with a time dimension:
+
+TSGuard outputs (per edge)
+	•	dynamics_risk.common_trend_risk (low/med/high)
+	•	dynamics_risk.autocorr_risk
+	•	dynamics_risk.nonstationarity_risk
+	•	dynamics_risk.regime_break_risk
+	•	dynamics_risk.timing_misspec_risk
+	•	claim_level: IDENTIFIED_CAUSAL | REDUCED_FORM | DESCRIPTIVE | BLOCKED_ID
+
+And a mandatory reminder:
+
+“Significance does not imply causality; in time series it often indicates misspecified dynamics or common trends.”
+
+TSGuard triggers issue log rules
+
+Examples:
+	•	NONSTATIONARY_LEVELS_RISK (HIGH/CRITICAL)
+	•	RESIDUAL_AUTOCORR_DETECTED (MEDIUM/HIGH)
+	•	REGIME_BREAK_SUSPECTED (MEDIUM/HIGH)
+	•	LEADS_SIGNIFICANT_TIMING_FAIL (HIGH)
+	•	HAC_LAG_SENSITIVITY_HIGH (MEDIUM)
+
+Important: even when these aren’t “fatal,” they must cap credibility and block policy counterfactuals unless resolved.
+
+⸻
+
+2) Add time-series specific diagnostics and gating
+
+These are the “always run” checks for time series edges.
+
+A) Common trend / nonstationarity guard
+
+Not perfect (tests have low power), but still valuable:
+	•	report whether variables are in levels vs growth/differences
+	•	run simple stationarity heuristics/tests (ADF/KPSS or “trend regression” heuristics)
+	•	require an explicit transform in NodeSpec for any macro level variable (CPI level, FX level, rate level)
+
+Governance rule (strongly recommended):
+	•	If outcome and treatment are both in levels and TSGuard flags nonstationarity risk →
+claim_level cannot exceed DESCRIPTIVE unless you implement a cointegration/ECM design (special structure).
+
+B) Autocorrelation guard
+	•	residual autocorrelation tests/plots (e.g., Ljung–Box, ACF)
+	•	HAC settings must be reported
+	•	sensitivity to HAC lag length
+
+Issue example:
+	•	HAC_LAG_SENSITIVITY_HIGH: estimate changes materially when NW lags move from 1→4→8.
+
+C) Timing / dynamics plausibility guard
+
+Run a built-in “timing sanity suite”:
+	•	lead test: include a few leads of the shock; if significant, warn “reverse timing / omitted factor”
+	•	IRF shape check: if you’re estimating an IRF, flag oscillatory or implausible patterns
+	•	lag-length sensitivity: re-estimate with L∈{1,2,4} (pre-registered grid) and check sign/magnitude stability
+
+Rule of thumb:
+	•	If “effects” show up strongly at negative horizons (or leads) → mark TIMING_FAIL and cap rating.
+
+D) Regime stability guard
+
+This is especially important for Kazakhstan macro + banking:
+	•	pre-specify known breaks (e.g., 2015-08 float, COVID period)
+	•	run split-sample IRFs (pre vs post)
+	•	log whether sign/magnitude stable
+
+If not stable:
+	•	the edge can still be informative, but it must be labeled “regime-dependent” and counterfactual use must be restricted to the relevant regime.
+
+⸻
+
+3) Now: elaborate your six dynamic features with time-series constraints baked in
+
+Feature 1) Dynamic node/edge discovery (LLM priors + literature search + download)
+
+Viable, but proposal-only. Add TS caveats at the proposal stage.
+
+TS-specific guardrails
+For each candidate edge, DAGScout must output:
+	•	whether it’s likely feedback/reaction function (policy edges)
+	•	whether it’s likely nonstationary in levels
+	•	what dynamic structure is needed:
+	•	“needs innovations,”
+	•	“needs exposure×shock,”
+	•	“needs event discontinuity,”
+	•	“needs cointegration/ECM,” etc.
+
+Mandatory reminder text attached to every discovered edge
+“This edge is in a macro time-series setting; significant coefficients may reflect common trends or dynamics misspecification. Identification requires special structure (innovations, discontinuities, exposure heterogeneity, or valid instruments).”
+
+Download policy should reflect TS realities
+DataScout should prioritize series that allow “special structure,” e.g.:
+	•	shock series (oil supply shocks, risk shocks)
+	•	policy decision surprises
+	•	exposure measures for shift-share panels
+	•	regime indicators
+
+Instead of downloading everything blindly.
+
+⸻
+
+Feature 2) Dynamic addition of design artifacts + variable typing expansion
+
+Viable with contracts + sandbox.
+
+TS-specific “design contracts”
+Any new time-series design must declare:
+	•	whether it assumes stationarity
+	•	what it does about autocorrelation
+	•	what it does about trends
+	•	what it does about regime breaks
+	•	how it handles timing (lags/horizons)
+
+Typing must include dynamics semantics
+You already track units; add time-series semantics:
+	•	series_class: level | growth | diff | yoy | innovation
+	•	integration_suspected: bool
+	•	aggregation_rule: avg/sum/end-of-period (for frequency alignment)
+
+This prevents silent errors like “monthly shock applied to quarterly outcome” without explicit aggregation.
+
+⸻
+
+Feature 3) “Criticize everything” for ModelSmith
+
+This is where the time-series loopholes are prevented.
+
+ModelSmithCritic TS rules (deterministic):
+	•	If both variables are in levels and trending → block causal claim or require transformation/ECM
+	•	If treatment is common macro shock and panel uses time FE → require Exposure×Shock
+	•	If edge is policy reaction function → block using it for propagation
+	•	If lag/horizon choices are not specified → force default pre-registered choices (no searching)
+	•	If lead test fails → downgrade claim level and flag reverse timing risk
+
+Reminder printed in CLI:
+
+“Time-series warning: significant ≠ causal. Dynamics must be validated (leads, lag sensitivity, regime stability).”
+
+⸻
+
+Feature 4) Additional agentic diagnostics assisting Estimator/Interpreter and Judge
+
+This is where you operationalize:
+
+“Significant often means you didn’t model dynamics right.”
+
+Add required diagnostics for time-series designs:
+	•	leads_test (timing)
+	•	residual_autocorr (spurious SE risk)
+	•	hac_sensitivity (robustness)
+	•	lag_sensitivity (dynamic specification)
+	•	regime_stability (breaks)
+	•	placebo_time_shift (optional: circularly shift shock series; should kill the effect if it’s genuine timing)
+
+Judge behavior:
+	•	If diagnostics missing → cap rating or fail
+	•	If lead test fails → block “shock propagation” use
+	•	If regime instability → label as regime-specific
+
+⸻
+
+Feature 5) Implement updates compliant to guardrail
+
+Time series is where automated “fixes” can become p-hacking if you’re not strict.
+
+Allowed auto-fixes (TS-safe)
+	•	add missing diagnostics
+	•	enforce reporting of HAC parameters
+	•	enforce pre-registered lag grids
+	•	add regime split reporting using pre-specified break dates
+	•	convert level regressions to growth/diff only in EXPLORATION mode with explicit logging
+
+Disallowed auto-fixes (p-hacking in TS disguise)
+	•	searching over lags/horizons until significance
+	•	trying many shock definitions and keeping the best
+	•	choosing breakpoints endogenously to maximize fit
+	•	trimming sample windows post hoc
+
+Key rule: any transformation/lag/spec change after seeing results must be logged as a spec change and (in CONFIRMATION) requires human approval.
+
+⸻
+
+Feature 6) Mark what needs human-in-loop
+
+Time series generates untestable caveats that must be explicitly accepted or rejected.
+
+HITL triggers (TS-focused):
+	•	“We are using levels but suspect nonstationarity” → decide whether to:
+	•	switch to differences, or
+	•	implement cointegration/ECM, or
+	•	accept descriptive-only
+	•	“Regime break instability detected” → decide whether:
+	•	to split the estimand by regime, or
+	•	restrict counterfactual scope
+	•	“Policy edge may be reaction function” → human must classify edge_type
+	•	“Instrument exclusion not verifiable” → human must accept the narrative risk
+
+The system should stop with a checklist:
+
+“These edges can produce statistically significant estimates even when not identified. Please approve/deny the following assumption moves.”
+
+⸻
+
+4) Where Codex/Claude should “remind everywhere” (three redundancy layers)
+
+A) CLI runtime reminders (per edge)
+
+After estimation, print a standardized “TS risk block,” e.g.:
+	•	Claim level: REDUCED_FORM
+	•	TS risks: common trend=HIGH, autocorr=MED, regime=HIGH
+	•	Diagnostics: leads FAIL, lag sensitivity FAIL
+	•	Counterfactual use: BLOCKED
+
+This prevents you from reading just the coefficient table.
+
+B) EdgeCard fields (machine-enforced)
+
+Add:
+	•	dynamics.risks (common trend/autocorr/regime/timing)
+	•	dynamics.diagnostics (pass/fail)
+	•	counterfactual.allowed + reason
+
+C) Report-level dashboard
+
+A one-page “Time-Series Validity Dashboard”:
+
+Edge	Claim level	Trend risk	Autocorr risk	Regime stability	Timing	Counterfactual allowed
+
+
+This ensures the caveats survive into the final artifact.
+
+⸻
+
+5) The meta-guardrail you want to enforce
+
+The sentence you gave is the correct ethos:
+
+“Significant often means you didn’t model dynamics right.”
+
+So enforce a framework norm:
+	•	Significance is never a promotion criterion.
+	•	Stability and timing plausibility are promotion criteria.
+
+Concretely:
+	•	an edge can be rated highly with a null effect if identified and diagnostics pass
+	•	an edge with a significant effect but timing fails or regime instability exists must be downgraded
+
+⸻
+
+If you want, I can translate this into:
+	•	a proposed issue_registry.yaml section for TS risks,
+	•	a diagnostic_registry.yaml with parameters,
+	•	and a “PatchPolicy” whitelist specifically for time-series (what auto-changes are allowed in EXPLORATION vs forbidden in CONFIRMATION).

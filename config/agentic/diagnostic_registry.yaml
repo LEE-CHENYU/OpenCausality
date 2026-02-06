@@ -1,0 +1,106 @@
+# Diagnostic Registry: Required tests per design type
+#
+# Each diagnostic has:
+#   applies_to: list of design IDs (or ["*"] for all)
+#   required: whether the diagnostic must be run
+#   parameters: test-specific configuration
+#   fail_action: what happens when the test fails
+
+diagnostics:
+  # =========================================================================
+  # Design-Specific Diagnostics
+  # =========================================================================
+  - id: "first_stage_f"
+    applies_to: ["IV"]
+    required: true
+    parameters:
+      threshold: 10
+    fail_action: "cap_rating_C, flag_weak_iv"
+
+  - id: "pre_trends_test"
+    applies_to: ["DID", "EVENT_STUDY"]
+    required: true
+    fail_action: "cap_rating_B, flag_parallel_trends"
+
+  - id: "leave_one_unit_out"
+    applies_to: ["PANEL_LP_EXPOSURE_FE"]
+    required: true
+    parameters:
+      sign_flip_threshold: true
+      magnitude_change_threshold: 0.5
+    fail_action: "cap_rating_C"
+
+  - id: "exposure_variation"
+    applies_to: ["PANEL_LP_EXPOSURE_FE"]
+    required: true
+    parameters:
+      min_cv: 0.1
+    fail_action: "block_edge"
+
+  # =========================================================================
+  # Time-Series Specific Diagnostics
+  # =========================================================================
+  - id: "leads_test"
+    applies_to: ["TS_LOCAL_PROJECTION", "VAR"]
+    required: true
+    parameters:
+      n_leads: 2
+    fail_action: "block_propagation, flag_timing"
+
+  - id: "residual_autocorr"
+    applies_to: ["TS_LOCAL_PROJECTION"]
+    required: true
+    fail_action: "flag_se_risk"
+
+  - id: "hac_sensitivity"
+    applies_to: ["TS_LOCAL_PROJECTION"]
+    required: true
+    parameters:
+      lag_grid: [1, 4, 8]
+    fail_action: "flag_if_sign_changes"
+
+  - id: "lag_sensitivity"
+    applies_to: ["TS_LOCAL_PROJECTION"]
+    required: true
+    parameters:
+      lag_grid: [1, 2, 4]
+    fail_action: "flag_if_sign_changes"
+
+  - id: "regime_stability"
+    applies_to: ["TS_LOCAL_PROJECTION", "PANEL_LP_EXPOSURE_FE"]
+    required: false
+    parameters:
+      break_dates: ["2015-08", "2020-03"]
+    fail_action: "label_regime_dependent"
+
+  - id: "placebo_time_shift"
+    applies_to: ["TS_LOCAL_PROJECTION"]
+    required: true
+    parameters:
+      n_shifts: 4
+      circular: true
+    fail_action: "cap_rating_C, flag_spurious"
+
+  - id: "shock_support"
+    applies_to: ["TS_LOCAL_PROJECTION", "VAR"]
+    required: true
+    parameters:
+      min_nontrivial_shocks: 3
+      abs_threshold_sd: 1.0
+    fail_action: "cap_rating_C, block_propagation_if_below_min"
+    description: "Counts non-trivial shock episodes; regression can output numbers even with no real variation"
+
+  # =========================================================================
+  # Global Diagnostics (apply to all designs)
+  # =========================================================================
+  - id: "unit_consistency"
+    applies_to: ["*"]
+    required: true
+    fail_action: "block_estimation"
+
+  - id: "interpolation_check"
+    applies_to: ["*"]
+    required: true
+    parameters:
+      max_share: 0.3
+    fail_action: "cap_rating_C"

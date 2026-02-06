@@ -84,6 +84,13 @@ from shared.agentic.output.edge_card import (
     compute_credibility_score,
 )
 from shared.agentic.output.provenance import SpecDetails, DataProvenance, SourceProvenance
+from shared.agentic.identification.screen import IdentifiabilityScreen, IdentifiabilityResult
+from shared.agentic.ts_guard import TSGuard, TSGuardResult
+from shared.agentic.output.edge_card import (
+    IdentificationBlock,
+    CounterfactualBlock,
+    PropagationRole,
+)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -857,6 +864,88 @@ def build_panel_edge_card(
 
 
 # ---------------------------------------------------------------------------
+# Per-edge risk block and dashboard
+# ---------------------------------------------------------------------------
+
+def print_edge_risk_block(
+    edge_id: str,
+    card: EdgeCard,
+    id_result: IdentifiabilityResult,
+    ts_result: TSGuardResult | None = None,
+) -> None:
+    """Print per-edge risk block after estimation (CLI reminder)."""
+    lines = [
+        "",
+        "\u2501" * 55,
+        f"Edge: {edge_id}",
+        "\u2501" * 55,
+        f"Claim Level: {id_result.claim_level}",
+    ]
+
+    # Identification risks
+    if id_result.risks:
+        lines.append("Identification Risks:")
+        for risk, level in id_result.risks.items():
+            if level in ("medium", "high"):
+                lines.append(f"  - {risk}: {level.upper()}")
+
+    # TS dynamics risks
+    if ts_result:
+        lines.append("TS Dynamics Risks:")
+        for risk, level in ts_result.dynamics_risk.items():
+            if level in ("medium", "high"):
+                lines.append(f"  - {risk.replace('_risk', '')}: {level.upper()}")
+
+    # Diagnostics summary
+    if card.diagnostics:
+        lines.append("Diagnostics:")
+        for name, diag in card.diagnostics.items():
+            status = "PASS" if diag.passed else "FAIL"
+            msg = f" ({diag.message})" if diag.message and not diag.passed else ""
+            lines.append(f"  - {name}: {status}{msg}")
+
+    # Counterfactual status
+    cf_allowed = id_result.counterfactual_allowed
+    lines.append(f"Counterfactual Use: {'ALLOWED' if cf_allowed else 'BLOCKED'}")
+    if not cf_allowed and id_result.counterfactual_reason_blocked:
+        lines.append(f"Reason: {id_result.counterfactual_reason_blocked}")
+
+    lines.append("")
+    lines.append("Even if p<0.05, this does not establish a causal effect.")
+    lines.append("\u2501" * 55)
+
+    for line in lines:
+        logger.info(line)
+
+
+def attach_identification(
+    card: EdgeCard,
+    id_result: IdentifiabilityResult,
+) -> None:
+    """Attach identification block to EdgeCard."""
+    card.identification = IdentificationBlock(
+        claim_level=id_result.claim_level,
+        risks=id_result.risks,
+        untestable_assumptions=id_result.untestable_assumptions,
+        testable_threats_passed=id_result.testable_threats_passed,
+        testable_threats_failed=id_result.testable_threats_failed,
+    )
+    card.counterfactual_block = CounterfactualBlock(
+        allowed=id_result.counterfactual_allowed,
+        reason_blocked=id_result.counterfactual_reason_blocked,
+        supports_policy_intervention=card.counterfactual.supports_policy_intervention,
+    )
+
+
+def generate_id_dashboard(
+    id_results: dict[str, IdentifiabilityResult],
+) -> str:
+    """Generate the identifiability risk dashboard as markdown."""
+    screen = IdentifiabilityScreen()
+    return screen.generate_dashboard(id_results)
+
+
+# ---------------------------------------------------------------------------
 # Report generation
 # ---------------------------------------------------------------------------
 
@@ -1316,6 +1405,12 @@ def main(output_dir: Path | None = None):
     panel_results: dict[str, PanelLPResult] = {}
     annual_lp_results: dict[str, LPResult] = {}
 
+    # Initialize identification screen and TSGuard
+    id_screen = IdentifiabilityScreen()
+    ts_guard = TSGuard()
+    id_results: dict[str, IdentifiabilityResult] = {}
+    ts_results: dict[str, TSGuardResult] = {}
+
     # ===================================================================
     # Group A: Monthly LP (6 edges)
     # ===================================================================
@@ -1349,6 +1444,23 @@ def main(output_dir: Path | None = None):
                 f"rating={card.credibility_rating}"
             )
 
+            # Run TSGuard and identification screen
+            try:
+                ts_result = ts_guard.validate(
+                    edge_id=edge_id, y=data["outcome"], x=data["treatment"],
+                    lp_result=lp,
+                )
+                ts_results[edge_id] = ts_result
+                id_result = id_screen.screen_post_estimation(
+                    edge_id=edge_id, design="LOCAL_PROJECTIONS",
+                    diagnostics=card.diagnostics, ts_guard_result=ts_result,
+                )
+                id_results[edge_id] = id_result
+                attach_identification(card, id_result)
+                print_edge_risk_block(edge_id, card, id_result, ts_result)
+            except Exception as e:
+                logger.warning(f"  ID/TSGuard for {edge_id}: {e}")
+
         except Exception as e:
             logger.error(f"  {edge_id} FAILED: {e}")
 
@@ -1372,6 +1484,14 @@ def main(output_dir: Path | None = None):
                 f"  {edge_id}: point={ir.point_estimate:.4f}, "
                 f"source={ir.source_block}, rating={card.credibility_rating}"
             )
+
+            # Immutable edges get IDENTIFIED_CAUSAL
+            try:
+                id_result = id_screen.screen_post_design(edge_id, "IMMUTABLE_EVIDENCE")
+                id_results[edge_id] = id_result
+                attach_identification(card, id_result)
+            except Exception as e:
+                logger.warning(f"  ID screen for {edge_id}: {e}")
 
         except Exception as e:
             logger.error(f"  {edge_id} FAILED: {e}")
@@ -1428,6 +1548,23 @@ def main(output_dir: Path | None = None):
                 f"se={lp.impact_se:.4f}, N={n}, "
                 f"rating={card.credibility_rating}"
             )
+
+            # Run TSGuard and identification screen for quarterly edges
+            try:
+                ts_result = ts_guard.validate(
+                    edge_id=edge_id, y=data["outcome"], x=data["treatment"],
+                    lp_result=lp,
+                )
+                ts_results[edge_id] = ts_result
+                id_result = id_screen.screen_post_estimation(
+                    edge_id=edge_id, design="LOCAL_PROJECTIONS",
+                    diagnostics=card.diagnostics, ts_guard_result=ts_result,
+                )
+                id_results[edge_id] = id_result
+                attach_identification(card, id_result)
+                print_edge_risk_block(edge_id, card, id_result, ts_result)
+            except Exception as e:
+                logger.warning(f"  ID/TSGuard for {edge_id}: {e}")
 
         except Exception as e:
             logger.error(f"  {edge_id} FAILED: {e}")
@@ -1519,6 +1656,24 @@ def main(output_dir: Path | None = None):
                     f"rating={card.credibility_rating}"
                 )
 
+                # Run TSGuard and identification screen for annual edges
+                try:
+                    ts_result = ts_guard.validate(
+                        edge_id=edge_id + "_annual",
+                        y=outcome_aligned, x=treatment_aligned,
+                        lp_result=lp,
+                    )
+                    ts_results[edge_id + "_annual"] = ts_result
+                    id_result = id_screen.screen_post_estimation(
+                        edge_id=edge_id + "_annual", design="LOCAL_PROJECTIONS",
+                        diagnostics=card.diagnostics, ts_guard_result=ts_result,
+                    )
+                    id_results[edge_id + "_annual"] = id_result
+                    attach_identification(card, id_result)
+                    print_edge_risk_block(edge_id + "_annual", card, id_result, ts_result)
+                except Exception as e:
+                    logger.warning(f"  ID/TSGuard for {edge_id}_annual: {e}")
+
             except Exception as e:
                 logger.error(f"  {edge_id}_annual FAILED: {e}")
 
@@ -1599,6 +1754,18 @@ def main(output_dir: Path | None = None):
                     f"rating={card.credibility_rating}"
                 )
 
+                # Run identification screen for panel edges
+                try:
+                    id_result = id_screen.screen_post_estimation(
+                        edge_id=edge_id, design="PANEL_LP_EXPOSURE_FE",
+                        diagnostics=card.diagnostics,
+                    )
+                    id_results[edge_id] = id_result
+                    attach_identification(card, id_result)
+                    print_edge_risk_block(edge_id, card, id_result)
+                except Exception as e:
+                    logger.warning(f"  ID screen for {edge_id}: {e}")
+
             except Exception as e:
                 logger.error(f"  {edge_id} FAILED: {e}")
 
@@ -1640,6 +1807,23 @@ def main(output_dir: Path | None = None):
                 f"rating={card.credibility_rating}"
             )
 
+            # Run TSGuard and identification screen
+            try:
+                ts_result = ts_guard.validate(
+                    edge_id=edge_id, y=data["outcome"], x=data["treatment"],
+                    lp_result=lp,
+                )
+                ts_results[edge_id] = ts_result
+                id_result = id_screen.screen_post_estimation(
+                    edge_id=edge_id, design="LOCAL_PROJECTIONS",
+                    diagnostics=card.diagnostics, ts_guard_result=ts_result,
+                )
+                id_results[edge_id] = id_result
+                attach_identification(card, id_result)
+                print_edge_risk_block(edge_id, card, id_result, ts_result)
+            except Exception as e:
+                logger.warning(f"  ID/TSGuard for {edge_id}: {e}")
+
         except Exception as e:
             logger.error(f"  {edge_id} FAILED: {e}")
 
@@ -1678,6 +1862,15 @@ def main(output_dir: Path | None = None):
                     f"formula={br.formula}, rating={card.credibility_rating}"
                 )
 
+                # Bridge edges are mechanical - screen as such
+                try:
+                    id_result = id_screen.screen_post_design(edge_id, "ACCOUNTING_BRIDGE")
+                    id_results[edge_id] = id_result
+                    attach_identification(card, id_result)
+                    print_edge_risk_block(edge_id, card, id_result)
+                except Exception as e:
+                    logger.warning(f"  ID screen for {edge_id}: {e}")
+
             except Exception as e:
                 logger.error(f"  {edge_id} FAILED: {e}")
 
@@ -1697,10 +1890,10 @@ def main(output_dir: Path | None = None):
         capital = float(latest["total_capital"])
         rwa = float(latest["rwa"])
 
-        id_results = compute_identity_sensitivity(capital, rwa)
+        identity_sens = compute_identity_sensitivity(capital, rwa)
 
         for edge_id in IDENTITY_EDGES:
-            ir = id_results[edge_id]
+            ir = identity_sens[edge_id]
             identity_results[edge_id] = ir
 
             card = build_identity_edge_card(ir)
@@ -1710,6 +1903,15 @@ def main(output_dir: Path | None = None):
                 f"  {edge_id}: sensitivity={ir.sensitivity:.6f}, "
                 f"formula={ir.formula}, rating={card.credibility_rating}"
             )
+
+            # Identity edges are mechanical - screen as such
+            try:
+                id_result = id_screen.screen_post_design(edge_id, "IDENTITY")
+                id_results[edge_id] = id_result
+                attach_identification(card, id_result)
+                print_edge_risk_block(edge_id, card, id_result)
+            except Exception as e:
+                logger.warning(f"  ID screen for {edge_id}: {e}")
 
     except Exception as e:
         logger.error(f"  Identity computation FAILED: {e}")
@@ -1738,6 +1940,12 @@ def main(output_dir: Path | None = None):
         cards, lp_results, immutable_results, identity_results,
         bridge_results, panel_results, annual_lp_results,
     )
+
+    # Append identifiability dashboard
+    if id_results:
+        dashboard_md = generate_id_dashboard(id_results)
+        report_md += "\n\n---\n\n" + dashboard_md
+
     report_path = output_dir / "KSPI_K2_REAL_ESTIMATION_REPORT.md"
     with open(report_path, "w") as f:
         f.write(report_md)

@@ -1,0 +1,245 @@
+# Issue Registry: Rules as Code
+# Each rule defines a detectable problem class with severity, trigger, and resolution policy.
+#
+# Trigger types:
+#   pre_run   - Checked before estimation begins
+#   post_run  - Checked after estimation completes
+#   cross_run - Compared across runs (requires state.json)
+#
+# Severity levels: CRITICAL > HIGH > MEDIUM > LOW
+
+rules:
+  # =========================================================================
+  # Data + Definition Problems
+  # =========================================================================
+  - rule_id: ENTITY_BOUNDARY_DRIFT
+    severity: HIGH
+    trigger: post_run
+    auto_fixable: false
+    requires_human: true
+    description: "Mixing entity scopes (bank vs group) breaks comparability"
+
+  - rule_id: KPI_DEFINITION_MISMATCH_CROSS_BANK
+    severity: HIGH
+    trigger: cross_run
+    auto_fixable: false
+    requires_human: true
+    description: "NPL/CoR definitions differ across banks causing sign conflicts"
+
+  - rule_id: SHOCK_CONSTRUCT_AMBIGUOUS
+    severity: MEDIUM
+    trigger: pre_run
+    auto_fixable: true
+    requires_human: false
+    description: "EdgeCard must include shock_node_id, shock_unit, shock_scale"
+
+  - rule_id: FREQUENCY_ALIGNMENT_ERROR
+    severity: CRITICAL
+    trigger: pre_run
+    auto_fixable: true
+    requires_human: false
+    description: "Mixing frequencies without explicit aggregation rule"
+
+  - rule_id: FREQUENCY_SCALING_MISMATCH
+    severity: HIGH
+    trigger: cross_run
+    auto_fixable: false
+    requires_human: true
+    description: "Annual vs quarterly estimates not normalized to common unit"
+
+  - rule_id: EXTRACTION_PROVENANCE_GAPS
+    severity: MEDIUM
+    trigger: post_run
+    auto_fixable: false
+    requires_human: false
+    description: "Missing source document/page reference for extracted data"
+
+  # =========================================================================
+  # Identification / Design Problems
+  # =========================================================================
+  - rule_id: REACTION_FUNCTION_EDGE
+    severity: CRITICAL
+    trigger: pre_run
+    auto_fixable: false
+    requires_human: true
+    description: "Policy reaction edge cannot be used for shock propagation"
+
+  - rule_id: TIME_FE_ABSORBS_SHOCK
+    severity: CRITICAL
+    trigger: pre_run
+    auto_fixable: true
+    requires_human: false
+    description: "Panel with time FE and common shock requires Exposure x Shock"
+
+  - rule_id: EXPOSURE_NOT_PREDETERMINED
+    severity: CRITICAL
+    trigger: pre_run
+    auto_fixable: false
+    requires_human: true
+    description: "Exposure variable must be measured strictly pre-treatment"
+
+  - rule_id: MECHANICAL_EDGE_ESTIMATED
+    severity: HIGH
+    trigger: pre_run
+    auto_fixable: true
+    requires_human: false
+    description: "Accounting identity should be bridge, not regression"
+
+  - rule_id: PATH_DOUBLE_COUNTING
+    severity: HIGH
+    trigger: post_run
+    auto_fixable: false
+    requires_human: true
+    description: "Direct reduced-form + indirect chain both used for propagation"
+    resolution_policy: |
+      Each edge must have propagation_role: structural | reduced_form | bridge | diagnostic_only.
+      The counterfactual engine enforces: cannot simultaneously use a reduced_form shortcut edge
+      AND the full structural decomposition path for the same causal channel.
+      If both exist, HITL must choose which to use (or config flag selects default).
+      Default: prefer structural chain if all intermediate edges are IDENTIFIED_CAUSAL;
+      fall back to reduced_form otherwise.
+
+  - rule_id: SIGNIFICANT_BUT_NOT_IDENTIFIED
+    severity: CRITICAL
+    trigger: post_run
+    auto_fixable: false
+    requires_human: false
+    action: "cap_rating_C, block_counterfactual"
+    description: "Significant result but claim_level != IDENTIFIED_CAUSAL"
+
+  # =========================================================================
+  # Statistical Inference Problems
+  # =========================================================================
+  - rule_id: SMALL_SAMPLE_INFERENCE
+    severity: HIGH
+    trigger: post_run
+    auto_fixable: false
+    requires_human: false
+    action: "cap_rating_B"
+    description: "N < 30 with HAC SEs; inference fragile"
+
+  - rule_id: PANEL_TOO_FEW_UNITS
+    severity: HIGH
+    trigger: post_run
+    auto_fixable: false
+    requires_human: false
+    action: "cap_rating_B"
+    description: "< 5 units; cluster-robust unreliable"
+
+  - rule_id: LOO_INSTABILITY
+    severity: HIGH
+    trigger: post_run
+    auto_fixable: false
+    requires_human: false
+    action: "cap_rating_C"
+    description: "Leave-one-out shows sign flip or >50% magnitude change"
+
+  - rule_id: BREAKS_UNMODELED
+    severity: MEDIUM
+    trigger: post_run
+    auto_fixable: false
+    requires_human: true
+    description: "Regime changes not accounted for in estimation"
+
+  - rule_id: MULTIPLE_TESTING_DRIFT
+    severity: MEDIUM
+    trigger: cross_run
+    auto_fixable: false
+    requires_human: true
+    description: "Spec search exceeded pre-registered budget"
+
+  # =========================================================================
+  # Time-Series Specific (TSGuard)
+  # =========================================================================
+  - rule_id: NONSTATIONARY_LEVELS_RISK
+    severity: HIGH
+    trigger: pre_run
+    auto_fixable: true
+    requires_human: false
+    description: "Both variables in levels and trending; require transformation or ECM"
+
+  - rule_id: RESIDUAL_AUTOCORR_DETECTED
+    severity: MEDIUM
+    trigger: post_run
+    auto_fixable: false
+    requires_human: false
+    description: "Serial correlation in residuals; HAC SEs may be inadequate"
+
+  - rule_id: REGIME_BREAK_SUSPECTED
+    severity: HIGH
+    trigger: post_run
+    auto_fixable: false
+    requires_human: true
+    description: "Coefficient instability across regime splits"
+
+  - rule_id: LEADS_SIGNIFICANT_TIMING_FAIL
+    severity: CRITICAL
+    trigger: post_run
+    auto_fixable: false
+    requires_human: false
+    action: "block_propagation"
+    description: "Effects appear before shock; reverse causation or omitted factor"
+
+  - rule_id: HAC_LAG_SENSITIVITY_HIGH
+    severity: MEDIUM
+    trigger: post_run
+    auto_fixable: false
+    requires_human: false
+    description: "Estimate changes materially with HAC lag length"
+
+  # =========================================================================
+  # Selection / External Validity Problems
+  # =========================================================================
+  - rule_id: SELECTION_PUBLIC_BANK_ONLY
+    severity: HIGH
+    trigger: post_run
+    auto_fixable: false
+    requires_human: true
+    action: "add_report_disclaimer, cap_counterfactual_scope"
+    description: "Panel uses only public banks; results may not generalize to full banking sector"
+
+  - rule_id: SURVIVORSHIP_BIAS_RISK
+    severity: HIGH
+    trigger: post_run
+    auto_fixable: false
+    requires_human: true
+    description: "Sample excludes failed/merged banks; survival conditioning biases estimates"
+
+  - rule_id: COVERAGE_GAP_EXTERNAL_VALIDITY
+    severity: MEDIUM
+    trigger: post_run
+    auto_fixable: false
+    requires_human: true
+    action: "add_report_disclaimer"
+    description: "Sample covers <50% of system assets or <50% of institutions in target population"
+
+  # =========================================================================
+  # Scoring / Reporting Problems
+  # =========================================================================
+  - rule_id: RATING_DIAGNOSTICS_CONFLICT
+    severity: HIGH
+    trigger: post_run
+    auto_fixable: true
+    requires_human: false
+    description: "A-rating despite failed diagnostics or missing requirements"
+
+  - rule_id: N_REPORTING_INCONSISTENT
+    severity: MEDIUM
+    trigger: post_run
+    auto_fixable: true
+    requires_human: false
+    description: "Report N header != EdgeCard N_eff"
+
+  - rule_id: CROSS_EVIDENCE_CONFLICT
+    severity: HIGH
+    trigger: cross_run
+    auto_fixable: false
+    requires_human: true
+    description: "Two edges measuring same relationship have conflicting signs"
+
+  - rule_id: UNIT_MISSING_IN_EDGECARD
+    severity: CRITICAL
+    trigger: post_run
+    auto_fixable: true
+    requires_human: false
+    description: "EdgeCard missing treatment_unit/outcome_unit"

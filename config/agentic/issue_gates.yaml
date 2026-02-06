@@ -1,0 +1,30 @@
+# Issue Gates: Conditions that block mode transitions or require human input
+#
+# Gates are evaluated against the current issue state.
+# If a gate condition is met, the specified action is taken.
+
+gates:
+  - name: "block_confirmation"
+    condition: "any(issue.severity == 'CRITICAL' and issue.status == 'OPEN')"
+    action: "prevent mode promotion to CONFIRMATION"
+    description: "Any open CRITICAL issue blocks transition to CONFIRMATION mode"
+
+  - name: "require_hitl"
+    condition: "any(issue.requires_human == true and issue.status == 'OPEN')"
+    action: "pause loop, produce HITL checklist"
+    description: "Open issues requiring human decision pause the agent loop"
+
+  - name: "auto_fix_allowed"
+    condition: "issue.auto_fixable == true and mode != 'CONFIRMATION'"
+    action: "apply suggested_fix from PatchPolicy whitelist"
+    description: "Auto-fixable issues can be patched in EXPLORATION mode only"
+
+  - name: "block_counterfactual"
+    condition: "any(issue.rule_id == 'SIGNIFICANT_BUT_NOT_IDENTIFIED' and issue.status == 'OPEN')"
+    action: "block counterfactual propagation for affected edges"
+    description: "Significant-but-unidentified edges cannot be used in counterfactuals"
+
+  - name: "block_propagation_timing"
+    condition: "any(issue.rule_id == 'LEADS_SIGNIFICANT_TIMING_FAIL' and issue.status == 'OPEN')"
+    action: "block shock propagation for affected edges"
+    description: "Timing failures block use of edge in shock propagation chains"

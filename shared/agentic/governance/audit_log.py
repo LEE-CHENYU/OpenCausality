@@ -364,6 +364,15 @@ class AuditLog:
             if e.result_delta is not None
         )
 
+    def link_issue_ledger_path(self, issue_ledger_path: str) -> None:
+        """Link this audit log to the corresponding issue ledger file."""
+        self._issue_ledger_path = issue_ledger_path
+
+    @property
+    def issue_ledger_path(self) -> str | None:
+        """Get the linked issue ledger path, if any."""
+        return getattr(self, "_issue_ledger_path", None)
+
     def summary(self) -> str:
         """Generate summary of audit log."""
         lines = [
@@ -375,8 +384,10 @@ class AuditLog:
             f"Iteration: {self.iteration}",
             f"Total entries: {len(self.entries)}",
             f"Refinements: {self.count_refinements()}",
-            "",
         ]
+        if self.issue_ledger_path:
+            lines.append(f"Issue Ledger: {self.issue_ledger_path}")
+        lines.append("")
 
         # Group by edge
         edges = set(e.change.edge_id for e in self.entries)

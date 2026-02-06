@@ -30,6 +30,22 @@ from shared.agentic.governance.whitelist import RefinementWhitelist, Refinement
 from shared.agentic.governance.stopping import StoppingCriteria, StoppingDecision
 from shared.agentic.artifact_store import ArtifactStore
 
+# New imports for comprehensive agentic system
+from shared.agentic.issues.issue_ledger import IssueLedger
+from shared.agentic.issues.issue_registry import IssueRegistry
+from shared.agentic.issues.issue_gates import IssueGates
+from shared.agentic.issues.cross_run_reducer import CrossRunReducer
+from shared.agentic.identification.screen import IdentifiabilityScreen
+from shared.agentic.ts_guard import TSGuard
+from shared.agentic.governance.hitl_gate import HITLGate
+from shared.agentic.governance.patch_policy import PatchPolicy
+from shared.agentic.agents.patch_bot import PatchBot
+from shared.agentic.output.edge_card import (
+    IdentificationBlock,
+    CounterfactualBlock,
+    PropagationRole,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -143,10 +159,38 @@ class AgentLoop:
         # Storage
         self.artifact_store = ArtifactStore(self.config.output_dir / "cards")
 
+        # Issue tracking system
+        self.issue_ledger = IssueLedger(
+            run_id=self.run_id,
+            output_dir=self.config.output_dir / "issues",
+        )
+        self.issue_registry = IssueRegistry.load()
+        self.issue_gates = IssueGates()
+
+        # Identification screen
+        self.id_screen = IdentifiabilityScreen()
+
+        # TSGuard
+        self.ts_guard = TSGuard()
+
+        # HITL gate
+        self.hitl_gate = HITLGate()
+
+        # PatchPolicy and PatchBot
+        self.patch_policy = PatchPolicy.load()
+        self.patch_bot = PatchBot(self.patch_policy)
+
+        # Cross-run state
+        self.cross_run_reducer = CrossRunReducer(
+            issues_dir=self.config.output_dir / "issues",
+        )
+
         # State
         self.catalog = DataCatalog()
         self.validation_report: ValidationReport | None = None
         self.system_report: SystemReport | None = None
+        self.id_results: dict[str, Any] = {}  # edge_id -> IdentifiabilityResult
+        self.ts_guard_results: dict[str, Any] = {}  # edge_id -> TSGuardResult
 
         # Computed hashes
         self._dag_hash = dag.compute_hash()
@@ -187,6 +231,36 @@ class AgentLoop:
         while not self.queue.is_complete():
             self._process_ready_tasks()
 
+        # Phase 4.5: Post-estimation issue detection
+        edge_cards = self.artifact_store.get_all_edge_cards()
+        edge_card_dict = {c.edge_id: c for c in edge_cards}
+        self.issue_registry.detect_post_run_issues(edge_card_dict, self.issue_ledger)
+
+        # Phase 4.6: Evaluate issue gates
+        gate_eval = self.issue_gates.evaluate(self.issue_ledger, self.mode)
+        logger.info(gate_eval.summary())
+
+        # Phase 4.7: Apply auto-fixes (EXPLORATION only)
+        if self.mode == "EXPLORATION" and gate_eval.auto_fixable_count > 0:
+            patch_results = self.patch_bot.apply_fixes(self.issue_ledger, self.mode)
+            for pr in patch_results:
+                logger.info(f"PatchBot: {pr.action} -> {'applied' if pr.applied else 'rejected'}: {pr.message}")
+
+        # Phase 4.8: HITL gate
+        hitl_checklist = self.hitl_gate.evaluate(
+            edge_cards=edge_card_dict,
+            ledger=self.issue_ledger,
+            ts_guard_results=self.ts_guard_results,
+            run_id=self.run_id,
+        )
+        if hitl_checklist.pending_count > 0:
+            logger.warning(f"HITL checklist has {hitl_checklist.pending_count} pending items")
+            checklist_path = self.config.output_dir / "hitl_checklist.md"
+            checklist_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(checklist_path, "w") as f:
+                f.write(hitl_checklist.to_markdown())
+            logger.info(f"HITL checklist written to {checklist_path}")
+
         # Create system report
         self.system_report = self._create_system_report()
 
@@ -194,8 +268,15 @@ class AgentLoop:
         if self.mode == "EXPLORATION":
             self._run_judge_evaluation()
 
+        # Flush issues and update cross-run state
+        self.issue_ledger.flush()
+        self.cross_run_reducer.reduce_incremental(
+            self.run_id, self.issue_ledger.issues,
+        )
+
         logger.info("=" * 60)
         logger.info("AGENT LOOP COMPLETE")
+        logger.info(self.issue_ledger.summary())
         logger.info(self.system_report.summary())
         logger.info("=" * 60)
 
@@ -216,6 +297,12 @@ class AgentLoop:
         Returns:
             SystemReport
         """
+        # Check if CONFIRMATION is allowed (no CRITICAL open issues)
+        ready, msg = self.issue_gates.check_confirmation_ready(self.issue_ledger)
+        if not ready:
+            logger.error(f"Cannot enter CONFIRMATION mode: {msg}")
+            return self._create_error_report(f"CONFIRMATION blocked: {msg}")
+
         self.mode = "CONFIRMATION"
         self.config.holdout_period = holdout_period
         self.config.frozen_spec_path = frozen_spec_path
@@ -362,6 +449,33 @@ class AgentLoop:
                         return
                     edge_card = self._create_edge_card(task, result, edge)
 
+            # Run identifiability screen (post-estimation)
+            design_name = edge_card.spec_details.design if edge_card.spec_details else ""
+            id_result = self.id_screen.screen_post_estimation(
+                edge_id=task.edge_id,
+                design=design_name,
+                diagnostics=edge_card.diagnostics,
+                ts_guard_result=self.ts_guard_results.get(task.edge_id),
+            )
+            self.id_results[task.edge_id] = id_result
+
+            # Attach identification block to card
+            edge_card.identification = IdentificationBlock(
+                claim_level=id_result.claim_level,
+                risks=id_result.risks,
+                untestable_assumptions=id_result.untestable_assumptions,
+                testable_threats_passed=id_result.testable_threats_passed,
+                testable_threats_failed=id_result.testable_threats_failed,
+            )
+            edge_card.counterfactual_block = CounterfactualBlock(
+                allowed=id_result.counterfactual_allowed,
+                reason_blocked=id_result.counterfactual_reason_blocked,
+                supports_policy_intervention=(
+                    edge_card.counterfactual.supports_policy_intervention
+                    if edge_card.counterfactual else False
+                ),
+            )
+
             # Log initial specification
             self.audit_log.log_initial(task.edge_id, edge_card.spec_hash)
 
@@ -375,6 +489,9 @@ class AgentLoop:
                 edge_card.credibility_score,
                 edge_card.credibility_rating,
             )
+
+            # Print per-edge risk block
+            self._print_edge_risk_block(task.edge_id, edge_card, id_result)
 
         except Exception as e:
             logger.error(f"Task {task.edge_id} failed: {e}")
@@ -770,6 +887,61 @@ class AgentLoop:
         report.refinements_applied = self.audit_log.count_refinements()
 
         return report
+
+    def _print_edge_risk_block(
+        self,
+        edge_id: str,
+        card: EdgeCard,
+        id_result: Any,
+    ) -> None:
+        """Print per-edge risk block after estimation (CLI reminder)."""
+        lines = [
+            "",
+            "\u2501" * 55,
+            f"Edge: {edge_id}",
+            "\u2501" * 55,
+            f"Claim Level: {id_result.claim_level}",
+        ]
+
+        # Identification risks
+        if id_result.risks:
+            lines.append("Identification Risks:")
+            for risk, level in id_result.risks.items():
+                if level in ("medium", "high"):
+                    lines.append(f"  - {risk}: {level.upper()}")
+
+        # TS dynamics risks
+        ts_result = self.ts_guard_results.get(edge_id)
+        if ts_result:
+            lines.append("TS Dynamics Risks:")
+            for risk, level in ts_result.dynamics_risk.items():
+                if level in ("medium", "high"):
+                    lines.append(f"  - {risk.replace('_risk', '')}: {level.upper()}")
+
+        # Diagnostics summary
+        if card.diagnostics:
+            lines.append("Diagnostics:")
+            for name, diag in card.diagnostics.items():
+                status = "PASS" if diag.passed else "FAIL"
+                msg = f" ({diag.message})" if diag.message and not diag.passed else ""
+                lines.append(f"  - {name}: {status}{msg}")
+
+        # Counterfactual status
+        cf_allowed = id_result.counterfactual_allowed
+        lines.append(f"Counterfactual Use: {'ALLOWED' if cf_allowed else 'BLOCKED'}")
+        if not cf_allowed and id_result.counterfactual_reason_blocked:
+            lines.append(f"Reason: {id_result.counterfactual_reason_blocked}")
+
+        lines.append("")
+        lines.append("Even if p<0.05, this does not establish a causal effect.")
+        lines.append("\u2501" * 55)
+
+        for line in lines:
+            logger.info(line)
+
+    def generate_id_dashboard(self) -> str:
+        """Generate the identifiability risk dashboard."""
+        return self.id_screen.generate_dashboard(self.id_results)
 
     def _create_error_report(self, error: str) -> SystemReport:
         """Create error system report."""

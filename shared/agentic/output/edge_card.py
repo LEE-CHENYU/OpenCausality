@@ -29,6 +29,62 @@ from shared.agentic.output.provenance import (
     AuditRecord,
 )
 
+# ---------------------------------------------------------------------------
+# Identification and propagation blocks (Plan Section 2.2)
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class IdentificationBlock:
+    """Identification assessment attached to an EdgeCard."""
+
+    claim_level: str = ""  # IDENTIFIED_CAUSAL, REDUCED_FORM, DESCRIPTIVE, BLOCKED_ID
+    risks: dict[str, str] = field(default_factory=dict)
+    untestable_assumptions: list[str] = field(default_factory=list)
+    testable_threats_passed: list[str] = field(default_factory=list)
+    testable_threats_failed: list[str] = field(default_factory=list)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "claim_level": self.claim_level,
+            "risks": self.risks,
+            "untestable_assumptions": self.untestable_assumptions,
+            "testable_threats_passed": self.testable_threats_passed,
+            "testable_threats_failed": self.testable_threats_failed,
+        }
+
+
+@dataclass
+class CounterfactualBlock:
+    """Counterfactual eligibility assessment."""
+
+    allowed: bool = False
+    reason_blocked: str | None = None
+    supports_policy_intervention: bool = False
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "allowed": self.allowed,
+            "reason_blocked": self.reason_blocked,
+            "supports_policy_intervention": self.supports_policy_intervention,
+        }
+
+
+@dataclass
+class PropagationRole:
+    """Role of an edge in the causal propagation chain."""
+
+    role: Literal["structural", "reduced_form", "bridge", "diagnostic_only"] = "reduced_form"
+    overlapping_paths: list[str] = field(default_factory=list)
+    selected_for_counterfactual: bool = False
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "role": self.role,
+            "overlapping_paths": self.overlapping_paths,
+            "selected_for_counterfactual": self.selected_for_counterfactual,
+        }
+
 
 @dataclass
 class Estimates:
@@ -313,6 +369,15 @@ class EdgeCard:
     # Companion edge (links KSPI-only ↔ sector panel estimates)
     companion_edge_id: str | None = None
 
+    # Identification (Plan Section 2.2)
+    identification: IdentificationBlock = field(default_factory=IdentificationBlock)
+
+    # Counterfactual eligibility (Plan Section 2.2)
+    counterfactual_block: CounterfactualBlock = field(default_factory=CounterfactualBlock)
+
+    # Propagation role (Plan Section 2.2)
+    propagation_role: PropagationRole = field(default_factory=PropagationRole)
+
     # Null acceptance
     is_precisely_null: bool = False
     null_equivalence_bound: float | None = None
@@ -391,6 +456,9 @@ class EdgeCard:
             "counterfactual": self.counterfactual.to_dict(),
             "credibility_rating": self.credibility_rating,
             "credibility_score": self.credibility_score,
+            "identification": self.identification.to_dict(),
+            "counterfactual_block": self.counterfactual_block.to_dict(),
+            "propagation_role": self.propagation_role.to_dict(),
             "companion_edge_id": self.companion_edge_id,
             "is_precisely_null": self.is_precisely_null,
             "null_equivalence_bound": self.null_equivalence_bound,
@@ -491,6 +559,30 @@ class EdgeCard:
         if self.counterfactual.intervention_note:
             lines.append(f"- Note: {self.counterfactual.intervention_note}")
         lines.append("")
+
+        # Identification
+        if self.identification.claim_level:
+            lines.append("## Identification Assessment")
+            lines.append("")
+            lines.append(f"**Claim Level:** {self.identification.claim_level}")
+            if self.identification.risks:
+                lines.append("")
+                lines.append("**Identification Risks:**")
+                for risk, level in self.identification.risks.items():
+                    lines.append(f"- {risk}: {level.upper()}")
+            if self.identification.untestable_assumptions:
+                lines.append("")
+                lines.append("**Untestable Assumptions:**")
+                for assumption in self.identification.untestable_assumptions:
+                    lines.append(f"- {assumption}")
+            lines.append("")
+            cf_status = "ALLOWED" if self.counterfactual_block.allowed else "BLOCKED"
+            lines.append(f"**Counterfactual Use:** {cf_status}")
+            if self.counterfactual_block.reason_blocked:
+                lines.append(f"Reason: {self.counterfactual_block.reason_blocked}")
+            lines.append("")
+            lines.append(f"**Propagation Role:** {self.propagation_role.role}")
+            lines.append("")
 
         # Specification
         lines.append("## Specification Details")

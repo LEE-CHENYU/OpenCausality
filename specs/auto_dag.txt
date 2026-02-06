@@ -1,0 +1,323 @@
+Yes — with the guardrails you’ve already started implementing (mode separation, unit safety, reaction‑function labeling, immutable artifacts, exposure×shock panels, accounting bridges), the agentic design you list is viable for your objectives, but only if you treat the “dynamic” pieces as a constrained proposal engine rather than letting the loop freely rewrite the DAG/design library until it finds significance.
+
+Below I’ll:
+	1.	restate the current framework in operational terms,
+	2.	evaluate your six proposed “dynamic” capabilities (viable / partially / not safe),
+	3.	show how to add an Issue Log System that persists all problems and lets the loop continuously check against them,
+	4.	map which fixes are automatable vs require human-in-the-loop.
+
+⸻
+
+1) Current framework, as it operates now
+
+You have a deterministic causal pipeline executor whose contract is:
+	•	Input: a DAG spec (nodes/edges) + a design registry + connectors.
+	•	Output: EdgeCards + a system report + an audit ledger.
+	•	Governance: pre/post validation + credibility scoring + interpretation boundaries.
+
+The execution loop is essentially:
+	1.	Pre-run validation
+	•	DAG acyclicity (with lags), node/edge existence, unit presence, edge types present, scope/entity boundary checks.
+	2.	Data assembly
+	•	Build a feature store aligned to the edge’s required frequency and scope.
+	•	Record provenance hashes, missingness, interpolation fractions, etc.
+	3.	Design selection (ModelSmith)
+	•	Choose a design from design_registry that is feasible and identified given data structure.
+	•	E.g. you correctly switched macro→bank panel edges to Exposure×Shock when time FE would absorb common shocks.
+	4.	Estimation (Estimator/Interpreter)
+	•	Run models, compute uncertainty, run required diagnostics.
+	5.	Post-run validation + Judge
+	•	Enforce diagnostic completeness and rating caps.
+	•	Enforce unit normalization and sign checking.
+	•	Enforce reaction-function edges cannot be used for shock propagation.
+	•	Produce EdgeCards + report, with an audit ledger.
+
+This core is generalizable to other causal inference DAGs as an execution and criticism engine. It is not a “guaranteed causal truth machine,” because DAG correctness and some assumptions (IV exclusion, definition harmonization) are inherently non-testable.
+
+⸻
+
+2) The biggest problem from the initial run (and how to make sure it never happens again)
+
+The biggest failure mode wasn’t a specific econometric bug — it was governance:
+
+Initial-run core failure
+
+A run with placeholder/missing data/diagnostics could still produce:
+	•	high credibility scores,
+	•	A-ratings,
+	•	“stopping criteria met.”
+
+That is false confidence. Everything else (N inconsistencies, missing units, reaction-function confusion) feeds into that.
+
+The “never again” requirement
+
+Your loop must obey:
+	•	Mode separation: SIMULATION vs EXPLORATION vs CONFIRMATION
+	•	Quality gates: critical issues block promotion to confirmation
+	•	Issue log persistence: every run records issues; subsequent runs must check them
+
+You already implemented most checks. The missing piece is a persistent, structured “issue system” that drives iteration in a controlled way.
+
+⸻
+
+3) Add an Issue Log System that the agents constantly check against
+
+You already have an audit ledger (spec/data hashes). What you need now is an Issue Ledger.
+
+3.1 What the Issue Ledger is
+
+An append-only log capturing all problems found during:
+	•	pre-validation
+	•	estimation
+	•	diagnostics
+	•	report generation
+	•	report/card consistency checks
+
+Each issue has:
+	•	severity, rule id, affected edge(s), evidence snippet, and whether it is auto-fixable.
+
+3.2 Minimal schema (JSONL)
+
+Create: outputs/agentic/issues/<run_id>.jsonl
+
+Each line:
+
+{
+  "run_id": "a0d5c3...",
+  "timestamp": "2026-02-05T12:15:01Z",
+  "severity": "CRITICAL",
+  "rule_id": "UNIT_MISSING_IN_EDGECARD",
+  "scope": "edge",
+  "edge_id": "shock_to_cor_kspi",
+  "message": "EdgeCard missing treatment_unit/outcome_unit; chain propagation unsafe.",
+  "evidence": {"card_path": ".../shock_to_cor_kspi.yaml"},
+  "auto_fixable": true,
+  "suggested_fix": {"action": "add_edge_units_registry_entry", "target": "EDGE_UNITS.yaml"},
+  "requires_human": false,
+  "status": "OPEN"
+}
+
+3.3 Rule registry
+
+Create: config/agentic/issue_registry.yaml
+
+Example rules (covering your initial-run problems):
+	•	N_COUNT_INCONSISTENT (HIGH): report N header != card N_eff
+	•	UNIT_MISSING_IN_DAG (CRITICAL): edge missing treatment/outcome units
+	•	UNIT_MISSING_IN_EDGECARD (CRITICAL)
+	•	REACTION_FUNCTION_MISUSED (CRITICAL): RF edge used for shock propagation
+	•	SIMULATION_RATED_AS_A (CRITICAL): simulation run produced A/B ratings
+	•	TIME_FE_ABSORBS_SHOCK (CRITICAL): panel design chosen but not identified
+	•	MISSING_REQUIRED_DIAGNOSTIC (HIGH/CRITICAL)
+	•	SIGN_CONVENTION_UNDEFINED (HIGH): FX sign semantics not defined
+	•	LOO_UNSTABLE (MEDIUM/HIGH): leave-one-out flips sign or explodes
+	•	INTERPOLATION_USED_IN_ESTIMATION (CRITICAL)
+
+3.4 How the Issue Ledger changes the loop behavior
+
+Every iteration becomes:
+	1.	run pipeline
+	2.	run validations → emit issues
+	3.	if CRITICAL issues exist:
+	•	block “promotion” (no CONFIRMATION),
+	•	run auto-fixes that are allowed
+	4.	rerun until:
+	•	either no CRITICAL issues remain, or
+	•	a human gate is required.
+
+This also makes your “Judge” objective concrete: it becomes “resolve issues, don’t just score edges.”
+
+⸻
+
+4) Now evaluate your six proposed “dynamic” features (viability + constraints)
+
+I’ll answer each item directly.
+
+⸻
+
+(1) Dynamic discovery of nodes/edges using LLM prior + paper search + download everything with DataScout
+
+Viability: Partially viable
+
+Yes to “LLM proposes candidate nodes/edges + supporting citations + candidate datasets.”
+No to “LLM automatically modifies the production DAG and downloads everything” without gates.
+
+Why it’s risky
+	•	DAG structure is assumption-laden. Auto-expanding edges easily creates:
+	•	cycles,
+	•	post-treatment controls,
+	•	meaningless proxy nodes,
+	•	and p-hacking by “trying more edges until something works.”
+	•	“Download everything” is operationally expensive and can create licensing/compliance issues.
+
+Safe design: split into two stages
+
+Add a new agent ahead of DataScout:
+
+DAGScout / PaperScout (proposal-only)
+	•	Outputs: candidate_dag.yaml + citation_bundle.json + dataset_candidates.yaml
+	•	Every proposed edge must include:
+	•	justification_text
+	•	supporting_sources[] (DOI/URL + excerpt)
+	•	suggested_designs[]
+	•	data_requirements[]
+
+Human gate (required)
+	•	Human merges candidate DAG into the official DAG (or rejects edges).
+	•	Then DataScout downloads only the data relevant to approved nodes.
+
+Data download strategy (recommended)
+
+Instead of “download everything,” implement tiers:
+	•	Tier 0: metadata only (schema, coverage, units, access method)
+	•	Tier 1: head sample download (few rows) to validate accessibility
+	•	Tier 2: full download + caching for approved nodes
+
+This is fully automatable and keeps costs sane.
+
+⸻
+
+(2) Dynamically add design artifacts and variable typing
+
+Viability: Yes, but must be sandboxed
+
+Let Codex/Claude propose new designs and types, but enforce:
+	•	Design Contract Tests (automatable)
+	•	minimal data requirements
+	•	required diagnostics
+	•	expected output fields in EdgeCard
+	•	scoring bound rules
+	•	identification feasibility checks
+	•	Registry Versioning (automatable)
+	•	new designs enter as experimental: true
+	•	ModelSmith will not use experimental designs unless explicitly allowed for that edge
+	•	Typing changes must be backwards compatible
+	•	if you add new unit types or sign semantics, older DAGs must still validate.
+
+Biggest caveat
+
+If you let the loop add designs freely, it can drift into “design shopping.”
+So new designs must be introduced with a human approval gate before being used in confirmation mode.
+
+⸻
+
+(3) “Criticize everything” for ModelSmith
+
+Viability: Yes, and mostly automatable
+
+You can implement a ModelSmith critic that is 80–90% rule-based.
+
+Add a ModelSmithCritic that runs before estimation and emits issues if:
+	•	design is not identified (e.g., time FE absorbs shock)
+	•	forbidden controls are included (post-treatment)
+	•	instrument is weak (if IV) or exclusion narrative missing
+	•	panel spec uses common shocks without heterogeneity term
+	•	edge_type is reaction_function but design tries to use it for counterfactual propagation
+	•	units missing / scope mismatch / frequency mismatch
+
+LLM can help write better explanations, but the actual accept/reject logic should be deterministic.
+
+⸻
+
+(4) Additional agentic diagnostics to assist Estimator/Interpreter and Judge
+
+Viability: Yes
+
+This is a core strength of your framework: diagnostics are design-specific and automatable.
+
+Add a diagnostic_registry.yaml (parallel to design registry) so diagnostics are:
+	•	declared,
+	•	parameterized,
+	•	and enforced.
+
+Diagnostics you should standardize (many you already have):
+	•	Required by design:
+	•	IV: first-stage F, weak-IV flag, placebo outcomes
+	•	DiD/event study: pre-trends joint test, placebo event
+	•	Exposure×Shock panel: LOO unit stability, placebo exposure, lead tests
+	•	LP: lag sensitivity, horizon stability, regime split
+	•	Global:
+	•	unit-consistency checks
+	•	sign convention checks
+	•	interpolation fraction check (hard fail if used)
+	•	report-card consistency check
+
+The Judge then becomes “issue resolver and rating assigner,” not a narrative writer.
+
+⸻
+
+(5) Implement updates compliant to guardrail
+
+Viability: Yes, if you define an explicit patch whitelist
+
+This is where Codex CLI shines: it can apply patches repeatedly and rerun.
+
+But you must restrict the patch space to prevent p-hacking.
+
+Allowed auto-patches (examples):
+	•	add missing unit metadata
+	•	fix report/table formatting and N header logic
+	•	add missing diagnostics outputs
+	•	fix design feasibility gating logic
+	•	add new connector scaffolding (without changing results)
+	•	switch from identified-broken design to identified design (e.g., panel macro shock → exposure×shock)
+
+Disallowed auto-patches (examples):
+	•	changing sample windows to chase significance
+	•	adding/removing controls beyond EdgeSpec allowances after seeing results
+	•	changing shock definitions post hoc
+	•	moving edges between “causal” and “reaction_function” without human approval
+
+Enforce this via a PatchPolicy object, and log every patch in the audit ledger.
+
+⸻
+
+(6) Mark items requiring human-in-loop
+
+Viability: Yes, and you should make it explicit per issue type
+
+Add requires_human: true in Issue Ledger entries and stop auto-iteration when those accumulate.
+
+Typical HITL gates
+	•	DAG edits (adding/removing edges) intended for confirmation runs
+	•	edge_type classification: causal vs reaction_function (you can suggest; human decides)
+	•	expected signs and plausibility bounds (LLM suggests; human approves)
+	•	instrument exclusion restriction acceptance (must be human)
+	•	definition harmonization across entities (NPL definitions, capital/RWA definitions)
+	•	licensing/compliance checks for data sources
+
+This keeps the loop safe and aligned with your “no p-hacking” objective.
+
+⸻
+
+5) Final verdict: is this design viable?
+
+Yes — with one critical caveat
+
+Your design is viable if you treat the “dynamic” LLM parts as a constrained proposal + patch system, and keep the core estimation/validation/rating decisions:
+	•	deterministic,
+	•	logged,
+	•	and governed by modes + issue gates.
+
+The core requirement you should add (strong recommendation)
+
+Issue Ledger + Guarded Auto-Patch Loop is the missing “control tower.”
+It is what prevents a powerful iterative Codex loop from turning into automated p‑hacking.
+
+⸻
+
+6) What I would change in your current write-up (small but important wording fix)
+
+Your current doc says:
+
+“The framework is fully generalizable to any causal inference task with DAG input.”
+
+I would tweak this to:
+
+“The framework is generalizable as a DAG-driven causal inference executor and critic, provided identification is encoded via EdgeSpec + a vetted design registry + domain data connectors. The DAG alone does not guarantee identification.”
+
+That’s the honest version that will protect you later.
+
+⸻
+
+If you want, I can translate the six dynamic objectives into a concrete agent roster (DAGScout, PaperScout, DataScout, ModelSmith, ModelSmithCritic, Estimator, Judge, PatchBot) plus exactly which ones are allowed to mutate which files under which mode (SIMULATION/EXPLORATION/CONFIRMATION). That makes the Codex loop safe to run overnight without drifting.

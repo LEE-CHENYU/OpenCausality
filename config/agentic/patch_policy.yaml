@@ -1,0 +1,66 @@
+# Patch Policy: Guardrail-Compliant Auto-Fixes
+#
+# Defines which automated fixes PatchBot is allowed to apply,
+# and which modifications are explicitly forbidden to prevent p-hacking.
+
+allowed_auto_fixes:
+  - action: "add_edge_units"
+    description: "Add missing treatment_unit/outcome_unit to EdgeCard"
+    modes: ["EXPLORATION"]
+
+  - action: "fix_n_reporting"
+    description: "Align report N header with EdgeCard N_eff"
+    modes: ["EXPLORATION"]
+    # NOTE: In CONFIRMATION, N alignment is handled deterministically by the report
+    # generator itself (not PatchBot), since PatchBot is disabled in CONFIRMATION.
+
+  - action: "add_frequency_normalization"
+    description: "Add frequency_normalization field to EdgeCard"
+    modes: ["EXPLORATION"]
+
+  - action: "add_missing_diagnostics"
+    description: "Run and add required diagnostics outputs"
+    modes: ["EXPLORATION"]
+
+  - action: "convert_to_bridge"
+    description: "Reclassify mechanical edge to ACCOUNTING_BRIDGE"
+    modes: ["EXPLORATION"]
+
+  - action: "switch_to_exposure_shock"
+    description: "Convert panel macro LP to Exposure x Shock design"
+    modes: ["EXPLORATION"]
+
+  - action: "add_provenance_fields"
+    description: "Add extraction source/confidence metadata"
+    modes: ["EXPLORATION"]
+
+  - action: "enforce_hac_reporting"
+    description: "Add HAC parameters to EdgeCard"
+    modes: ["EXPLORATION"]
+
+  - action: "convert_levels_to_growth"
+    description: "Transform level regression to growth/diff"
+    modes: ["EXPLORATION"]
+    requires_logging: true
+
+disallowed_auto_fixes:
+  - action: "change_sample_window"
+    reason: "Risk of chasing significance"
+
+  - action: "add_remove_controls_post_results"
+    reason: "P-hacking via control shopping"
+
+  - action: "redefine_shock_post_hoc"
+    reason: "Outcome-driven shock construction"
+
+  - action: "change_edge_type"
+    reason: "Causal vs reaction_function requires human judgment"
+
+  - action: "search_lags_horizons"
+    reason: "Lag shopping for significance"
+
+  - action: "endogenous_breakpoint_selection"
+    reason: "Data-driven regime identification"
+
+  - action: "trim_sample_post_hoc"
+    reason: "Selective sample to improve results"

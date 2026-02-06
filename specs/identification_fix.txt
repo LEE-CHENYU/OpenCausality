@@ -1,0 +1,414 @@
+Below is a deeper, “design‑doc level” expansion of the six dynamic features—with explicit viability, constraints, and (most importantly) how Claude Code / Codex CLI should continuously remind you about the central caveat:
+
+Many causal effects are not identifiable without special structure.
+Regression will still output numbers; significance will not warn you.
+
+I’ll treat this as the core operating principle of the dynamic layer: the system must be able to say “BLOCKED_ID” or “REDUCED_FORM_ONLY” early and loudly.
+
+⸻
+
+A. First: make “identifiability” a first‑class object
+
+Before evaluating the six dynamic features, you need one architectural addition that drives all guardrails:
+
+A.1 Add an Identifiability Screen that runs everywhere
+
+A deterministic component that, for each edge, outputs:
+	•	claim_level: IDENTIFIED_CAUSAL | REDUCED_FORM | DESCRIPTIVE | BLOCKED_ID
+	•	risks (not necessarily testable):
+	•	unmeasured_confounding
+	•	simultaneity_feedback
+	•	weak_variation_or_weak_iv
+	•	measurement_error
+	•	selection_external_validity
+	•	required_structure_missing: e.g., “needs exposure heterogeneity”, “needs instrument”, “needs cutoff”, “needs quasi-experiment”
+	•	allowed_actions: what the loop is allowed to modify (within patch policy)
+
+This screen runs:
+	1.	pre‑design (ModelSmith input),
+	2.	post‑design (before estimation),
+	3.	post‑estimation (Judge’s rating and counterfactual eligibility),
+	4.	report generation (global caveat dashboard).
+
+A.2 Add Issue rules that explicitly reject “significant but unidentified”
+
+This is the central loophole to kill:
+	•	SIGNIFICANT_BUT_NOT_IDENTIFIED (severity HIGH):
+	•	Trigger when:
+	•	design doesn’t meet identification prerequisites or claim_level is not IDENTIFIED_CAUSAL,
+	•	but estimate is statistically significant,
+	•	Action:
+	•	force EdgeCard interpretation to “association/reduced-form”
+	•	cap rating (e.g., max C)
+	•	block counterfactual policy usage.
+
+This ensures the loop never “falls in love” with p-values.
+
+⸻
+
+B. Now evaluate your six dynamic features
+
+For each feature, I’ll cover:
+	•	Viable?
+	•	Constraints / guardrails
+	•	What the loop can safely automate
+	•	Where the identifiability reminders must appear
+	•	What must be human‑in‑the‑loop
+
+⸻
+
+1) Dynamic node/edge discovery (LLM priors + paper search + download everything)
+
+Viability
+
+Partially viable.
+	•	Viable as a proposal engine (discover candidate variables/edges/datasets).
+	•	Not viable as an autonomous DAG rewriter in production mode (high p‑hacking risk + wrong assumptions + cycles + bad controls).
+
+Constraints / guardrails
+
+Hard rule: dynamic discovery can only write to a Candidate DAG, not the official one.
+
+Add a “DAGScout / LiteratureScout” agent (proposal-only)
+Outputs:
+	•	candidate_dag.yaml
+	•	candidate_edges.md with:
+	•	short mechanism story per edge
+	•	citations
+	•	proposed identification design(s)
+	•	identifiability screen summary (does any feasible design exist with available data?)
+
+Add a “DataScout download budget”
+Instead of “download everything,” enforce tiers:
+	•	Tier 0: metadata only (coverage, frequency, units, access)
+	•	Tier 1: sample head (first N rows)
+	•	Tier 2: full download only for nodes approved in the official DAG
+
+This prevents “infinite data hoarding” and keeps the system reproducible.
+
+What’s safe to automate
+	•	Paper/dataset search and summarization
+	•	Candidate node/edge generation
+	•	Mapping datasets to connectors
+	•	Coverage checks and missingness profiling
+	•	A feasibility report: “with current data, this edge is likely BLOCKED_ID / REDUCED_FORM / IDENTIFIED”
+
+Identifiability reminders (must be printed)
+
+Every candidate edge must include a standardized Identifiability Note:
+
+“Even if the DAG edge is correct, this effect may be not identifiable from available data because: (confounding / feedback / weak variation / measurement error / selection).”
+
+And a deterministic warning like:
+	•	“No exogenous variation found”
+	•	“Treatment and outcome move simultaneously; needs instrument or timing discontinuity”
+	•	“Only common time variation; requires exposure heterogeneity for panel FE”
+	•	“Instrument proposed but weak/invalid risk; needs diagnostics”
+
+Human-in-the-loop required
+	•	Approving which candidate edges enter the official DAG
+	•	Approving edge types (causal vs reaction_function)
+	•	Approving whether a proposed quasi-experiment is credible
+
+⸻
+
+2) Dynamic addition of design artifacts (library expansion) + variable typing system expansion
+
+Viability
+
+Yes, with sandboxing and contracts.
+
+This is valuable because your framework becomes general when:
+	•	designs are modular,
+	•	typing prevents nonsense (units/frequencies/scopes),
+	•	and each design declares its identification assumptions and diagnostics.
+
+Constraints / guardrails
+
+Design additions must pass “Design Contract Tests”
+Every design template must define:
+	•	Data prerequisites:
+	•	min obs, min units, required variation (cross-sectional/time), required running variable, etc.
+	•	Identification prerequisites:
+	•	e.g., Exposure×Shock requires predetermined exposures; DiD requires treated/control + pre-period; IV requires strong first stage + exclusion narrative
+	•	Required diagnostics:
+	•	and which ones are hard fails vs soft flags
+	•	EdgeCard output schema:
+	•	must produce required fields (units, N_cal/N_eff, interpretation bounds, risk flags)
+
+Designs enter as:
+	•	experimental: true (cannot be used in CONFIRMATION)
+	•	only promoted after a human reviews the contract tests and at least one successful run.
+
+Typing system changes must be backwards compatible
+Add types like:
+	•	rate_pp, bps, pct_change, log_points, bn_kzt
+	•	frequency types: monthly/quarterly/annual + aggregation method
+	•	scope: bank_subsidiary vs group vs sector vs national
+
+What’s safe to automate
+	•	Code scaffolding for new design templates
+	•	Auto-generation of diagnostic stubs
+	•	Unit tests for design contracts
+	•	Static checks: “this design is not identified if time FE absorbs shock” (this is rule-based)
+
+Identifiability reminders
+
+Whenever a new design is registered, the system should auto-generate a “Design Caveats” block:
+
+Example for IV:
+
+“IV estimates can be statistically significant even if the instrument violates exclusion or is weak. Diagnostics reduce—but do not eliminate—this risk.”
+
+Example for DiD:
+
+“Even with significant results, parallel trends is untestable in the post period; pre-trends tests are necessary but not sufficient.”
+
+Human-in-the-loop required
+	•	Approving new design types for CONFIRMATION mode
+	•	Approving typing semantics when it changes interpretation (e.g., “rate in pp vs bps”)
+
+⸻
+
+3) “Criticize everything” for ModelSmith
+
+Viability
+
+Yes; this should be mostly deterministic.
+This is where you prevent “regression gives numbers” from becoming “causal story.”
+
+Constraints / guardrails
+
+Add a ModelSmithCritic stage that runs before estimation and can:
+	•	block a design as not identified even if feasible computationally
+	•	downgrade claim_level to reduced-form
+	•	force additional diagnostics
+	•	enforce forbidden controls and adjustment sets
+
+The Critic should be able to emit issues like:
+	•	TIME_FE_ABSORBS_SHOCK (critical)
+	•	NO_VALID_ADJUSTMENT_SET (high)
+	•	POTENTIAL_BAD_CONTROL (high)
+	•	EXPOSURE_NOT_PREDETERMINED (critical for exposure×shock)
+	•	IV_EXCLUSION_UNJUSTIFIED (requires human)
+	•	INSUFFICIENT_VARIATION / WEAK_FIRST_STAGE (high)
+
+What’s safe to automate
+
+Almost all of it:
+	•	backdoor feasibility (if DAG + observed nodes allow an adjustment set)
+	•	design feasibility checks
+	•	data structure checks (panel vs time series vs cutoff)
+	•	forbidden control checks
+	•	default fallbacks: if causal design not feasible → mark edge REDUCED_FORM rather than estimate “causal”
+
+Identifiability reminders
+
+ModelSmithCritic must print something like:
+
+“This edge may be significant but still not causal because: [unmeasured confounding / simultaneity / selection].”
+
+And it must explicitly set:
+	•	edge_card.identification.claim_level
+	•	edge_card.counterfactual.supports_policy_intervention = false unless identified
+
+Human-in-the-loop required
+	•	Whether a particular edge is fundamentally a reaction function
+	•	Whether an IV exclusion argument is acceptable
+
+⸻
+
+4) Additional agentic diagnostics assisting Estimator/Interpreter and Judge
+
+Viability
+
+Yes. This is one of your strongest automation wins.
+
+Diagnostics are the main way to operationalize “don’t trust significance.”
+
+Constraints / guardrails
+
+You want a Diagnostic Registry that is:
+	•	linked to each design,
+	•	parameterized (lags, bandwidths),
+	•	and produces standardized outputs + pass/fail thresholds.
+
+Key diagnostics that specifically address your “not identifiable without special structure” warning:
+
+Unmeasured confounding
+	•	Negative control outcomes (if available)
+	•	Placebo exposures (for exposure×shock)
+	•	Sensitivity bounds (optional; even coarse ones are better than nothing)
+	•	“Backdoor set missing observed confounders” flag from DAG
+
+Simultaneity / feedback
+	•	Reaction function labeling enforcement
+	•	Lead tests (does treatment “predict” pre-outcomes?)
+	•	Excluding contemporaneous outcomes in controls (avoid mechanical feedback)
+
+Weak variation / weak IV
+	•	First-stage F for IV
+	•	Effective variation checks (std dev of treatment; number of non-zero shocks)
+	•	Event study: number of treated units, event count, support around cutoff (RDD)
+
+Measurement error
+	•	Multiple measures consistency (if two sources)
+	•	Extraction confidence / provenance completeness thresholds
+	•	Noise amplification warnings when differencing noisy series
+
+Selection into sample
+	•	“Sample is selected” flag if using only public banks
+	•	External validity tag: results apply to listed banks only
+	•	Compare to system-level aggregates if possible (sanity check)
+
+What’s safe to automate
+	•	Running diagnostics
+	•	Logging pass/fail
+	•	Capping credibility automatically based on diagnostics and sample structure
+	•	Generating diagnostic plots and including them in the report
+
+Identifiability reminders
+
+Judge should summarize, per edge:
+	•	Testable threats (diagnostics did/didn’t pass)
+	•	Untestable threats (must be disclosed regardless of diagnostics)
+
+Example EdgeCard section:
+	•	Testable threats: passed leads test, LOO stable
+	•	Untestable threats: instrument exclusion, definition mismatch risk
+
+Human-in-the-loop required
+	•	Interpreting untestable threats (exclusion restriction; definition harmonization)
+
+⸻
+
+5) Implement updates compliant to guardrail (auto-fixes)
+
+Viability
+
+Yes, but only with a strict “Patch Policy.”
+
+Otherwise your loop becomes automated p-hacking.
+
+Constraints / guardrails
+
+Create a PatchPolicy with:
+
+Allowed auto-fixes
+	•	fix unit metadata omissions (DAG/EdgeCards)
+	•	fix N reporting and frequency normalization
+	•	fix design feasibility gating
+	•	add missing required diagnostics or report sections
+	•	convert mechanical edges → bridges/identities
+	•	improve connector extraction robustness (without altering interpretation)
+
+Disallowed auto-fixes (must be human approved)
+	•	changing sample windows to chase significance
+	•	adding/removing controls after seeing results (outside pre-registered set)
+	•	redefining shocks post hoc
+	•	changing edge type from reaction_function ↔ causal
+	•	“try 10 specifications and keep best”
+
+What’s safe to automate
+	•	applying a patch whitelist
+	•	re-running and checking whether critical issues are closed
+	•	rolling back changes if validation worsens (issue regression)
+
+Identifiability reminders
+
+PatchBot must never claim “fixed causal identification” when it only fixed code/reporting. It should say:
+
+“This patch fixes reporting/feasibility, not the underlying identification threat of confounding/feedback/etc.”
+
+Human-in-the-loop required
+	•	any patch that changes the estimand interpretation
+	•	any patch that changes causal claim level
+
+⸻
+
+6) Mark requires-human inputs (HITL gating)
+
+Viability
+
+Yes; do this aggressively.
+This is how you prevent the system from silently crossing from “analysis” to “assertion.”
+
+Constraints / guardrails
+
+Attach requires_human=true to issues like:
+	•	EDGE_TYPE_UNSPECIFIED (causal vs reaction_function)
+	•	IV_EXCLUSION_UNJUSTIFIED
+	•	DEFINITION_HARMONIZATION_REQUIRED
+	•	PLAUSIBILITY_BOUNDS_UNSET
+	•	DAG_EXPANSION_PROPOSED (candidate edges need approval)
+	•	SELECTION_EXTERNAL_VALIDITY_CRITICAL (using selected sample)
+
+When such issues exist:
+	•	Codex loop can continue to improve non-blocking parts,
+	•	but cannot promote the run to CONFIRMATION,
+	•	and must output a HITL checklist.
+
+Identifiability reminders
+
+The HITL checklist should explicitly include the five threats:
+	•	confounding
+	•	feedback
+	•	weak variation/IV
+	•	measurement error
+	•	selection
+
+For each edge, it should ask the human to accept/reject the residual untestable assumptions.
+
+⸻
+
+C. “Remind us everywhere”: where to surface the caveats in CLI and artifacts
+
+To meet your requirement (“remind us everywhere where this is possible”), build three redundant reminder layers:
+
+C.1 EdgeCard-level (per-edge)
+
+Add fields:
+	•	identification.claim_level
+	•	identification.untestable_assumptions[]
+	•	identification.risk_flags[] with severity
+	•	counterfactual.allowed: true/false
+	•	counterfactual.reason_blocked
+
+C.2 Run-level dashboard (report)
+
+Add an “Identifiability Risk Dashboard” table:
+
+Edge	Claim Level	Main Risk	Testable?	Diagnostics	Counterfactual Allowed
+
+
+This prevents readers from equating “table of coefficients” with causality.
+
+C.3 CLI-level (real-time)
+
+During estimation, after each edge:
+	•	print claim_level and risk flags
+	•	if significant but not identified → explicit warning
+	•	if reduced-form edge used in propagation → hard error (or block)
+
+Example:
+
+⚠️ shock_to_npl_sector: claim_level=REDUCED_FORM
+Risks: selection_bias, definition_mismatch, LOO_unstable
+Even if p<0.05, this does not establish a causal effect.
+
+⸻
+
+D. Final “viability verdict” for your dynamic layer
+
+Yes, the agentic design is viable for your objectives if:
+	1.	Dynamic DAG/design discovery is proposal-only (never directly mutates official specs in confirmation),
+	2.	ModelSmith is gated by an Identifiability Screen and must be allowed to output BLOCKED_ID,
+	3.	Diagnostics are mandatory and can cap ratings automatically,
+	4.	PatchBot is constrained by a strict whitelist,
+	5.	HITL gates are explicit for untestable assumptions and definition harmonization.
+
+If you do those, the Codex/Claude loop becomes powerful without becoming a loophole generator.
+
+⸻
+
+If you want, I can turn this into a concrete “control flow spec” that enumerates exactly what each agent can write (which directories/files), per mode (SIMULATION/EXPLORATION/CONFIRMATION), and what issue severities block promotion—so you can run overnight loops with confidence.

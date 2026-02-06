@@ -21,6 +21,7 @@ from typing import Any
 import yaml
 
 from shared.agentic.output.edge_card import EdgeCard
+from shared.agentic.identification.screen import IdentifiabilityScreen, IdentifiabilityResult
 
 
 class ValidationSeverity(Enum):
@@ -443,6 +444,59 @@ class DAGValidator:
                     ))
 
     # =========================================================================
+    # IDENTIFIABILITY SCREEN INTEGRATION
+    # =========================================================================
+
+    def validate_identifiability(
+        self,
+        edge_cards: dict[str, EdgeCard],
+    ) -> tuple[ValidationResult, dict[str, IdentifiabilityResult]]:
+        """
+        Run identifiability screen on all edge cards.
+
+        Returns:
+            Tuple of (ValidationResult, dict of edge_id -> IdentifiabilityResult)
+        """
+        result = ValidationResult(passed=True)
+        result.checks_run.append("identifiability_screen")
+        screen = IdentifiabilityScreen()
+        id_results: dict[str, IdentifiabilityResult] = {}
+
+        for edge_id, card in edge_cards.items():
+            design = card.spec_details.design if card.spec_details else ""
+            id_result = screen.screen_post_estimation(
+                edge_id=edge_id,
+                design=design,
+                diagnostics=card.diagnostics,
+            )
+            id_results[edge_id] = id_result
+
+            # Flag significant-but-not-identified
+            if (card.estimates and card.estimates.pvalue is not None
+                    and card.estimates.pvalue < 0.05
+                    and id_result.claim_level != "IDENTIFIED_CAUSAL"):
+                result.add_issue(ValidationIssue(
+                    check_id="significant_but_not_identified",
+                    severity=ValidationSeverity.WARNING,
+                    message=(
+                        f"p={card.estimates.pvalue:.4f} but claim_level={id_result.claim_level}. "
+                        "Statistical significance does not establish causation."
+                    ),
+                    edge_id=edge_id,
+                ))
+
+            # Flag blocked identification
+            if id_result.claim_level == "BLOCKED_ID":
+                result.add_issue(ValidationIssue(
+                    check_id="identification_blocked",
+                    severity=ValidationSeverity.ERROR,
+                    message=f"Identification blocked: {', '.join(id_result.required_structure_missing)}",
+                    edge_id=edge_id,
+                ))
+
+        return result, id_results
+
+    # =========================================================================
     # REPORT CONSISTENCY CHECKS
     # =========================================================================
 
@@ -577,6 +631,13 @@ def run_full_validation(
         combined.issues.extend(post_result.issues)
         combined.checks_run.extend(post_result.checks_run)
         if not post_result.passed:
+            combined.passed = False
+
+        # Identifiability screen
+        id_result, _ = validator.validate_identifiability(edge_cards)
+        combined.issues.extend(id_result.issues)
+        combined.checks_run.extend(id_result.checks_run)
+        if not id_result.passed:
             combined.passed = False
 
     # Report consistency checks (if report provided)

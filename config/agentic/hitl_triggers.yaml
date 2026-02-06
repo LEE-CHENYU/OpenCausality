@@ -1,0 +1,45 @@
+# HITL Triggers: Conditions requiring human-in-the-loop decisions
+#
+# When a trigger condition is met, the agent loop pauses and produces
+# a checklist item for human review.
+
+triggers:
+  - trigger_id: "edge_type_unspecified"
+    condition: "edge.edge_type not in ['causal', 'reaction_function', 'bridge', 'identity']"
+    checklist_item: "Classify edge as causal, reaction_function, bridge, or identity"
+    priority: HIGH
+
+  - trigger_id: "dag_expansion_proposed"
+    condition: "candidate_edges not empty"
+    checklist_item: "Approve/reject proposed candidate edges"
+    priority: HIGH
+
+  - trigger_id: "iv_exclusion_unjustified"
+    condition: "design == 'IV' and exclusion_narrative == null"
+    checklist_item: "Accept or reject instrument exclusion assumption"
+    priority: CRITICAL
+
+  - trigger_id: "definition_harmonization_required"
+    condition: "cross_bank_definition_mismatch detected"
+    checklist_item: "Decide if KPI definitions are comparable"
+    priority: HIGH
+
+  - trigger_id: "nonstationarity_unresolved"
+    condition: "ts_guard.nonstationarity_risk == 'high' and transform == 'levels'"
+    checklist_item: "Choose: switch to differences, implement ECM, or accept descriptive-only"
+    priority: HIGH
+
+  - trigger_id: "regime_instability_detected"
+    condition: "regime_stability diagnostic failed"
+    checklist_item: "Split estimand by regime or restrict counterfactual scope"
+    priority: MEDIUM
+
+  - trigger_id: "expected_sign_undefined"
+    condition: "edge.expected_sign == null"
+    checklist_item: "Define expected sign based on economic theory"
+    priority: MEDIUM
+
+  - trigger_id: "plausibility_bounds_unset"
+    condition: "edge.plausibility_bounds == null"
+    checklist_item: "Set reasonable magnitude bounds for estimate"
+    priority: LOW

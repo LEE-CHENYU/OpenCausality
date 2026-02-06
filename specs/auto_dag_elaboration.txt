@@ -1,0 +1,247 @@
+Absolutely — once you moved past the simulated “smoke test,” the later runs surfaced a different class of issues: not “the system is lying,” but “the system is honest yet still fragile.” These are the realistic problems you’ll keep seeing in real causal pipelines (especially with macro + bank data).
+
+Below is an expanded issue taxonomy that covers:
+	•	Simulation run issues (governance failures)
+	•	Real estimation run issues (identification, definitions, scaling, small‑N inference, cross‑evidence conflicts)
+	•	A concrete way to encode them into your Issue Log System so agents can re-check them on every iteration.
+
+⸻
+
+1) What changed after the simulation run?
+
+Simulation-run problems were mostly “governance”
+	•	placeholder estimates treated as real
+	•	A ratings despite missing connectors/diagnostics
+	•	stopping criteria triggered prematurely
+
+Later-run problems are “real-world econometrics and data”
+
+Even with real estimation, you saw:
+	•	definition mismatches (NPL, CoR, capital, RWA)
+	•	frequency/scaling issues (quarterly vs annual impacts not directly comparable)
+	•	entity boundary issues (bank subsidiary vs group, cross-bank comparability)
+	•	panel fragility (4-bank LOO instability)
+	•	reaction-function confusion (policy edges)
+	•	mechanical edges that should be bridges/identities
+	•	coherence problems across parallel evidence (KSPI-specific vs sector panel disagree)
+
+These don’t mean the framework failed — they mean it’s working in the real world.
+
+⸻
+
+2) Expanded issue list from “later runs” (realistic problems)
+
+I’ll list them as Issue IDs you can put into issue_registry.yaml, grouped by category.
+
+A) Data + definition problems (most common in later runs)
+	1.	ENTITY_BOUNDARY_DRIFT
+
+	•	Symptom: mixing Kaspi Bank subsidiary measures with Kaspi Group metrics; or panel banks using different consolidation scopes.
+	•	Why it matters: breaks comparability and can flip signs/magnitudes.
+	•	Automatable detection: partial (scope metadata present → detect mismatch).
+	•	Human needed: deciding whether mapping is acceptable.
+
+	2.	KPI_DEFINITION_MISMATCH_CROSS_BANK
+
+	•	Symptom: sector panel NPL behaves opposite to KSPI NPL (your report: KSPI shock_to_npl_kspi positive; sector shock_to_npl_sector negative).
+	•	Likely cause: NPL definitions differ (90+ DPD vs stage classification; write-offs/restructures), or exposure proxy not aligned.
+	•	Automatable detection: yes (flag cross-evidence sign conflicts), but resolution needs human.
+
+	3.	CAPITAL_RWA_DEFINITION_RISK
+
+	•	Symptom: “capital” and “RWA” may be IFRS vs regulatory; CAR ratio not always K2-equivalent.
+	•	Why it matters: invalidates K2 propagation.
+	•	Automatable detection: partial (require definition_source fields; flag if missing/heterogeneous).
+
+	4.	SHOCK_CONSTRUCT_AMBIGUOUS
+
+	•	Symptom: edge name says shock_to_* but report doesn’t explicitly state whether “shock” is imported inflation, FX innovation, or something else.
+	•	Automatable detection: yes (EdgeCard must include shock_node_id, shock_unit, shock_scale).
+
+	5.	FREQUENCY_ALIGNMENT_ERROR
+
+	•	Symptom: mixing monthly shock series with quarterly outcomes without explicit aggregation rule (sum/avg/end-of-period).
+	•	Automatable detection: yes (validate NodeSpec frequency + edge aggregation method present).
+
+	6.	FREQUENCY_SCALING_MISMATCH
+
+	•	Symptom: annual robustness estimates much larger than quarterly (your report: annual impacts ~360 vs quarterly ~86) without a scaling explanation.
+	•	Why it matters: can be normal (annual shock accumulates), but must be normalized to a common unit (e.g., per quarter).
+	•	Automatable detection: yes (require frequency_normalization field in EdgeCard; flag if missing).
+
+	7.	EXTRACTION_PROVENANCE_GAPS
+
+	•	Symptom: bank KPIs “extracted from reports,” but no table reference / page number / checksum.
+	•	Automatable detection: yes (provenance fields required; otherwise issue).
+
+⸻
+
+B) Identification/design problems (later runs)
+	8.	REACTION_FUNCTION_EDGE
+
+	•	Symptom: CPI→policy rate estimated and treated like a causal transmission edge; but it’s a reaction function.
+	•	You still see it: monthly LP shows cpi_to_nbk_rate with huge SE and wrong expected sign.
+	•	Automatable detection: partial (LLM can suggest, but human should confirm edge_type=reaction_function).
+	•	Automatable guardrail: yes (reaction_function edges cannot be used for shock propagation).
+
+	9.	PANEL_IDENTIFICATION_FAILURE
+
+	•	Old issue (fixed): time FE absorbing common shocks.
+	•	Keep as a permanent rule: if time_FE=True and treatment varies only by time → require Exposure × Shock or block.
+
+	10.	EXPOSURE_NOT_PREDETERMINED
+
+	•	Symptom: exposure constructed from full-sample averages (post-treatment) or rolling exposure that responds to shocks.
+	•	Automatable detection: yes (EdgeSpec must declare baseline window; validate it lies strictly pre-period).
+
+	11.	MECHANICAL_EDGE_ESTIMATED_INSTEAD_OF_BRIDGE
+
+	•	Symptom: loan→RWA or CoR→capital estimated via regressions (often “significant”) but really mechanical.
+	•	You improved this: moved to accounting bridges and identity sensitivities. Keep the rule anyway.
+	•	Automatable detection: yes (if edge is flagged edge_type=identity_or_bridge, block estimation design).
+
+	12.	PATH_DOUBLE_COUNTING
+
+	•	Symptom: DAG includes both a direct reduced-form edge (FX→real expenditure) and the indirect chain (FX→CPI→income→expenditure). If both are used for counterfactual propagation, you double count.
+	•	Automatable detection: yes (graph path overlap check; if direct reduced-form exists, mark indirect path as “structural decomposition only,” or require user choice).
+
+⸻
+
+C) Statistical inference problems (very realistic in later runs)
+	13.	SMALL_SAMPLE_INFERENCE
+
+	•	Symptom: N=18, N=26, N=7 edges with HAC SEs; p-values look strong but are fragile.
+	•	Automatable detection: yes (N thresholds, horizon count thresholds).
+
+	14.	PANEL_TOO_FEW_UNITS
+
+	•	Symptom: 4 banks → cluster-robust unreliable; DK might help but still fragile.
+	•	Automatable detection: yes (cap max rating when n_units < K).
+
+	15.	LOO_INSTABILITY
+
+	•	You now report it: sector edges show LOO Stable: No for several.
+	•	Automatable detection: yes (run leave-one-out automatically; log if sign flips or >X% change).
+
+	16.	BREAKS_UNMODELED
+
+	•	Symptom: major regime changes (2015 float, IFRS 9 adoption timing, COVID) can dominate short samples.
+	•	Automatable detection: partial (break tests + pre-specified splits can be automated; deciding splits sometimes needs human).
+
+	17.	MULTIPLE_TESTING_DRIFT
+
+	•	Symptom: many edges × many horizons × many specs → false positives.
+	•	Automatable detection/guardrail: yes:
+	•	restrict variants per edge in EXPLORATION,
+	•	separate CONFIRMATION with frozen spec and holdout,
+	•	record a “spec search budget.”
+
+⸻
+
+D) Scoring/reporting problems that show up in later runs too
+	18.	RATING_DIAGNOSTICS_CONFLICT
+
+	•	Symptom (from your report): vix_to_fx has sign mismatch and p=0.768 yet rating A; cpi_to_nbk_rate sign mismatch, massive SE, rating A.
+	•	Important nuance: A-rating should not require significance, because null results can be credible.
+But A-rating should require: identified design + required diagnostics complete + no critical interpretation misuse.
+	•	Automatable detection: yes:
+	•	If sign mismatch is “critical” per EdgeSpec, downgrade.
+	•	If edge_type is reaction_function and used for propagation, downgrade/block.
+	•	If required diagnostics missing, downgrade.
+
+	19.	N_REPORTING_INCONSISTENT
+
+	•	You still have hints of it: “17 true quarterly obs” vs effective N differing across edges.
+	•	Automatable detection: yes (force report to print N_calendar, N_eff_h0, N_eff_by_h).
+
+	20.	CROSS_EVIDENCE_CONFLICT
+
+	•	Your new “KSPI vs sector” comparison table surfaced this clearly.
+	•	Automatable detection: yes (flag when two edges meant to measure same relationship differ in sign or are outside each other’s CIs).
+	•	Human required: interpretation (definition mismatch vs real heterogeneity).
+
+	21.	BRIDGE_STATIC_BASELINE
+
+	•	Symptom: sensitivity computed “at 2024Q3 values” only. True sensitivities move when capital/RWA/loans change.
+	•	Automatable detection: yes (flag if bridge uses a single baseline; suggest time-varying or scenario baseline).
+	•	Human decision: whether local approximation is acceptable.
+
+⸻
+
+3) How to implement this in the Issue Log System
+
+To make the agent “constantly check against” issues, you want three things:
+
+3.1 A stable Issue Registry (rules as code)
+
+Each rule has:
+	•	rule_id
+	•	severity
+	•	trigger (pre-run / post-run / cross-run)
+	•	autofix_allowed
+	•	requires_human
+
+3.2 Cross-run issue aggregation (“regressions” are recurrent)
+
+Some issues only appear when you compare runs:
+	•	CROSS_EVIDENCE_CONFLICT
+	•	FREQUENCY_SCALING_MISMATCH
+	•	ENTITY_BOUNDARY_DRIFT
+	•	MULTIPLE_TESTING_DRIFT
+
+So the Judge should read:
+	•	current run EdgeCards
+	•	last run EdgeCards
+	•	immutable evidence artifacts
+and emit “regression issues” if something got worse.
+
+3.3 “Issue gates” that control iteration
+
+Example gates:
+	•	If any CRITICAL issues exist:
+	•	do not allow CONFIRMATION
+	•	only allow auto-fixes from patch whitelist
+	•	If any requires_human issues exist:
+	•	stop the loop and produce a HITL checklist
+
+This turns your iterative loop into “repair and improve,” not “search for significance.”
+
+⸻
+
+4) The most important “later run” issues to prioritize
+
+If you only prioritize 5 beyond the simulation problems, make it these:
+	1.	Entity/definition harmonization (bank vs group; NPL/CoR definitions across banks)
+	2.	Shock definition + scale clarity (what exactly is “shock”? per what unit?)
+	3.	Frequency normalization (annual vs quarterly comparability)
+	4.	Panel fragility (4 units; LOO instability; rating caps)
+	5.	Path double counting (direct reduced-form edges vs structural chain)
+
+These are what will otherwise poison the final “impact on K2” narrative.
+
+⸻
+
+5) What’s automatable vs HITL in later-run issues?
+
+Fully automatable detection/logging
+	•	N reporting, frequency alignment, unit presence, provenance presence
+	•	panel ID feasibility checks (Exposure×Shock required with time FE)
+	•	LOO stability and break tests
+	•	multiple-testing budget enforcement
+	•	path overlap/double counting detection
+	•	rating caps (small N, few units, missing diagnostics)
+
+Requires human confirmation
+	•	reaction_function classification (the system can suggest)
+	•	definition harmonization decisions (“is this NPL comparable?”)
+	•	plausibility bounds / expected signs (domain knowledge)
+	•	whether divergence is “real heterogeneity” vs “measurement mismatch”
+
+⸻
+
+If you want, paste one EdgeCard each for:
+	•	shock_to_cor_kspi
+	•	shock_to_cor_sector
+	•	and the NodeSpec definitions for shock, cor, capital, rwa
+
+…and I’ll tell you exactly which of the above issues should currently be OPEN vs CLOSED in your Issue Ledger (and which can be auto-fixed vs must be HITL).

@@ -1,0 +1,22 @@
+# Data Download Tiers
+#
+# Controls what data agents are allowed to fetch at each tier.
+# Prevents unauthorized full dataset downloads.
+
+tiers:
+  - tier: 0
+    name: "metadata_only"
+    description: "Schema, coverage, units, access method"
+    auto_allowed: true
+
+  - tier: 1
+    name: "sample_head"
+    description: "First N rows for validation"
+    auto_allowed: true
+    max_rows: 100
+
+  - tier: 2
+    name: "full_download"
+    description: "Complete dataset for approved nodes"
+    auto_allowed: false
+    requires: "node in approved_dag"
