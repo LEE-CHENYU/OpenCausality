@@ -1,6 +1,6 @@
 edge_id: cor_to_capital
 dag_version_hash: a0d5c383631c52aa262f288704c6f7868d48b73d5034761245939de8eeea1d72
-created_at: '2026-02-06T00:14:12.791043'
+created_at: '2026-02-06T13:22:12.884737'
 data_provenance:
   treatment_source: null
   outcome_source: null
@@ -86,6 +86,14 @@ propagation_role:
   role: reduced_form
   overlapping_paths: []
   selected_for_counterfactual: false
+literature:
+  supporting: []
+  challenging: []
+  methodological: []
+  search_status: PENDING
+  search_timestamp: null
+  search_query: ''
+  total_results: 0
 companion_edge_id: null
 is_precisely_null: false
 null_equivalence_bound: null

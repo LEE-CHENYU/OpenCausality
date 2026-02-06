@@ -1,6 +1,6 @@
 edge_id: vix_to_fx
 dag_version_hash: a0d5c383631c52aa262f288704c6f7868d48b73d5034761245939de8eeea1d72
-created_at: '2026-02-06T00:14:10.696002'
+created_at: '2026-02-06T13:22:06.268120'
 data_provenance:
   treatment_source:
     connector: parquet_file
@@ -192,6 +192,14 @@ propagation_role:
   role: reduced_form
   overlapping_paths: []
   selected_for_counterfactual: false
+literature:
+  supporting: []
+  challenging: []
+  methodological: []
+  search_status: PENDING
+  search_timestamp: null
+  search_query: ''
+  total_results: 0
 companion_edge_id: null
 is_precisely_null: true
 null_equivalence_bound: 0.21989108883496739

@@ -1,6 +1,6 @@
 # KSPI K2 DAG: Real Econometric Estimation Report
 
-**Generated:** 2026-02-06 00:14:12
+**Generated:** 2026-02-06 13:22:13
 **DAG Version Hash:** `a0d5c383631c52aa...`
 **Total Edge Cards:** 26
 
