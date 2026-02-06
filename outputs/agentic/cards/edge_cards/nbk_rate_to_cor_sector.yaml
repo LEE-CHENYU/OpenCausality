@@ -1,6 +1,6 @@
 edge_id: nbk_rate_to_cor_sector
 dag_version_hash: a0d5c383631c52aa262f288704c6f7868d48b73d5034761245939de8eeea1d72
-created_at: '2026-02-05T15:25:32.173335'
+created_at: '2026-02-06T00:14:12.759601'
 data_provenance:
   treatment_source: null
   outcome_source: null
@@ -117,6 +117,31 @@ counterfactual:
   external_validity: ''
 credibility_rating: C
 credibility_score: 0.59
+identification:
+  claim_level: REDUCED_FORM
+  risks:
+    unmeasured_confounding: low
+    simultaneity: low
+    weak_variation: high
+    measurement_error: low
+    selection: low
+  untestable_assumptions:
+  - Exposure predetermined and exogenous to outcome trends
+  testable_threats_passed:
+  - effective_obs
+  - exposure_variation
+  - regime_break
+  - r_squared_within
+  testable_threats_failed:
+  - leave_one_bank_out
+counterfactual_block:
+  allowed: true
+  reason_blocked: null
+  supports_policy_intervention: false
+propagation_role:
+  role: reduced_form
+  overlapping_paths: []
+  selected_for_counterfactual: false
 companion_edge_id: nbk_rate_to_cor
 is_precisely_null: true
 null_equivalence_bound: 2.7777787535412886

@@ -786,6 +786,18 @@ class AgentLoop:
             edge_id=task.edge_id,
         )
 
+        # Run TSGuard validation on the LP result
+        try:
+            ts_result = self.ts_guard.validate(
+                edge_id=task.edge_id,
+                y=data["outcome"],
+                x=data["treatment"],
+                lp_result=lp,
+            )
+            self.ts_guard_results[task.edge_id] = ts_result
+        except Exception as e:
+            logger.warning(f"TSGuard for {task.edge_id}: {e}")
+
         point = lp.impact_estimate
         se = lp.impact_se
         n_obs = lp.nobs[0] if lp.nobs else 0
@@ -820,7 +832,23 @@ class AgentLoop:
             name="sign_consistency", passed=sign_ok, message=sign_msg,
         )
 
-        failure_flags = FailureFlags(small_sample=is_quarterly or n_obs < 30)
+        # Merge TSGuard diagnostics into the edge card diagnostics
+        ts_result = self.ts_guard_results.get(task.edge_id)
+        regime_break = False
+        if ts_result:
+            for diag_name, diag_status in ts_result.diagnostics_results.items():
+                if diag_status != "not_run":
+                    diagnostics[f"ts_{diag_name}"] = DiagnosticResult(
+                        name=f"ts_{diag_name}",
+                        passed=(diag_status == "pass"),
+                        message=f"TSGuard: {diag_status}",
+                    )
+            regime_break = ts_result.diagnostics_results.get("regime_stability") == "fail"
+
+        failure_flags = FailureFlags(
+            small_sample=is_quarterly or n_obs < 30,
+            regime_break_detected=regime_break,
+        )
         treatment_node, outcome_node = EDGE_NODE_MAP[task.edge_id]
         spec_details = SpecDetails(
             design="LOCAL_PROJECTIONS",

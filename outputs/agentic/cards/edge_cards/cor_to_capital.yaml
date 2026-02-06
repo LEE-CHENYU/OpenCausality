@@ -1,6 +1,6 @@
 edge_id: cor_to_capital
 dag_version_hash: a0d5c383631c52aa262f288704c6f7868d48b73d5034761245939de8eeea1d72
-created_at: '2026-02-05T15:25:32.196881'
+created_at: '2026-02-06T00:14:12.791043'
 data_provenance:
   treatment_source: null
   outcome_source: null
@@ -67,6 +67,25 @@ counterfactual:
   external_validity: ''
 credibility_rating: A
 credibility_score: 0.9299999999999999
+identification:
+  claim_level: IDENTIFIED_CAUSAL
+  risks:
+    unmeasured_confounding: low
+    simultaneity: low
+    weak_variation: low
+    measurement_error: low
+    selection: low
+  untestable_assumptions: []
+  testable_threats_passed: []
+  testable_threats_failed: []
+counterfactual_block:
+  allowed: true
+  reason_blocked: null
+  supports_policy_intervention: true
+propagation_role:
+  role: reduced_form
+  overlapping_paths: []
+  selected_for_counterfactual: false
 companion_edge_id: null
 is_precisely_null: false
 null_equivalence_bound: null

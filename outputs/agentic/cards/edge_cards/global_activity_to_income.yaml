@@ -1,6 +1,6 @@
 edge_id: global_activity_to_income
 dag_version_hash: 1c7bd8fe01609fd7d4926c38e6134a089c1c4e450ca44d017023564f04d8220f
-created_at: '2026-02-05T23:24:03.313426'
+created_at: '2026-02-06T00:18:45.043687'
 data_provenance:
   treatment_source: null
   outcome_source: null

@@ -1,6 +1,6 @@
 edge_id: portfolio_mix_to_rwa
 dag_version_hash: a0d5c383631c52aa262f288704c6f7868d48b73d5034761245939de8eeea1d72
-created_at: '2026-02-05T15:25:32.195726'
+created_at: '2026-02-06T00:14:12.782336'
 data_provenance:
   treatment_source:
     connector: parquet_file
@@ -142,6 +142,31 @@ counterfactual:
   external_validity: ''
 credibility_rating: B
 credibility_score: 0.7982352941176472
+identification:
+  claim_level: BLOCKED_ID
+  risks:
+    unmeasured_confounding: medium
+    simultaneity: low
+    weak_variation: low
+    measurement_error: low
+    selection: low
+  untestable_assumptions:
+  - No omitted common cause of treatment and outcome
+  testable_threats_passed:
+  - hac_bandwidth
+  - r_squared_h0
+  - residual_ac1
+  - sign_consistency
+  testable_threats_failed:
+  - effective_obs
+counterfactual_block:
+  allowed: false
+  reason_blocked: Claim level capped to BLOCKED_ID
+  supports_policy_intervention: false
+propagation_role:
+  role: reduced_form
+  overlapping_paths: []
+  selected_for_counterfactual: false
 companion_edge_id: null
 is_precisely_null: false
 null_equivalence_bound: null

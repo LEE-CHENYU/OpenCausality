@@ -1,6 +1,6 @@
 edge_id: oil_supply_to_fx
 dag_version_hash: a0d5c383631c52aa262f288704c6f7868d48b73d5034761245939de8eeea1d72
-created_at: '2026-02-05T15:25:29.394267'
+created_at: '2026-02-06T00:14:10.627500'
 data_provenance:
   treatment_source:
     connector: parquet_file
@@ -167,6 +167,36 @@ counterfactual:
   external_validity: ''
 credibility_rating: A
 credibility_score: 0.97
+identification:
+  claim_level: REDUCED_FORM
+  risks:
+    unmeasured_confounding: medium
+    simultaneity: low
+    weak_variation: low
+    measurement_error: low
+    selection: low
+  untestable_assumptions:
+  - No omitted common cause of treatment and outcome
+  testable_threats_passed:
+  - hac_bandwidth
+  - effective_obs
+  - r_squared_h0
+  - residual_ac1
+  - sign_consistency
+  testable_threats_failed: []
+counterfactual_block:
+  allowed: false
+  reason_blocked: 'Counterfactual Use: BLOCKED
+
+    Reason: regime break risk
+
+
+    Even if p<0.05, this does not establish a causal effect.'
+  supports_policy_intervention: false
+propagation_role:
+  role: reduced_form
+  overlapping_paths: []
+  selected_for_counterfactual: false
 companion_edge_id: null
 is_precisely_null: true
 null_equivalence_bound: 0.2553043462960166

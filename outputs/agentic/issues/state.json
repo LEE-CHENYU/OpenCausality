@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-02-06T07:24:03.447516+00:00",
+  "last_updated": "2026-02-06T08:18:45.202568+00:00",
   "baseline_run_id": "",
   "baseline_mode": "",
   "baseline_dag_hash": "",
@@ -159,207 +159,265 @@
       "message": "p=0.0030 but claim_level=REDUCED_FORM. Significance does not establish causation."
     },
     "UNIT_MISSING_IN_EDGECARD:fx_to_cpi_nontradable": {
-      "status": "OPEN",
+      "status": "CLOSED",
       "opened_run": "416c1a5a",
       "severity": "CRITICAL",
       "rule_id": "UNIT_MISSING_IN_EDGECARD",
-      "message": "EdgeCard missing treatment_unit/outcome_unit."
+      "message": "EdgeCard missing treatment_unit/outcome_unit.",
+      "closed_run": "fda3b4db",
+      "resolution": "auto_fix:add_edge_units"
     },
     "UNIT_MISSING_IN_EDGECARD:fx_to_cpi_tradable": {
-      "status": "OPEN",
+      "status": "CLOSED",
       "opened_run": "416c1a5a",
       "severity": "CRITICAL",
       "rule_id": "UNIT_MISSING_IN_EDGECARD",
-      "message": "EdgeCard missing treatment_unit/outcome_unit."
+      "message": "EdgeCard missing treatment_unit/outcome_unit.",
+      "closed_run": "fda3b4db",
+      "resolution": "auto_fix:add_edge_units"
     },
     "UNIT_MISSING_IN_EDGECARD:cpi_to_nbk_rate": {
-      "status": "OPEN",
+      "status": "CLOSED",
       "opened_run": "416c1a5a",
       "severity": "CRITICAL",
       "rule_id": "UNIT_MISSING_IN_EDGECARD",
-      "message": "EdgeCard missing treatment_unit/outcome_unit."
+      "message": "EdgeCard missing treatment_unit/outcome_unit.",
+      "closed_run": "fda3b4db",
+      "resolution": "auto_fix:add_edge_units"
     },
     "UNIT_MISSING_IN_EDGECARD:loan_portfolio_to_rwa": {
-      "status": "OPEN",
+      "status": "CLOSED",
       "opened_run": "416c1a5a",
       "severity": "CRITICAL",
       "rule_id": "UNIT_MISSING_IN_EDGECARD",
-      "message": "EdgeCard missing treatment_unit/outcome_unit."
+      "message": "EdgeCard missing treatment_unit/outcome_unit.",
+      "closed_run": "fda3b4db",
+      "resolution": "auto_fix:add_edge_units"
     },
     "UNIT_MISSING_IN_EDGECARD:fx_to_nbk_rate": {
-      "status": "OPEN",
+      "status": "CLOSED",
       "opened_run": "416c1a5a",
       "severity": "CRITICAL",
       "rule_id": "UNIT_MISSING_IN_EDGECARD",
-      "message": "EdgeCard missing treatment_unit/outcome_unit."
+      "message": "EdgeCard missing treatment_unit/outcome_unit.",
+      "closed_run": "fda3b4db",
+      "resolution": "auto_fix:add_edge_units"
     },
     "UNIT_MISSING_IN_EDGECARD:shock_to_npl_kspi_annual": {
-      "status": "OPEN",
+      "status": "CLOSED",
       "opened_run": "416c1a5a",
       "severity": "CRITICAL",
       "rule_id": "UNIT_MISSING_IN_EDGECARD",
-      "message": "EdgeCard missing treatment_unit/outcome_unit."
+      "message": "EdgeCard missing treatment_unit/outcome_unit.",
+      "closed_run": "fda3b4db",
+      "resolution": "auto_fix:add_edge_units"
     },
     "UNIT_MISSING_IN_EDGECARD:shock_to_npl_sector": {
-      "status": "OPEN",
+      "status": "CLOSED",
       "opened_run": "416c1a5a",
       "severity": "CRITICAL",
       "rule_id": "UNIT_MISSING_IN_EDGECARD",
-      "message": "EdgeCard missing treatment_unit/outcome_unit."
+      "message": "EdgeCard missing treatment_unit/outcome_unit.",
+      "closed_run": "fda3b4db",
+      "resolution": "auto_fix:add_edge_units"
     },
     "UNIT_MISSING_IN_EDGECARD:shock_to_cor_kspi_annual": {
-      "status": "OPEN",
+      "status": "CLOSED",
       "opened_run": "416c1a5a",
       "severity": "CRITICAL",
       "rule_id": "UNIT_MISSING_IN_EDGECARD",
-      "message": "EdgeCard missing treatment_unit/outcome_unit."
+      "message": "EdgeCard missing treatment_unit/outcome_unit.",
+      "closed_run": "fda3b4db",
+      "resolution": "auto_fix:add_edge_units"
     },
     "UNIT_MISSING_IN_EDGECARD:vix_to_fx": {
-      "status": "OPEN",
+      "status": "CLOSED",
       "opened_run": "416c1a5a",
       "severity": "CRITICAL",
       "rule_id": "UNIT_MISSING_IN_EDGECARD",
-      "message": "EdgeCard missing treatment_unit/outcome_unit."
+      "message": "EdgeCard missing treatment_unit/outcome_unit.",
+      "closed_run": "fda3b4db",
+      "resolution": "auto_fix:add_edge_units"
     },
     "UNIT_MISSING_IN_EDGECARD:oil_supply_to_income": {
-      "status": "OPEN",
+      "status": "CLOSED",
       "opened_run": "416c1a5a",
       "severity": "CRITICAL",
       "rule_id": "UNIT_MISSING_IN_EDGECARD",
-      "message": "EdgeCard missing treatment_unit/outcome_unit."
+      "message": "EdgeCard missing treatment_unit/outcome_unit.",
+      "closed_run": "fda3b4db",
+      "resolution": "auto_fix:add_edge_units"
     },
     "UNIT_MISSING_IN_EDGECARD:capital_to_k2": {
-      "status": "OPEN",
+      "status": "CLOSED",
       "opened_run": "416c1a5a",
       "severity": "CRITICAL",
       "rule_id": "UNIT_MISSING_IN_EDGECARD",
-      "message": "EdgeCard missing treatment_unit/outcome_unit."
+      "message": "EdgeCard missing treatment_unit/outcome_unit.",
+      "closed_run": "fda3b4db",
+      "resolution": "auto_fix:add_edge_units"
     },
     "UNIT_MISSING_IN_EDGECARD:cpi_to_nominal_income": {
-      "status": "OPEN",
+      "status": "CLOSED",
       "opened_run": "416c1a5a",
       "severity": "CRITICAL",
       "rule_id": "UNIT_MISSING_IN_EDGECARD",
-      "message": "EdgeCard missing treatment_unit/outcome_unit."
+      "message": "EdgeCard missing treatment_unit/outcome_unit.",
+      "closed_run": "fda3b4db",
+      "resolution": "auto_fix:add_edge_units"
     },
     "UNIT_MISSING_IN_EDGECARD:cor_to_capital": {
-      "status": "OPEN",
+      "status": "CLOSED",
       "opened_run": "416c1a5a",
       "severity": "CRITICAL",
       "rule_id": "UNIT_MISSING_IN_EDGECARD",
-      "message": "EdgeCard missing treatment_unit/outcome_unit."
+      "message": "EdgeCard missing treatment_unit/outcome_unit.",
+      "closed_run": "fda3b4db",
+      "resolution": "auto_fix:add_edge_units"
     },
     "UNIT_MISSING_IN_EDGECARD:global_activity_to_income": {
-      "status": "OPEN",
+      "status": "CLOSED",
       "opened_run": "416c1a5a",
       "severity": "CRITICAL",
       "rule_id": "UNIT_MISSING_IN_EDGECARD",
-      "message": "EdgeCard missing treatment_unit/outcome_unit."
+      "message": "EdgeCard missing treatment_unit/outcome_unit.",
+      "closed_run": "fda3b4db",
+      "resolution": "auto_fix:add_edge_units"
     },
     "UNIT_MISSING_IN_EDGECARD:rwa_to_k2": {
-      "status": "OPEN",
+      "status": "CLOSED",
       "opened_run": "416c1a5a",
       "severity": "CRITICAL",
       "rule_id": "UNIT_MISSING_IN_EDGECARD",
-      "message": "EdgeCard missing treatment_unit/outcome_unit."
+      "message": "EdgeCard missing treatment_unit/outcome_unit.",
+      "closed_run": "fda3b4db",
+      "resolution": "auto_fix:add_edge_units"
     },
     "UNIT_MISSING_IN_EDGECARD:portfolio_mix_to_rwa": {
-      "status": "OPEN",
+      "status": "CLOSED",
       "opened_run": "416c1a5a",
       "severity": "CRITICAL",
       "rule_id": "UNIT_MISSING_IN_EDGECARD",
-      "message": "EdgeCard missing treatment_unit/outcome_unit."
+      "message": "EdgeCard missing treatment_unit/outcome_unit.",
+      "closed_run": "fda3b4db",
+      "resolution": "auto_fix:add_edge_units"
     },
     "UNIT_MISSING_IN_EDGECARD:expenditure_to_payments_revenue": {
-      "status": "OPEN",
+      "status": "CLOSED",
       "opened_run": "416c1a5a",
       "severity": "CRITICAL",
       "rule_id": "UNIT_MISSING_IN_EDGECARD",
-      "message": "EdgeCard missing treatment_unit/outcome_unit."
+      "message": "EdgeCard missing treatment_unit/outcome_unit.",
+      "closed_run": "fda3b4db",
+      "resolution": "auto_fix:add_edge_units"
     },
     "UNIT_MISSING_IN_EDGECARD:nbk_rate_to_cor": {
-      "status": "OPEN",
+      "status": "CLOSED",
       "opened_run": "416c1a5a",
       "severity": "CRITICAL",
       "rule_id": "UNIT_MISSING_IN_EDGECARD",
-      "message": "EdgeCard missing treatment_unit/outcome_unit."
+      "message": "EdgeCard missing treatment_unit/outcome_unit.",
+      "closed_run": "fda3b4db",
+      "resolution": "auto_fix:add_edge_units"
     },
     "UNIT_MISSING_IN_EDGECARD:oil_supply_to_fx": {
-      "status": "OPEN",
+      "status": "CLOSED",
       "opened_run": "416c1a5a",
       "severity": "CRITICAL",
       "rule_id": "UNIT_MISSING_IN_EDGECARD",
-      "message": "EdgeCard missing treatment_unit/outcome_unit."
+      "message": "EdgeCard missing treatment_unit/outcome_unit.",
+      "closed_run": "fda3b4db",
+      "resolution": "auto_fix:add_edge_units"
     },
     "UNIT_MISSING_IN_EDGECARD:shock_to_cor_kspi": {
-      "status": "OPEN",
+      "status": "CLOSED",
       "opened_run": "416c1a5a",
       "severity": "CRITICAL",
       "rule_id": "UNIT_MISSING_IN_EDGECARD",
-      "message": "EdgeCard missing treatment_unit/outcome_unit."
+      "message": "EdgeCard missing treatment_unit/outcome_unit.",
+      "closed_run": "fda3b4db",
+      "resolution": "auto_fix:add_edge_units"
     },
     "UNIT_MISSING_IN_EDGECARD:shock_to_npl_kspi": {
-      "status": "OPEN",
+      "status": "CLOSED",
       "opened_run": "416c1a5a",
       "severity": "CRITICAL",
       "rule_id": "UNIT_MISSING_IN_EDGECARD",
-      "message": "EdgeCard missing treatment_unit/outcome_unit."
+      "message": "EdgeCard missing treatment_unit/outcome_unit.",
+      "closed_run": "fda3b4db",
+      "resolution": "auto_fix:add_edge_units"
     },
     "UNIT_MISSING_IN_EDGECARD:oil_supply_to_brent": {
-      "status": "OPEN",
+      "status": "CLOSED",
       "opened_run": "416c1a5a",
       "severity": "CRITICAL",
       "rule_id": "UNIT_MISSING_IN_EDGECARD",
-      "message": "EdgeCard missing treatment_unit/outcome_unit."
+      "message": "EdgeCard missing treatment_unit/outcome_unit.",
+      "closed_run": "fda3b4db",
+      "resolution": "auto_fix:add_edge_units"
     },
     "UNIT_MISSING_IN_EDGECARD:shock_to_cor_sector": {
-      "status": "OPEN",
+      "status": "CLOSED",
       "opened_run": "416c1a5a",
       "severity": "CRITICAL",
       "rule_id": "UNIT_MISSING_IN_EDGECARD",
-      "message": "EdgeCard missing treatment_unit/outcome_unit."
+      "message": "EdgeCard missing treatment_unit/outcome_unit.",
+      "closed_run": "fda3b4db",
+      "resolution": "auto_fix:add_edge_units"
     },
     "UNIT_MISSING_IN_EDGECARD:fx_to_real_expenditure": {
-      "status": "OPEN",
+      "status": "CLOSED",
       "opened_run": "416c1a5a",
       "severity": "CRITICAL",
       "rule_id": "UNIT_MISSING_IN_EDGECARD",
-      "message": "EdgeCard missing treatment_unit/outcome_unit."
+      "message": "EdgeCard missing treatment_unit/outcome_unit.",
+      "closed_run": "fda3b4db",
+      "resolution": "auto_fix:add_edge_units"
     },
     "UNIT_MISSING_IN_EDGECARD:nbk_rate_to_cor_sector": {
-      "status": "OPEN",
+      "status": "CLOSED",
       "opened_run": "416c1a5a",
       "severity": "CRITICAL",
       "rule_id": "UNIT_MISSING_IN_EDGECARD",
-      "message": "EdgeCard missing treatment_unit/outcome_unit."
+      "message": "EdgeCard missing treatment_unit/outcome_unit.",
+      "closed_run": "fda3b4db",
+      "resolution": "auto_fix:add_edge_units"
     },
     "UNIT_MISSING_IN_EDGECARD:nbk_rate_to_deposit_cost_sector": {
-      "status": "OPEN",
+      "status": "CLOSED",
       "opened_run": "416c1a5a",
       "severity": "CRITICAL",
       "rule_id": "UNIT_MISSING_IN_EDGECARD",
-      "message": "EdgeCard missing treatment_unit/outcome_unit."
+      "message": "EdgeCard missing treatment_unit/outcome_unit.",
+      "closed_run": "fda3b4db",
+      "resolution": "auto_fix:add_edge_units"
     },
     "UNIT_MISSING_IN_EDGECARD:oil_demand_to_fx": {
-      "status": "OPEN",
+      "status": "CLOSED",
       "opened_run": "416c1a5a",
       "severity": "CRITICAL",
       "rule_id": "UNIT_MISSING_IN_EDGECARD",
-      "message": "EdgeCard missing treatment_unit/outcome_unit."
+      "message": "EdgeCard missing treatment_unit/outcome_unit.",
+      "closed_run": "fda3b4db",
+      "resolution": "auto_fix:add_edge_units"
     },
     "UNIT_MISSING_IN_EDGECARD:nbk_rate_to_deposit_cost": {
-      "status": "OPEN",
+      "status": "CLOSED",
       "opened_run": "416c1a5a",
       "severity": "CRITICAL",
       "rule_id": "UNIT_MISSING_IN_EDGECARD",
-      "message": "EdgeCard missing treatment_unit/outcome_unit."
+      "message": "EdgeCard missing treatment_unit/outcome_unit.",
+      "closed_run": "fda3b4db",
+      "resolution": "auto_fix:add_edge_units"
     },
     "UNIT_MISSING_IN_EDGECARD:oil_demand_to_income": {
-      "status": "OPEN",
+      "status": "CLOSED",
       "opened_run": "416c1a5a",
       "severity": "CRITICAL",
       "rule_id": "UNIT_MISSING_IN_EDGECARD",
-      "message": "EdgeCard missing treatment_unit/outcome_unit."
+      "message": "EdgeCard missing treatment_unit/outcome_unit.",
+      "closed_run": "fda3b4db",
+      "resolution": "auto_fix:add_edge_units"
     }
   }
 }

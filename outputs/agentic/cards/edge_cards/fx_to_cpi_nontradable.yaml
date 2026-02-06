@@ -1,6 +1,6 @@
 edge_id: fx_to_cpi_nontradable
 dag_version_hash: a0d5c383631c52aa262f288704c6f7868d48b73d5034761245939de8eeea1d72
-created_at: '2026-02-05T15:25:29.488407'
+created_at: '2026-02-06T00:14:10.769050'
 data_provenance:
   treatment_source: null
   outcome_source: null
@@ -71,6 +71,25 @@ counterfactual:
   external_validity: ''
 credibility_rating: A
 credibility_score: 0.99
+identification:
+  claim_level: IDENTIFIED_CAUSAL
+  risks:
+    unmeasured_confounding: low
+    simultaneity: low
+    weak_variation: low
+    measurement_error: low
+    selection: low
+  untestable_assumptions: []
+  testable_threats_passed: []
+  testable_threats_failed: []
+counterfactual_block:
+  allowed: true
+  reason_blocked: null
+  supports_policy_intervention: false
+propagation_role:
+  role: reduced_form
+  overlapping_paths: []
+  selected_for_counterfactual: false
 companion_edge_id: null
 is_precisely_null: true
 null_equivalence_bound: 0.03
