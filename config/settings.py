@@ -21,6 +21,11 @@ class Settings(BaseSettings):
     # API Keys
     fred_api_key: str = Field(default="", description="FRED API key")
 
+    # Literature search
+    openalex_mailto: str = Field(default="", description="Email for OpenAlex polite pool")
+    unpaywall_email: str = Field(default="", description="Email for Unpaywall API")
+    core_api_key: str = Field(default="", description="CORE API key")
+
     # Directories
     project_root: Path = Field(
         default_factory=lambda: Path(__file__).parent.parent,

@@ -206,9 +206,14 @@ class AgentLoop:
             output_dir=self.config.output_dir / "cards" / "data",
         )
 
-        # PaperScout (literature search)
+        # PaperScout (literature search — multi-source)
+        from config.settings import get_settings
+        _settings = get_settings()
         self.paper_scout = PaperScout(
             output_dir=self.config.output_dir / "citations",
+            openalex_mailto=_settings.openalex_mailto or None,
+            unpaywall_email=_settings.unpaywall_email or None,
+            core_api_key=_settings.core_api_key or None,
         )
         self.citation_bundles: dict[str, Any] = {}
 

@@ -2,14 +2,16 @@
 PaperScout Agent: Search literature for edge justification.
 
 PaperScout finds citations that support or challenge proposed
-DAG edges using the Semantic Scholar API.
-Output goes to the configured citations directory.
+DAG edges using multiple academic APIs: Semantic Scholar, OpenAlex,
+arXiv, and CORE.  Results are deduplicated by DOI and enriched
+with Open Access PDF URLs via Unpaywall.
 """
 
 from __future__ import annotations
 
 import json
 import logging
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -31,6 +33,8 @@ class Citation:
     paper_id: str = ""          # Semantic Scholar paper ID
     citation_count: int = 0     # for relevance weighting
     search_query: str = ""      # query that found this paper
+    source: str = "semantic_scholar"  # which API found this paper
+    pdf_url: str = ""           # OA PDF URL
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -44,6 +48,8 @@ class Citation:
             "paper_id": self.paper_id,
             "citation_count": self.citation_count,
             "search_query": self.search_query,
+            "source": self.source,
+            "pdf_url": self.pdf_url,
         }
 
 
@@ -64,20 +70,37 @@ class CitationBundle:
 class PaperScout:
     """
     PaperScout agent: finds literature support for DAG edges
-    using the Semantic Scholar Graph API.
+    using Semantic Scholar, OpenAlex, arXiv, and CORE APIs.
+    Results are deduplicated by DOI and enriched via Unpaywall.
     """
 
     def __init__(
         self,
         output_dir: Path | None = None,
         s2_client: Any | None = None,
+        openalex_mailto: str | None = None,
+        unpaywall_email: str | None = None,
+        core_api_key: str | None = None,
     ):
         self.output_dir = output_dir or Path("outputs/agentic/citations")
         self.bundles: list[CitationBundle] = []
         self.search_status: dict[str, str] = {}  # edge_id -> status
 
-        # Lazy-init Semantic Scholar client
+        # Lazy-init clients via properties
         self._s2_client = s2_client
+        self._openalex_mailto = openalex_mailto
+        self._unpaywall_email = unpaywall_email
+        self._core_api_key = core_api_key
+
+        # Cached client instances
+        self._openalex_client: Any | None = None
+        self._unpaywall_client: Any | None = None
+        self._core_client: Any | None = None
+        self._arxiv_client: Any | None = None
+
+    # ------------------------------------------------------------------
+    # Lazy-initialized client properties
+    # ------------------------------------------------------------------
 
     @property
     def s2_client(self) -> Any:
@@ -85,6 +108,38 @@ class PaperScout:
             from shared.data.semantic_scholar import SemanticScholarClient
             self._s2_client = SemanticScholarClient()
         return self._s2_client
+
+    @property
+    def openalex_client(self) -> Any | None:
+        if self._openalex_client is None and self._openalex_mailto is not None:
+            from shared.data.openalex import OpenAlexClient
+            self._openalex_client = OpenAlexClient(mailto=self._openalex_mailto)
+        # Also initialize without mailto (works, just slower)
+        if self._openalex_client is None and self._openalex_mailto is None:
+            from shared.data.openalex import OpenAlexClient
+            self._openalex_client = OpenAlexClient()
+        return self._openalex_client
+
+    @property
+    def unpaywall_client(self) -> Any | None:
+        if self._unpaywall_client is None and self._unpaywall_email:
+            from shared.data.unpaywall import UnpaywallClient
+            self._unpaywall_client = UnpaywallClient(email=self._unpaywall_email)
+        return self._unpaywall_client
+
+    @property
+    def core_client(self) -> Any | None:
+        if self._core_client is None and self._core_api_key:
+            from shared.data.core_api import COREClient
+            self._core_client = COREClient(api_key=self._core_api_key)
+        return self._core_client
+
+    @property
+    def arxiv_client(self) -> Any:
+        if self._arxiv_client is None:
+            from shared.data.arxiv import ArXivClient
+            self._arxiv_client = ArXivClient()
+        return self._arxiv_client
 
     # ------------------------------------------------------------------
     # Public API
@@ -105,17 +160,19 @@ class PaperScout:
         to_node_name: str,
         to_node_desc: str,
         limit: int = 5,
+        per_source_limit: int = 3,
     ) -> CitationBundle:
         """
-        Search Semantic Scholar for papers relevant to a single edge.
+        Search multiple sources for papers relevant to a single edge.
 
         Args:
             edge_id: Edge identifier
             from_node_name: Treatment node human name
-            from_node_desc: Treatment node description (unused for now)
+            from_node_desc: Treatment node description
             to_node_name: Outcome node human name
-            to_node_desc: Outcome node description (unused for now)
-            limit: Max papers to fetch
+            to_node_desc: Outcome node description
+            limit: Max total papers to return after dedup
+            per_source_limit: Max papers per source before dedup
 
         Returns:
             CitationBundle for this edge
@@ -125,28 +182,34 @@ class PaperScout:
         )
         logger.info(f"PaperScout: searching for '{query}' (edge={edge_id})")
 
-        try:
-            papers = self.s2_client.search_papers(query, limit=limit)
-        except Exception as e:
-            logger.warning(f"PaperScout: search failed for {edge_id}: {e}")
-            self.search_status[edge_id] = "FAILED"
-            return CitationBundle(edge_id=edge_id)
+        # Search all sources, collecting citations
+        all_citations: list[Citation] = []
+        all_citations += self._search_source_safe("semantic_scholar", query, edge_id, per_source_limit)
+        all_citations += self._search_source_safe("openalex", query, edge_id, per_source_limit)
+        all_citations += self._search_source_safe("core", query, edge_id, per_source_limit)
+        all_citations += self._search_source_safe("arxiv", query, edge_id, per_source_limit)
 
-        citations: list[Citation] = []
-        for paper in papers:
-            relevance = self._categorize_citation(paper, from_node_name, to_node_name)
-            citation = self._s2_paper_to_citation(paper, edge_id, relevance, query)
-            citations.append(citation)
+        # Deduplicate by DOI, then by normalized title
+        deduped = self._deduplicate(all_citations)
 
-        bundle = CitationBundle(edge_id=edge_id, citations=citations)
+        # Enrich with Unpaywall PDF URLs
+        enriched = self._enrich_with_unpaywall(deduped)
+
+        # Sort by citation count (descending) and take top `limit`
+        enriched.sort(key=lambda c: c.citation_count, reverse=True)
+        final = enriched[:limit]
+
+        bundle = CitationBundle(edge_id=edge_id, citations=final)
         self.bundles.append(bundle)
         self.search_status[edge_id] = "SEARCHED"
 
+        sources_used = {c.source for c in final}
         logger.info(
-            f"PaperScout: {len(citations)} papers for {edge_id} "
-            f"(supporting={sum(1 for c in citations if c.relevance == 'supporting')}, "
-            f"challenging={sum(1 for c in citations if c.relevance == 'challenging')}, "
-            f"methodological={sum(1 for c in citations if c.relevance == 'methodological')})"
+            f"PaperScout: {len(final)} papers for {edge_id} "
+            f"(sources={sources_used}, "
+            f"supporting={sum(1 for c in final if c.relevance == 'supporting')}, "
+            f"challenging={sum(1 for c in final if c.relevance == 'challenging')}, "
+            f"methodological={sum(1 for c in final if c.relevance == 'methodological')})"
         )
         return bundle
 
@@ -195,6 +258,214 @@ class PaperScout:
         return output_path
 
     # ------------------------------------------------------------------
+    # Multi-source dispatch
+    # ------------------------------------------------------------------
+
+    def _search_source_safe(
+        self,
+        source: str,
+        query: str,
+        edge_id: str,
+        limit: int,
+    ) -> list[Citation]:
+        """Dispatch to source-specific search; catch all errors, return []."""
+        try:
+            if source == "semantic_scholar":
+                return self._search_semantic_scholar(query, edge_id, limit)
+            elif source == "openalex":
+                return self._search_openalex(query, edge_id, limit)
+            elif source == "core":
+                return self._search_core(query, edge_id, limit)
+            elif source == "arxiv":
+                return self._search_arxiv(query, edge_id, limit)
+            else:
+                logger.warning(f"PaperScout: unknown source '{source}'")
+                return []
+        except Exception as e:
+            logger.warning(f"PaperScout: {source} search failed for {edge_id}: {e}")
+            return []
+
+    def _search_semantic_scholar(
+        self, query: str, edge_id: str, limit: int,
+    ) -> list[Citation]:
+        """Search Semantic Scholar and convert to Citations."""
+        papers = self.s2_client.search_papers(query, limit=limit)
+        citations = []
+        for paper in papers:
+            from_name = query.split()[0] if query else ""
+            to_name = query.split()[-2] if len(query.split()) > 2 else ""
+            relevance = self._categorize_citation(paper, from_name, to_name)
+            citations.append(self._s2_paper_to_citation(paper, edge_id, relevance, query))
+        return citations
+
+    def _search_openalex(
+        self, query: str, edge_id: str, limit: int,
+    ) -> list[Citation]:
+        """Search OpenAlex and convert to Citations."""
+        client = self.openalex_client
+        if client is None:
+            return []
+        works = client.search_works(query, limit=limit)
+        citations = []
+        for work in works:
+            # Create a lightweight object with .abstract for _categorize_citation
+            proxy = _AbstractProxy(work.abstract)
+            from_name = query.split()[0] if query else ""
+            to_name = query.split()[-2] if len(query.split()) > 2 else ""
+            relevance = self._categorize_citation(proxy, from_name, to_name)
+            citations.append(Citation(
+                doi=work.doi or "",
+                title=work.title,
+                authors=work.authors,
+                year=work.year,
+                excerpt=(work.abstract or "")[:300],
+                relevance=relevance,
+                edge_id=edge_id,
+                citation_count=work.cited_by_count,
+                search_query=query,
+                source="openalex",
+                pdf_url=work.oa_url or "",
+            ))
+        return citations
+
+    def _search_core(
+        self, query: str, edge_id: str, limit: int,
+    ) -> list[Citation]:
+        """Search CORE and convert to Citations."""
+        client = self.core_client
+        if client is None:
+            return []
+        works = client.search_works(query, limit=limit)
+        citations = []
+        for work in works:
+            proxy = _AbstractProxy(work.abstract)
+            from_name = query.split()[0] if query else ""
+            to_name = query.split()[-2] if len(query.split()) > 2 else ""
+            relevance = self._categorize_citation(proxy, from_name, to_name)
+            citations.append(Citation(
+                doi=work.doi or "",
+                title=work.title,
+                authors=work.authors,
+                year=work.year,
+                excerpt=(work.abstract or "")[:300],
+                relevance=relevance,
+                edge_id=edge_id,
+                search_query=query,
+                source="core",
+                pdf_url=work.download_url or "",
+            ))
+        return citations
+
+    def _search_arxiv(
+        self, query: str, edge_id: str, limit: int,
+    ) -> list[Citation]:
+        """Search arXiv and convert to Citations."""
+        papers = self.arxiv_client.search_papers(query, limit=limit)
+        citations = []
+        for paper in papers:
+            proxy = _AbstractProxy(paper.abstract)
+            from_name = query.split()[0] if query else ""
+            to_name = query.split()[-2] if len(query.split()) > 2 else ""
+            relevance = self._categorize_citation(proxy, from_name, to_name)
+            citations.append(Citation(
+                doi=paper.doi or "",
+                title=paper.title,
+                authors=paper.authors,
+                year=paper.year,
+                excerpt=(paper.abstract or "")[:300],
+                relevance=relevance,
+                edge_id=edge_id,
+                paper_id=paper.arxiv_id,
+                search_query=query,
+                source="arxiv",
+                pdf_url=paper.pdf_url or "",
+            ))
+        return citations
+
+    # ------------------------------------------------------------------
+    # Deduplication and enrichment
+    # ------------------------------------------------------------------
+
+    def _deduplicate(self, citations: list[Citation]) -> list[Citation]:
+        """
+        Merge duplicates by DOI (keep highest citation_count, preserve pdf_url).
+        For DOI-less papers, deduplicate by normalized title.
+        """
+        doi_map: dict[str, Citation] = {}
+        title_map: dict[str, Citation] = {}
+
+        for c in citations:
+            if c.doi:
+                existing = doi_map.get(c.doi)
+                if existing is None:
+                    doi_map[c.doi] = c
+                else:
+                    # Keep the one with higher citation count
+                    if c.citation_count > existing.citation_count:
+                        # Preserve pdf_url if the existing had one
+                        if existing.pdf_url and not c.pdf_url:
+                            c.pdf_url = existing.pdf_url
+                        doi_map[c.doi] = c
+                    elif c.pdf_url and not existing.pdf_url:
+                        existing.pdf_url = c.pdf_url
+            else:
+                norm_title = self._normalize_title(c.title)
+                if not norm_title:
+                    continue
+                existing = title_map.get(norm_title)
+                if existing is None:
+                    title_map[norm_title] = c
+                else:
+                    if c.citation_count > existing.citation_count:
+                        if existing.pdf_url and not c.pdf_url:
+                            c.pdf_url = existing.pdf_url
+                        title_map[norm_title] = c
+                    elif c.pdf_url and not existing.pdf_url:
+                        existing.pdf_url = c.pdf_url
+
+        # Combine: DOI-matched papers + title-only papers
+        # But skip title-only if their title matches a DOI-matched paper
+        doi_titles = {self._normalize_title(c.title) for c in doi_map.values()}
+        result = list(doi_map.values())
+        for norm_title, c in title_map.items():
+            if norm_title not in doi_titles:
+                result.append(c)
+
+        return result
+
+    def _enrich_with_unpaywall(self, citations: list[Citation]) -> list[Citation]:
+        """
+        For citations with DOI but no pdf_url, resolve via Unpaywall.
+        Skip if no unpaywall_email configured.
+        """
+        client = self.unpaywall_client
+        if client is None:
+            return citations
+
+        dois_to_resolve = [
+            c.doi for c in citations
+            if c.doi and not c.pdf_url
+        ]
+        if not dois_to_resolve:
+            return citations
+
+        logger.info(f"PaperScout: enriching {len(dois_to_resolve)} DOIs via Unpaywall")
+        resolved = client.resolve_batch(dois_to_resolve)
+
+        for c in citations:
+            if c.doi and not c.pdf_url and c.doi in resolved:
+                result = resolved[c.doi]
+                if result.pdf_url:
+                    c.pdf_url = result.pdf_url
+
+        return citations
+
+    @staticmethod
+    def _normalize_title(title: str) -> str:
+        """Normalize title for deduplication: lowercase, strip punctuation/spaces."""
+        return re.sub(r"[^a-z0-9]", "", title.lower())
+
+    # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
 
@@ -205,7 +476,7 @@ class PaperScout:
         to_name: str,
         to_desc: str,
     ) -> str:
-        """Build a Semantic Scholar search query from node names."""
+        """Build a search query from node names."""
         # Convert underscores to spaces for readability
         treatment = from_name.replace("_", " ")
         outcome = to_name.replace("_", " ")
@@ -267,4 +538,12 @@ class PaperScout:
             paper_id=paper.paper_id,
             citation_count=paper.citation_count,
             search_query=query,
+            source="semantic_scholar",
         )
+
+
+class _AbstractProxy:
+    """Lightweight proxy so _categorize_citation can operate on any source."""
+
+    def __init__(self, abstract: str | None):
+        self.abstract = abstract
