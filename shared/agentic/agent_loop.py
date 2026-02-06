@@ -27,7 +27,7 @@ from shared.agentic.output.edge_card import EdgeCard, compute_credibility_score
 from shared.agentic.output.system_report import SystemReport, CriticalPathSummary
 from shared.agentic.governance.audit_log import AuditLog, Hashes, ResultDelta
 from shared.agentic.governance.whitelist import RefinementWhitelist, Refinement
-from shared.agentic.governance.stopping import StoppingCriteria, StoppingDecision
+from shared.agentic.governance.stopping import StoppingCriteria
 from shared.agentic.artifact_store import ArtifactStore
 
 # New imports for comprehensive agentic system
@@ -39,7 +39,7 @@ from shared.agentic.identification.screen import IdentifiabilityScreen
 from shared.agentic.ts_guard import TSGuard
 from shared.agentic.governance.hitl_gate import HITLGate
 from shared.agentic.governance.patch_policy import PatchPolicy
-from shared.agentic.agents.patch_bot import PatchBot
+from shared.agentic.agents.patch_bot import PatchBot, PatchResult
 from shared.agentic.output.edge_card import (
     IdentificationBlock,
     CounterfactualBlock,
@@ -47,6 +47,21 @@ from shared.agentic.output.edge_card import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class IterationResult:
+    """Result of a single iteration of the agent loop."""
+
+    iteration: int
+    edges_estimated: int
+    patches_applied: int
+    edges_requeued: list[str]
+    issues_open: int
+    issues_critical: int
+    hitl_required: bool
+    should_stop: bool
+    stop_reason: str
 
 
 @dataclass
@@ -178,7 +193,7 @@ class AgentLoop:
 
         # PatchPolicy and PatchBot
         self.patch_policy = PatchPolicy.load()
-        self.patch_bot = PatchBot(self.patch_policy)
+        self.patch_bot = PatchBot(self.patch_policy, artifact_store=self.artifact_store)
 
         # Cross-run state
         self.cross_run_reducer = CrossRunReducer(
@@ -200,6 +215,12 @@ class AgentLoop:
         """
         Run the complete agent loop.
 
+        In EXPLORATION mode, iterates: Estimate → Detect Issues → Fix →
+        Re-queue (only when re-estimation required) → Re-estimate →
+        Check convergence → Repeat (up to max_iterations).
+
+        In CONFIRMATION mode, executes a single pass (no iteration).
+
         Returns:
             SystemReport with all results
         """
@@ -207,6 +228,7 @@ class AgentLoop:
         logger.info(f"AGENT LOOP: {self.dag.metadata.name}")
         logger.info(f"Run ID: {self.run_id}")
         logger.info(f"Mode: {self.mode}")
+        logger.info(f"Max iterations: {self.config.max_iterations}")
         logger.info("=" * 60)
 
         # Set audit context
@@ -227,26 +249,21 @@ class AgentLoop:
         # Phase 1: DataScout
         self._run_data_scout()
 
-        # Phase 2-4: Edge estimation loop
-        while not self.queue.is_complete():
-            self._process_ready_tasks()
+        # Iteration loop
+        for self.iteration in range(self.config.max_iterations):
+            result = self._run_iteration()
+            logger.info(
+                f"Iteration {self.iteration}: {result.edges_estimated} estimated, "
+                f"{result.patches_applied} patches, "
+                f"{len(result.edges_requeued)} re-queued"
+            )
+            if result.should_stop:
+                logger.info(f"Stopping: {result.stop_reason}")
+                break
 
-        # Phase 4.5: Post-estimation issue detection
+        # Post-loop: HITL gate (produce checklist if needed)
         edge_cards = self.artifact_store.get_all_edge_cards()
         edge_card_dict = {c.edge_id: c for c in edge_cards}
-        self.issue_registry.detect_post_run_issues(edge_card_dict, self.issue_ledger)
-
-        # Phase 4.6: Evaluate issue gates
-        gate_eval = self.issue_gates.evaluate(self.issue_ledger, self.mode)
-        logger.info(gate_eval.summary())
-
-        # Phase 4.7: Apply auto-fixes (EXPLORATION only)
-        if self.mode == "EXPLORATION" and gate_eval.auto_fixable_count > 0:
-            patch_results = self.patch_bot.apply_fixes(self.issue_ledger, self.mode)
-            for pr in patch_results:
-                logger.info(f"PatchBot: {pr.action} -> {'applied' if pr.applied else 'rejected'}: {pr.message}")
-
-        # Phase 4.8: HITL gate
         hitl_checklist = self.hitl_gate.evaluate(
             edge_cards=edge_card_dict,
             ledger=self.issue_ledger,
@@ -261,26 +278,154 @@ class AgentLoop:
                 f.write(hitl_checklist.to_markdown())
             logger.info(f"HITL checklist written to {checklist_path}")
 
-        # Create system report
-        self.system_report = self._create_system_report()
-
-        # Phase 5: Judge evaluation (in EXPLORATION mode)
-        if self.mode == "EXPLORATION":
-            self._run_judge_evaluation()
-
         # Flush issues and update cross-run state
         self.issue_ledger.flush()
         self.cross_run_reducer.reduce_incremental(
             self.run_id, self.issue_ledger.issues,
         )
 
+        # Create system report
+        self.system_report = self._create_system_report()
+
         logger.info("=" * 60)
         logger.info("AGENT LOOP COMPLETE")
+        logger.info(f"Total iterations: {self.iteration + 1}")
         logger.info(self.issue_ledger.summary())
         logger.info(self.system_report.summary())
         logger.info("=" * 60)
 
         return self.system_report
+
+    def _run_iteration(self) -> IterationResult:
+        """
+        Execute a single iteration of the agent loop.
+
+        Phases per iteration:
+        2. Process ready tasks (estimate/re-estimate)
+        3. Post-run issue detection
+        4. Gate evaluation
+        5. HITL check
+        6. PatchBot applies auto-fixes, re-queues affected edges
+        7. Convergence check
+
+        Returns:
+            IterationResult with iteration outcome
+        """
+        logger.info(f"--- Iteration {self.iteration} ---")
+
+        # Phase 2: Process ready tasks (estimate / re-estimate)
+        edges_estimated = 0
+        while not self.queue.is_complete():
+            ready_before = len(self.queue.get_ready())
+            if ready_before == 0:
+                break
+            self._process_ready_tasks()
+            edges_estimated += ready_before
+
+        # Phase 3: Post-run issue detection
+        edge_cards = self.artifact_store.get_all_edge_cards()
+        edge_card_dict = {c.edge_id: c for c in edge_cards}
+        self.issue_registry.detect_post_run_issues(edge_card_dict, self.issue_ledger)
+
+        # Phase 4: Gate evaluation
+        gate_eval = self.issue_gates.evaluate(self.issue_ledger, self.mode)
+        logger.info(gate_eval.summary())
+
+        open_issues = self.issue_ledger.get_open_issues()
+        critical_issues = self.issue_ledger.get_critical_open()
+
+        # Phase 5: HITL check — if requires_human issues exist, stop iterating
+        hitl_required = self.issue_ledger.has_human_required()
+
+        # CONFIRMATION mode: always single-pass
+        if self.mode == "CONFIRMATION":
+            return IterationResult(
+                iteration=self.iteration,
+                edges_estimated=edges_estimated,
+                patches_applied=0,
+                edges_requeued=[],
+                issues_open=len(open_issues),
+                issues_critical=len(critical_issues),
+                hitl_required=hitl_required,
+                should_stop=True,
+                stop_reason="CONFIRMATION mode: single pass only",
+            )
+
+        # Phase 6: PatchBot applies auto-fixes
+        patches_applied = 0
+        requeued: list[str] = []
+        if gate_eval.auto_fixable_count > 0:
+            patch_results = self.patch_bot.apply_fixes(self.issue_ledger, self.mode)
+            for pr in patch_results:
+                logger.info(
+                    f"PatchBot: {pr.action} -> "
+                    f"{'applied' if pr.applied else 'rejected'} "
+                    f"reest={pr.requires_reestimation}: {pr.message}"
+                )
+                if pr.applied:
+                    patches_applied += 1
+                    if pr.requires_reestimation:
+                        for edge_id in pr.affected_edges:
+                            if self.queue.reset_task(edge_id, reason=f"patch:{pr.action}"):
+                                requeued.append(edge_id)
+                                logger.info(f"Re-queued {edge_id} for re-estimation (patch:{pr.action})")
+
+            # Increment iteration counter in audit log when patches applied
+            if patches_applied > 0:
+                self.audit_log.increment_iteration()
+
+        # Phase 7: Convergence check
+        # STOP if HITL issues require human input
+        if hitl_required:
+            return IterationResult(
+                iteration=self.iteration,
+                edges_estimated=edges_estimated,
+                patches_applied=patches_applied,
+                edges_requeued=requeued,
+                issues_open=len(open_issues),
+                issues_critical=len(critical_issues),
+                hitl_required=True,
+                should_stop=True,
+                stop_reason="HITL required: issues need human input",
+            )
+
+        # STOP if no tasks were re-queued AND no auto-fixable issues remain
+        remaining_auto_fixable = len(self.issue_ledger.get_auto_fixable())
+        if not requeued and remaining_auto_fixable == 0:
+            return IterationResult(
+                iteration=self.iteration,
+                edges_estimated=edges_estimated,
+                patches_applied=patches_applied,
+                edges_requeued=requeued,
+                issues_open=len(open_issues),
+                issues_critical=len(critical_issues),
+                hitl_required=False,
+                should_stop=True,
+                stop_reason="Converged: no re-queued tasks and no auto-fixable issues",
+            )
+
+        # Log credibility delta for observability (NOT used as optimization target)
+        prev_scores = self.queue.get_prev_credibility_scores()
+        if prev_scores:
+            delta_info = {
+                eid: f"{prev:.2f} -> re-queued"
+                for eid, prev in prev_scores.items()
+                if eid in requeued
+            }
+            logger.info(f"Credibility delta (informational): {delta_info}")
+
+        # Continue to next iteration
+        return IterationResult(
+            iteration=self.iteration,
+            edges_estimated=edges_estimated,
+            patches_applied=patches_applied,
+            edges_requeued=requeued,
+            issues_open=len(open_issues),
+            issues_critical=len(critical_issues),
+            hitl_required=False,
+            should_stop=False,
+            stop_reason="",
+        )
 
     def run_confirmation(
         self,
@@ -814,36 +959,6 @@ class AgentLoop:
             credibility_rating=rating,
             credibility_score=score,
         )
-
-    def _run_judge_evaluation(self) -> None:
-        """Run Judge evaluation and potentially iterate."""
-        logger.info("Phase 5: Judge evaluation")
-
-        edge_cards = self.artifact_store.get_all_edge_cards()
-        scores = [c.credibility_score for c in edge_cards]
-
-        # Check stopping criteria
-        decision = self.stopping_criteria.should_stop(
-            iteration=self.iteration,
-            credibility_delta=0.0,  # First iteration
-            critical_edges_scores=scores,
-            mode=self.mode,
-        )
-
-        if decision.should_stop:
-            logger.info(f"Stopping: {decision.reason}")
-            return
-
-        # Propose refinements (simplified)
-        # In production, Judge agent would analyze weak edges and propose fixes
-
-        # Check if we should continue
-        self.iteration += 1
-        self.audit_log.increment_iteration()
-
-        if self.iteration < self.config.max_iterations:
-            logger.info(f"Iteration {self.iteration}: checking for improvements")
-            # Could re-run with refinements here
 
     def _create_system_report(self) -> SystemReport:
         """Create system report from current state."""

@@ -108,6 +108,10 @@ class LinkageTask:
     credibility_score: float | None = None
     credibility_rating: str | None = None  # A/B/C/D
 
+    # Re-estimation tracking
+    _prev_credibility_score: float | None = None
+    reset_reason: str | None = None
+
     # Lock for idempotency
     _locked_by: str | None = None
 
@@ -239,6 +243,19 @@ class LinkageTask:
             return True
         return False
 
+    def reset(self, reason: str = "") -> None:
+        """Reset a terminal task for re-estimation."""
+        self._prev_credibility_score = self.credibility_score
+        self.status = TaskStatus.READY
+        self.started_at = None
+        self.completed_at = None
+        self.results_ref = None
+        self.critique_ref = None
+        self.credibility_score = None
+        self.credibility_rating = None
+        self.blocked_reason = None
+        self.reset_reason = reason
+
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
@@ -257,6 +274,8 @@ class LinkageTask:
             "results_ref": self.results_ref,
             "credibility_score": self.credibility_score,
             "credibility_rating": self.credibility_rating,
+            "reset_reason": self.reset_reason,
+            "prev_credibility_score": self._prev_credibility_score,
         }
 
 

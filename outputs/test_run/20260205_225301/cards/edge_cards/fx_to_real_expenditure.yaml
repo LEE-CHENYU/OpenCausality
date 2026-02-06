@@ -1,0 +1,95 @@
+edge_id: fx_to_real_expenditure
+dag_version_hash: a0d5c383631c52aa262f288704c6f7868d48b73d5034761245939de8eeea1d72
+created_at: '2026-02-05T22:53:03.107976'
+data_provenance:
+  treatment_source: null
+  outcome_source: null
+  control_sources: {}
+  instrument_sources: {}
+  combined_row_count: null
+  combined_date_range: null
+  missing_rate: null
+  panel_dimensions: null
+  entity_boundary_note: null
+  kpi_definitions: null
+spec_hash: 3cd8d61ed8c8fce944339d672111bfc406d15a3e7db2cecade9100f86d2c9383
+spec_details:
+  design: IMMUTABLE_EVIDENCE
+  controls: []
+  instruments: []
+  fixed_effects: []
+  se_method: from_source_block
+  sample_filter: null
+  horizon: null
+  bandwidth: null
+estimates:
+  point: -0.1
+  se: 0.04
+  ci_95:
+  - -0.18
+  - -0.02
+  pvalue: 0.012
+diagnostics:
+  validated_evidence:
+    name: validated_evidence
+    passed: true
+    value: 1.0
+    threshold: null
+    pvalue: null
+    message: Validated from Block F
+  effective_obs:
+    name: effective_obs
+    passed: true
+    value: 60.0
+    threshold: 20.0
+    pvalue: null
+    message: ''
+all_diagnostics_pass: true
+interpretation:
+  estimand: Effect of exchange rate depreciation on real household expenditure. 10%
+    depreciation reduces real spending by ~1%.
+  is_not: Re-estimated result; this is locked validated evidence
+  channels:
+  - as identified in source block
+  population: ''
+  conditions: 'Source: Block F'
+  allowed_uses: []
+  forbidden_uses: []
+failure_flags:
+  weak_identification: false
+  potential_bad_control: false
+  mechanical_identity_risk: false
+  regime_break_detected: false
+  small_sample: false
+  high_missing_rate: false
+  entity_boundary_change: false
+  definition_inconsistency: false
+counterfactual:
+  supports_shock_path: true
+  supports_policy_intervention: false
+  intervention_note: Validated evidence from Block F
+  external_validity: ''
+credibility_rating: A
+credibility_score: 0.99
+identification:
+  claim_level: IDENTIFIED_CAUSAL
+  risks:
+    unmeasured_confounding: low
+    simultaneity: low
+    weak_variation: low
+    measurement_error: low
+    selection: low
+  untestable_assumptions: []
+  testable_threats_passed: []
+  testable_threats_failed: []
+counterfactual_block:
+  allowed: true
+  reason_blocked: null
+  supports_policy_intervention: false
+propagation_role:
+  role: reduced_form
+  overlapping_paths: []
+  selected_for_counterfactual: false
+companion_edge_id: null
+is_precisely_null: false
+null_equivalence_bound: null

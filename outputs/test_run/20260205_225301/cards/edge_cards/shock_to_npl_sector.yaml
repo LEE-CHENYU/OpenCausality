@@ -1,0 +1,147 @@
+edge_id: shock_to_npl_sector
+dag_version_hash: a0d5c383631c52aa262f288704c6f7868d48b73d5034761245939de8eeea1d72
+created_at: '2026-02-05T22:53:04.206460'
+data_provenance:
+  treatment_source: null
+  outcome_source: null
+  control_sources: {}
+  instrument_sources: {}
+  combined_row_count: 48
+  combined_date_range: null
+  missing_rate: null
+  panel_dimensions:
+    n_units: 4
+    n_periods: 27
+    balance: unbalanced
+  entity_boundary_note: 'Multi-bank panel: kaspi, halyk, forte, bcc'
+  kpi_definitions: null
+spec_hash: e19a69de52014bfee37b9ba7706c0bf94d42389f35e1bcfff1ee6f214a5baeb0
+spec_details:
+  design: PANEL_LP_EXPOSURE_FE
+  controls:
+  - outcome_lag1
+  - interaction_lag1
+  instruments: []
+  fixed_effects:
+  - bank
+  - time
+  se_method: clustered
+  sample_filter: null
+  horizon: &id001
+  - 0
+  - 1
+  - 2
+  bandwidth: null
+estimates:
+  point: -46.548475059120626
+  se: 13.416397639038799
+  ci_95:
+  - -72.84461443163667
+  - -20.25233568660458
+  pvalue: 0.0029314539629232694
+  horizons: *id001
+  irf:
+  - -46.548475059120626
+  - -12.610408604529738
+  - -2.575374997519121
+  irf_ci_lower:
+  - -74.85459979636899
+  - -107.01677496713384
+  - -29.432642741678563
+  irf_ci_upper:
+  - -18.242350321872262
+  - 81.79595775807437
+  - 24.281892746640324
+diagnostics:
+  effective_obs:
+    name: effective_obs
+    passed: true
+    value: 48.0
+    threshold: 20.0
+    pvalue: null
+    message: 48 panel observations (4 banks x 27 periods)
+  leave_one_bank_out:
+    name: leave_one_bank_out
+    passed: false
+    value: 0.0
+    threshold: null
+    pvalue: null
+    message: 'Sign flipped when excluding: kaspi'
+  exposure_variation:
+    name: exposure_variation
+    passed: true
+    value: 0.5119650985255363
+    threshold: 0.1
+    pvalue: null
+    message: CV of exposure = 0.512, range = [0.30, 0.85]
+  regime_break:
+    name: regime_break
+    passed: false
+    value: 0.0
+    threshold: null
+    pvalue: null
+    message: 'Sign flipped at: IFRS 9 adoption'
+  r_squared_within:
+    name: r_squared_within
+    passed: true
+    value: -0.2535000590468959
+    threshold: null
+    pvalue: null
+    message: 'R-squared within at h=0: -0.2535'
+all_diagnostics_pass: false
+interpretation:
+  estimand: Differential bank response per unit E_consumer, per unit shock (shift-share
+    Exposure x Shock)
+  is_not: Aggregate causal effect of shock on outcome; this is a differential effect
+    by exposure level
+  channels:
+  - cross-bank exposure variation
+  population: Kazakhstan banking sector (4 banks)
+  conditions: Predetermined exposure; common shock; entity + time FE
+  allowed_uses: []
+  forbidden_uses: []
+failure_flags:
+  weak_identification: true
+  potential_bad_control: false
+  mechanical_identity_risk: false
+  regime_break_detected: true
+  small_sample: false
+  high_missing_rate: false
+  entity_boundary_change: false
+  definition_inconsistency: false
+counterfactual:
+  supports_shock_path: true
+  supports_policy_intervention: false
+  intervention_note: Shift-share panel LP; valid for differential shock propagation
+    across banks
+  external_validity: ''
+credibility_rating: C
+credibility_score: 0.59
+identification:
+  claim_level: REDUCED_FORM
+  risks:
+    unmeasured_confounding: low
+    simultaneity: low
+    weak_variation: high
+    measurement_error: low
+    selection: low
+  untestable_assumptions:
+  - Exposure predetermined and exogenous to outcome trends
+  testable_threats_passed:
+  - effective_obs
+  - exposure_variation
+  - r_squared_within
+  testable_threats_failed:
+  - leave_one_bank_out
+  - regime_break
+counterfactual_block:
+  allowed: true
+  reason_blocked: null
+  supports_policy_intervention: false
+propagation_role:
+  role: reduced_form
+  overlapping_paths: []
+  selected_for_counterfactual: false
+companion_edge_id: shock_to_npl_kspi
+is_precisely_null: false
+null_equivalence_bound: null

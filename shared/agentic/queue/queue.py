@@ -276,6 +276,23 @@ class TaskQueue:
                 # Propagate artifact availability
                 self.mark_artifact_available(edge_id, results_ref)
 
+    def reset_task(self, edge_id: str, reason: str = "") -> bool:
+        """Reset a completed/failed/blocked task for re-estimation."""
+        with self._lock:
+            task = self._tasks.get(edge_id)
+            if task and task.is_done():
+                task.reset(reason)
+                return True
+            return False
+
+    def get_prev_credibility_scores(self) -> dict[str, float]:
+        """Get previous iteration credibility scores for delta tracking."""
+        return {
+            eid: t._prev_credibility_score
+            for eid, t in self._tasks.items()
+            if t._prev_credibility_score is not None
+        }
+
     def mark_failed(self, edge_id: str, reason: str) -> None:
         """Mark a task as failed."""
         with self._lock:

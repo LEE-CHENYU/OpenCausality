@@ -1,7 +1,365 @@
 {
-  "last_updated": "",
+  "last_updated": "2026-02-06T07:24:03.447516+00:00",
   "baseline_run_id": "",
   "baseline_mode": "",
   "baseline_dag_hash": "",
-  "issues": {}
+  "issues": {
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:fx_to_cpi_tradable": {
+      "status": "OPEN",
+      "opened_run": "4144e331",
+      "severity": "CRITICAL",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0001 but claim_level=. Significance does not establish causation."
+    },
+    "RATING_DIAGNOSTICS_CONFLICT:cpi_to_nbk_rate": {
+      "status": "OPEN",
+      "opened_run": "4144e331",
+      "severity": "HIGH",
+      "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
+      "message": "A-rating despite failed diagnostics."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:shock_to_npl_kspi_annual": {
+      "status": "OPEN",
+      "opened_run": "4144e331",
+      "severity": "CRITICAL",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0000 but claim_level=. Significance does not establish causation."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:shock_to_npl_sector": {
+      "status": "OPEN",
+      "opened_run": "4144e331",
+      "severity": "CRITICAL",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0029 but claim_level=. Significance does not establish causation."
+    },
+    "LOO_INSTABILITY:shock_to_npl_sector": {
+      "status": "OPEN",
+      "opened_run": "4144e331",
+      "severity": "HIGH",
+      "rule_id": "LOO_INSTABILITY",
+      "message": "Leave-one-out shows sign flip or >50% magnitude change."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:shock_to_cor_kspi_annual": {
+      "status": "OPEN",
+      "opened_run": "4144e331",
+      "severity": "CRITICAL",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0000 but claim_level=. Significance does not establish causation."
+    },
+    "RATING_DIAGNOSTICS_CONFLICT:vix_to_fx": {
+      "status": "OPEN",
+      "opened_run": "4144e331",
+      "severity": "HIGH",
+      "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
+      "message": "A-rating despite failed diagnostics."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:oil_supply_to_income": {
+      "status": "OPEN",
+      "opened_run": "4144e331",
+      "severity": "CRITICAL",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0030 but claim_level=REDUCED_FORM. Significance does not establish causation."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:cpi_to_nominal_income": {
+      "status": "OPEN",
+      "opened_run": "4144e331",
+      "severity": "CRITICAL",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0003 but claim_level=. Significance does not establish causation."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:global_activity_to_income": {
+      "status": "OPEN",
+      "opened_run": "4144e331",
+      "severity": "CRITICAL",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0030 but claim_level=REDUCED_FORM. Significance does not establish causation."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:portfolio_mix_to_rwa": {
+      "status": "OPEN",
+      "opened_run": "4144e331",
+      "severity": "CRITICAL",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0000 but claim_level=. Significance does not establish causation."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:expenditure_to_payments_revenue": {
+      "status": "OPEN",
+      "opened_run": "4144e331",
+      "severity": "CRITICAL",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0000 but claim_level=. Significance does not establish causation."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:nbk_rate_to_cor": {
+      "status": "OPEN",
+      "opened_run": "4144e331",
+      "severity": "CRITICAL",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0029 but claim_level=. Significance does not establish causation."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:shock_to_cor_kspi": {
+      "status": "OPEN",
+      "opened_run": "4144e331",
+      "severity": "CRITICAL",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0000 but claim_level=. Significance does not establish causation."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:shock_to_npl_kspi": {
+      "status": "OPEN",
+      "opened_run": "4144e331",
+      "severity": "CRITICAL",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0000 but claim_level=. Significance does not establish causation."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:oil_supply_to_brent": {
+      "status": "OPEN",
+      "opened_run": "4144e331",
+      "severity": "CRITICAL",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0000 but claim_level=. Significance does not establish causation."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:shock_to_cor_sector": {
+      "status": "OPEN",
+      "opened_run": "4144e331",
+      "severity": "CRITICAL",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0000 but claim_level=. Significance does not establish causation."
+    },
+    "LOO_INSTABILITY:shock_to_cor_sector": {
+      "status": "OPEN",
+      "opened_run": "4144e331",
+      "severity": "HIGH",
+      "rule_id": "LOO_INSTABILITY",
+      "message": "Leave-one-out shows sign flip or >50% magnitude change."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:fx_to_real_expenditure": {
+      "status": "OPEN",
+      "opened_run": "4144e331",
+      "severity": "CRITICAL",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0120 but claim_level=. Significance does not establish causation."
+    },
+    "LOO_INSTABILITY:nbk_rate_to_cor_sector": {
+      "status": "OPEN",
+      "opened_run": "4144e331",
+      "severity": "HIGH",
+      "rule_id": "LOO_INSTABILITY",
+      "message": "Leave-one-out shows sign flip or >50% magnitude change."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:nbk_rate_to_deposit_cost": {
+      "status": "OPEN",
+      "opened_run": "4144e331",
+      "severity": "CRITICAL",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0003 but claim_level=. Significance does not establish causation."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:oil_demand_to_income": {
+      "status": "OPEN",
+      "opened_run": "4144e331",
+      "severity": "CRITICAL",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0030 but claim_level=REDUCED_FORM. Significance does not establish causation."
+    },
+    "UNIT_MISSING_IN_EDGECARD:fx_to_cpi_nontradable": {
+      "status": "OPEN",
+      "opened_run": "416c1a5a",
+      "severity": "CRITICAL",
+      "rule_id": "UNIT_MISSING_IN_EDGECARD",
+      "message": "EdgeCard missing treatment_unit/outcome_unit."
+    },
+    "UNIT_MISSING_IN_EDGECARD:fx_to_cpi_tradable": {
+      "status": "OPEN",
+      "opened_run": "416c1a5a",
+      "severity": "CRITICAL",
+      "rule_id": "UNIT_MISSING_IN_EDGECARD",
+      "message": "EdgeCard missing treatment_unit/outcome_unit."
+    },
+    "UNIT_MISSING_IN_EDGECARD:cpi_to_nbk_rate": {
+      "status": "OPEN",
+      "opened_run": "416c1a5a",
+      "severity": "CRITICAL",
+      "rule_id": "UNIT_MISSING_IN_EDGECARD",
+      "message": "EdgeCard missing treatment_unit/outcome_unit."
+    },
+    "UNIT_MISSING_IN_EDGECARD:loan_portfolio_to_rwa": {
+      "status": "OPEN",
+      "opened_run": "416c1a5a",
+      "severity": "CRITICAL",
+      "rule_id": "UNIT_MISSING_IN_EDGECARD",
+      "message": "EdgeCard missing treatment_unit/outcome_unit."
+    },
+    "UNIT_MISSING_IN_EDGECARD:fx_to_nbk_rate": {
+      "status": "OPEN",
+      "opened_run": "416c1a5a",
+      "severity": "CRITICAL",
+      "rule_id": "UNIT_MISSING_IN_EDGECARD",
+      "message": "EdgeCard missing treatment_unit/outcome_unit."
+    },
+    "UNIT_MISSING_IN_EDGECARD:shock_to_npl_kspi_annual": {
+      "status": "OPEN",
+      "opened_run": "416c1a5a",
+      "severity": "CRITICAL",
+      "rule_id": "UNIT_MISSING_IN_EDGECARD",
+      "message": "EdgeCard missing treatment_unit/outcome_unit."
+    },
+    "UNIT_MISSING_IN_EDGECARD:shock_to_npl_sector": {
+      "status": "OPEN",
+      "opened_run": "416c1a5a",
+      "severity": "CRITICAL",
+      "rule_id": "UNIT_MISSING_IN_EDGECARD",
+      "message": "EdgeCard missing treatment_unit/outcome_unit."
+    },
+    "UNIT_MISSING_IN_EDGECARD:shock_to_cor_kspi_annual": {
+      "status": "OPEN",
+      "opened_run": "416c1a5a",
+      "severity": "CRITICAL",
+      "rule_id": "UNIT_MISSING_IN_EDGECARD",
+      "message": "EdgeCard missing treatment_unit/outcome_unit."
+    },
+    "UNIT_MISSING_IN_EDGECARD:vix_to_fx": {
+      "status": "OPEN",
+      "opened_run": "416c1a5a",
+      "severity": "CRITICAL",
+      "rule_id": "UNIT_MISSING_IN_EDGECARD",
+      "message": "EdgeCard missing treatment_unit/outcome_unit."
+    },
+    "UNIT_MISSING_IN_EDGECARD:oil_supply_to_income": {
+      "status": "OPEN",
+      "opened_run": "416c1a5a",
+      "severity": "CRITICAL",
+      "rule_id": "UNIT_MISSING_IN_EDGECARD",
+      "message": "EdgeCard missing treatment_unit/outcome_unit."
+    },
+    "UNIT_MISSING_IN_EDGECARD:capital_to_k2": {
+      "status": "OPEN",
+      "opened_run": "416c1a5a",
+      "severity": "CRITICAL",
+      "rule_id": "UNIT_MISSING_IN_EDGECARD",
+      "message": "EdgeCard missing treatment_unit/outcome_unit."
+    },
+    "UNIT_MISSING_IN_EDGECARD:cpi_to_nominal_income": {
+      "status": "OPEN",
+      "opened_run": "416c1a5a",
+      "severity": "CRITICAL",
+      "rule_id": "UNIT_MISSING_IN_EDGECARD",
+      "message": "EdgeCard missing treatment_unit/outcome_unit."
+    },
+    "UNIT_MISSING_IN_EDGECARD:cor_to_capital": {
+      "status": "OPEN",
+      "opened_run": "416c1a5a",
+      "severity": "CRITICAL",
+      "rule_id": "UNIT_MISSING_IN_EDGECARD",
+      "message": "EdgeCard missing treatment_unit/outcome_unit."
+    },
+    "UNIT_MISSING_IN_EDGECARD:global_activity_to_income": {
+      "status": "OPEN",
+      "opened_run": "416c1a5a",
+      "severity": "CRITICAL",
+      "rule_id": "UNIT_MISSING_IN_EDGECARD",
+      "message": "EdgeCard missing treatment_unit/outcome_unit."
+    },
+    "UNIT_MISSING_IN_EDGECARD:rwa_to_k2": {
+      "status": "OPEN",
+      "opened_run": "416c1a5a",
+      "severity": "CRITICAL",
+      "rule_id": "UNIT_MISSING_IN_EDGECARD",
+      "message": "EdgeCard missing treatment_unit/outcome_unit."
+    },
+    "UNIT_MISSING_IN_EDGECARD:portfolio_mix_to_rwa": {
+      "status": "OPEN",
+      "opened_run": "416c1a5a",
+      "severity": "CRITICAL",
+      "rule_id": "UNIT_MISSING_IN_EDGECARD",
+      "message": "EdgeCard missing treatment_unit/outcome_unit."
+    },
+    "UNIT_MISSING_IN_EDGECARD:expenditure_to_payments_revenue": {
+      "status": "OPEN",
+      "opened_run": "416c1a5a",
+      "severity": "CRITICAL",
+      "rule_id": "UNIT_MISSING_IN_EDGECARD",
+      "message": "EdgeCard missing treatment_unit/outcome_unit."
+    },
+    "UNIT_MISSING_IN_EDGECARD:nbk_rate_to_cor": {
+      "status": "OPEN",
+      "opened_run": "416c1a5a",
+      "severity": "CRITICAL",
+      "rule_id": "UNIT_MISSING_IN_EDGECARD",
+      "message": "EdgeCard missing treatment_unit/outcome_unit."
+    },
+    "UNIT_MISSING_IN_EDGECARD:oil_supply_to_fx": {
+      "status": "OPEN",
+      "opened_run": "416c1a5a",
+      "severity": "CRITICAL",
+      "rule_id": "UNIT_MISSING_IN_EDGECARD",
+      "message": "EdgeCard missing treatment_unit/outcome_unit."
+    },
+    "UNIT_MISSING_IN_EDGECARD:shock_to_cor_kspi": {
+      "status": "OPEN",
+      "opened_run": "416c1a5a",
+      "severity": "CRITICAL",
+      "rule_id": "UNIT_MISSING_IN_EDGECARD",
+      "message": "EdgeCard missing treatment_unit/outcome_unit."
+    },
+    "UNIT_MISSING_IN_EDGECARD:shock_to_npl_kspi": {
+      "status": "OPEN",
+      "opened_run": "416c1a5a",
+      "severity": "CRITICAL",
+      "rule_id": "UNIT_MISSING_IN_EDGECARD",
+      "message": "EdgeCard missing treatment_unit/outcome_unit."
+    },
+    "UNIT_MISSING_IN_EDGECARD:oil_supply_to_brent": {
+      "status": "OPEN",
+      "opened_run": "416c1a5a",
+      "severity": "CRITICAL",
+      "rule_id": "UNIT_MISSING_IN_EDGECARD",
+      "message": "EdgeCard missing treatment_unit/outcome_unit."
+    },
+    "UNIT_MISSING_IN_EDGECARD:shock_to_cor_sector": {
+      "status": "OPEN",
+      "opened_run": "416c1a5a",
+      "severity": "CRITICAL",
+      "rule_id": "UNIT_MISSING_IN_EDGECARD",
+      "message": "EdgeCard missing treatment_unit/outcome_unit."
+    },
+    "UNIT_MISSING_IN_EDGECARD:fx_to_real_expenditure": {
+      "status": "OPEN",
+      "opened_run": "416c1a5a",
+      "severity": "CRITICAL",
+      "rule_id": "UNIT_MISSING_IN_EDGECARD",
+      "message": "EdgeCard missing treatment_unit/outcome_unit."
+    },
+    "UNIT_MISSING_IN_EDGECARD:nbk_rate_to_cor_sector": {
+      "status": "OPEN",
+      "opened_run": "416c1a5a",
+      "severity": "CRITICAL",
+      "rule_id": "UNIT_MISSING_IN_EDGECARD",
+      "message": "EdgeCard missing treatment_unit/outcome_unit."
+    },
+    "UNIT_MISSING_IN_EDGECARD:nbk_rate_to_deposit_cost_sector": {
+      "status": "OPEN",
+      "opened_run": "416c1a5a",
+      "severity": "CRITICAL",
+      "rule_id": "UNIT_MISSING_IN_EDGECARD",
+      "message": "EdgeCard missing treatment_unit/outcome_unit."
+    },
+    "UNIT_MISSING_IN_EDGECARD:oil_demand_to_fx": {
+      "status": "OPEN",
+      "opened_run": "416c1a5a",
+      "severity": "CRITICAL",
+      "rule_id": "UNIT_MISSING_IN_EDGECARD",
+      "message": "EdgeCard missing treatment_unit/outcome_unit."
+    },
+    "UNIT_MISSING_IN_EDGECARD:nbk_rate_to_deposit_cost": {
+      "status": "OPEN",
+      "opened_run": "416c1a5a",
+      "severity": "CRITICAL",
+      "rule_id": "UNIT_MISSING_IN_EDGECARD",
+      "message": "EdgeCard missing treatment_unit/outcome_unit."
+    },
+    "UNIT_MISSING_IN_EDGECARD:oil_demand_to_income": {
+      "status": "OPEN",
+      "opened_run": "416c1a5a",
+      "severity": "CRITICAL",
+      "rule_id": "UNIT_MISSING_IN_EDGECARD",
+      "message": "EdgeCard missing treatment_unit/outcome_unit."
+    }
+  }
 }

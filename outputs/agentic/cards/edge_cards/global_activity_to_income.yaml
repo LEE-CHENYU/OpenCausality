@@ -1,0 +1,90 @@
+edge_id: global_activity_to_income
+dag_version_hash: 1c7bd8fe01609fd7d4926c38e6134a089c1c4e450ca44d017023564f04d8220f
+created_at: '2026-02-05T23:24:03.313426'
+data_provenance:
+  treatment_source: null
+  outcome_source: null
+  control_sources: {}
+  instrument_sources: {}
+  combined_row_count: null
+  combined_date_range: null
+  missing_rate: null
+  panel_dimensions: null
+  entity_boundary_note: null
+  kpi_definitions: null
+spec_hash: b6876d1132f29867fe9f992b97ddb472075389c1e5ae41b06653325575f6f7f9
+spec_details:
+  design: LOCAL_PROJECTIONS
+  controls: []
+  instruments: []
+  fixed_effects: []
+  se_method: hac
+  sample_filter: null
+  horizon: null
+  bandwidth: null
+estimates:
+  point: -0.15
+  se: 0.05
+  ci_95:
+  - -0.25
+  - -0.05
+  pvalue: 0.003
+diagnostics:
+  residual_checks:
+    name: residual_checks
+    passed: true
+    value: 0.95
+    threshold: null
+    pvalue: null
+    message: ''
+all_diagnostics_pass: true
+interpretation:
+  estimand: Effect of global_activity_innovation on log_income_pc
+  is_not: Universal causal effect
+  channels:
+  - direct
+  - indirect
+  population: ''
+  conditions: ''
+  allowed_uses: []
+  forbidden_uses: []
+failure_flags:
+  weak_identification: false
+  potential_bad_control: false
+  mechanical_identity_risk: false
+  regime_break_detected: false
+  small_sample: false
+  high_missing_rate: false
+  entity_boundary_change: false
+  definition_inconsistency: false
+counterfactual:
+  supports_shock_path: true
+  supports_policy_intervention: false
+  intervention_note: Reduced-form estimate
+  external_validity: ''
+credibility_rating: A
+credibility_score: 0.97
+identification:
+  claim_level: REDUCED_FORM
+  risks:
+    unmeasured_confounding: medium
+    simultaneity: low
+    weak_variation: low
+    measurement_error: low
+    selection: low
+  untestable_assumptions:
+  - No omitted common cause of treatment and outcome
+  testable_threats_passed:
+  - residual_checks
+  testable_threats_failed: []
+counterfactual_block:
+  allowed: false
+  reason_blocked: Design LOCAL_PROJECTIONS provides REDUCED_FORM level only
+  supports_policy_intervention: false
+propagation_role:
+  role: reduced_form
+  overlapping_paths: []
+  selected_for_counterfactual: false
+companion_edge_id: null
+is_precisely_null: false
+null_equivalence_bound: null

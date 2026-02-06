@@ -1,0 +1,30 @@
+{
+  "run_id": "test_630e34b_225301",
+  "total_issues": 36,
+  "open_issues": 36,
+  "critical_open": 23,
+  "human_required": 0,
+  "auto_fixable": 14,
+  "by_severity": {
+    "CRITICAL": 23,
+    "HIGH": 13
+  },
+  "by_rule": {
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED": 11,
+    "RATING_DIAGNOSTICS_CONFLICT": 2,
+    "UNIT_MISSING_IN_EDGECARD": 12,
+    "SMALL_SAMPLE_INFERENCE": 8,
+    "LOO_INSTABILITY": 3
+  },
+  "gate_evaluation": {
+    "can_proceed": true,
+    "can_promote_to_confirmation": false,
+    "requires_hitl": false,
+    "auto_fixable_count": 14,
+    "gates_triggered": [
+      "block_confirmation",
+      "auto_fix_allowed",
+      "block_counterfactual"
+    ]
+  }
+}

@@ -1,0 +1,87 @@
+edge_id: rwa_to_k2
+dag_version_hash: a0d5c383631c52aa262f288704c6f7868d48b73d5034761245939de8eeea1d72
+created_at: '2026-02-05T22:53:05.460157'
+data_provenance:
+  treatment_source: null
+  outcome_source: null
+  control_sources: {}
+  instrument_sources: {}
+  combined_row_count: null
+  combined_date_range: null
+  missing_rate: null
+  panel_dimensions: null
+  entity_boundary_note: null
+  kpi_definitions: null
+spec_hash: e582f930ce9896f4f11444ee5cacdafd5fe5affd270856c3a0d680d029846d79
+spec_details:
+  design: IDENTITY
+  controls: []
+  instruments: []
+  fixed_effects: []
+  se_method: deterministic
+  sample_filter: null
+  horizon: null
+  bandwidth: null
+estimates:
+  point: -0.010125
+  se: 0.0
+  ci_95:
+  - -0.010125
+  - -0.010125
+  pvalue: null
+diagnostics:
+  identity_check:
+    name: identity_check
+    passed: true
+    value: -0.010125
+    threshold: null
+    pvalue: null
+    message: 'Deterministic: dK2/dRWA = -100 * Capital / RWA^2'
+all_diagnostics_pass: true
+interpretation:
+  estimand: 'Sensitivity: dK2/dRWA = -100 * Capital / RWA^2'
+  is_not: Causal effect; this is a mechanical identity
+  channels:
+  - mechanical/accounting
+  population: ''
+  conditions: 'Evaluated at: {''capital'': 259.2, ''rwa'': 1600.0}'
+  allowed_uses: []
+  forbidden_uses: []
+failure_flags:
+  weak_identification: false
+  potential_bad_control: false
+  mechanical_identity_risk: true
+  regime_break_detected: false
+  small_sample: false
+  high_missing_rate: false
+  entity_boundary_change: false
+  definition_inconsistency: false
+counterfactual:
+  supports_shock_path: true
+  supports_policy_intervention: true
+  intervention_note: Mechanical identity; always holds by definition
+  external_validity: ''
+credibility_rating: A
+credibility_score: 0.94
+identification:
+  claim_level: IDENTIFIED_CAUSAL
+  risks:
+    unmeasured_confounding: low
+    simultaneity: low
+    weak_variation: low
+    measurement_error: low
+    selection: low
+  untestable_assumptions: []
+  testable_threats_passed: []
+  testable_threats_failed: []
+counterfactual_block:
+  allowed: true
+  reason_blocked: null
+  supports_policy_intervention: true
+propagation_role:
+  role: reduced_form
+  overlapping_paths: []
+  selected_for_counterfactual: false
+companion_edge_id: null
+is_precisely_null: false
+null_equivalence_bound: null
