@@ -1,12 +1,18 @@
-# Design registry v2 for estimator selection.
+# Design registry v3 for estimator selection.
 # Maps identification strategies to templates, diagnostics, and data requirements.
 #
 # V2 CHANGES:
 # - Added credibility_weight per design (higher = more credible)
 # - Designs sorted by credibility: RDD > IV > DiD > LP > Panel FE
 # - Removed significance-based criteria from design selection
+#
+# V3 CHANGES (Generalization):
+# - Added is_reaction_function flag support for designs
+# - Added unit_normalization requirements
+# - Added edge_type compatibility checking
+# - Domain-agnostic design templates
 
-schema_version: 2
+schema_version: 3
 registry_name: "default_designs"
 
 # Global defaults applied when a design does not override.
@@ -282,3 +288,152 @@ credibility_ranking:
   - design: "PANEL_LP_EXPOSURE_FE"
     weight: 0.7
     reason: "Shift-share identification via predetermined cross-bank exposure variation"
+
+# =============================================================================
+# EDGE TYPE RULES (NEW v3)
+# =============================================================================
+# Rules for handling different edge types in estimation and reporting.
+
+edge_type_rules:
+  causal:
+    description: "Standard causal edge - supports shock propagation"
+    propagation_allowed: true
+    requires_identification: true
+    report_warning: null
+
+  reaction_function:
+    description: "Endogenous policy response (e.g., Taylor rule)"
+    propagation_allowed: false  # CRITICAL: Cannot use for shock propagation
+    requires_identification: false  # Descriptive, not causal
+    report_warning: |
+      **Warning:** This edge estimates a **reaction function** (endogenous policy response),
+      NOT a causal effect. It should NOT be used for shock propagation without re-specifying
+      as monetary policy surprises or other exogenous variation.
+    examples:
+      - "cpi_to_policy_rate"      # Central bank responds to inflation
+      - "fx_to_policy_rate"       # Central bank responds to depreciation
+      - "output_gap_to_rate"      # Fed responds to output gap
+
+  mechanical:
+    description: "Deterministic accounting/identity relationship"
+    propagation_allowed: true   # Can propagate through identities
+    requires_identification: false
+    report_warning: |
+      **Note:** This edge is a mechanical accounting identity. The sensitivity is deterministic
+      at current values and may change if underlying ratios change.
+    examples:
+      - "capital_to_k2"           # K2 = Capital / RWA
+      - "loans_to_rwa"            # RWA = f(loans, risk_weights)
+
+  immutable:
+    description: "Validated evidence from prior research, locked from re-estimation"
+    propagation_allowed: true
+    requires_identification: false  # Already validated
+    report_warning: null
+    examples:
+      - "fx_to_cpi_tradable"      # Block A validated result
+
+# =============================================================================
+# UNIT NORMALIZATION RULES (NEW v3)
+# =============================================================================
+# Standard units for common variable types.
+
+unit_normalization:
+  standard_units:
+    percentage_point: "pp"        # 1pp = 1 percentage point
+    basis_point: "bps"            # 1bps = 0.01pp
+    percent: "%"                  # % change
+    standard_deviation: "SD"      # 1 SD shock
+    currency_billion: "bn KZT"    # Billion KZT
+    ratio: "ratio"                # Unitless ratio
+
+  # Common treatment/outcome patterns
+  patterns:
+    shock_to_ratio:
+      treatment: "1pp shock"
+      outcome: "bps ratio change"
+      conversion: 100  # 1pp = 100bps
+
+    rate_to_rate:
+      treatment: "1pp rate change"
+      outcome: "pp rate change"
+      conversion: 1
+
+    fx_passthrough:
+      treatment: "10% depreciation"
+      outcome: "pp CPI change"
+      conversion: null  # No automatic conversion
+
+  # Validation: check that chain units match
+  chain_validation:
+    enabled: true
+    rules:
+      - "If edge A outputs 'pp' and edge B expects 'pp', OK"
+      - "If edge A outputs 'bps' and edge B expects 'pp', divide by 100"
+      - "If units incompatible, flag ERROR and block propagation"
+
+# =============================================================================
+# DESIGN TEMPLATES LIBRARY (NEW v3)
+# =============================================================================
+# Pre-built templates for common causal inference designs.
+
+design_templates:
+  # DiD with staggered rollout
+  staggered_did:
+    base_design: "DID_EVENT_STUDY"
+    extensions:
+      - "callaway_santanna"   # Robust to heterogeneous treatment timing
+      - "sun_abraham"         # Interaction-weighted estimator
+    diagnostics_added:
+      - "treatment_timing_variation"
+      - "never_treated_check"
+
+  # Synthetic control
+  synthetic_control:
+    description: "Synthetic control method for single-unit treatment"
+    credibility_weight: 0.85
+    requirements:
+      data:
+        panel: true
+        min_pre_periods: 10
+        treated_units: 1
+      variables:
+        treatment_type: ["binary"]
+        outcome_type: ["continuous"]
+    template:
+      model: "y_1t = sum_j w_j * y_jt for t < T0; compare to y_1t for t >= T0"
+    diagnostics:
+      required:
+        - "pre_treatment_fit"   # RMSPE in pre-period
+        - "placebo_permutation" # Fisher permutation test
+      optional:
+        - "leave_one_out"       # Sensitivity to donor pool
+
+  # Regression kink design
+  regression_kink:
+    description: "Regression kink design at known discontinuity in slope"
+    credibility_weight: 0.95
+    requirements:
+      data:
+        running_variable: true
+        kink_point: true
+        min_obs: 200
+      variables:
+        treatment_type: ["continuous"]
+        outcome_type: ["continuous"]
+    template:
+      model: "y = a + b1*(x-c) + b2*(x-c)*1[x>c] + e"
+    diagnostics:
+      required:
+        - "kink_specification"  # Is the kink point correct?
+        - "bandwidth_sensitivity"
+
+  # Bartik / shift-share
+  bartik_shift_share:
+    base_design: "PANEL_LP_EXPOSURE_FE"
+    description: "Bartik-style shift-share IV with exogenous shares"
+    credibility_weight: 0.75
+    diagnostics_added:
+      - "share_exogeneity"      # Are shares predetermined?
+      - "shift_exogeneity"      # Are shifts exogenous?
+      - "rotemberg_weights"     # Decomposition of identifying variation

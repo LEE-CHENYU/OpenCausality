@@ -166,6 +166,121 @@ DAG_HASH = hashlib.sha256(b"kspi_k2_stress_v3_extended").hexdigest()
 
 
 # ---------------------------------------------------------------------------
+# Unit normalization registry
+# ---------------------------------------------------------------------------
+# CRITICAL: Every edge must have treatment and outcome units documented
+# for safe chain propagation
+
+EDGE_UNITS: dict[str, dict[str, str]] = {
+    # Group A: Monthly LP
+    "oil_supply_to_brent": {
+        "treatment_unit": "1 SD Baumeister supply shock (mbd equivalent)",
+        "outcome_unit": "% change in Brent price",
+    },
+    "oil_supply_to_fx": {
+        "treatment_unit": "1 SD Baumeister supply shock",
+        "outcome_unit": "% change in USD/KZT",
+    },
+    "oil_demand_to_fx": {
+        "treatment_unit": "1 SD Baumeister demand shock",
+        "outcome_unit": "% change in USD/KZT",
+    },
+    "vix_to_fx": {
+        "treatment_unit": "1 point VIX increase",
+        "outcome_unit": "% change in USD/KZT",
+    },
+    "cpi_to_nbk_rate": {
+        "treatment_unit": "1pp YoY tradable CPI inflation",
+        "outcome_unit": "pp NBK base rate",
+        "is_reaction_function": True,  # NOT causal - endogenous policy response
+    },
+    "fx_to_nbk_rate": {
+        "treatment_unit": "1% KZT depreciation (MoM)",
+        "outcome_unit": "pp NBK base rate",
+        "is_reaction_function": True,  # NOT causal - endogenous policy response
+    },
+    # Group B: Immutable
+    "fx_to_cpi_tradable": {
+        "treatment_unit": "10% KZT depreciation",
+        "outcome_unit": "pp tradable CPI (cumulative 12m)",
+    },
+    "fx_to_cpi_nontradable": {
+        "treatment_unit": "10% KZT depreciation",
+        "outcome_unit": "pp non-tradable CPI (cumulative 12m)",
+    },
+    "cpi_to_nominal_income": {
+        "treatment_unit": "1pp CPI inflation",
+        "outcome_unit": "pp nominal income growth",
+    },
+    "fx_to_real_expenditure": {
+        "treatment_unit": "10% KZT depreciation",
+        "outcome_unit": "% real expenditure decline",
+    },
+    # Group C-Q: Quarterly LP (KSPI)
+    "shock_to_npl_kspi": {
+        "treatment_unit": "1pp tradable CPI shock (quarterly)",
+        "outcome_unit": "bps NPL ratio change",
+    },
+    "shock_to_cor_kspi": {
+        "treatment_unit": "1pp tradable CPI shock (quarterly)",
+        "outcome_unit": "bps CoR change",
+    },
+    "nbk_rate_to_deposit_cost": {
+        "treatment_unit": "1pp NBK base rate increase",
+        "outcome_unit": "pp deposit cost increase",
+    },
+    "nbk_rate_to_cor": {
+        "treatment_unit": "1pp NBK base rate increase",
+        "outcome_unit": "pp CoR increase",
+    },
+    # Group C-Panel: Sector Panel
+    "shock_to_npl_sector": {
+        "treatment_unit": "1pp CPI shock × E_consumer exposure",
+        "outcome_unit": "bps NPL differential per unit exposure",
+    },
+    "shock_to_cor_sector": {
+        "treatment_unit": "1pp CPI shock × E_consumer exposure",
+        "outcome_unit": "bps CoR differential per unit exposure",
+    },
+    "nbk_rate_to_deposit_cost_sector": {
+        "treatment_unit": "1pp rate × E_demand_dep exposure",
+        "outcome_unit": "pp deposit cost differential per unit exposure",
+    },
+    "nbk_rate_to_cor_sector": {
+        "treatment_unit": "1pp rate × E_shortterm exposure",
+        "outcome_unit": "pp CoR differential per unit exposure",
+    },
+    # Group C-KSPI: KSPI-only
+    "expenditure_to_payments_revenue": {
+        "treatment_unit": "1% real expenditure change",
+        "outcome_unit": "bn KZT payments revenue",
+    },
+    "portfolio_mix_to_rwa": {
+        "treatment_unit": "1pp consumer loan share change",
+        "outcome_unit": "bn KZT RWA change",
+    },
+    # Group C-Bridge: Accounting
+    "loan_portfolio_to_rwa": {
+        "treatment_unit": "1 bn KZT net loans increase",
+        "outcome_unit": "bn KZT RWA increase (avg risk weight)",
+    },
+    "cor_to_capital": {
+        "treatment_unit": "1pp CoR increase",
+        "outcome_unit": "bn KZT capital decline (provisions)",
+    },
+    # Group D: Identity
+    "capital_to_k2": {
+        "treatment_unit": "1 bn KZT capital increase",
+        "outcome_unit": "pp K2 ratio change",
+    },
+    "rwa_to_k2": {
+        "treatment_unit": "1 bn KZT RWA increase",
+        "outcome_unit": "pp K2 ratio change",
+    },
+}
+
+
+# ---------------------------------------------------------------------------
 # Edge card builders
 # ---------------------------------------------------------------------------
 
@@ -180,6 +295,7 @@ def build_lp_edge_card(
 ) -> EdgeCard:
     """Build EdgeCard from LP estimation result."""
     n_obs = lp_result.nobs[0] if lp_result.nobs else 0
+    n_calendar = len(data) if data is not None and not data.empty else 0
 
     # Impact estimate as main point estimate
     point = lp_result.impact_estimate
@@ -197,6 +313,11 @@ def build_lp_edge_card(
     ci_hi = point + 1.96 * se if not np.isnan(se) else np.nan
     pval = lp_result.pvalues[0] if lp_result.pvalues and not np.isnan(lp_result.pvalues[0]) else None
 
+    # Get unit information
+    edge_units = EDGE_UNITS.get(edge_id, {})
+    treatment_unit = edge_units.get("treatment_unit", "")
+    outcome_unit = edge_units.get("outcome_unit", "")
+
     estimates = Estimates(
         point=float(point) if not np.isnan(point) else 0.0,
         se=float(se) if not np.isnan(se) else 0.0,
@@ -207,6 +328,13 @@ def build_lp_edge_card(
         irf=lp_result.coefficients,
         irf_ci_lower=lp_result.ci_lower,
         irf_ci_upper=lp_result.ci_upper,
+        # Unit normalization
+        treatment_unit=treatment_unit,
+        outcome_unit=outcome_unit,
+        # Sample size details
+        n_calendar_periods=n_calendar,
+        n_effective_obs_h0=n_obs,
+        n_effective_obs_by_horizon=list(lp_result.nobs) if lp_result.nobs else None,
     )
 
     # Diagnostics
@@ -796,6 +924,9 @@ def generate_report(
         "",
         "Time-series LP with Newey-West HAC standard errors.",
         "",
+        "**Warning:** `cpi_to_nbk_rate` and `fx_to_nbk_rate` are **reaction function** edges (endogenous policy response), ",
+        "not causal effects. They should NOT be used for shock propagation without re-specifying as monetary policy surprises.",
+        "",
         "| Edge | Impact (h=0) | SE | 95% CI | p-value | N | Sign OK | Rating |",
         "|------|-------------|-----|---------|---------|---|---------|--------|",
     ])
@@ -850,10 +981,12 @@ def generate_report(
         "",
         "## Group C-Q: Quarterly LP with KSPI Data (4 edges)",
         "",
-        "True quarterly observations only (N=17). Entity: kaspi_bank.",
+        "KSPI quarterly LP using post-2020 quarterly observations. Entity: kaspi_bank.",
         "",
-        "| Edge | Impact (h=0) | SE | 95% CI | p-value | N | Rating |",
-        "|------|-------------|-----|---------|---------|---|--------|",
+        "**Note on N:** `N_cal` = calendar periods in sample; `N_eff` = effective obs after lags/leads.",
+        "",
+        "| Edge | Impact | SE | p-value | N_cal | N_eff | Treatment | Outcome | Rating |",
+        "|------|--------|-----|---------|-------|-------|-----------|---------|--------|",
     ])
 
     for edge_id in QUARTERLY_LP_EDGES:
@@ -862,11 +995,13 @@ def generate_report(
         if card and card.estimates:
             e = card.estimates
             pv = f"{e.pvalue:.4f}" if e.pvalue is not None else "-"
-            n = lp.nobs[0] if lp and lp.nobs else "-"
+            n_eff = lp.nobs[0] if lp and lp.nobs else "-"
+            n_cal = e.n_calendar_periods if e.n_calendar_periods else "-"
+            t_unit = e.treatment_unit[:20] + "..." if len(e.treatment_unit) > 20 else e.treatment_unit
+            o_unit = e.outcome_unit[:15] + "..." if len(e.outcome_unit) > 15 else e.outcome_unit
             lines.append(
-                f"| `{edge_id}` | {e.point:.4f} | {e.se:.4f} | "
-                f"[{e.ci_95[0]:.4f}, {e.ci_95[1]:.4f}] | {pv} | {n} | "
-                f"{card.credibility_rating} |"
+                f"| `{edge_id}` | {e.point:.2f} | {e.se:.2f} | {pv} | "
+                f"{n_cal} | {n_eff} | {t_unit} | {o_unit} | {card.credibility_rating} |"
             )
     lines.append("")
 
@@ -878,11 +1013,13 @@ def generate_report(
         "",
         "## Group C-A: Annual LP Robustness (4 edges)",
         "",
-        "Annual-frequency LP using pre-2020 annual observations (N=11-13).",
+        "Annual-frequency LP using pre-2020 annual observations (2011-2019).",
         "Sign/magnitude consistency check against quarterly estimates.",
         "",
-        "| Edge | Impact (h=0) | SE | N | Q-impact | Sign Match | Rating |",
-        "|------|-------------|-----|---|---------|-----------|--------|",
+        "**Note:** `N_eff` = effective observations after lags. Annual data has fewer obs due to lag requirements.",
+        "",
+        "| Edge | Impact (A) | SE | N_eff | Impact (Q) | Sign Match | Rating |",
+        "|------|-----------|-----|-------|-----------|-----------|--------|",
     ])
 
     for edge_id in ANNUAL_LP_EDGES:
@@ -892,14 +1029,14 @@ def generate_report(
         quarterly_lp = lp_results.get(edge_id)
         if card and card.estimates and annual_lp:
             e = card.estimates
-            n = annual_lp.nobs[0] if annual_lp.nobs else "-"
+            n_eff = annual_lp.nobs[0] if annual_lp.nobs else "-"
             q_impact = quarterly_lp.impact_estimate if quarterly_lp else 0.0
             q_sign = "+" if q_impact > 0 else ("-" if q_impact < 0 else "0")
             a_sign = "+" if e.point > 0 else ("-" if e.point < 0 else "0")
             sign_match = "Yes" if q_sign == a_sign else "No"
             lines.append(
-                f"| `{edge_id}` | {e.point:.4f} | {e.se:.4f} | "
-                f"{n} | {q_impact:.4f} | {sign_match} | {card.credibility_rating} |"
+                f"| `{edge_id}` | {e.point:.2f} | {e.se:.2f} | "
+                f"{n_eff} | {q_impact:.2f} | {sign_match} | {card.credibility_rating} |"
             )
     lines.append("")
 
@@ -1089,6 +1226,28 @@ def generate_report(
         lines.append("")
 
     # -----------------------------------------------------------------------
+    # Unit Normalization Reference
+    # -----------------------------------------------------------------------
+    lines.extend([
+        "---",
+        "",
+        "## Unit Normalization Reference",
+        "",
+        "**CRITICAL:** All coefficients must be interpreted with correct units for chain propagation.",
+        "",
+        "| Edge | Treatment Unit | Outcome Unit |",
+        "|------|---------------|--------------|",
+    ])
+    for edge_id in ALL_EDGES:
+        units = EDGE_UNITS.get(edge_id, {})
+        t_unit = units.get("treatment_unit", "not specified")
+        o_unit = units.get("outcome_unit", "not specified")
+        is_rf = units.get("is_reaction_function", False)
+        rf_note = " **(REACTION FN)**" if is_rf else ""
+        lines.append(f"| `{edge_id}` | {t_unit} | {o_unit}{rf_note} |")
+    lines.append("")
+
+    # -----------------------------------------------------------------------
     # Honest limitations
     # -----------------------------------------------------------------------
     lines.extend([
@@ -1098,7 +1257,7 @@ def generate_report(
         "",
         "### Data Quality",
         "- KSPI quarterly data: 17 true quarterly observations (2020Q3-2024Q3)",
-        "- KSPI annual data: 9-10 annual observations (2011-2019), bank subsidiary level",
+        "- KSPI annual data: 9 annual observations (2011-2019), bank subsidiary level",
         "- No interpolated observations used in estimation (hard filter)",
         "- Panel data: 4 banks, unbalanced panel, annual frequency for most",
         "- Monthly macro data: ~60-180 observations depending on series",
@@ -1115,6 +1274,11 @@ def generate_report(
         "- Panel LP uses shift-share design; identified from exposure variation",
         "- HAC standard errors may be undersized in very small samples",
         "- Accounting bridges are deterministic at current values only",
+        "",
+        "### Policy-Rate Edges",
+        "- `cpi_to_nbk_rate` and `fx_to_nbk_rate` estimate **reaction functions**, not causal effects",
+        "- These edges should NOT be used for shock propagation without monetary policy surprise specification",
+        "- Current estimates are imprecise/near-null, consistent with endogenous policy response",
         "",
         "### Scope",
         "- All results are Kazakhstan-specific",

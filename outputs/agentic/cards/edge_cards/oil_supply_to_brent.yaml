@@ -1,6 +1,6 @@
 edge_id: oil_supply_to_brent
 dag_version_hash: a0d5c383631c52aa262f288704c6f7868d48b73d5034761245939de8eeea1d72
-created_at: '2026-02-05T14:50:55.179536'
+created_at: '2026-02-05T15:25:29.361553'
 data_provenance:
   treatment_source:
     connector: parquet_file
@@ -91,6 +91,18 @@ estimates:
   - 0.016635724008283122
   - 0.003379969896064247
   - 0.007817514359297147
+  treatment_unit: 1 SD Baumeister supply shock (mbd equivalent)
+  outcome_unit: '% change in Brent price'
+  n_calendar_periods: 308
+  n_effective_obs_h0: 306
+  n_effective_obs_by_horizon:
+  - 306
+  - 305
+  - 304
+  - 303
+  - 302
+  - 301
+  - 300
 diagnostics:
   hac_bandwidth:
     name: hac_bandwidth

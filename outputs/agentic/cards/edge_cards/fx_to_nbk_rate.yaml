@@ -1,6 +1,6 @@
 edge_id: fx_to_nbk_rate
 dag_version_hash: a0d5c383631c52aa262f288704c6f7868d48b73d5034761245939de8eeea1d72
-created_at: '2026-02-05T14:50:55.297323'
+created_at: '2026-02-05T15:25:29.488174'
 data_provenance:
   treatment_source:
     connector: parquet_file
@@ -91,6 +91,18 @@ estimates:
   - 4.384078027405482
   - 11.374285060509232
   - 5.46761626435383
+  treatment_unit: 1% KZT depreciation (MoM)
+  outcome_unit: pp NBK base rate
+  n_calendar_periods: 69
+  n_effective_obs_h0: 67
+  n_effective_obs_by_horizon:
+  - 67
+  - 66
+  - 65
+  - 64
+  - 63
+  - 62
+  - 61
 diagnostics:
   hac_bandwidth:
     name: hac_bandwidth

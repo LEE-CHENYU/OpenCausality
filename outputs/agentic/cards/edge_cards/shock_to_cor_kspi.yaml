@@ -1,6 +1,6 @@
 edge_id: shock_to_cor_kspi
 dag_version_hash: a0d5c383631c52aa262f288704c6f7868d48b73d5034761245939de8eeea1d72
-created_at: '2026-02-05T14:50:55.334947'
+created_at: '2026-02-05T15:25:29.518965'
 data_provenance:
   treatment_source:
     connector: parquet_file
@@ -75,6 +75,14 @@ estimates:
   - 100.46531027285984
   - 32.60451918664201
   - 0.5967412860706212
+  treatment_unit: 1pp tradable CPI shock (quarterly)
+  outcome_unit: bps CoR change
+  n_calendar_periods: 27
+  n_effective_obs_h0: 26
+  n_effective_obs_by_horizon:
+  - 26
+  - 25
+  - 24
 diagnostics:
   hac_bandwidth:
     name: hac_bandwidth

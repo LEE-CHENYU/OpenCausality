@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KSPI K2 DAG</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background: #fff;
+            color: #000;
+        }
+        #graph { width: 100vw; height: 100vh; }
+        .node circle {
+            fill: #fff;
+            stroke: #000;
+            stroke-width: 1.5px;
+            cursor: grab;
+        }
+        .node circle:hover { stroke-width: 2.5px; }
+        .node text {
+            font-size: 9px;
+            font-weight: 400;
+            pointer-events: none;
+            text-anchor: middle;
+        }
+        .link {
+            fill: none;
+            stroke-opacity: 0.7;
+        }
+        .link:hover { stroke-opacity: 1; stroke-width: 3px !important; }
+        .link.null { stroke-dasharray: 4, 3; stroke-opacity: 0.4; }
+        .label-bg {
+            fill: white;
+            stroke: none;
+        }
+        .link-label {
+            font-size: 9px;
+            font-weight: 500;
+            fill: #333;
+            pointer-events: none;
+            text-anchor: middle;
+            dominant-baseline: middle;
+        }
+        .tooltip {
+            position: absolute;
+            background: #fff;
+            border: 1px solid #000;
+            padding: 12px 16px;
+            font-size: 11px;
+            pointer-events: none;
+            opacity: 0;
+            max-width: 300px;
+            line-height: 1.5;
+            z-index: 1000;
+        }
+        .tooltip.visible { opacity: 1; }
+        .tooltip h3 { font-size: 12px; font-weight: 600; margin-bottom: 8px; border-bottom: 1px solid #000; padding-bottom: 6px; }
+        .tooltip-row { display: flex; justify-content: space-between; margin: 3px 0; }
+        .tooltip-label { color: #666; }
+        .tooltip-value { font-weight: 500; font-variant-numeric: tabular-nums; }
+        .tooltip-value.null { color: #999; }
+        .controls {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            font-size: 11px;
+            background: rgba(255,255,255,0.95);
+            padding: 16px;
+            border: 1px solid #000;
+            z-index: 100;
+        }
+        .controls h1 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .controls p { color: #666; margin-bottom: 12px; }
+        .control-row { margin: 8px 0; }
+        .control-row label { color: #666; margin-right: 8px; }
+        .control-row select {
+            border: 1px solid #000;
+            background: #fff;
+            padding: 4px 8px;
+            font-size: 11px;
+            font-family: inherit;
+        }
+        .legend { margin-top: 12px; padding-top: 12px; border-top: 1px solid #ddd; }
+        .legend-item { display: flex; align-items: center; margin: 4px 0; font-size: 10px; }
+        .legend-line { width: 20px; height: 2px; margin-right: 8px; }
+        .stats {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            font-size: 10px;
+            color: #666;
+        }
+        .stats span { margin-right: 16px; }
+        .stats strong { color: #000; }
+    </style>
+</head>
+<body>
+    <svg id="graph"></svg>
+    <div class="controls">
+        <h1>KSPI K2 DAG</h1>
+        <p>26 edges, 19 nodes</p>
+        <div class="control-row">
+            <label>Group</label>
+            <select id="groupFilter">
+                <option value="all">All</option>
+                <option value="monthly_lp">Monthly LP</option>
+                <option value="immutable">Immutable</option>
+                <option value="quarterly_lp">Quarterly LP</option>
+                <option value="panel_lp">Panel LP</option>
+                <option value="kspi_only">KSPI Only</option>
+                <option value="bridge">Accounting</option>
+                <option value="identity">Identity</option>
+            </select>
+        </div>
+        <div class="control-row">
+            <label>Rating</label>
+            <select id="ratingFilter">
+                <option value="all">All</option>
+                <option value="A">A</option>
+                <option value="B">B</option>
+                <option value="C">C</option>
+            </select>
+        </div>
+        <div class="control-row">
+            <label><input type="checkbox" id="showNull" checked> Show null</label>
+        </div>
+        <div class="control-row">
+            <label><input type="checkbox" id="showLabels" checked> Show labels</label>
+        </div>
+        <div class="legend">
+            <div class="legend-item"><div class="legend-line" style="background: #2563eb;"></div>Significant (p&lt;0.05)</div>
+            <div class="legend-item"><div class="legend-line" style="background: #9333ea;"></div>Deterministic</div>
+            <div class="legend-item"><div class="legend-line" style="background: #999; border-style: dashed;"></div>Null / Insig.</div>
+        </div>
+    </div>
+    <div class="stats">
+        <span>Edges: <strong id="statEdges">26</strong></span>
+        <span>A: <strong id="statA">15</strong></span>
+        <span>B: <strong id="statB">8</strong></span>
+        <span>C: <strong id="statC">3</strong></span>
+        <span>Null: <strong id="statNull">7</strong></span>
+    </div>
+    <div class="tooltip" id="tooltip"></div>
+
+    <script>
+        const nodes = [
+            { id: "oil_supply", label: "Oil Supply", layer: 0 },
+            { id: "oil_demand", label: "Oil Demand", layer: 0 },
+            { id: "vix", label: "VIX", layer: 0 },
+            { id: "brent", label: "Brent", layer: 1 },
+            { id: "fx", label: "USD/KZT", layer: 1 },
+            { id: "cpi_tradable", label: "CPI Trad.", layer: 2 },
+            { id: "cpi_nontradable", label: "CPI Non-T.", layer: 2 },
+            { id: "nbk_rate", label: "NBK Rate", layer: 2 },
+            { id: "nominal_income", label: "Income", layer: 3 },
+            { id: "real_expenditure", label: "Expenditure", layer: 3 },
+            { id: "npl_kspi", label: "NPL", layer: 4 },
+            { id: "cor_kspi", label: "CoR", layer: 4 },
+            { id: "deposit_cost_kspi", label: "Dep. Cost", layer: 4 },
+            { id: "payments_revenue", label: "Payments", layer: 4 },
+            { id: "portfolio_mix", label: "Portfolio", layer: 4 },
+            { id: "net_loans", label: "Loans", layer: 4 },
+            { id: "rwa", label: "RWA", layer: 5 },
+            { id: "total_capital", label: "Capital", layer: 5 },
+            { id: "k2_ratio", label: "K2", layer: 6 },
+        ];
+
+        // Deduplicate edges for visualization - only show primary edges
+        // Panel edges duplicate quarterly edges visually, so filter them
+        const allEdges = [
+            { source: "oil_supply", target: "brent", id: "oil_supply_to_brent", beta: -0.052, se: 0.0054, pvalue: 0.0000, n_obs: 306, rating: "A", group: "monthly_lp", is_null: false },
+            { source: "oil_supply", target: "fx", id: "oil_supply_to_fx", beta: 0.0004, se: 0.1277, pvalue: 0.9972, n_obs: 187, rating: "A", group: "monthly_lp", is_null: true },
+            { source: "oil_demand", target: "fx", id: "oil_demand_to_fx", beta: -0.30, se: 0.1611, pvalue: 0.0641, n_obs: 187, rating: "A", group: "monthly_lp", is_null: false },
+            { source: "vix", target: "fx", id: "vix_to_fx", beta: -0.032, se: 0.1099, pvalue: 0.7681, n_obs: 190, rating: "A", group: "monthly_lp", is_null: true },
+            { source: "cpi_tradable", target: "nbk_rate", id: "cpi_to_nbk_rate", beta: -0.54, se: 13.97, pvalue: 0.9694, n_obs: 67, rating: "A", group: "monthly_lp", is_null: true },
+            { source: "fx", target: "nbk_rate", id: "fx_to_nbk_rate", beta: 0.018, se: 1.12, pvalue: 0.9869, n_obs: 67, rating: "A", group: "monthly_lp", is_null: true },
+            { source: "fx", target: "cpi_tradable", id: "fx_to_cpi_tradable", beta: 0.11, se: 0.028, pvalue: 0.0001, n_obs: null, rating: "A", group: "immutable", is_null: false },
+            { source: "fx", target: "cpi_nontradable", id: "fx_to_cpi_nontradable", beta: 0.00, se: 0.015, pvalue: 1.0000, n_obs: null, rating: "A", group: "immutable", is_null: true },
+            { source: "cpi_tradable", target: "nominal_income", id: "cpi_to_nominal_income", beta: 0.65, se: 0.18, pvalue: 0.0003, n_obs: null, rating: "A", group: "immutable", is_null: false },
+            { source: "fx", target: "real_expenditure", id: "fx_to_real_expenditure", beta: -0.10, se: 0.04, pvalue: 0.0125, n_obs: null, rating: "A", group: "immutable", is_null: false },
+            { source: "cpi_tradable", target: "npl_kspi", id: "shock_to_npl_kspi", beta: 73, se: 10.3, pvalue: 0.0000, n_obs: 26, rating: "B", group: "quarterly_lp", is_null: false },
+            { source: "cpi_tradable", target: "cor_kspi", id: "shock_to_cor_kspi", beta: 86, se: 7.4, pvalue: 0.0000, n_obs: 26, rating: "B", group: "quarterly_lp", is_null: false },
+            { source: "nbk_rate", target: "deposit_cost_kspi", id: "nbk_rate_to_deposit_cost", beta: 0.22, se: 0.062, pvalue: 0.0003, n_obs: 18, rating: "B", group: "quarterly_lp", is_null: false },
+            { source: "nbk_rate", target: "cor_kspi", id: "nbk_rate_to_cor", beta: 0.36, se: 0.12, pvalue: 0.0029, n_obs: 18, rating: "B", group: "quarterly_lp", is_null: false },
+            { source: "real_expenditure", target: "payments_revenue", id: "expenditure_to_payments_revenue", beta: 333, se: 71, pvalue: 0.0000, n_obs: 7, rating: "B", group: "kspi_only", is_null: false },
+            { source: "portfolio_mix", target: "rwa", id: "portfolio_mix_to_rwa", beta: 18196, se: 3953, pvalue: 0.0000, n_obs: 16, rating: "B", group: "kspi_only", is_null: false },
+            { source: "net_loans", target: "rwa", id: "loan_portfolio_to_rwa", beta: 0.57, se: 0, pvalue: null, n_obs: null, rating: "A", group: "bridge", is_null: false, formula: "RWA/loans" },
+            { source: "cor_kspi", target: "total_capital", id: "cor_to_capital", beta: -22, se: 0, pvalue: null, n_obs: null, rating: "A", group: "bridge", is_null: false, formula: "-loans*(1-t)/100" },
+            { source: "total_capital", target: "k2_ratio", id: "capital_to_k2", beta: 0.063, se: 0, pvalue: null, n_obs: null, rating: "A", group: "identity", is_null: false, formula: "100/RWA" },
+            { source: "rwa", target: "k2_ratio", id: "rwa_to_k2", beta: -0.010, se: 0, pvalue: null, n_obs: null, rating: "A", group: "identity", is_null: false, formula: "-100*K/RWA²" },
+        ];
+
+        // Filter to unique source-target pairs (keep first/primary edge)
+        const seenPairs = new Set();
+        const edges = allEdges.filter(e => {
+            const key = `${e.source}-${e.target}`;
+            if (seenPairs.has(key)) return false;
+            seenPairs.add(key);
+            return true;
+        });
+
+        // Format beta for display - smart formatting
+        function formatBeta(beta) {
+            if (beta === 0) return "0";
+            const abs = Math.abs(beta);
+            // Very large numbers: use k notation
+            if (abs >= 10000) return (beta / 1000).toFixed(0) + "k";
+            if (abs >= 1000) return (beta / 1000).toFixed(1) + "k";
+            // Regular large numbers
+            if (abs >= 100) return beta.toFixed(0);
+            if (abs >= 10) return beta.toFixed(1);
+            if (abs >= 1) return beta.toFixed(1);
+            // Small numbers
+            if (abs >= 0.1) return beta.toFixed(2);
+            if (abs >= 0.01) return beta.toFixed(2);
+            // Very small - use scientific
+            if (abs >= 0.001) return beta.toFixed(3);
+            return beta.toExponential(1);
+        }
+
+        // Get edge color based on significance
+        function getEdgeColor(d) {
+            if (d.pvalue === null) return "#9333ea"; // deterministic - purple
+            if (d.is_null) return "#999"; // null - gray
+            if (d.pvalue < 0.05) return "#2563eb"; // significant - blue
+            return "#999"; // insignificant
+        }
+
+        const svg = d3.select("#graph");
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        svg.attr("width", width).attr("height", height);
+
+        svg.append("defs").append("marker")
+            .attr("id", "arrow")
+            .attr("viewBox", "0 -3 6 6")
+            .attr("refX", 18)
+            .attr("refY", 0)
+            .attr("markerWidth", 5)
+            .attr("markerHeight", 5)
+            .attr("orient", "auto")
+            .append("path")
+            .attr("d", "M0,-3L6,0L0,3")
+            .attr("fill", "#000");
+
+        // Create colored arrow markers
+        ["#2563eb", "#9333ea", "#999"].forEach(color => {
+            svg.select("defs").append("marker")
+                .attr("id", "arrow-" + color.replace("#", ""))
+                .attr("viewBox", "0 -3 6 6")
+                .attr("refX", 18)
+                .attr("refY", 0)
+                .attr("markerWidth", 5)
+                .attr("markerHeight", 5)
+                .attr("orient", "auto")
+                .append("path")
+                .attr("d", "M0,-3L6,0L0,3")
+                .attr("fill", color);
+        });
+
+        const g = svg.append("g");
+        svg.call(d3.zoom().scaleExtent([0.3, 3]).on("zoom", e => g.attr("transform", e.transform)));
+
+        const simulation = d3.forceSimulation(nodes)
+            .force("link", d3.forceLink(edges).id(d => d.id).distance(120).strength(0.3))
+            .force("charge", d3.forceManyBody().strength(-400))
+            .force("center", d3.forceCenter(width / 2, height / 2))
+            .force("y", d3.forceY(d => 80 + d.layer * 90).strength(0.7))
+            .force("x", d3.forceX(width / 2).strength(0.02))
+            .force("collision", d3.forceCollide(40));
+
+        const linkGroup = g.append("g");
+        let links = linkGroup.selectAll("path")
+            .data(edges)
+            .enter()
+            .append("path")
+            .attr("class", d => `link ${d.is_null ? 'null' : ''}`)
+            .attr("stroke", d => getEdgeColor(d))
+            .attr("stroke-width", d => d.pvalue !== null && d.pvalue < 0.05 ? 2.5 : 1.5)
+            .attr("marker-end", d => `url(#arrow-${getEdgeColor(d).replace("#", "")})`)
+            .on("mouseover", showTooltip)
+            .on("mouseout", hideTooltip);
+
+        // Edge labels with background
+        const labelGroup = g.append("g");
+
+        // Background rectangles for labels
+        let labelBgs = labelGroup.selectAll("rect")
+            .data(edges)
+            .enter()
+            .append("rect")
+            .attr("class", "label-bg")
+            .attr("rx", 2)
+            .attr("ry", 2);
+
+        let linkLabels = labelGroup.selectAll("text")
+            .data(edges)
+            .enter()
+            .append("text")
+            .attr("class", "link-label")
+            .text(d => formatBeta(d.beta));
+
+        const nodeGroup = g.append("g");
+        const node = nodeGroup.selectAll("g")
+            .data(nodes)
+            .enter()
+            .append("g")
+            .attr("class", "node")
+            .call(d3.drag()
+                .on("start", (e, d) => { if (!e.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
+                .on("drag", (e, d) => { d.fx = e.x; d.fy = e.y; })
+                .on("end", (e, d) => { if (!e.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; }));
+
+        node.append("circle").attr("r", 18);
+        node.append("text").attr("dy", 4).text(d => d.label);
+
+        const tooltip = d3.select("#tooltip");
+
+        function showTooltip(e, d) {
+            let html = `<h3>${d.id.replace(/_/g, ' ')}</h3>`;
+            html += `<div class="tooltip-row"><span class="tooltip-label">β (coefficient)</span><span class="tooltip-value">${d.beta.toFixed(4)}</span></div>`;
+            html += `<div class="tooltip-row"><span class="tooltip-label">SE</span><span class="tooltip-value">${d.se.toFixed(4)}</span></div>`;
+            if (d.pvalue !== null) {
+                html += `<div class="tooltip-row"><span class="tooltip-label">p-value</span><span class="tooltip-value ${d.is_null ? 'null' : ''}">${d.pvalue.toFixed(4)}</span></div>`;
+            } else {
+                html += `<div class="tooltip-row"><span class="tooltip-label">Type</span><span class="tooltip-value">Deterministic</span></div>`;
+            }
+            if (d.n_obs) html += `<div class="tooltip-row"><span class="tooltip-label">N (obs)</span><span class="tooltip-value">${d.n_obs}</span></div>`;
+            html += `<div class="tooltip-row"><span class="tooltip-label">Rating</span><span class="tooltip-value">${d.rating}</span></div>`;
+            html += `<div class="tooltip-row"><span class="tooltip-label">Group</span><span class="tooltip-value">${d.group.replace(/_/g, ' ')}</span></div>`;
+            if (d.is_null) html += `<div class="tooltip-row"><span class="tooltip-label">Status</span><span class="tooltip-value null">Precisely Null</span></div>`;
+            if (d.formula) html += `<div class="tooltip-row"><span class="tooltip-label">Formula</span><span class="tooltip-value">${d.formula}</span></div>`;
+            tooltip.html(html).style("left", (e.pageX + 15) + "px").style("top", (e.pageY - 15) + "px").classed("visible", true);
+        }
+
+        function hideTooltip() { tooltip.classed("visible", false); }
+
+        // Compute label position along the curve
+        function getLabelPos(d) {
+            const dx = d.target.x - d.source.x;
+            const dy = d.target.y - d.source.y;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+
+            // Position at 40% along the path, with perpendicular offset
+            const t = 0.4;
+            const mx = d.source.x + dx * t;
+            const my = d.source.y + dy * t;
+
+            // Perpendicular offset (to the side of the curve)
+            const offset = 12;
+            const px = -dy / dist * offset;
+            const py = dx / dist * offset;
+
+            return { x: mx + px, y: my + py };
+        }
+
+        simulation.on("tick", () => {
+            links.attr("d", d => {
+                const dx = d.target.x - d.source.x, dy = d.target.y - d.source.y;
+                const dr = Math.sqrt(dx * dx + dy * dy) * 1.8;
+                return `M${d.source.x},${d.source.y}A${dr},${dr} 0 0,1 ${d.target.x},${d.target.y}`;
+            });
+
+            // Position labels
+            linkLabels.each(function(d) {
+                const pos = getLabelPos(d);
+                d3.select(this).attr("x", pos.x).attr("y", pos.y);
+            });
+
+            // Position label backgrounds
+            labelBgs.each(function(d, i) {
+                const pos = getLabelPos(d);
+                const textNode = linkLabels.nodes()[i];
+                const bbox = textNode.getBBox();
+                d3.select(this)
+                    .attr("x", pos.x - bbox.width/2 - 2)
+                    .attr("y", pos.y - bbox.height/2 - 1)
+                    .attr("width", bbox.width + 4)
+                    .attr("height", bbox.height + 2);
+            });
+
+            node.attr("transform", d => `translate(${d.x},${d.y})`);
+        });
+
+        function applyFilters() {
+            const grp = document.getElementById("groupFilter").value;
+            const rat = document.getElementById("ratingFilter").value;
+            const showNull = document.getElementById("showNull").checked;
+            const showLabels = document.getElementById("showLabels").checked;
+
+            const isVisible = d => {
+                if (grp !== "all" && d.group !== grp) return false;
+                if (rat !== "all" && d.rating !== rat) return false;
+                if (!showNull && d.is_null) return false;
+                return true;
+            };
+
+            links.style("display", d => isVisible(d) ? null : "none");
+            linkLabels.style("display", d => (isVisible(d) && showLabels) ? null : "none");
+            labelBgs.style("display", d => (isVisible(d) && showLabels) ? null : "none");
+
+            const visible = edges.filter(isVisible);
+            document.getElementById("statEdges").textContent = visible.length;
+            document.getElementById("statA").textContent = visible.filter(e => e.rating === "A").length;
+            document.getElementById("statB").textContent = visible.filter(e => e.rating === "B").length;
+            document.getElementById("statC").textContent = visible.filter(e => e.rating === "C").length;
+            document.getElementById("statNull").textContent = visible.filter(e => e.is_null).length;
+        }
+
+        document.getElementById("groupFilter").addEventListener("change", applyFilters);
+        document.getElementById("ratingFilter").addEventListener("change", applyFilters);
+        document.getElementById("showNull").addEventListener("change", applyFilters);
+        document.getElementById("showLabels").addEventListener("change", applyFilters);
+    </script>
+</body>
+</html>

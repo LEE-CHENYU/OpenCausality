@@ -1,0 +1,32 @@
+Econometric DAG Estimation Pipeline - Validation & Quality Improvement
+
+PRIMARY GOAL: Ensure all EdgeCards pass validation and report is consistent.
+
+VALIDATION CHECKS (in order of priority):
+1. Pre-estimation: DAG acyclicity, unit presence, edge type presence
+2. Post-estimation: N consistency, units in EdgeCards, reaction function labels
+3. Report consistency: values match EdgeCards, unit table complete, RF warnings present
+
+ESTIMATION TASKS:
+- Re-run estimation for edges with sign inconsistencies
+- Update edges where validation fails
+- Regenerate report after any estimate changes
+
+KEY CONSTRAINTS:
+- Do NOT change domain knowledge decisions (expected signs, reaction function IDs)
+- Do NOT add new edges without explicit instruction
+- Prefer fixing validation errors over adding features
+- Keep changes minimal and well-documented
+
+QUALITY RULES:
+- 80% of checks are automatable (run them!)
+- 20% require domain knowledge (flag but don't change)
+- Commit after each successful fix with clear message
+
+FILES:
+- DAG: config/agentic/dags/kspi_k2_full.yaml
+- Estimation: scripts/run_real_estimation.py
+- Validation: shared/agentic/validation.py
+- Report checker: shared/agentic/report_checker.py
+- Report: outputs/agentic/KSPI_K2_REAL_ESTIMATION_REPORT.md
+- EdgeCards: outputs/agentic/cards/edge_cards/*.yaml

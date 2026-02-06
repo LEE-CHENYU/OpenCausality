@@ -1,6 +1,6 @@
 # KSPI K2 DAG: Real Econometric Estimation Report
 
-**Generated:** 2026-02-05 14:50:58
+**Generated:** 2026-02-05 15:25:32
 **DAG Version Hash:** `a0d5c383631c52aa...`
 **Total Edge Cards:** 26
 
@@ -34,6 +34,9 @@
 
 Time-series LP with Newey-West HAC standard errors.
 
+**Warning:** `cpi_to_nbk_rate` and `fx_to_nbk_rate` are **reaction function** edges (endogenous policy response), 
+not causal effects. They should NOT be used for shock propagation without re-specifying as monetary policy surprises.
+
 | Edge | Impact (h=0) | SE | 95% CI | p-value | N | Sign OK | Rating |
 |------|-------------|-----|---------|---------|---|---------|--------|
 | `oil_supply_to_brent` | -0.0517 | 0.0054 | [-0.0623, -0.0411] | 0.0000 | 306 | Yes | A |
@@ -60,26 +63,30 @@ Locked from validated research blocks.
 
 ## Group C-Q: Quarterly LP with KSPI Data (4 edges)
 
-True quarterly observations only (N=17). Entity: kaspi_bank.
+KSPI quarterly LP using post-2020 quarterly observations. Entity: kaspi_bank.
 
-| Edge | Impact (h=0) | SE | 95% CI | p-value | N | Rating |
-|------|-------------|-----|---------|---------|---|--------|
-| `shock_to_npl_kspi` | 72.7972 | 10.2974 | [52.6144, 92.9800] | 0.0000 | 26 | B |
-| `shock_to_cor_kspi` | 85.9573 | 7.4022 | [71.4489, 100.4656] | 0.0000 | 26 | B |
-| `nbk_rate_to_deposit_cost` | 0.2227 | 0.0618 | [0.1016, 0.3438] | 0.0003 | 18 | B |
-| `nbk_rate_to_cor` | 0.3560 | 0.1193 | [0.1220, 0.5899] | 0.0029 | 18 | B |
+**Note on N:** `N_cal` = calendar periods in sample; `N_eff` = effective obs after lags/leads.
+
+| Edge | Impact | SE | p-value | N_cal | N_eff | Treatment | Outcome | Rating |
+|------|--------|-----|---------|-------|-------|-----------|---------|--------|
+| `shock_to_npl_kspi` | 72.80 | 10.30 | 0.0000 | 27 | 26 | 1pp tradable CPI sho... | bps NPL ratio c... | B |
+| `shock_to_cor_kspi` | 85.96 | 7.40 | 0.0000 | 27 | 26 | 1pp tradable CPI sho... | bps CoR change | B |
+| `nbk_rate_to_deposit_cost` | 0.22 | 0.06 | 0.0003 | 19 | 18 | 1pp NBK base rate in... | pp deposit cost... | B |
+| `nbk_rate_to_cor` | 0.36 | 0.12 | 0.0029 | 19 | 18 | 1pp NBK base rate in... | pp CoR increase | B |
 
 ---
 
 ## Group C-A: Annual LP Robustness (4 edges)
 
-Annual-frequency LP using pre-2020 annual observations (N=11-13).
+Annual-frequency LP using pre-2020 annual observations (2011-2019).
 Sign/magnitude consistency check against quarterly estimates.
 
-| Edge | Impact (h=0) | SE | N | Q-impact | Sign Match | Rating |
-|------|-------------|-----|---|---------|-----------|--------|
-| `shock_to_npl_kspi` | 349.1599 | 33.4216 | 8 | 72.7972 | Yes | B |
-| `shock_to_cor_kspi` | 360.1183 | 45.4416 | 8 | 85.9573 | Yes | B |
+**Note:** `N_eff` = effective observations after lags. Annual data has fewer obs due to lag requirements.
+
+| Edge | Impact (A) | SE | N_eff | Impact (Q) | Sign Match | Rating |
+|------|-----------|-----|-------|-----------|-----------|--------|
+| `shock_to_npl_kspi` | 349.16 | 33.42 | 8 | 72.80 | Yes | B |
+| `shock_to_cor_kspi` | 360.12 | 45.44 | 8 | 85.96 | Yes | B |
 
 ---
 
@@ -171,11 +178,44 @@ Deterministic partial derivatives of K2 = 100 * Capital / RWA.
 
 ---
 
+## Unit Normalization Reference
+
+**CRITICAL:** All coefficients must be interpreted with correct units for chain propagation.
+
+| Edge | Treatment Unit | Outcome Unit |
+|------|---------------|--------------|
+| `oil_supply_to_brent` | 1 SD Baumeister supply shock (mbd equivalent) | % change in Brent price |
+| `oil_supply_to_fx` | 1 SD Baumeister supply shock | % change in USD/KZT |
+| `oil_demand_to_fx` | 1 SD Baumeister demand shock | % change in USD/KZT |
+| `vix_to_fx` | 1 point VIX increase | % change in USD/KZT |
+| `cpi_to_nbk_rate` | 1pp YoY tradable CPI inflation | pp NBK base rate **(REACTION FN)** |
+| `fx_to_nbk_rate` | 1% KZT depreciation (MoM) | pp NBK base rate **(REACTION FN)** |
+| `fx_to_cpi_tradable` | 10% KZT depreciation | pp tradable CPI (cumulative 12m) |
+| `fx_to_cpi_nontradable` | 10% KZT depreciation | pp non-tradable CPI (cumulative 12m) |
+| `cpi_to_nominal_income` | 1pp CPI inflation | pp nominal income growth |
+| `fx_to_real_expenditure` | 10% KZT depreciation | % real expenditure decline |
+| `shock_to_npl_kspi` | 1pp tradable CPI shock (quarterly) | bps NPL ratio change |
+| `shock_to_cor_kspi` | 1pp tradable CPI shock (quarterly) | bps CoR change |
+| `nbk_rate_to_deposit_cost` | 1pp NBK base rate increase | pp deposit cost increase |
+| `nbk_rate_to_cor` | 1pp NBK base rate increase | pp CoR increase |
+| `expenditure_to_payments_revenue` | 1% real expenditure change | bn KZT payments revenue |
+| `portfolio_mix_to_rwa` | 1pp consumer loan share change | bn KZT RWA change |
+| `loan_portfolio_to_rwa` | 1 bn KZT net loans increase | bn KZT RWA increase (avg risk weight) |
+| `cor_to_capital` | 1pp CoR increase | bn KZT capital decline (provisions) |
+| `capital_to_k2` | 1 bn KZT capital increase | pp K2 ratio change |
+| `rwa_to_k2` | 1 bn KZT RWA increase | pp K2 ratio change |
+| `shock_to_npl_sector` | 1pp CPI shock × E_consumer exposure | bps NPL differential per unit exposure |
+| `shock_to_cor_sector` | 1pp CPI shock × E_consumer exposure | bps CoR differential per unit exposure |
+| `nbk_rate_to_deposit_cost_sector` | 1pp rate × E_demand_dep exposure | pp deposit cost differential per unit exposure |
+| `nbk_rate_to_cor_sector` | 1pp rate × E_shortterm exposure | pp CoR differential per unit exposure |
+
+---
+
 ## Limitations and Honest Assessment
 
 ### Data Quality
 - KSPI quarterly data: 17 true quarterly observations (2020Q3-2024Q3)
-- KSPI annual data: 9-10 annual observations (2011-2019), bank subsidiary level
+- KSPI annual data: 9 annual observations (2011-2019), bank subsidiary level
 - No interpolated observations used in estimation (hard filter)
 - Panel data: 4 banks, unbalanced panel, annual frequency for most
 - Monthly macro data: ~60-180 observations depending on series
@@ -192,6 +232,11 @@ Deterministic partial derivatives of K2 = 100 * Capital / RWA.
 - Panel LP uses shift-share design; identified from exposure variation
 - HAC standard errors may be undersized in very small samples
 - Accounting bridges are deterministic at current values only
+
+### Policy-Rate Edges
+- `cpi_to_nbk_rate` and `fx_to_nbk_rate` estimate **reaction functions**, not causal effects
+- These edges should NOT be used for shock propagation without monetary policy surprise specification
+- Current estimates are imprecise/near-null, consistent with endogenous policy response
 
 ### Scope
 - All results are Kazakhstan-specific

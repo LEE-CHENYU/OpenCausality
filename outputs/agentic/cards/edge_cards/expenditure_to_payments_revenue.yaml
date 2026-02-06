@@ -1,6 +1,6 @@
 edge_id: expenditure_to_payments_revenue
 dag_version_hash: a0d5c383631c52aa262f288704c6f7868d48b73d5034761245939de8eeea1d72
-created_at: '2026-02-05T14:50:58.333515'
+created_at: '2026-02-05T15:25:32.188331'
 data_provenance:
   treatment_source:
     connector: parquet_file
@@ -75,6 +75,14 @@ estimates:
   - 472.4761879833761
   - 137.47512653375753
   - 392.65974059141115
+  treatment_unit: 1% real expenditure change
+  outcome_unit: bn KZT payments revenue
+  n_calendar_periods: 8
+  n_effective_obs_h0: 7
+  n_effective_obs_by_horizon:
+  - 7
+  - 6
+  - 5
 diagnostics:
   hac_bandwidth:
     name: hac_bandwidth

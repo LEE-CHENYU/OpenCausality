@@ -1,6 +1,6 @@
 edge_id: shock_to_npl_kspi_annual
 dag_version_hash: a0d5c383631c52aa262f288704c6f7868d48b73d5034761245939de8eeea1d72
-created_at: '2026-02-05T14:50:55.369739'
+created_at: '2026-02-05T15:25:29.554033'
 data_provenance:
   treatment_source:
     connector: parquet_file
@@ -75,6 +75,14 @@ estimates:
   - 414.6649871501906
   - 376.0757840815713
   - 249.4251898462839
+  treatment_unit: 1pp tradable CPI shock (quarterly)
+  outcome_unit: bps NPL ratio change
+  n_calendar_periods: 9
+  n_effective_obs_h0: 8
+  n_effective_obs_by_horizon:
+  - 8
+  - 7
+  - 6
 diagnostics:
   hac_bandwidth:
     name: hac_bandwidth

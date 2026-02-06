@@ -45,6 +45,15 @@ class Estimates:
     irf_ci_lower: list[float] | None = None
     irf_ci_upper: list[float] | None = None
 
+    # Unit normalization (CRITICAL for chain propagation)
+    treatment_unit: str = ""  # e.g., "1pp", "1 SD", "10% depreciation"
+    outcome_unit: str = ""    # e.g., "pp", "bps", "bn KZT"
+
+    # Sample size details (for honest reporting)
+    n_calendar_periods: int | None = None   # Raw calendar periods in sample
+    n_effective_obs_h0: int | None = None   # Effective obs at h=0 after lags
+    n_effective_obs_by_horizon: list[int] | None = None  # Effective obs per horizon
+
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         d = {
@@ -58,6 +67,18 @@ class Estimates:
             d["irf"] = self.irf
             d["irf_ci_lower"] = self.irf_ci_lower
             d["irf_ci_upper"] = self.irf_ci_upper
+        # Unit normalization
+        if self.treatment_unit:
+            d["treatment_unit"] = self.treatment_unit
+        if self.outcome_unit:
+            d["outcome_unit"] = self.outcome_unit
+        # Sample size details
+        if self.n_calendar_periods is not None:
+            d["n_calendar_periods"] = self.n_calendar_periods
+        if self.n_effective_obs_h0 is not None:
+            d["n_effective_obs_h0"] = self.n_effective_obs_h0
+        if self.n_effective_obs_by_horizon is not None:
+            d["n_effective_obs_by_horizon"] = self.n_effective_obs_by_horizon
         return d
 
 

@@ -1,6 +1,6 @@
 edge_id: nbk_rate_to_deposit_cost
 dag_version_hash: a0d5c383631c52aa262f288704c6f7868d48b73d5034761245939de8eeea1d72
-created_at: '2026-02-05T14:50:55.347849'
+created_at: '2026-02-05T15:25:29.529757'
 data_provenance:
   treatment_source:
     connector: parquet_file
@@ -75,6 +75,14 @@ estimates:
   - 0.3437480099642522
   - 0.3655210806380018
   - 0.335334065125602
+  treatment_unit: 1pp NBK base rate increase
+  outcome_unit: pp deposit cost increase
+  n_calendar_periods: 19
+  n_effective_obs_h0: 18
+  n_effective_obs_by_horizon:
+  - 18
+  - 17
+  - 16
 diagnostics:
   hac_bandwidth:
     name: hac_bandwidth

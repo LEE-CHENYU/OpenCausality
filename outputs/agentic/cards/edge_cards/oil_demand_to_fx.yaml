@@ -1,6 +1,6 @@
 edge_id: oil_demand_to_fx
 dag_version_hash: a0d5c383631c52aa262f288704c6f7868d48b73d5034761245939de8eeea1d72
-created_at: '2026-02-05T14:50:55.223171'
+created_at: '2026-02-05T15:25:29.414322'
 data_provenance:
   treatment_source:
     connector: parquet_file
@@ -91,6 +91,18 @@ estimates:
   - 0.330164328151642
   - 0.2967537201154435
   - 0.1805074235934897
+  treatment_unit: 1 SD Baumeister demand shock
+  outcome_unit: '% change in USD/KZT'
+  n_calendar_periods: 189
+  n_effective_obs_h0: 187
+  n_effective_obs_by_horizon:
+  - 187
+  - 186
+  - 185
+  - 184
+  - 183
+  - 182
+  - 181
 diagnostics:
   hac_bandwidth:
     name: hac_bandwidth

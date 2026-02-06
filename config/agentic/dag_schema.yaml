@@ -1,4 +1,4 @@
-# DAG schema v2 for agentic causal identification
+# DAG schema v3 for agentic causal identification
 # This file describes the expected structure for DAG specifications.
 # It is not a JSON-schema; it is a human-readable contract.
 #
@@ -8,8 +8,15 @@
 # - Added derived node tracking (identity, depends_on)
 # - Added aggregation configuration
 # - Added null_acceptance for preventing p-hacking
+#
+# V3 CHANGES (Generalization):
+# - Added unit_specification on edges (treatment_unit, outcome_unit) for safe chain propagation
+# - Added edge_type (causal, reaction_function, mechanical, immutable) to distinguish edge semantics
+# - Added propagation_rules for automated chain multiplication
+# - Added validation_pipeline configuration
+# - Domain-agnostic: works for any causal DAG, not just KSPI/banking
 
-schema_version: 2
+schema_version: 3
 
 metadata:
   name: "<study_name>"
@@ -94,6 +101,21 @@ edges:
   - id: "<edge_id>"
     from: "<node_id>"
     to: "<node_id>"
+
+    # NEW v3: Edge Type Classification
+    # CRITICAL for interpretation and propagation
+    edge_type: "causal"             # causal|reaction_function|mechanical|immutable
+    # - causal: Standard causal edge, supports shock propagation
+    # - reaction_function: Endogenous policy response (NOT for shock propagation)
+    # - mechanical: Deterministic accounting/identity relationship
+    # - immutable: Validated evidence, locked from re-estimation
+
+    # NEW v3: Unit Specification (REQUIRED for chain propagation)
+    # Without units, chain multiplication produces meaningless numbers
+    unit_specification:
+      treatment_unit: "<treatment_unit>"   # e.g., "1pp", "1 SD", "10% depreciation", "1 bn KZT"
+      outcome_unit: "<outcome_unit>"       # e.g., "pp", "bps", "bn KZT", "% change"
+      notes: "<optional notes on unit normalization>"
 
     # NEW v2: Temporal semantics
     # Specifies the timing relationship between treatment and outcome
@@ -222,3 +244,130 @@ allowed_refinements:
   - id: "bandwidth_change"
     design: "RDD"
     range: [0.5, 2.0]
+
+# =============================================================================
+# PROPAGATION RULES (NEW v3)
+# =============================================================================
+# Rules for propagating shocks through the DAG.
+
+propagation_rules:
+  # Edge types that BLOCK shock propagation
+  blocked_edge_types:
+    - "reaction_function"   # Endogenous policy response cannot propagate
+
+  # Unit compatibility rules for chain multiplication
+  unit_compatibility:
+    enabled: true
+    # When multiplying edges, output unit of edge N must match input unit of edge N+1
+    # Example: edge1 outputs "pp" → edge2 must accept "pp" (or compatible "1pp") as input
+
+  # Chain multiplication rules
+  chain_multiplication:
+    # When propagating shock S through edges A→B→C:
+    # Effect on C = beta_A * beta_B (if units compatible)
+    # SE propagation: sqrt(beta_B^2 * se_A^2 + beta_A^2 * se_B^2) (delta method)
+    se_method: "delta_method"
+
+  # Warning flags
+  warnings:
+    - "reaction_function_in_path"  # Path includes reaction function edge
+    - "unit_mismatch"              # Units don't match across edges
+    - "mechanical_edge"            # Path includes identity/accounting edge
+    - "immutable_edge"             # Path includes locked validated evidence
+
+# =============================================================================
+# VALIDATION PIPELINE (NEW v3)
+# =============================================================================
+# Automated checks to run after estimation.
+
+validation_pipeline:
+  # Pre-estimation checks (before running estimators)
+  pre_checks:
+    - id: "unit_presence"
+      description: "All edges have treatment_unit and outcome_unit specified"
+      severity: "error"
+
+    - id: "edge_type_presence"
+      description: "All edges have edge_type specified"
+      severity: "error"
+
+    - id: "node_source_defined"
+      description: "All observed nodes have data source defined"
+      severity: "warning"
+
+    - id: "dag_acyclic"
+      description: "DAG has no cycles"
+      severity: "error"
+
+  # Post-estimation checks (after running estimators)
+  post_checks:
+    - id: "n_consistency"
+      description: "N in report matches N in EdgeCard"
+      severity: "error"
+
+    - id: "unit_in_card"
+      description: "EdgeCard has treatment_unit and outcome_unit populated"
+      severity: "error"
+
+    - id: "interpolation_fraction"
+      description: "Interpolated obs < 30% of sample for estimation-eligible edges"
+      severity: "warning"
+      threshold: 0.30
+
+    - id: "reaction_function_labeled"
+      description: "Reaction function edges have is_reaction_function=true in EdgeCard"
+      severity: "error"
+
+    - id: "loo_stability"
+      description: "Leave-one-out stability check passes for panel edges"
+      severity: "warning"
+
+    - id: "sign_consistency"
+      description: "Estimated sign matches expected_sign in DAG spec"
+      severity: "warning"
+
+  # Report consistency checks
+  report_checks:
+    - id: "report_vs_card_match"
+      description: "Report table values match EdgeCard estimates"
+      fields: ["point", "se", "ci_95", "n_effective_obs_h0"]
+      severity: "error"
+
+    - id: "unit_table_present"
+      description: "Report includes Unit Normalization Reference table"
+      severity: "warning"
+
+    - id: "reaction_function_warning"
+      description: "Reaction function edges have warning in report"
+      severity: "warning"
+
+# =============================================================================
+# DOMAIN EXAMPLES (NEW v3)
+# =============================================================================
+# Example DAG structures for different domains to show generality.
+
+domain_examples:
+  banking_stress_test:
+    description: "Shocks → Macro → Bank Balance Sheet → Capital Ratio"
+    example_path: ["oil_shock", "fx_rate", "inflation", "npl_ratio", "capital_ratio"]
+    key_edges:
+      - { from: "fx_rate", to: "inflation", type: "causal" }
+      - { from: "inflation", to: "policy_rate", type: "reaction_function" }
+
+  labor_economics:
+    description: "Policy → Employment → Wages → Welfare"
+    example_path: ["minimum_wage", "employment", "wages", "consumption"]
+    key_edges:
+      - { from: "minimum_wage", to: "employment", type: "causal" }
+
+  environmental:
+    description: "Regulation → Emissions → Health → Productivity"
+    example_path: ["carbon_tax", "emissions", "air_quality", "mortality"]
+    key_edges:
+      - { from: "carbon_tax", to: "emissions", type: "causal" }
+
+  healthcare:
+    description: "Treatment → Biomarkers → Clinical Outcomes"
+    example_path: ["drug_treatment", "blood_pressure", "cardiovascular_events"]
+    key_edges:
+      - { from: "drug_treatment", to: "blood_pressure", type: "causal" }
