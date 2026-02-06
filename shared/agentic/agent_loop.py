@@ -39,6 +39,7 @@ from shared.agentic.ts_guard import TSGuard
 from shared.agentic.governance.hitl_gate import HITLGate
 from shared.agentic.governance.patch_policy import PatchPolicy
 from shared.agentic.agents.patch_bot import PatchBot, PatchResult
+from shared.engine.dynamic_loader import DynamicLoaderFactory
 from shared.agentic.output.edge_card import (
     IdentificationBlock,
     CounterfactualBlock,
@@ -193,6 +194,9 @@ class AgentLoop:
         # PatchPolicy and PatchBot
         self.patch_policy = PatchPolicy.load()
         self.patch_bot = PatchBot(self.patch_policy, artifact_store=self.artifact_store)
+
+        # Dynamic loader factory
+        self.dynamic_loader = DynamicLoaderFactory()
 
         # Cross-run state
         self.cross_run_reducer = CrossRunReducer(
@@ -463,6 +467,13 @@ class AgentLoop:
         if self.config.catalog_only_first:
             self._catalog_data()
 
+        # Auto-populate missing loaders from DAG source specs
+        populate_results = self.dynamic_loader.auto_populate_from_dag(self.dag)
+        registered_count = sum(1 for v in populate_results.values() if v == "registered")
+        if registered_count > 0:
+            logger.info(f"DynamicLoader: auto-registered {registered_count} edges")
+            self._catalog_data()  # Re-catalog with new loaders
+
         # Mark data available in queue
         for node in self.dag.nodes:
             asset = self.catalog.get(node.id)
@@ -567,6 +578,8 @@ class AgentLoop:
                 edge_card = self._create_identity_card(task)
             elif group in ("MONTHLY_LP", "QUARTERLY_LP"):
                 edge_card = self._create_lp_card(task, is_quarterly=(group == "QUARTERLY_LP"))
+            elif group == "DYNAMIC_LP":
+                edge_card = self._create_lp_card(task, is_quarterly=False)
             else:
                 # Fallback: try LP estimation if edge is in EDGE_NODE_MAP
                 if task.edge_id in EDGE_NODE_MAP:

@@ -686,4 +686,6 @@ def get_edge_group(edge_id: str) -> str:
     elif edge_id in identity:
         return "IDENTITY"
     else:
+        if edge_id in EDGE_NODE_MAP:
+            return "DYNAMIC_LP"
         return "UNKNOWN"

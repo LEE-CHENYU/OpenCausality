@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HITL Resolution Panel</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background: #fff;
+            color: #000;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        /* Header */
+        .header {
+            padding: 24px 32px 16px;
+            border-bottom: 1px solid #000;
+        }
+        .header h1 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .header .subtitle {
+            color: #666;
+            font-size: 11px;
+            margin-bottom: 12px;
+        }
+        .stats-row {
+            display: flex;
+            gap: 24px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .stat {
+            font-size: 11px;
+        }
+        .stat strong { font-weight: 600; }
+        .stat .critical { color: #000; font-weight: 700; }
+        .stat .high { color: #555; font-weight: 600; }
+
+        /* Controls bar */
+        .controls-bar {
+            padding: 10px 32px;
+            border-bottom: 1px solid #000;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            background: #fafafa;
+            font-size: 11px;
+        }
+        .controls-bar label {
+            color: #666;
+            margin-right: 4px;
+        }
+        .controls-bar select, .controls-bar input[type="text"] {
+            border: 1px solid #000;
+            background: #fff;
+            padding: 4px 8px;
+            font-size: 11px;
+            font-family: inherit;
+        }
+        .controls-bar input[type="text"] {
+            width: 200px;
+        }
+
+        /* Progress bar */
+        .progress-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: auto;
+        }
+        .progress-bar {
+            width: 120px;
+            height: 8px;
+            border: 1px solid #000;
+            background: #fff;
+        }
+        .progress-fill {
+            height: 100%;
+            background: #000;
+            transition: width 0.3s;
+        }
+        .progress-label {
+            font-size: 11px;
+            font-weight: 500;
+            min-width: 60px;
+        }
+
+        /* Sections */
+        .section {
+            padding: 16px 32px;
+            border-bottom: 1px solid #ddd;
+        }
+        .section:last-of-type {
+            border-bottom: 1px solid #000;
+        }
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+        .section-title {
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .section-count {
+            font-size: 11px;
+            color: #666;
+        }
+        .severity-badge {
+            display: inline-block;
+            font-size: 10px;
+            font-weight: 600;
+            padding: 1px 6px;
+            border: 1px solid #000;
+            margin-left: 8px;
+        }
+        .severity-badge.critical {
+            background: #000;
+            color: #fff;
+        }
+        .severity-badge.high {
+            background: #fff;
+            color: #000;
+        }
+
+        /* Bulk action */
+        .bulk-action {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            background: #fafafa;
+        }
+        .bulk-action label { color: #666; font-size: 11px; }
+        .bulk-action select {
+            border: 1px solid #000;
+            background: #fff;
+            padding: 3px 6px;
+            font-size: 11px;
+            font-family: inherit;
+        }
+        .btn-sm {
+            border: 1px solid #000;
+            background: #fff;
+            padding: 3px 10px;
+            font-size: 11px;
+            font-family: inherit;
+            cursor: pointer;
+        }
+        .btn-sm:hover { background: #000; color: #fff; }
+
+        /* Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+        }
+        th {
+            text-align: left;
+            font-weight: 600;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 6px 8px;
+            border-bottom: 1px solid #000;
+            color: #666;
+        }
+        td {
+            padding: 8px 8px;
+            border-bottom: 1px solid #eee;
+            vertical-align: top;
+        }
+        tr:hover td { background: #fafafa; }
+        tr.resolved td { opacity: 0.45; }
+
+        .edge-name {
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        .mono {
+            font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+            font-size: 10px;
+        }
+        .diag-pass { color: #000; }
+        .diag-fail { color: #000; font-weight: 700; text-decoration: underline; }
+
+        .claim-tag {
+            display: inline-block;
+            font-size: 9px;
+            font-weight: 600;
+            padding: 1px 5px;
+            border: 1px solid #000;
+            white-space: nowrap;
+        }
+        .rating-tag {
+            display: inline-block;
+            font-size: 10px;
+            font-weight: 700;
+            width: 18px;
+            text-align: center;
+            border: 1px solid #000;
+        }
+
+        .flag-list {
+            font-size: 10px;
+            color: #666;
+        }
+        .flag-list .flag {
+            display: inline-block;
+            margin-right: 4px;
+            padding: 0 3px;
+            border: 1px solid #ccc;
+            font-size: 9px;
+        }
+
+        /* Action cells */
+        td select {
+            border: 1px solid #000;
+            background: #fff;
+            padding: 3px 6px;
+            font-size: 11px;
+            font-family: inherit;
+            width: 100%;
+        }
+        td select.decided {
+            background: #000;
+            color: #fff;
+        }
+        td input[type="text"] {
+            border: 1px solid #ccc;
+            padding: 3px 6px;
+            font-size: 10px;
+            font-family: inherit;
+            width: 100%;
+            margin-top: 4px;
+        }
+        td input[type="text"]:focus {
+            border-color: #000;
+            outline: none;
+        }
+
+        /* Details toggle */
+        .details-row td {
+            padding: 0 8px 8px 8px;
+            border-bottom: 1px solid #ddd;
+        }
+        .details-content {
+            display: none;
+            padding: 8px 12px;
+            background: #fafafa;
+            border: 1px solid #eee;
+            font-size: 10px;
+            line-height: 1.6;
+        }
+        .details-content.open { display: block; }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            max-width: 400px;
+        }
+        .detail-label { color: #666; }
+        .detail-value { font-weight: 500; font-variant-numeric: tabular-nums; }
+        .toggle-btn {
+            cursor: pointer;
+            color: #666;
+            font-size: 10px;
+            text-decoration: underline;
+        }
+        .toggle-btn:hover { color: #000; }
+
+        /* Footer */
+        .footer {
+            padding: 16px 32px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .footer label {
+            font-size: 11px;
+            color: #666;
+        }
+        .footer input[type="text"] {
+            border: 1px solid #000;
+            padding: 6px 10px;
+            font-size: 11px;
+            font-family: inherit;
+            width: 220px;
+        }
+        .btn-export {
+            border: 1px solid #000;
+            background: #000;
+            color: #fff;
+            padding: 6px 20px;
+            font-size: 12px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+        }
+        .btn-export:hover { background: #333; }
+        .btn-export:disabled {
+            background: #ccc;
+            border-color: #ccc;
+            cursor: not-allowed;
+        }
+        .footer .timestamp {
+            font-size: 10px;
+            color: #999;
+            margin-left: auto;
+        }
+
+        /* Hidden */
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>HITL Resolution Panel</h1>
+    <div class="subtitle">Human-in-the-Loop Issue Resolution &mdash; KSPI K2 Agentic Pipeline</div>
+    <div class="stats-row" id="statsRow"></div>
+</div>
+
+<div class="controls-bar">
+    <label>Severity</label>
+    <select id="filterSeverity">
+        <option value="all">All</option>
+        <option value="CRITICAL">CRITICAL</option>
+        <option value="HIGH">HIGH</option>
+    </select>
+    <label>Rule</label>
+    <select id="filterRule">
+        <option value="all">All rules</option>
+    </select>
+    <label>Status</label>
+    <select id="filterStatus">
+        <option value="all">All</option>
+        <option value="pending">Pending</option>
+        <option value="resolved">Resolved</option>
+    </select>
+    <div class="progress-container">
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+        <span class="progress-label" id="progressLabel">0 / 0</span>
+    </div>
+</div>
+
+<div id="sectionsContainer"></div>
+
+<div class="footer">
+    <label>Analyst ID</label>
+    <input type="text" id="analystId" placeholder="Your name or initials">
+    <button class="btn-export" id="exportBtn">Export Decisions</button>
+    <span class="timestamp" id="genTimestamp"></span>
+</div>
+
+<script>
+// ─── INLINE DATA: Issues from state.json ───────────────────────────────
+const ISSUES = {
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:fx_to_cpi_tradable": {
+        "status": "OPEN", "opened_run": "4144e331", "severity": "CRITICAL",
+        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+        "message": "p=0.0001 but claim_level=. Significance does not establish causation."
+    },
+    "RATING_DIAGNOSTICS_CONFLICT:cpi_to_nbk_rate": {
+        "status": "OPEN", "opened_run": "4144e331", "severity": "HIGH",
+        "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
+        "message": "A-rating despite failed diagnostics."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:shock_to_npl_kspi_annual": {
+        "status": "OPEN", "opened_run": "4144e331", "severity": "CRITICAL",
+        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+        "message": "p=0.0000 but claim_level=. Significance does not establish causation."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:shock_to_npl_sector": {
+        "status": "OPEN", "opened_run": "4144e331", "severity": "CRITICAL",
+        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+        "message": "p=0.0029 but claim_level=. Significance does not establish causation."
+    },
+    "LOO_INSTABILITY:shock_to_npl_sector": {
+        "status": "OPEN", "opened_run": "4144e331", "severity": "HIGH",
+        "rule_id": "LOO_INSTABILITY",
+        "message": "Leave-one-out shows sign flip or >50% magnitude change."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:shock_to_cor_kspi_annual": {
+        "status": "OPEN", "opened_run": "4144e331", "severity": "CRITICAL",
+        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+        "message": "p=0.0000 but claim_level=. Significance does not establish causation."
+    },
+    "RATING_DIAGNOSTICS_CONFLICT:vix_to_fx": {
+        "status": "OPEN", "opened_run": "4144e331", "severity": "HIGH",
+        "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
+        "message": "A-rating despite failed diagnostics."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:oil_supply_to_income": {
+        "status": "OPEN", "opened_run": "4144e331", "severity": "CRITICAL",
+        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+        "message": "p=0.0030 but claim_level=REDUCED_FORM. Significance does not establish causation."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:cpi_to_nominal_income": {
+        "status": "OPEN", "opened_run": "4144e331", "severity": "CRITICAL",
+        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+        "message": "p=0.0003 but claim_level=. Significance does not establish causation."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:global_activity_to_income": {
+        "status": "OPEN", "opened_run": "4144e331", "severity": "CRITICAL",
+        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+        "message": "p=0.0030 but claim_level=REDUCED_FORM. Significance does not establish causation."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:portfolio_mix_to_rwa": {
+        "status": "OPEN", "opened_run": "4144e331", "severity": "CRITICAL",
+        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+        "message": "p=0.0000 but claim_level=. Significance does not establish causation."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:expenditure_to_payments_revenue": {
+        "status": "OPEN", "opened_run": "4144e331", "severity": "CRITICAL",
+        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+        "message": "p=0.0000 but claim_level=. Significance does not establish causation."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:nbk_rate_to_cor": {
+        "status": "OPEN", "opened_run": "4144e331", "severity": "CRITICAL",
+        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+        "message": "p=0.0029 but claim_level=. Significance does not establish causation."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:shock_to_cor_kspi": {
+        "status": "OPEN", "opened_run": "4144e331", "severity": "CRITICAL",
+        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+        "message": "p=0.0000 but claim_level=. Significance does not establish causation."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:shock_to_npl_kspi": {
+        "status": "OPEN", "opened_run": "4144e331", "severity": "CRITICAL",
+        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+        "message": "p=0.0000 but claim_level=. Significance does not establish causation."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:oil_supply_to_brent": {
+        "status": "OPEN", "opened_run": "4144e331", "severity": "CRITICAL",
+        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+        "message": "p=0.0000 but claim_level=. Significance does not establish causation."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:shock_to_cor_sector": {
+        "status": "OPEN", "opened_run": "4144e331", "severity": "CRITICAL",
+        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+        "message": "p=0.0000 but claim_level=. Significance does not establish causation."
+    },
+    "LOO_INSTABILITY:shock_to_cor_sector": {
+        "status": "OPEN", "opened_run": "4144e331", "severity": "HIGH",
+        "rule_id": "LOO_INSTABILITY",
+        "message": "Leave-one-out shows sign flip or >50% magnitude change."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:fx_to_real_expenditure": {
+        "status": "OPEN", "opened_run": "4144e331", "severity": "CRITICAL",
+        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+        "message": "p=0.0120 but claim_level=. Significance does not establish causation."
+    },
+    "LOO_INSTABILITY:nbk_rate_to_cor_sector": {
+        "status": "OPEN", "opened_run": "4144e331", "severity": "HIGH",
+        "rule_id": "LOO_INSTABILITY",
+        "message": "Leave-one-out shows sign flip or >50% magnitude change."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:nbk_rate_to_deposit_cost": {
+        "status": "OPEN", "opened_run": "4144e331", "severity": "CRITICAL",
+        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+        "message": "p=0.0003 but claim_level=. Significance does not establish causation."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:oil_demand_to_income": {
+        "status": "OPEN", "opened_run": "4144e331", "severity": "CRITICAL",
+        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+        "message": "p=0.0030 but claim_level=REDUCED_FORM. Significance does not establish causation."
+    }
+};
+
+// Closed issues count (from state.json)
+const CLOSED_ISSUES_COUNT = 29;
+
+// ─── INLINE DATA: Edge card summaries ──────────────────────────────────
+const EDGES = {
+    "fx_to_cpi_tradable": {
+        point: 0.113, se: 0.028, pvalue: 0.0001,
+        design: "IMMUTABLE_EVIDENCE", rating: "A", score: 0.99,
+        claim_level: "IDENTIFIED_CAUSAL", all_pass: true, n_obs: 1200,
+        diagnostics: [
+            {name:"validated_evidence", passed:true},
+            {name:"effective_obs", passed:true}
+        ],
+        failure_flags: [],
+        panel: null
+    },
+    "cpi_to_nbk_rate": {
+        point: -0.5353, se: 13.966, pvalue: 0.9694,
+        design: "LOCAL_PROJECTIONS", rating: "A", score: 0.824,
+        claim_level: "BLOCKED_ID", all_pass: false, n_obs: 67,
+        diagnostics: [
+            {name:"hac_bandwidth", passed:true},
+            {name:"effective_obs", passed:true},
+            {name:"r_squared_h0", passed:true},
+            {name:"residual_ac1", passed:true},
+            {name:"sign_consistency", passed:false}
+        ],
+        failure_flags: [],
+        panel: null
+    },
+    "shock_to_npl_kspi_annual": {
+        point: 349.160, se: 33.422, pvalue: 1.51e-25,
+        design: "LOCAL_PROJECTIONS_ANNUAL", rating: "B", score: 0.626,
+        claim_level: "REDUCED_FORM", all_pass: false, n_obs: 9,
+        diagnostics: [
+            {name:"hac_bandwidth", passed:true},
+            {name:"effective_obs", passed:false},
+            {name:"r_squared_h0", passed:true},
+            {name:"residual_ac1", passed:true},
+            {name:"sign_consistency", passed:true}
+        ],
+        failure_flags: ["small_sample"],
+        panel: null
+    },
+    "shock_to_npl_sector": {
+        point: -46.548, se: 13.416, pvalue: 0.0029,
+        design: "PANEL_LP_EXPOSURE_FE", rating: "C", score: 0.59,
+        claim_level: "REDUCED_FORM", all_pass: false, n_obs: 48,
+        diagnostics: [
+            {name:"effective_obs", passed:true},
+            {name:"leave_one_bank_out", passed:false},
+            {name:"exposure_variation", passed:true},
+            {name:"regime_break", passed:false},
+            {name:"r_squared_within", passed:true}
+        ],
+        failure_flags: ["weak_identification","regime_break_detected"],
+        panel: {n_units:4, n_periods:27, balance:"unbalanced"}
+    },
+    "shock_to_cor_kspi_annual": {
+        point: 360.118, se: 45.442, pvalue: 2.28e-15,
+        design: "LOCAL_PROJECTIONS_ANNUAL", rating: "B", score: 0.626,
+        claim_level: "REDUCED_FORM", all_pass: false, n_obs: 9,
+        diagnostics: [
+            {name:"hac_bandwidth", passed:true},
+            {name:"effective_obs", passed:false},
+            {name:"r_squared_h0", passed:true},
+            {name:"residual_ac1", passed:true},
+            {name:"sign_consistency", passed:true}
+        ],
+        failure_flags: ["small_sample"],
+        panel: null
+    },
+    "vix_to_fx": {
+        point: -0.0324, se: 0.110, pvalue: 0.7681,
+        design: "LOCAL_PROJECTIONS", rating: "A", score: 0.890,
+        claim_level: "REDUCED_FORM", all_pass: false, n_obs: 190,
+        diagnostics: [
+            {name:"hac_bandwidth", passed:true},
+            {name:"effective_obs", passed:true},
+            {name:"r_squared_h0", passed:true},
+            {name:"residual_ac1", passed:true},
+            {name:"sign_consistency", passed:false}
+        ],
+        failure_flags: [],
+        panel: null
+    },
+    "oil_supply_to_income": {
+        point: -0.150, se: 0.050, pvalue: 0.003,
+        design: "LOCAL_PROJECTIONS", rating: "A", score: 0.97,
+        claim_level: "REDUCED_FORM", all_pass: true, n_obs: null,
+        diagnostics: [
+            {name:"residual_checks", passed:true}
+        ],
+        failure_flags: [],
+        panel: null
+    },
+    "oil_demand_to_income": {
+        point: -0.150, se: 0.050, pvalue: 0.003,
+        design: "LOCAL_PROJECTIONS", rating: "A", score: 0.97,
+        claim_level: "REDUCED_FORM", all_pass: true, n_obs: null,
+        diagnostics: [
+            {name:"residual_checks", passed:true}
+        ],
+        failure_flags: [],
+        panel: null
+    },
+    "global_activity_to_income": {
+        point: -0.150, se: 0.050, pvalue: 0.003,
+        design: "LOCAL_PROJECTIONS", rating: "A", score: 0.97,
+        claim_level: "REDUCED_FORM", all_pass: true, n_obs: null,
+        diagnostics: [
+            {name:"residual_checks", passed:true}
+        ],
+        failure_flags: [],
+        panel: null
+    },
+    "cpi_to_nominal_income": {
+        point: 0.650, se: 0.180, pvalue: 0.0003,
+        design: "IMMUTABLE_EVIDENCE", rating: "A", score: 0.99,
+        claim_level: "IDENTIFIED_CAUSAL", all_pass: true, n_obs: null,
+        diagnostics: [
+            {name:"validated_evidence", passed:true},
+            {name:"effective_obs", passed:true}
+        ],
+        failure_flags: [],
+        panel: null
+    },
+    "portfolio_mix_to_rwa": {
+        point: 18195.963, se: 3952.754, pvalue: 4.16e-6,
+        design: "LOCAL_PROJECTIONS", rating: "B", score: 0.798,
+        claim_level: "BLOCKED_ID", all_pass: false, n_obs: 17,
+        diagnostics: [
+            {name:"hac_bandwidth", passed:true},
+            {name:"effective_obs", passed:false},
+            {name:"r_squared_h0", passed:true},
+            {name:"residual_ac1", passed:true},
+            {name:"sign_consistency", passed:true}
+        ],
+        failure_flags: ["small_sample"],
+        panel: null
+    },
+    "expenditure_to_payments_revenue": {
+        point: 333.409, se: 70.954, pvalue: 2.62e-6,
+        design: "LOCAL_PROJECTIONS", rating: "B", score: 0.692,
+        claim_level: "REDUCED_FORM", all_pass: false, n_obs: 8,
+        diagnostics: [
+            {name:"hac_bandwidth", passed:true},
+            {name:"effective_obs", passed:false},
+            {name:"r_squared_h0", passed:true},
+            {name:"residual_ac1", passed:true},
+            {name:"sign_consistency", passed:true}
+        ],
+        failure_flags: ["small_sample"],
+        panel: null
+    },
+    "nbk_rate_to_cor": {
+        point: 0.356, se: 0.119, pvalue: 0.0029,
+        design: "LOCAL_PROJECTIONS", rating: "B", score: 0.79,
+        claim_level: "BLOCKED_ID", all_pass: false, n_obs: 19,
+        diagnostics: [
+            {name:"hac_bandwidth", passed:true},
+            {name:"effective_obs", passed:false},
+            {name:"r_squared_h0", passed:true},
+            {name:"residual_ac1", passed:true},
+            {name:"sign_consistency", passed:true}
+        ],
+        failure_flags: ["small_sample"],
+        panel: null
+    },
+    "shock_to_cor_kspi": {
+        point: 85.957, se: 7.402, pvalue: 3.57e-31,
+        design: "LOCAL_PROJECTIONS", rating: "B", score: 0.79,
+        claim_level: "REDUCED_FORM", all_pass: true, n_obs: 27,
+        diagnostics: [
+            {name:"hac_bandwidth", passed:true},
+            {name:"effective_obs", passed:true},
+            {name:"r_squared_h0", passed:true},
+            {name:"residual_ac1", passed:true},
+            {name:"sign_consistency", passed:true}
+        ],
+        failure_flags: ["small_sample"],
+        panel: null
+    },
+    "shock_to_npl_kspi": {
+        point: 72.797, se: 10.297, pvalue: 1.55e-12,
+        design: "LOCAL_PROJECTIONS", rating: "B", score: 0.79,
+        claim_level: "REDUCED_FORM", all_pass: true, n_obs: 27,
+        diagnostics: [
+            {name:"hac_bandwidth", passed:true},
+            {name:"effective_obs", passed:true},
+            {name:"r_squared_h0", passed:true},
+            {name:"residual_ac1", passed:true},
+            {name:"sign_consistency", passed:true}
+        ],
+        failure_flags: ["small_sample"],
+        panel: null
+    },
+    "oil_supply_to_brent": {
+        point: -0.0517, se: 0.0054, pvalue: 1.22e-21,
+        design: "LOCAL_PROJECTIONS", rating: "A", score: 0.97,
+        claim_level: "REDUCED_FORM", all_pass: true, n_obs: 308,
+        diagnostics: [
+            {name:"hac_bandwidth", passed:true},
+            {name:"effective_obs", passed:true},
+            {name:"r_squared_h0", passed:true},
+            {name:"residual_ac1", passed:true},
+            {name:"sign_consistency", passed:true}
+        ],
+        failure_flags: [],
+        panel: null
+    },
+    "shock_to_cor_sector": {
+        point: 36.178, se: 6.695, pvalue: 4.75e-5,
+        design: "PANEL_LP_EXPOSURE_FE", rating: "C", score: 0.59,
+        claim_level: "REDUCED_FORM", all_pass: false, n_obs: 48,
+        diagnostics: [
+            {name:"effective_obs", passed:true},
+            {name:"leave_one_bank_out", passed:false},
+            {name:"exposure_variation", passed:true},
+            {name:"regime_break", passed:true},
+            {name:"r_squared_within", passed:true}
+        ],
+        failure_flags: ["weak_identification"],
+        panel: {n_units:4, n_periods:27, balance:"unbalanced"}
+    },
+    "fx_to_real_expenditure": {
+        point: -0.100, se: 0.040, pvalue: 0.012,
+        design: "IMMUTABLE_EVIDENCE", rating: "A", score: 0.99,
+        claim_level: "IDENTIFIED_CAUSAL", all_pass: true, n_obs: null,
+        diagnostics: [
+            {name:"validated_evidence", passed:true},
+            {name:"effective_obs", passed:true}
+        ],
+        failure_flags: [],
+        panel: null
+    },
+    "nbk_rate_to_cor_sector": {
+        point: 0.135, se: 1.389, pvalue: 0.926,
+        design: "PANEL_LP_EXPOSURE_FE", rating: "C", score: 0.59,
+        claim_level: "REDUCED_FORM", all_pass: false, n_obs: 30,
+        diagnostics: [
+            {name:"effective_obs", passed:true},
+            {name:"leave_one_bank_out", passed:false},
+            {name:"exposure_variation", passed:true},
+            {name:"regime_break", passed:true},
+            {name:"r_squared_within", passed:true}
+        ],
+        failure_flags: ["weak_identification"],
+        panel: {n_units:4, n_periods:20, balance:"unbalanced"}
+    },
+    "nbk_rate_to_deposit_cost": {
+        point: 0.223, se: 0.062, pvalue: 0.0003,
+        design: "LOCAL_PROJECTIONS", rating: "B", score: 0.73,
+        claim_level: "BLOCKED_ID", all_pass: false, n_obs: 19,
+        diagnostics: [
+            {name:"hac_bandwidth", passed:true},
+            {name:"effective_obs", passed:false},
+            {name:"r_squared_h0", passed:true},
+            {name:"residual_ac1", passed:false},
+            {name:"sign_consistency", passed:true}
+        ],
+        failure_flags: ["small_sample"],
+        panel: null
+    }
+};
+
+// ─── Rule-specific action menus ────────────────────────────────────────
+const ACTIONS_BY_RULE = {
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED": {
+        action_type: "set_claim_level",
+        options: [
+            {value: "", label: "-- select --"},
+            {value: "IDENTIFIED_CAUSAL", label: "IDENTIFIED_CAUSAL"},
+            {value: "REDUCED_FORM", label: "REDUCED_FORM"},
+            {value: "DESCRIPTIVE", label: "DESCRIPTIVE"},
+            {value: "BLOCKED_ID", label: "BLOCKED_ID"}
+        ]
+    },
+    "RATING_DIAGNOSTICS_CONFLICT": {
+        action_type: "set_rating",
+        options: [
+            {value: "", label: "-- select --"},
+            {value: "DOWNGRADE_B", label: "Downgrade to B"},
+            {value: "DOWNGRADE_C", label: "Downgrade to C"},
+            {value: "ACCEPT", label: "Accept (document)"}
+        ]
+    },
+    "LOO_INSTABILITY": {
+        action_type: "set_loo_action",
+        options: [
+            {value: "", label: "-- select --"},
+            {value: "CAP_C", label: "Cap rating to C"},
+            {value: "ACCEPT_CAVEAT", label: "Accept with caveat"},
+            {value: "RE_ESTIMATE", label: "Flag for re-estimation"}
+        ]
+    }
+};
+
+const RULE_DESCRIPTIONS = {
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED": "Statistically significant edges lacking a causal identification claim. Set the appropriate claim level.",
+    "RATING_DIAGNOSTICS_CONFLICT": "High credibility rating despite one or more failed diagnostics. Decide whether to downgrade or accept.",
+    "LOO_INSTABILITY": "Leave-one-out analysis shows instability (sign flip or >50% magnitude change). Decide on rating cap or re-estimation."
+};
+
+// ─── State ─────────────────────────────────────────────────────────────
+const decisions = {}; // key -> {value, rationale}
+
+// ─── Helpers ───────────────────────────────────────────────────────────
+function extractEdgeId(issueKey) {
+    const parts = issueKey.split(':');
+    return parts.slice(1).join(':');
+}
+
+function fmtP(p) {
+    if (p === null || p === undefined) return '--';
+    if (p < 0.0001) return p.toExponential(2);
+    return p.toFixed(4);
+}
+
+function fmtNum(n, decimals) {
+    if (n === null || n === undefined) return '--';
+    if (Math.abs(n) > 1000) return n.toFixed(1);
+    if (Math.abs(n) < 0.01 && n !== 0) return n.toExponential(2);
+    return n.toFixed(decimals !== undefined ? decimals : 4);
+}
+
+function diagSummary(diags) {
+    const passed = diags.filter(d => d.passed).length;
+    const failed = diags.filter(d => !d.passed).length;
+    return `${passed}/${diags.length} pass`;
+}
+
+function diagDetail(diags) {
+    return diags.map(d =>
+        `<span class="${d.passed ? 'diag-pass' : 'diag-fail'}">${d.passed ? '\u2713' : '\u2717'} ${d.name}</span>`
+    ).join(', ');
+}
+
+function updateProgress() {
+    const openKeys = Object.keys(ISSUES);
+    const total = openKeys.length;
+    const resolved = openKeys.filter(k => decisions[k] && decisions[k].value).length;
+    const pct = total > 0 ? (resolved / total * 100) : 0;
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressLabel').textContent = resolved + ' / ' + total + ' resolved';
+}
+
+function updateStats() {
+    const openKeys = Object.keys(ISSUES);
+    const total = openKeys.length + CLOSED_ISSUES_COUNT;
+    const critCount = openKeys.filter(k => ISSUES[k].severity === 'CRITICAL').length;
+    const highCount = openKeys.filter(k => ISSUES[k].severity === 'HIGH').length;
+    document.getElementById('statsRow').innerHTML =
+        `<span class="stat"><strong>${openKeys.length}</strong> open</span>` +
+        `<span class="stat">&middot; <strong>${CLOSED_ISSUES_COUNT}</strong> closed</span>` +
+        `<span class="stat">&middot; <strong>${total}</strong> total</span>` +
+        `<span class="stat" style="margin-left:12px">` +
+            `<span class="critical">${critCount} CRITICAL</span>` +
+            ` &middot; <span class="high">${highCount} HIGH</span>` +
+        `</span>`;
+}
+
+// ─── Group issues by rule_id ───────────────────────────────────────────
+function groupByRule() {
+    const groups = {};
+    for (const [key, issue] of Object.entries(ISSUES)) {
+        const rule = issue.rule_id;
+        if (!groups[rule]) groups[rule] = [];
+        groups[rule].push({key, ...issue, edge_id: extractEdgeId(key)});
+    }
+    return groups;
+}
+
+// ─── Render ────────────────────────────────────────────────────────────
+function render() {
+    const container = document.getElementById('sectionsContainer');
+    container.innerHTML = '';
+    const groups = groupByRule();
+
+    // Populate rule filter
+    const ruleFilter = document.getElementById('filterRule');
+    const existingRules = Array.from(ruleFilter.options).map(o => o.value);
+    for (const rule of Object.keys(groups)) {
+        if (!existingRules.includes(rule)) {
+            const opt = document.createElement('option');
+            opt.value = rule;
+            opt.textContent = rule;
+            ruleFilter.appendChild(opt);
+        }
+    }
+
+    const sevFilter = document.getElementById('filterSeverity').value;
+    const ruleFilterVal = document.getElementById('filterRule').value;
+    const statusFilter = document.getElementById('filterStatus').value;
+
+    // Sort: CRITICAL rules first
+    const ruleOrder = ["SIGNIFICANT_BUT_NOT_IDENTIFIED", "RATING_DIAGNOSTICS_CONFLICT", "LOO_INSTABILITY"];
+
+    for (const rule of ruleOrder) {
+        if (!groups[rule]) continue;
+        if (ruleFilterVal !== 'all' && ruleFilterVal !== rule) continue;
+
+        let items = groups[rule];
+
+        // Apply severity filter
+        if (sevFilter !== 'all') {
+            items = items.filter(i => i.severity === sevFilter);
+        }
+
+        // Apply status filter
+        if (statusFilter === 'pending') {
+            items = items.filter(i => !decisions[i.key] || !decisions[i.key].value);
+        } else if (statusFilter === 'resolved') {
+            items = items.filter(i => decisions[i.key] && decisions[i.key].value);
+        }
+
+        if (items.length === 0) continue;
+
+        const severity = items[0].severity;
+        const actCfg = ACTIONS_BY_RULE[rule];
+
+        const section = document.createElement('div');
+        section.className = 'section';
+        section.innerHTML = `
+            <div class="section-header">
+                <div>
+                    <span class="section-title">${rule}</span>
+                    <span class="severity-badge ${severity.toLowerCase()}">${severity}</span>
+                    <span class="section-count">${items.length} edge${items.length !== 1 ? 's' : ''}</span>
+                </div>
+            </div>
+            <div style="font-size:10px;color:#666;margin-bottom:12px">${RULE_DESCRIPTIONS[rule] || ''}</div>
+        `;
+
+        // Bulk action (only for SIGNIFICANT_BUT_NOT_IDENTIFIED with many items)
+        if (rule === 'SIGNIFICANT_BUT_NOT_IDENTIFIED' && items.length > 3) {
+            const bulk = document.createElement('div');
+            bulk.className = 'bulk-action';
+            let optHtml = actCfg.options.map(o => `<option value="${o.value}">${o.label}</option>`).join('');
+            bulk.innerHTML = `
+                <label>Bulk action:</label>
+                <select id="bulk-${rule}">${optHtml}</select>
+                <button class="btn-sm" data-rule="${rule}">Apply to all unresolved</button>
+            `;
+            bulk.querySelector('button').addEventListener('click', function() {
+                const val = document.getElementById(`bulk-${rule}`).value;
+                if (!val) return;
+                items.forEach(item => {
+                    if (!decisions[item.key] || !decisions[item.key].value) {
+                        decisions[item.key] = {value: val, rationale: decisions[item.key]?.rationale || ''};
+                        const sel = document.querySelector(`select[data-key="${item.key}"]`);
+                        if (sel) { sel.value = val; sel.classList.add('decided'); }
+                        const row = document.querySelector(`tr[data-key="${item.key}"]`);
+                        if (row) row.classList.add('resolved');
+                    }
+                });
+                updateProgress();
+            });
+            section.appendChild(bulk);
+        }
+
+        // Build table
+        const table = document.createElement('table');
+        let headerCols;
+        if (rule === 'SIGNIFICANT_BUT_NOT_IDENTIFIED') {
+            headerCols = '<th>Edge</th><th>p-value</th><th>Point (SE)</th><th>Claim</th><th>Rating</th><th>Design</th><th>Diagnostics</th><th>Action</th>';
+        } else if (rule === 'RATING_DIAGNOSTICS_CONFLICT') {
+            headerCols = '<th>Edge</th><th>Rating</th><th>Score</th><th>Failed diagnostics</th><th>N obs</th><th>Action</th>';
+        } else if (rule === 'LOO_INSTABILITY') {
+            headerCols = '<th>Edge</th><th>Message</th><th>N units</th><th>Rating</th><th>Score</th><th>Action</th>';
+        }
+        table.innerHTML = `<thead><tr>${headerCols}</tr></thead><tbody></tbody>`;
+        const tbody = table.querySelector('tbody');
+
+        items.forEach(item => {
+            const edge = EDGES[item.edge_id] || {};
+            const isResolved = decisions[item.key] && decisions[item.key].value;
+            const tr = document.createElement('tr');
+            tr.setAttribute('data-key', item.key);
+            if (isResolved) tr.classList.add('resolved');
+
+            let cells = '';
+            if (rule === 'SIGNIFICANT_BUT_NOT_IDENTIFIED') {
+                cells = `
+                    <td>
+                        <span class="edge-name">${item.edge_id}</span>
+                        <span class="toggle-btn" data-toggle="${item.key}">[+]</span>
+                        ${edge.failure_flags && edge.failure_flags.length > 0 ?
+                            '<br><span class="flag-list">' + edge.failure_flags.map(f => `<span class="flag">${f}</span>`).join('') + '</span>' : ''}
+                    </td>
+                    <td class="mono">${fmtP(edge.pvalue)}</td>
+                    <td class="mono">${fmtNum(edge.point)} (${fmtNum(edge.se)})</td>
+                    <td><span class="claim-tag">${edge.claim_level || '--'}</span></td>
+                    <td><span class="rating-tag">${edge.rating || '--'}</span></td>
+                    <td style="font-size:10px">${edge.design || '--'}</td>
+                    <td style="font-size:10px">${edge.diagnostics ? diagSummary(edge.diagnostics) : '--'}</td>
+                    <td>
+                        <select data-key="${item.key}">
+                            ${actCfg.options.map(o => `<option value="${o.value}" ${isResolved && decisions[item.key].value === o.value ? 'selected' : ''}>${o.label}</option>`).join('')}
+                        </select>
+                        <input type="text" data-rationale="${item.key}" placeholder="Rationale..." value="${decisions[item.key]?.rationale || ''}">
+                    </td>
+                `;
+            } else if (rule === 'RATING_DIAGNOSTICS_CONFLICT') {
+                const failedDiags = (edge.diagnostics || []).filter(d => !d.passed);
+                cells = `
+                    <td>
+                        <span class="edge-name">${item.edge_id}</span>
+                        <span class="toggle-btn" data-toggle="${item.key}">[+]</span>
+                    </td>
+                    <td><span class="rating-tag">${edge.rating || '--'}</span></td>
+                    <td class="mono">${edge.score ? edge.score.toFixed(3) : '--'}</td>
+                    <td style="font-size:10px">${failedDiags.map(d => `<span class="diag-fail">\u2717 ${d.name}</span>`).join(', ') || 'none'}</td>
+                    <td class="mono">${edge.n_obs || '--'}</td>
+                    <td>
+                        <select data-key="${item.key}">
+                            ${actCfg.options.map(o => `<option value="${o.value}" ${isResolved && decisions[item.key].value === o.value ? 'selected' : ''}>${o.label}</option>`).join('')}
+                        </select>
+                        <input type="text" data-rationale="${item.key}" placeholder="Rationale..." value="${decisions[item.key]?.rationale || ''}">
+                    </td>
+                `;
+            } else if (rule === 'LOO_INSTABILITY') {
+                const nUnits = edge.panel ? edge.panel.n_units : (edge.n_obs || '--');
+                cells = `
+                    <td>
+                        <span class="edge-name">${item.edge_id}</span>
+                        <span class="toggle-btn" data-toggle="${item.key}">[+]</span>
+                    </td>
+                    <td style="font-size:10px;max-width:200px">${item.message}</td>
+                    <td class="mono">${nUnits}</td>
+                    <td><span class="rating-tag">${edge.rating || '--'}</span></td>
+                    <td class="mono">${edge.score ? edge.score.toFixed(3) : '--'}</td>
+                    <td>
+                        <select data-key="${item.key}">
+                            ${actCfg.options.map(o => `<option value="${o.value}" ${isResolved && decisions[item.key].value === o.value ? 'selected' : ''}>${o.label}</option>`).join('')}
+                        </select>
+                        <input type="text" data-rationale="${item.key}" placeholder="Rationale..." value="${decisions[item.key]?.rationale || ''}">
+                    </td>
+                `;
+            }
+            tr.innerHTML = cells;
+            tbody.appendChild(tr);
+
+            // Details row
+            const detailTr = document.createElement('tr');
+            detailTr.className = 'details-row';
+            const colSpan = rule === 'SIGNIFICANT_BUT_NOT_IDENTIFIED' ? 8 :
+                           rule === 'RATING_DIAGNOSTICS_CONFLICT' ? 6 : 6;
+            detailTr.innerHTML = `<td colspan="${colSpan}">
+                <div class="details-content" id="detail-${item.key.replace(/[^a-zA-Z0-9]/g,'_')}">
+                    <div class="detail-row"><span class="detail-label">Edge ID</span><span class="detail-value">${item.edge_id}</span></div>
+                    <div class="detail-row"><span class="detail-label">Design</span><span class="detail-value">${edge.design || '--'}</span></div>
+                    <div class="detail-row"><span class="detail-label">Point (SE)</span><span class="detail-value">${fmtNum(edge.point)} (${fmtNum(edge.se)})</span></div>
+                    <div class="detail-row"><span class="detail-label">p-value</span><span class="detail-value">${fmtP(edge.pvalue)}</span></div>
+                    <div class="detail-row"><span class="detail-label">Claim level</span><span class="detail-value">${edge.claim_level || '--'}</span></div>
+                    <div class="detail-row"><span class="detail-label">Rating / Score</span><span class="detail-value">${edge.rating || '--'} / ${edge.score ? edge.score.toFixed(3) : '--'}</span></div>
+                    <div class="detail-row"><span class="detail-label">N obs</span><span class="detail-value">${edge.n_obs || '--'}</span></div>
+                    ${edge.panel ? `<div class="detail-row"><span class="detail-label">Panel</span><span class="detail-value">${edge.panel.n_units} units x ${edge.panel.n_periods} periods (${edge.panel.balance})</span></div>` : ''}
+                    <div class="detail-row"><span class="detail-label">All diagnostics pass</span><span class="detail-value">${edge.all_pass ? 'Yes' : 'No'}</span></div>
+                    <div style="margin-top:4px">${edge.diagnostics ? diagDetail(edge.diagnostics) : '--'}</div>
+                    ${edge.failure_flags && edge.failure_flags.length > 0 ? `<div class="detail-row" style="margin-top:4px"><span class="detail-label">Flags</span><span class="detail-value">${edge.failure_flags.join(', ')}</span></div>` : ''}
+                    <div class="detail-row" style="margin-top:4px"><span class="detail-label">Issue</span><span class="detail-value">${item.message}</span></div>
+                </div>
+            </td>`;
+            tbody.appendChild(detailTr);
+        });
+
+        section.appendChild(table);
+        container.appendChild(section);
+    }
+
+    // Attach event listeners
+    container.querySelectorAll('select[data-key]').forEach(sel => {
+        sel.addEventListener('change', function() {
+            const key = this.getAttribute('data-key');
+            if (!decisions[key]) decisions[key] = {value: '', rationale: ''};
+            decisions[key].value = this.value;
+            const row = document.querySelector(`tr[data-key="${key}"]`);
+            if (this.value) {
+                this.classList.add('decided');
+                if (row) row.classList.add('resolved');
+            } else {
+                this.classList.remove('decided');
+                if (row) row.classList.remove('resolved');
+            }
+            updateProgress();
+        });
+    });
+
+    container.querySelectorAll('input[data-rationale]').forEach(inp => {
+        inp.addEventListener('input', function() {
+            const key = this.getAttribute('data-rationale');
+            if (!decisions[key]) decisions[key] = {value: '', rationale: ''};
+            decisions[key].rationale = this.value;
+        });
+    });
+
+    container.querySelectorAll('.toggle-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const key = this.getAttribute('data-toggle');
+            const id = 'detail-' + key.replace(/[^a-zA-Z0-9]/g, '_');
+            const el = document.getElementById(id);
+            if (el) {
+                el.classList.toggle('open');
+                this.textContent = el.classList.contains('open') ? '[-]' : '[+]';
+            }
+        });
+    });
+
+    // Restore decided styles
+    for (const [key, dec] of Object.entries(decisions)) {
+        if (dec.value) {
+            const sel = container.querySelector(`select[data-key="${key}"]`);
+            if (sel) { sel.value = dec.value; sel.classList.add('decided'); }
+        }
+    }
+
+    updateProgress();
+}
+
+// ─── Export ────────────────────────────────────────────────────────────
+document.getElementById('exportBtn').addEventListener('click', function() {
+    const analystId = document.getElementById('analystId').value.trim();
+    const now = new Date().toISOString();
+    const decisionList = [];
+
+    for (const [key, dec] of Object.entries(decisions)) {
+        if (!dec.value) continue;
+        const issue = ISSUES[key];
+        const edgeId = extractEdgeId(key);
+        const actCfg = ACTIONS_BY_RULE[issue.rule_id];
+        decisionList.push({
+            issue_key: key,
+            edge_id: edgeId,
+            rule_id: issue.rule_id,
+            action: actCfg ? actCfg.action_type : 'unknown',
+            value: dec.value,
+            rationale: dec.rationale || '',
+            status: 'CLOSED'
+        });
+    }
+
+    const output = {
+        generated_at: now,
+        analyst_id: analystId || 'anonymous',
+        decisions: decisionList
+    };
+
+    const blob = new Blob([JSON.stringify(output, null, 2)], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const dateStr = now.slice(0,10).replace(/-/g,'');
+    a.href = url;
+    a.download = `hitl_decisions_${dateStr}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+});
+
+// ─── Filter listeners ──────────────────────────────────────────────────
+document.getElementById('filterSeverity').addEventListener('change', render);
+document.getElementById('filterRule').addEventListener('change', render);
+document.getElementById('filterStatus').addEventListener('change', render);
+
+// ─── Init ──────────────────────────────────────────────────────────────
+updateStats();
+document.getElementById('genTimestamp').textContent = 'Generated: ' + new Date().toISOString().slice(0, 19).replace('T', ' ') + ' UTC';
+render();
+
+</script>
+</body>
+</html>
