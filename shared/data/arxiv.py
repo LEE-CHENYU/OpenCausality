@@ -19,7 +19,7 @@ import httpx
 
 logger = logging.getLogger(__name__)
 
-BASE_URL = "http://export.arxiv.org/api"
+BASE_URL = "https://export.arxiv.org/api"
 
 # Atom / arXiv namespaces
 NS = {
