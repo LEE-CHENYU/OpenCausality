@@ -21,8 +21,7 @@ from shared.agentic.dag.validator import DAGValidator, ValidationReport
 from shared.agentic.queue.queue import TaskQueue, create_queue_from_dag
 from shared.agentic.queue.task import LinkageTask, TaskStatus
 from shared.agentic.design.registry import DesignRegistry
-from shared.agentic.design.selector import DesignSelector, SelectedDesign, NotIdentified
-from shared.agentic.design.feasibility import DataReport
+from shared.agentic.design.selector import DesignSelector
 from shared.agentic.output.edge_card import EdgeCard, compute_credibility_score
 from shared.agentic.output.system_report import SystemReport, CriticalPathSummary
 from shared.agentic.governance.audit_log import AuditLog, Hashes, ResultDelta
@@ -573,26 +572,16 @@ class AgentLoop:
                 if task.edge_id in EDGE_NODE_MAP:
                     edge_card = self._create_lp_card(task, is_quarterly=False)
                 else:
-                    # Get forbidden controls from validation
-                    forbidden_controls = set()
-                    if self.validation_report and task.edge_id in self.validation_report.forbidden_controls:
-                        forbidden_controls = self.validation_report.forbidden_controls[task.edge_id].total_forbidden
-
-                    data_report = DataReport(
-                        is_panel=True, is_time_series=True,
-                        n_obs=100, n_periods=40, n_units=10,
-                        treatment_type="continuous", outcome_type="continuous",
-                        n_instruments=len(edge.instruments),
+                    self.queue.mark_failed(
+                        task.edge_id,
+                        f"No data loader registered for edge '{task.edge_id}'. "
+                        f"Add to EDGE_NODE_MAP or register a NODE_LOADER."
                     )
-                    result = self.design_selector.select(
-                        edge=edge, data_report=data_report,
-                        forbidden_controls=forbidden_controls,
+                    logger.warning(
+                        f"Edge {task.edge_id}: BLOCKED — no data loader. "
+                        f"Skipping estimation to avoid placeholder results."
                     )
-                    if isinstance(result, NotIdentified):
-                        self.queue.mark_blocked(task.edge_id, result.reason, TaskStatus.BLOCKED_ID)
-                        logger.warning(f"Edge {task.edge_id} not identified: {result.reason}")
-                        return
-                    edge_card = self._create_edge_card(task, result, edge)
+                    return
 
             # Run identifiability screen (post-estimation)
             design_name = edge_card.spec_details.design if edge_card.spec_details else ""
@@ -788,11 +777,18 @@ class AgentLoop:
 
         # Run TSGuard validation on the LP result
         try:
+            # Get break_dates from edge spec if available
+            edge = self.dag.get_edge(task.edge_id)
+            break_dates = None
+            if edge and edge.acceptance_criteria.stability.regime_split_date:
+                break_dates = [edge.acceptance_criteria.stability.regime_split_date]
+
             ts_result = self.ts_guard.validate(
                 edge_id=task.edge_id,
                 y=data["outcome"],
                 x=data["treatment"],
                 lp_result=lp,
+                break_dates=break_dates,
             )
             self.ts_guard_results[task.edge_id] = ts_result
         except Exception as e:
@@ -904,88 +900,6 @@ class AgentLoop:
             credibility_score=score,
             is_precisely_null=is_null,
             null_equivalence_bound=null_bound,
-        )
-
-    def _create_edge_card(
-        self,
-        task: LinkageTask,
-        design: SelectedDesign,
-        edge: Any,
-    ) -> EdgeCard:
-        """Create EdgeCard from estimation results."""
-        from shared.agentic.output.edge_card import (
-            Estimates,
-            DiagnosticResult,
-            Interpretation,
-            FailureFlags,
-            CounterfactualApplicability,
-        )
-        from shared.agentic.output.provenance import SpecDetails
-
-        # In production, actual estimation would happen here
-        # For now, create a placeholder card
-
-        spec_details = SpecDetails(
-            design=design.design.id,
-            controls=design.controls,
-            instruments=design.instruments,
-            fixed_effects=design.fixed_effects,
-            se_method=design.se_method,
-        )
-
-        # Placeholder estimates (would come from actual model)
-        estimates = Estimates(
-            point=-0.15,
-            se=0.05,
-            ci_95=(-0.25, -0.05),
-            pvalue=0.003,
-        )
-
-        # Placeholder diagnostics
-        diagnostics = {
-            "residual_checks": DiagnosticResult(
-                name="residual_checks",
-                passed=True,
-                value=0.95,
-            ),
-        }
-
-        # Interpretation
-        interpretation = Interpretation(
-            estimand=f"Effect of {task.treatment} on {task.outcome}",
-            is_not="Universal causal effect",
-            channels=["direct", "indirect"],
-        )
-
-        # Failure flags
-        failure_flags = FailureFlags()
-
-        # Counterfactual
-        counterfactual = CounterfactualApplicability(
-            supports_shock_path=True,
-            supports_policy_intervention=False,
-            intervention_note="Reduced-form estimate",
-        )
-
-        # Compute credibility
-        score, rating = compute_credibility_score(
-            diagnostics=diagnostics,
-            failure_flags=failure_flags,
-            design_weight=design.credibility_weight,
-        )
-
-        return EdgeCard(
-            edge_id=task.edge_id,
-            dag_version_hash=self._dag_hash,
-            spec_hash=design.spec_hash,
-            spec_details=spec_details,
-            estimates=estimates,
-            diagnostics=diagnostics,
-            interpretation=interpretation,
-            failure_flags=failure_flags,
-            counterfactual=counterfactual,
-            credibility_rating=rating,
-            credibility_score=score,
         )
 
     def _create_system_report(self) -> SystemReport:
