@@ -1,0 +1,214 @@
+# HITL Action Configuration
+# Maps each rule_id from issue_registry.yaml to available resolution actions
+# in the HITL panel. The build script reads this to populate action dropdowns.
+
+actions:
+  # ── Identification / Design ───────────────────────────────────────────
+  SIGNIFICANT_BUT_NOT_IDENTIFIED:
+    action_type: set_claim_level
+    options:
+      - {value: IDENTIFIED_CAUSAL, label: "IDENTIFIED_CAUSAL"}
+      - {value: REDUCED_FORM, label: "REDUCED_FORM"}
+      - {value: DESCRIPTIVE, label: "DESCRIPTIVE"}
+      - {value: BLOCKED_ID, label: "BLOCKED_ID"}
+
+  REACTION_FUNCTION_EDGE:
+    action_type: set_propagation
+    options:
+      - {value: RECLASSIFY_DIAGNOSTIC, label: "Reclassify as diagnostic"}
+      - {value: ACCEPT_WITH_CAVEAT, label: "Accept with caveat"}
+      - {value: BLOCK_PROPAGATION, label: "Block from propagation"}
+
+  TIME_FE_ABSORBS_SHOCK:
+    action_type: set_design_fix
+    options:
+      - {value: ADD_INTERACTION, label: "Add Exposure x Shock"}
+      - {value: DROP_TIME_FE, label: "Drop time FE"}
+      - {value: ACCEPT, label: "Accept (document)"}
+
+  EXPOSURE_NOT_PREDETERMINED:
+    action_type: set_exposure_action
+    options:
+      - {value: LAG_EXPOSURE, label: "Lag exposure variable"}
+      - {value: ACCEPT_CAVEAT, label: "Accept with caveat"}
+      - {value: BLOCK_ID, label: "Block identification claim"}
+
+  MECHANICAL_EDGE_ESTIMATED:
+    action_type: set_edge_type
+    options:
+      - {value: CONVERT_BRIDGE, label: "Convert to bridge edge"}
+      - {value: ACCEPT, label: "Accept as regression"}
+
+  PATH_DOUBLE_COUNTING:
+    action_type: set_path_choice
+    options:
+      - {value: USE_STRUCTURAL, label: "Use structural chain"}
+      - {value: USE_REDUCED_FORM, label: "Use reduced-form shortcut"}
+      - {value: ACCEPT_BOTH, label: "Accept both (document)"}
+
+  # ── Data + Definition ─────────────────────────────────────────────────
+  ENTITY_BOUNDARY_DRIFT:
+    action_type: set_boundary_action
+    options:
+      - {value: HARMONIZE, label: "Harmonize to common scope"}
+      - {value: ACCEPT_CAVEAT, label: "Accept with caveat"}
+      - {value: EXCLUDE_EDGE, label: "Exclude edge"}
+
+  KPI_DEFINITION_MISMATCH_CROSS_BANK:
+    action_type: set_kpi_action
+    options:
+      - {value: HARMONIZE, label: "Harmonize definitions"}
+      - {value: ACCEPT_CAVEAT, label: "Accept with caveat"}
+      - {value: EXCLUDE_EDGE, label: "Exclude edge"}
+
+  SHOCK_CONSTRUCT_AMBIGUOUS:
+    action_type: set_shock_action
+    options:
+      - {value: ADD_METADATA, label: "Add shock metadata"}
+      - {value: ACCEPT, label: "Accept as-is"}
+
+  FREQUENCY_ALIGNMENT_ERROR:
+    action_type: set_freq_action
+    options:
+      - {value: AGGREGATE_Q, label: "Aggregate to quarterly"}
+      - {value: AGGREGATE_A, label: "Aggregate to annual"}
+      - {value: ACCEPT, label: "Accept (document)"}
+
+  FREQUENCY_SCALING_MISMATCH:
+    action_type: set_scaling_action
+    options:
+      - {value: NORMALIZE, label: "Normalize to common unit"}
+      - {value: ACCEPT_CAVEAT, label: "Accept with caveat"}
+
+  EXTRACTION_PROVENANCE_GAPS:
+    action_type: set_provenance_action
+    options:
+      - {value: ADD_SOURCE, label: "Add source reference"}
+      - {value: ACCEPT, label: "Accept (low risk)"}
+
+  # ── Statistical Inference ─────────────────────────────────────────────
+  SMALL_SAMPLE_INFERENCE:
+    action_type: set_sample_action
+    options:
+      - {value: CAP_B, label: "Cap rating to B"}
+      - {value: ACCEPT_CAVEAT, label: "Accept with caveat"}
+      - {value: RE_ESTIMATE, label: "Flag for re-estimation"}
+
+  PANEL_TOO_FEW_UNITS:
+    action_type: set_panel_action
+    options:
+      - {value: CAP_B, label: "Cap rating to B"}
+      - {value: WILD_BOOTSTRAP, label: "Use wild cluster bootstrap"}
+      - {value: ACCEPT_CAVEAT, label: "Accept with caveat"}
+
+  LOO_INSTABILITY:
+    action_type: set_loo_action
+    options:
+      - {value: CAP_C, label: "Cap rating to C"}
+      - {value: ACCEPT_CAVEAT, label: "Accept with caveat"}
+      - {value: RE_ESTIMATE, label: "Flag for re-estimation"}
+
+  BREAKS_UNMODELED:
+    action_type: set_breaks_action
+    options:
+      - {value: ADD_REGIME, label: "Add regime dummy"}
+      - {value: SPLIT_SAMPLE, label: "Split sample estimation"}
+      - {value: ACCEPT_CAVEAT, label: "Accept with caveat"}
+
+  MULTIPLE_TESTING_DRIFT:
+    action_type: set_testing_action
+    options:
+      - {value: BONFERRONI, label: "Apply Bonferroni correction"}
+      - {value: ACCEPT_CAVEAT, label: "Accept with caveat"}
+      - {value: RESET_BUDGET, label: "Reset spec budget"}
+
+  # ── Time-Series (TSGuard) ─────────────────────────────────────────────
+  NONSTATIONARY_LEVELS_RISK:
+    action_type: set_stationarity_action
+    options:
+      - {value: DIFFERENCE, label: "First-difference"}
+      - {value: ECM, label: "Use ECM specification"}
+      - {value: ACCEPT, label: "Accept (document)"}
+
+  RESIDUAL_AUTOCORR_DETECTED:
+    action_type: set_autocorr_action
+    options:
+      - {value: INCREASE_HAC, label: "Increase HAC bandwidth"}
+      - {value: ACCEPT_CAVEAT, label: "Accept with caveat"}
+
+  REGIME_BREAK_SUSPECTED:
+    action_type: set_regime_action
+    options:
+      - {value: ADD_BREAK, label: "Add structural break"}
+      - {value: SPLIT_SAMPLE, label: "Split sample"}
+      - {value: ACCEPT_CAVEAT, label: "Accept with caveat"}
+
+  LEADS_SIGNIFICANT_TIMING_FAIL:
+    action_type: set_timing_action
+    options:
+      - {value: BLOCK_PROPAGATION, label: "Block from propagation"}
+      - {value: ACCEPT_CAVEAT, label: "Accept with caveat (document)"}
+      - {value: RE_ESTIMATE, label: "Flag for re-estimation"}
+
+  HAC_LAG_SENSITIVITY_HIGH:
+    action_type: set_hac_action
+    options:
+      - {value: USE_FIXED_BW, label: "Fix HAC bandwidth"}
+      - {value: ACCEPT_CAVEAT, label: "Accept with caveat"}
+
+  # ── Selection / External Validity ─────────────────────────────────────
+  SELECTION_PUBLIC_BANK_ONLY:
+    action_type: set_selection_action
+    options:
+      - {value: ADD_DISCLAIMER, label: "Add report disclaimer"}
+      - {value: CAP_SCOPE, label: "Cap counterfactual scope"}
+      - {value: ACCEPT, label: "Accept as-is"}
+
+  SURVIVORSHIP_BIAS_RISK:
+    action_type: set_survivorship_action
+    options:
+      - {value: ADD_DISCLAIMER, label: "Add report disclaimer"}
+      - {value: SENSITIVITY_CHECK, label: "Run sensitivity check"}
+      - {value: ACCEPT_CAVEAT, label: "Accept with caveat"}
+
+  COVERAGE_GAP_EXTERNAL_VALIDITY:
+    action_type: set_coverage_action
+    options:
+      - {value: ADD_DISCLAIMER, label: "Add report disclaimer"}
+      - {value: ACCEPT_CAVEAT, label: "Accept with caveat"}
+
+  # ── Scoring / Reporting ───────────────────────────────────────────────
+  RATING_DIAGNOSTICS_CONFLICT:
+    action_type: set_rating
+    options:
+      - {value: DOWNGRADE_B, label: "Downgrade to B"}
+      - {value: DOWNGRADE_C, label: "Downgrade to C"}
+      - {value: ACCEPT, label: "Accept (document)"}
+
+  N_REPORTING_INCONSISTENT:
+    action_type: set_n_action
+    options:
+      - {value: FIX_REPORT, label: "Fix report N"}
+      - {value: FIX_EDGECARD, label: "Fix EdgeCard N_eff"}
+      - {value: ACCEPT, label: "Accept (document)"}
+
+  CROSS_EVIDENCE_CONFLICT:
+    action_type: set_conflict_action
+    options:
+      - {value: PREFER_STRUCTURAL, label: "Prefer structural edge"}
+      - {value: PREFER_REDUCED, label: "Prefer reduced-form edge"}
+      - {value: ACCEPT_BOTH, label: "Accept both (document)"}
+
+  UNIT_MISSING_IN_EDGECARD:
+    action_type: set_unit_action
+    options:
+      - {value: ADD_UNITS, label: "Add units from spec"}
+      - {value: ACCEPT, label: "Accept (not critical)"}
+
+  # ── Fallback for unknown rules ────────────────────────────────────────
+  _default:
+    action_type: resolve
+    options:
+      - {value: ACCEPT, label: "Accept"}
+      - {value: REJECT, label: "Reject"}
+      - {value: ESCALATE, label: "Escalate"}

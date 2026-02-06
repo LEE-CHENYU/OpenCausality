@@ -161,6 +161,7 @@ class ArtifactStore:
             Interpretation,
             FailureFlags,
             CounterfactualApplicability,
+            LiteratureBlock,
         )
         from shared.agentic.output.provenance import (
             DataProvenance,
@@ -230,6 +231,18 @@ class ArtifactStore:
             se_method=spec_data.get("se_method", "cluster"),
         )
 
+        # Parse literature block (backward-compatible: defaults to empty)
+        lit_data = data.get("literature", {})
+        literature = LiteratureBlock(
+            supporting=lit_data.get("supporting", []),
+            challenging=lit_data.get("challenging", []),
+            methodological=lit_data.get("methodological", []),
+            search_status=lit_data.get("search_status", "PENDING"),
+            search_timestamp=lit_data.get("search_timestamp"),
+            search_query=lit_data.get("search_query", ""),
+            total_results=lit_data.get("total_results", 0),
+        )
+
         return EdgeCard(
             edge_id=data["edge_id"],
             dag_version_hash=data.get("dag_version_hash", ""),
@@ -243,6 +256,7 @@ class ArtifactStore:
             counterfactual=counterfactual,
             credibility_rating=data.get("credibility_rating", "D"),
             credibility_score=data.get("credibility_score", 0.0),
+            literature=literature,
             is_precisely_null=data.get("is_precisely_null", False),
             null_equivalence_bound=data.get("null_equivalence_bound"),
         )

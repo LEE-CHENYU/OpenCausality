@@ -39,6 +39,8 @@ from shared.agentic.ts_guard import TSGuard
 from shared.agentic.governance.hitl_gate import HITLGate
 from shared.agentic.governance.patch_policy import PatchPolicy
 from shared.agentic.agents.patch_bot import PatchBot, PatchResult
+from shared.agentic.agents.data_scout import DataScout
+from shared.agentic.agents.paper_scout import PaperScout
 from shared.engine.dynamic_loader import DynamicLoaderFactory
 from shared.agentic.output.edge_card import (
     IdentificationBlock,
@@ -198,6 +200,18 @@ class AgentLoop:
         # Dynamic loader factory
         self.dynamic_loader = DynamicLoaderFactory()
 
+        # DataScout (real data download)
+        self.data_scout = DataScout(
+            budget_mb=self.config.download_budget_mb,
+            output_dir=self.config.output_dir / "cards" / "data",
+        )
+
+        # PaperScout (literature search)
+        self.paper_scout = PaperScout(
+            output_dir=self.config.output_dir / "citations",
+        )
+        self.citation_bundles: dict[str, Any] = {}
+
         # Cross-run state
         self.cross_run_reducer = CrossRunReducer(
             issues_dir=self.config.output_dir / "issues",
@@ -251,6 +265,9 @@ class AgentLoop:
 
         # Phase 1: DataScout
         self._run_data_scout()
+
+        # Phase 1.5: PaperScout (literature search, non-blocking)
+        self._run_paper_scout()
 
         # Iteration loop
         for self.iteration in range(self.config.max_iterations):
@@ -474,6 +491,23 @@ class AgentLoop:
             logger.info(f"DynamicLoader: auto-registered {registered_count} edges")
             self._catalog_data()  # Re-catalog with new loaders
 
+        # DataScout: download missing node data
+        missing_nodes = [
+            node.id for node in self.dag.nodes
+            if not self.catalog.is_available(node.id)
+            and getattr(node, "observed", True)
+            and not getattr(node, "latent", False)
+        ]
+        if missing_nodes:
+            logger.info(f"DataScout: {len(missing_nodes)} nodes need data")
+            scout_report = self.data_scout.download_missing(self.dag, missing_nodes)
+            logger.info(
+                f"DataScout: downloaded {scout_report.downloaded}, "
+                f"skipped {scout_report.skipped}, failed {scout_report.failed}"
+            )
+            if scout_report.downloaded > 0:
+                self._catalog_data()  # Re-catalog with newly downloaded data
+
         # Mark data available in queue
         for node in self.dag.nodes:
             asset = self.catalog.get(node.id)
@@ -483,6 +517,16 @@ class AgentLoop:
         # Compute data hash
         self._data_hash = self._compute_data_hash()
         self.audit_log.data_hash = self._data_hash
+
+    def _run_paper_scout(self) -> None:
+        """Run PaperScout: search literature for all edges (non-blocking)."""
+        logger.info("Phase 1.5: PaperScout")
+        try:
+            self.citation_bundles = self.paper_scout.search_all_edges(self.dag)
+            self.paper_scout.save_bundles()
+            logger.info(f"PaperScout: citations for {len(self.citation_bundles)} edges")
+        except Exception as e:
+            logger.warning(f"PaperScout failed (non-blocking): {e}")
 
     def _catalog_data(self) -> None:
         """Catalog data availability by probing actual data sources."""
@@ -622,6 +666,23 @@ class AgentLoop:
                     if edge_card.counterfactual else False
                 ),
             )
+
+            # Attach literature citations if available
+            bundle = self.citation_bundles.get(task.edge_id)
+            if bundle and bundle.citations:
+                from shared.agentic.output.edge_card import LiteratureBlock
+                supporting = [c.to_dict() for c in bundle.citations if c.relevance == "supporting"]
+                challenging = [c.to_dict() for c in bundle.citations if c.relevance == "challenging"]
+                methodological = [c.to_dict() for c in bundle.citations if c.relevance == "methodological"]
+                edge_card.literature = LiteratureBlock(
+                    supporting=supporting,
+                    challenging=challenging,
+                    methodological=methodological,
+                    search_status=self.paper_scout.search_status.get(task.edge_id, "PENDING"),
+                    search_timestamp=datetime.now().isoformat(),
+                    search_query=bundle.citations[0].search_query if bundle.citations else "",
+                    total_results=len(bundle.citations),
+                )
 
             # Log initial specification
             self.audit_log.log_initial(task.edge_id, edge_card.spec_hash)

@@ -87,6 +87,30 @@ class PropagationRole:
 
 
 @dataclass
+class LiteratureBlock:
+    """Literature citations attached to an EdgeCard."""
+
+    supporting: list[dict[str, Any]] = field(default_factory=list)
+    challenging: list[dict[str, Any]] = field(default_factory=list)
+    methodological: list[dict[str, Any]] = field(default_factory=list)
+    search_status: str = "PENDING"  # SEARCHED | PENDING | FAILED | SKIPPED
+    search_timestamp: str | None = None
+    search_query: str = ""
+    total_results: int = 0
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "supporting": self.supporting,
+            "challenging": self.challenging,
+            "methodological": self.methodological,
+            "search_status": self.search_status,
+            "search_timestamp": self.search_timestamp,
+            "search_query": self.search_query,
+            "total_results": self.total_results,
+        }
+
+
+@dataclass
 class Estimates:
     """Point estimates with uncertainty quantification."""
 
@@ -378,6 +402,9 @@ class EdgeCard:
     # Propagation role (Plan Section 2.2)
     propagation_role: PropagationRole = field(default_factory=PropagationRole)
 
+    # Literature citations
+    literature: LiteratureBlock = field(default_factory=LiteratureBlock)
+
     # Null acceptance
     is_precisely_null: bool = False
     null_equivalence_bound: float | None = None
@@ -459,6 +486,7 @@ class EdgeCard:
             "identification": self.identification.to_dict(),
             "counterfactual_block": self.counterfactual_block.to_dict(),
             "propagation_role": self.propagation_role.to_dict(),
+            "literature": self.literature.to_dict(),
             "companion_edge_id": self.companion_edge_id,
             "is_precisely_null": self.is_precisely_null,
             "null_equivalence_bound": self.null_equivalence_bound,
@@ -583,6 +611,33 @@ class EdgeCard:
             lines.append("")
             lines.append(f"**Propagation Role:** {self.propagation_role.role}")
             lines.append("")
+
+        # Literature
+        if self.literature.search_status != "PENDING" and self.literature.total_results > 0:
+            lines.append("## Literature")
+            lines.append("")
+            lines.append(f"**Search status:** {self.literature.search_status}")
+            if self.literature.search_query:
+                lines.append(f"**Query:** {self.literature.search_query}")
+            lines.append("")
+            if self.literature.supporting:
+                lines.append("**Supporting:**")
+                for c in self.literature.supporting:
+                    authors = ", ".join(c.get("authors", [])[:3])
+                    lines.append(f"- {c.get('title', '')} ({c.get('year', '?')}) — {authors}")
+                lines.append("")
+            if self.literature.challenging:
+                lines.append("**Challenging:**")
+                for c in self.literature.challenging:
+                    authors = ", ".join(c.get("authors", [])[:3])
+                    lines.append(f"- {c.get('title', '')} ({c.get('year', '?')}) — {authors}")
+                lines.append("")
+            if self.literature.methodological:
+                lines.append("**Methodological:**")
+                for c in self.literature.methodological:
+                    authors = ", ".join(c.get("authors", [])[:3])
+                    lines.append(f"- {c.get('title', '')} ({c.get('year', '?')}) — {authors}")
+                lines.append("")
 
         # Specification
         lines.append("## Specification Details")
