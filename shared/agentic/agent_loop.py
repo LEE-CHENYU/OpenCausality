@@ -211,6 +211,7 @@ class AgentLoop:
         _settings = get_settings()
         self.paper_scout = PaperScout(
             output_dir=self.config.output_dir / "citations",
+            s2_api_key=_settings.semantic_scholar_api_key or None,
             openalex_mailto=_settings.openalex_mailto or None,
             unpaywall_email=_settings.unpaywall_email or None,
             core_api_key=_settings.core_api_key or None,

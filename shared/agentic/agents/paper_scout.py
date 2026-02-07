@@ -78,6 +78,7 @@ class PaperScout:
         self,
         output_dir: Path | None = None,
         s2_client: Any | None = None,
+        s2_api_key: str | None = None,
         openalex_mailto: str | None = None,
         unpaywall_email: str | None = None,
         core_api_key: str | None = None,
@@ -88,6 +89,7 @@ class PaperScout:
 
         # Lazy-init clients via properties
         self._s2_client = s2_client
+        self._s2_api_key = s2_api_key
         self._openalex_mailto = openalex_mailto
         self._unpaywall_email = unpaywall_email
         self._core_api_key = core_api_key
@@ -106,7 +108,7 @@ class PaperScout:
     def s2_client(self) -> Any:
         if self._s2_client is None:
             from shared.data.semantic_scholar import SemanticScholarClient
-            self._s2_client = SemanticScholarClient()
+            self._s2_client = SemanticScholarClient(api_key=self._s2_api_key)
         return self._s2_client
 
     @property
