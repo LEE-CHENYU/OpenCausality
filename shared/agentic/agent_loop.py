@@ -73,6 +73,9 @@ class AgentLoopConfig:
     # Mode
     mode: Literal["EXPLORATION", "CONFIRMATION"] = "EXPLORATION"
 
+    # Query mode (STRUCTURAL / REDUCED_FORM / DESCRIPTIVE)
+    query_mode: str = "REDUCED_FORM"
+
     # Iteration limits
     max_iterations: int = 3
 
@@ -158,6 +161,12 @@ class AgentLoop:
         self.run_id = str(uuid.uuid4())[:8]
         self.mode = self.config.mode
         self.iteration = 0
+
+        # Query mode
+        from shared.agentic.query_mode import QueryModeConfig, QueryMode
+        self.query_mode_config = QueryModeConfig.load()
+        self.query_mode = QueryMode(self.config.query_mode)
+        self.query_mode_spec = self.query_mode_config.get_spec(self.query_mode)
 
         # Core components
         self.queue = create_queue_from_dag(dag)
@@ -251,6 +260,7 @@ class AgentLoop:
         logger.info(f"AGENT LOOP: {self.dag.metadata.name}")
         logger.info(f"Run ID: {self.run_id}")
         logger.info(f"Mode: {self.mode}")
+        logger.info(f"Query Mode: {self.query_mode.value}")
         logger.info(f"Max iterations: {self.config.max_iterations}")
         logger.info("=" * 60)
 
@@ -354,7 +364,10 @@ class AgentLoop:
         self.issue_registry.detect_post_run_issues(edge_card_dict, self.issue_ledger)
 
         # Phase 4: Gate evaluation
-        gate_eval = self.issue_gates.evaluate(self.issue_ledger, self.mode)
+        gate_eval = self.issue_gates.evaluate(
+            self.issue_ledger, self.mode,
+            query_mode=self.query_mode.value,
+        )
         logger.info(gate_eval.summary())
 
         open_issues = self.issue_ledger.get_open_issues()
@@ -664,13 +677,46 @@ class AgentLoop:
                 testable_threats_passed=id_result.testable_threats_passed,
                 testable_threats_failed=id_result.testable_threats_failed,
             )
+
+            # Split counterfactual block (mode-aware)
+            from shared.agentic.query_mode import (
+                derive_propagation_role,
+                is_edge_allowed_for_propagation,
+                is_shock_cf_allowed,
+                is_policy_cf_allowed,
+            )
+
+            shock_ok, shock_reason = is_shock_cf_allowed(
+                id_result.claim_level, self.query_mode_spec,
+            )
+            policy_ok, policy_reason = is_policy_cf_allowed(
+                id_result.claim_level, self.query_mode_spec,
+            )
             edge_card.counterfactual_block = CounterfactualBlock(
-                allowed=id_result.counterfactual_allowed,
-                reason_blocked=id_result.counterfactual_reason_blocked,
-                supports_policy_intervention=(
-                    edge_card.counterfactual.supports_policy_intervention
-                    if edge_card.counterfactual else False
-                ),
+                shock_scenario_allowed=shock_ok and id_result.shock_scenario_allowed,
+                policy_intervention_allowed=policy_ok and id_result.policy_intervention_allowed,
+                reason_shock_blocked=shock_reason or id_result.reason_shock_blocked,
+                reason_policy_blocked=policy_reason or id_result.reason_policy_blocked,
+            )
+
+            # Populate propagation role with per-mode permissions
+            edge_type = edge.get_edge_type() if hasattr(edge, 'get_edge_type') else "causal"
+            role = derive_propagation_role(edge_type, id_result.claim_level)
+
+            mode_prop, mode_shock, mode_policy = {}, {}, {}
+            for mn, ms in self.query_mode_config.modes.items():
+                mode_prop[mn] = is_edge_allowed_for_propagation(role, ms)
+                s_ok, _ = is_shock_cf_allowed(id_result.claim_level, ms)
+                p_ok, _ = is_policy_cf_allowed(id_result.claim_level, ms)
+                mode_shock[mn] = s_ok
+                mode_policy[mn] = p_ok
+
+            edge_card.propagation_role = PropagationRole(
+                role=role,
+                mode_propagation_allowed=mode_prop,
+                mode_shock_cf_allowed=mode_shock,
+                mode_policy_cf_allowed=mode_policy,
+                selected_for_counterfactual=mode_shock.get(self.query_mode.value, False),
             )
 
             # Attach literature citations if available
@@ -689,6 +735,15 @@ class AgentLoop:
                     search_query=bundle.citations[0].search_query if bundle.citations else "",
                     total_results=len(bundle.citations),
                 )
+
+            # Validate edge card (log-only, non-blocking)
+            from shared.agentic.validation import validate_edge_card, ValidationSeverity
+            card_validation = validate_edge_card(edge_card)
+            for issue in card_validation.issues:
+                if issue.severity == ValidationSeverity.ERROR:
+                    logger.error(f"EdgeCard validation [{edge_card.edge_id}]: {issue.check_id}: {issue.message}")
+                else:
+                    logger.warning(f"EdgeCard validation [{edge_card.edge_id}]: {issue.check_id}: {issue.message}")
 
             # Log initial specification
             self.audit_log.log_initial(task.edge_id, edge_card.spec_hash)
@@ -1096,6 +1151,7 @@ def run_dag(
     dag_path: Path | str,
     output_dir: Path | str | None = None,
     mode: str = "EXPLORATION",
+    query_mode: str = "REDUCED_FORM",
 ) -> SystemReport:
     """
     Run a DAG specification.
@@ -1106,6 +1162,7 @@ def run_dag(
         dag_path: Path to DAG YAML file
         output_dir: Output directory (optional)
         mode: "EXPLORATION" or "CONFIRMATION"
+        query_mode: "STRUCTURAL", "REDUCED_FORM", or "DESCRIPTIVE"
 
     Returns:
         SystemReport
@@ -1114,6 +1171,7 @@ def run_dag(
 
     config = AgentLoopConfig(
         mode=mode,
+        query_mode=query_mode,
         output_dir=Path(output_dir) if output_dir else Path("outputs/agentic"),
     )
 

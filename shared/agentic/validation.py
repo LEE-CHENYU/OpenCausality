@@ -12,6 +12,7 @@ V3: Domain-agnostic validation that works for any causal inference DAG.
 
 from __future__ import annotations
 
+import math
 import re
 from dataclasses import dataclass, field
 from enum import Enum
@@ -20,8 +21,19 @@ from typing import Any
 
 import yaml
 
-from shared.agentic.output.edge_card import EdgeCard
+from shared.agentic.output.edge_card import EdgeCard, rating_from_score
 from shared.agentic.identification.screen import IdentifiabilityScreen, IdentifiabilityResult
+
+
+# ---------------------------------------------------------------------------
+# Numeric helpers
+# ---------------------------------------------------------------------------
+
+def _is_bad_float(x: float | None) -> bool:
+    """True if x is NaN or Inf. Returns False for None (caller skips None)."""
+    if x is None:
+        return False
+    return math.isnan(x) or math.isinf(x)
 
 
 class ValidationSeverity(Enum):
@@ -223,7 +235,7 @@ class DAGValidator:
         """Check that all edges have edge_type specified."""
         result.checks_run.append("edge_type_presence")
 
-        valid_types = {"causal", "reaction_function", "mechanical", "immutable"}
+        valid_types = {"causal", "reaction_function", "mechanical", "immutable", "identity"}
 
         for edge_id, edge in self.edges.items():
             edge_type = edge.get("edge_type")
@@ -597,10 +609,143 @@ class DAGValidator:
                     ))
 
 
+def validate_mode_consistency(
+    edge_cards: dict[str, EdgeCard],
+    query_mode: str,
+    critical_path_edges: list[str] | None = None,
+) -> ValidationResult:
+    """Validate that critical-path edges have roles allowed in the query mode."""
+    from shared.agentic.query_mode import QueryModeConfig
+
+    result = ValidationResult(passed=True)
+    result.checks_run.append("mode_consistency")
+
+    config = QueryModeConfig.load()
+    mode_spec = config.get_spec(query_mode)
+
+    check_edges = critical_path_edges or list(edge_cards.keys())
+    for edge_id in check_edges:
+        card = edge_cards.get(edge_id)
+        if not card:
+            continue
+        role = card.propagation_role.role
+        if role not in mode_spec.propagation_requires:
+            result.add_issue(ValidationIssue(
+                check_id="mode_consistency",
+                severity=ValidationSeverity.ERROR,
+                message=(
+                    f"Edge role '{role}' not allowed for propagation in "
+                    f"{query_mode} mode (requires {mode_spec.propagation_requires})"
+                ),
+                edge_id=edge_id,
+            ))
+    return result
+
+
+def validate_double_counting(
+    edge_cards: dict[str, EdgeCard],
+    dag_config: dict[str, Any],
+    query_mode: str,
+) -> ValidationResult:
+    """Check for direct + indirect path overlap (double counting risk)."""
+    from shared.agentic.query_mode import QueryModeConfig
+
+    result = ValidationResult(passed=True)
+    result.checks_run.append("double_counting")
+
+    config = QueryModeConfig.load()
+    mode_spec = config.get_spec(query_mode)
+
+    # Build adjacency from edges allowed for propagation in this mode
+    edges_raw = dag_config.get("edges", [])
+    adj: dict[str, list[tuple[str, str]]] = {}  # from_node -> [(to_node, edge_id)]
+    for e in edges_raw:
+        eid = e["id"]
+        card = edge_cards.get(eid)
+        if card and card.propagation_role.role in mode_spec.propagation_requires:
+            fn = e["from"]
+            tn = e["to"]
+            adj.setdefault(fn, []).append((tn, eid))
+
+    # For each pair of nodes (A, C), check if there is both:
+    #   - a direct edge A->C
+    #   - an indirect path A->B->...->C (length >= 2)
+    direct_edges: dict[tuple[str, str], str] = {}
+    for e in edges_raw:
+        eid = e["id"]
+        card = edge_cards.get(eid)
+        if card and card.propagation_role.role in mode_spec.propagation_requires:
+            direct_edges[(e["from"], e["to"])] = eid
+
+    # BFS from each node to find reachable nodes via paths of length >= 2
+    for (from_n, to_n), direct_eid in direct_edges.items():
+        # Check if to_n is reachable from from_n via a path of length >= 2
+        visited = set()
+        frontier = []
+        for next_n, _ in adj.get(from_n, []):
+            if next_n != to_n:
+                frontier.append(next_n)
+        while frontier:
+            current = frontier.pop()
+            if current in visited:
+                continue
+            visited.add(current)
+            for next_n, _ in adj.get(current, []):
+                if next_n == to_n:
+                    result.add_issue(ValidationIssue(
+                        check_id="double_counting",
+                        severity=ValidationSeverity.WARNING,
+                        message=(
+                            f"Direct edge {direct_eid} ({from_n}->{to_n}) "
+                            f"and indirect path both active; double counting risk"
+                        ),
+                        edge_id=direct_eid,
+                        details={"indirect_via": current},
+                    ))
+                    break
+                if next_n not in visited:
+                    frontier.append(next_n)
+
+    return result
+
+
+def validate_edge_type_presence_for_mode(
+    edge_cards: dict[str, EdgeCard],
+    dag_config: dict[str, Any],
+    dag_mode: str = "EXPLORATION",
+) -> ValidationResult:
+    """Check that edges have explicit edge_type (required in CONFIRMATION)."""
+    result = ValidationResult(passed=True)
+    result.checks_run.append("edge_type_explicit")
+
+    edges_raw = dag_config.get("edges", [])
+    for e in edges_raw:
+        eid = e["id"]
+        explicit_type = e.get("edge_type", "")
+        if not explicit_type:
+            severity = (
+                ValidationSeverity.ERROR
+                if dag_mode == "CONFIRMATION"
+                else ValidationSeverity.INFO
+            )
+            result.add_issue(ValidationIssue(
+                check_id="edge_type_explicit",
+                severity=severity,
+                message=(
+                    f"edge_type not explicit (inferred from edge_status). "
+                    f"{'Required' if dag_mode == 'CONFIRMATION' else 'Info'} in {dag_mode} mode."
+                ),
+                edge_id=eid,
+            ))
+    return result
+
+
 def run_full_validation(
     dag_path: str | Path,
     edge_cards: dict[str, EdgeCard] | None = None,
     report_path: str | Path | None = None,
+    query_mode: str | None = None,
+    critical_path_edges: list[str] | None = None,
 ) -> ValidationResult:
     """
     Run full validation pipeline.
@@ -640,6 +785,25 @@ def run_full_validation(
         if not id_result.passed:
             combined.passed = False
 
+    # Query mode checks (if mode and edge cards provided)
+    if edge_cards and query_mode:
+        mode_result = validate_mode_consistency(
+            edge_cards, query_mode, critical_path_edges,
+        )
+        combined.issues.extend(mode_result.issues)
+        combined.checks_run.extend(mode_result.checks_run)
+        if not mode_result.passed:
+            combined.passed = False
+
+        # Double counting check
+        with open(dag_path) as f:
+            dag_raw = yaml.safe_load(f)
+        dc_result = validate_double_counting(edge_cards, dag_raw, query_mode)
+        combined.issues.extend(dc_result.issues)
+        combined.checks_run.extend(dc_result.checks_run)
+        if not dc_result.passed:
+            combined.passed = False
+
     # Report consistency checks (if report provided)
     if report_path and edge_cards:
         with open(report_path) as f:
@@ -651,3 +815,250 @@ def run_full_validation(
             combined.passed = False
 
     return combined
+
+
+# =========================================================================
+# EdgeCard-level validation
+# =========================================================================
+
+def validate_edge_card(card: EdgeCard) -> ValidationResult:
+    """
+    Validate a single EdgeCard for numeric and structural integrity.
+
+    Checks NaN/Inf estimates, negative SEs, CI ordering, p-value range,
+    IRF length mismatches, score bounds, and rating consistency.
+
+    Returns ValidationResult (passed=True means no ERRORs found).
+    """
+    result = ValidationResult(passed=True)
+    result.checks_run.append("validate_edge_card")
+    eid = card.edge_id
+
+    est = card.estimates
+
+    # Skip all estimate checks if estimates is None
+    if est is not None:
+        # 1. NaN/Inf point estimate
+        if est.point is None or _is_bad_float(est.point):
+            result.add_issue(ValidationIssue(
+                check_id="nan_inf_point", severity=ValidationSeverity.ERROR,
+                message="Point estimate is NaN, Inf, or None", edge_id=eid,
+            ))
+
+        # 2. NaN/Inf CI bounds
+        if est.ci_95 is not None:
+            if _is_bad_float(est.ci_95[0]) or _is_bad_float(est.ci_95[1]):
+                result.add_issue(ValidationIssue(
+                    check_id="nan_inf_ci", severity=ValidationSeverity.ERROR,
+                    message="CI bound is NaN or Inf", edge_id=eid,
+                ))
+
+        # 3. NaN/Inf SE
+        if _is_bad_float(est.se):
+            result.add_issue(ValidationIssue(
+                check_id="nan_inf_se", severity=ValidationSeverity.ERROR,
+                message="Standard error is NaN or Inf", edge_id=eid,
+            ))
+
+        # 4. Negative SE (only if SE is finite)
+        if est.se is not None and not _is_bad_float(est.se) and est.se < 0:
+            result.add_issue(ValidationIssue(
+                check_id="negative_se", severity=ValidationSeverity.ERROR,
+                message=f"Negative standard error: {est.se}", edge_id=eid,
+            ))
+
+        # 5. CI order (skip if either bound is bad)
+        if (est.ci_95 is not None
+                and not _is_bad_float(est.ci_95[0])
+                and not _is_bad_float(est.ci_95[1])
+                and est.ci_95[0] > est.ci_95[1]):
+            result.add_issue(ValidationIssue(
+                check_id="ci_order", severity=ValidationSeverity.ERROR,
+                message=f"CI lower ({est.ci_95[0]}) > upper ({est.ci_95[1]})",
+                edge_id=eid,
+            ))
+
+        # 6. Point outside CI (WARNING, skip if any value is bad or degenerate)
+        if (est.ci_95 is not None
+                and est.point is not None
+                and not _is_bad_float(est.point)
+                and not _is_bad_float(est.ci_95[0])
+                and not _is_bad_float(est.ci_95[1])
+                and not (est.ci_95[0] == est.ci_95[1] == est.point)):
+            if est.point < est.ci_95[0] or est.point > est.ci_95[1]:
+                result.add_issue(ValidationIssue(
+                    check_id="point_outside_ci", severity=ValidationSeverity.WARNING,
+                    message=f"Point {est.point} outside CI [{est.ci_95[0]}, {est.ci_95[1]}]",
+                    edge_id=eid,
+                ))
+
+        # 7. NaN/Inf p-value
+        if _is_bad_float(est.pvalue):
+            result.add_issue(ValidationIssue(
+                check_id="nan_inf_pvalue", severity=ValidationSeverity.ERROR,
+                message="p-value is NaN or Inf", edge_id=eid,
+            ))
+
+        # 8. p-value range (skip if NaN)
+        if (est.pvalue is not None
+                and not _is_bad_float(est.pvalue)
+                and not (0 <= est.pvalue <= 1)):
+            result.add_issue(ValidationIssue(
+                check_id="pvalue_range", severity=ValidationSeverity.ERROR,
+                message=f"p-value out of [0,1]: {est.pvalue}", edge_id=eid,
+            ))
+
+        # 9. IRF length mismatch
+        if est.horizons is not None:
+            n_h = len(est.horizons)
+            for vec_name in ("irf", "irf_ci_lower", "irf_ci_upper"):
+                vec = getattr(est, vec_name, None)
+                if vec is not None and len(vec) != n_h:
+                    result.add_issue(ValidationIssue(
+                        check_id="irf_length_mismatch", severity=ValidationSeverity.ERROR,
+                        message=f"{vec_name} length ({len(vec)}) != horizons length ({n_h})",
+                        edge_id=eid,
+                    ))
+
+        # 13. Missing units (WARNING)
+        if not est.treatment_unit:
+            result.add_issue(ValidationIssue(
+                check_id="missing_treatment_unit", severity=ValidationSeverity.WARNING,
+                message="Missing treatment_unit", edge_id=eid,
+            ))
+        if not est.outcome_unit:
+            result.add_issue(ValidationIssue(
+                check_id="missing_outcome_unit", severity=ValidationSeverity.WARNING,
+                message="Missing outcome_unit", edge_id=eid,
+            ))
+
+    # 10. NaN/Inf credibility score
+    if _is_bad_float(card.credibility_score):
+        result.add_issue(ValidationIssue(
+            check_id="nan_inf_score", severity=ValidationSeverity.ERROR,
+            message="Credibility score is NaN or Inf", edge_id=eid,
+        ))
+
+    # 11. Score out of [0,1] (skip if NaN)
+    if (card.credibility_score is not None
+            and not _is_bad_float(card.credibility_score)
+            and not (0 <= card.credibility_score <= 1)):
+        result.add_issue(ValidationIssue(
+            check_id="score_range", severity=ValidationSeverity.ERROR,
+            message=f"Credibility score out of [0,1]: {card.credibility_score}",
+            edge_id=eid,
+        ))
+
+    # 12. Rating too generous (WARNING) — uses centralized thresholds
+    if (card.credibility_score is not None
+            and not _is_bad_float(card.credibility_score)
+            and card.credibility_rating is not None):
+        expected_rating = rating_from_score(card.credibility_score)
+        # "too generous" = card rating is strictly better (earlier in A>B>C>D)
+        rating_order = {"A": 0, "B": 1, "C": 2, "D": 3}
+        card_rank = rating_order.get(card.credibility_rating, 4)
+        expected_rank = rating_order.get(expected_rating, 4)
+        if card_rank < expected_rank:
+            result.add_issue(ValidationIssue(
+                check_id="rating_too_generous", severity=ValidationSeverity.WARNING,
+                message=(
+                    f"Rating '{card.credibility_rating}' is more generous than "
+                    f"expected '{expected_rating}' for score {card.credibility_score:.3f}"
+                ),
+                edge_id=eid,
+            ))
+
+    return result
+
+
+# =========================================================================
+# Chain unit compatibility
+# =========================================================================
+
+_UNIT_STOPWORDS = frozenset({
+    "in", "of", "per", "to", "and", "or", "the", "a", "an",
+    "change", "changes", "increase", "decrease", "percent",
+    "1", "1%", "sd",
+})
+
+
+def _extract_unit_tokens(unit_str: str) -> set[str]:
+    """Normalize unit string to meaningful keyword tokens."""
+    # Replace punctuation (/, (, ), %, comma) with spaces
+    cleaned = re.sub(r'[/(),%.]+', ' ', unit_str)
+    tokens = cleaned.lower().split()
+    # Drop short tokens (len < 2) and stopwords
+    return {t for t in tokens if len(t) >= 2 and t not in _UNIT_STOPWORDS}
+
+
+def validate_chain_units(
+    edge_cards: dict[str, EdgeCard],
+    dag_edges: dict[str, tuple[str, str]],
+) -> ValidationResult:
+    """
+    Validate unit compatibility for consecutive edges sharing intermediate nodes.
+
+    For each pair of consecutive edges (A->B, B->C), checks that the
+    upstream outcome_unit and downstream treatment_unit share meaningful
+    keyword tokens.
+
+    Args:
+        edge_cards: dict of edge_id -> EdgeCard
+        dag_edges: dict of edge_id -> (treatment_node, outcome_node)
+
+    Returns:
+        ValidationResult with WARNING issues for incompatible unit pairs
+    """
+    result = ValidationResult(passed=True)
+    result.checks_run.append("validate_chain_units")
+
+    # Build node->edge mapping
+    outcome_of: dict[str, list[str]] = {}  # node -> edge_ids where node is outcome
+    treatment_of: dict[str, list[str]] = {}  # node -> edge_ids where node is treatment
+
+    for edge_id, (treat_node, out_node) in dag_edges.items():
+        if edge_id not in edge_cards:
+            continue
+        outcome_of.setdefault(out_node, []).append(edge_id)
+        treatment_of.setdefault(treat_node, []).append(edge_id)
+
+    # For each intermediate node, check unit compatibility
+    intermediate_nodes = set(outcome_of.keys()) & set(treatment_of.keys())
+
+    for node in intermediate_nodes:
+        for upstream_eid in outcome_of[node]:
+            upstream_card = edge_cards.get(upstream_eid)
+            if not upstream_card or not upstream_card.estimates:
+                continue
+            upstream_unit = upstream_card.estimates.outcome_unit or ""
+            if not upstream_unit.strip():
+                continue
+
+            for downstream_eid in treatment_of[node]:
+                downstream_card = edge_cards.get(downstream_eid)
+                if not downstream_card or not downstream_card.estimates:
+                    continue
+                downstream_unit = downstream_card.estimates.treatment_unit or ""
+                if not downstream_unit.strip():
+                    continue
+
+                upstream_tokens = _extract_unit_tokens(upstream_unit)
+                downstream_tokens = _extract_unit_tokens(downstream_unit)
+
+                if not upstream_tokens or not downstream_tokens:
+                    continue
+
+                overlap = upstream_tokens & downstream_tokens
+                if not overlap:
+                    result.add_issue(ValidationIssue(
+                        check_id="chain_unit_mismatch",
+                        severity=ValidationSeverity.WARNING,
+                        message=(
+                            f"Unit mismatch at node '{node}': "
+                            f"upstream '{upstream_eid}' outcome_unit='{upstream_unit}' "
+                            f"vs downstream '{downstream_eid}' treatment_unit='{downstream_unit}'"
+                        ),
+                        edge_id=f"{upstream_eid}->{downstream_eid}",
+                    ))
+
+    return result

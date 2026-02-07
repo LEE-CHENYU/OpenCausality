@@ -271,7 +271,7 @@ def estimate_panel_lp_exposure(
     impact_se_val = std_errors[0] if std_errors and not np.isnan(std_errors[0]) else 0.0
     cum = sum(c for c in coefficients if not np.isnan(c))
 
-    return PanelLPResult(
+    panel_result = PanelLPResult(
         edge_id=edge_id,
         horizons=horizons,
         coefficients=coefficients,
@@ -288,6 +288,67 @@ def estimate_panel_lp_exposure(
         impact_se=impact_se_val,
         cumulative_estimate=cum,
     )
+
+    # Validate invariants (log-only, non-blocking)
+    panel_violations = validate_panel_lp_result(panel_result)
+    for v in panel_violations:
+        logger.warning(f"Panel LP validation [{edge_id}]: {v}")
+
+    return panel_result
+
+
+def validate_panel_lp_result(result: PanelLPResult) -> list[str]:
+    """
+    Validate Panel LP result invariants. Returns list of violation strings.
+
+    Canonical length: len(result.horizons).
+    Per-element checks skip NaN (valid for failed horizons).
+    Non-blocking — never raises.
+    """
+    violations: list[str] = []
+    n_h = len(result.horizons)
+
+    # Vector length checks
+    for field_name in ("coefficients", "std_errors", "pvalues", "ci_lower", "ci_upper"):
+        vec = getattr(result, field_name, None)
+        if vec is not None and len(vec) != n_h:
+            violations.append(
+                f"{field_name} length ({len(vec)}) != horizons length ({n_h})"
+            )
+
+    # r_squared_within length
+    if result.r_squared_within and len(result.r_squared_within) != n_h:
+        violations.append(
+            f"r_squared_within length ({len(result.r_squared_within)}) != horizons length ({n_h})"
+        )
+
+    # Per-element checks
+    for i in range(min(n_h, len(result.std_errors) if result.std_errors else 0)):
+        se = result.std_errors[i]
+        if not np.isnan(se) and se < 0:
+            violations.append(f"Negative SE at h={result.horizons[i]}: {se}")
+
+    for i in range(min(n_h, len(result.pvalues) if result.pvalues else 0)):
+        pv = result.pvalues[i]
+        if not np.isnan(pv) and not (0 <= pv <= 1):
+            violations.append(f"p-value out of [0,1] at h={result.horizons[i]}: {pv}")
+
+    ci_lo = result.ci_lower or []
+    ci_hi = result.ci_upper or []
+    for i in range(min(n_h, len(ci_lo), len(ci_hi))):
+        lo, hi = ci_lo[i], ci_hi[i]
+        if not np.isnan(lo) and not np.isnan(hi) and lo > hi:
+            violations.append(
+                f"CI lower > upper at h={result.horizons[i]}: [{lo}, {hi}]"
+            )
+
+    # Scalar checks
+    if result.n_units < 0:
+        violations.append(f"Negative n_units: {result.n_units}")
+    if result.n_periods < 0:
+        violations.append(f"Negative n_periods: {result.n_periods}")
+
+    return violations
 
 
 def _estimate_panel_lp_fallback(

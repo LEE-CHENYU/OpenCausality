@@ -918,11 +918,48 @@ def print_edge_risk_block(
         logger.info(line)
 
 
+def _infer_edge_type(edge_id: str) -> str:
+    """Infer edge_type from group membership."""
+    if edge_id in IMMUTABLE_EDGES:
+        return "immutable"
+    if edge_id in BRIDGE_EDGES:
+        return "mechanical"
+    if edge_id in IDENTITY_EDGES:
+        return "identity"
+    if edge_id in {"cpi_to_nbk_rate", "fx_to_nbk_rate"}:
+        return "reaction_function"
+    return "causal"
+
+
+def _infer_variant_of(edge_id: str) -> str | None:
+    """Infer variant_of for companion/annual edges."""
+    sector_map = {
+        "shock_to_npl_sector": "shock_to_npl_kspi",
+        "shock_to_cor_sector": "shock_to_cor_kspi",
+        "nbk_rate_to_deposit_cost_sector": "nbk_rate_to_deposit_cost",
+        "nbk_rate_to_cor_sector": "nbk_rate_to_cor",
+    }
+    if edge_id in sector_map:
+        return sector_map[edge_id]
+    if edge_id.endswith("_annual"):
+        return edge_id.replace("_annual", "")
+    return None
+
+
 def attach_identification(
     card: EdgeCard,
     id_result: IdentifiabilityResult,
+    query_mode: str = "REDUCED_FORM",
 ) -> None:
-    """Attach identification block to EdgeCard."""
+    """Attach identification block and propagation role to EdgeCard."""
+    from shared.agentic.query_mode import (
+        QueryModeConfig,
+        derive_propagation_role,
+        is_edge_allowed_for_propagation,
+        is_shock_cf_allowed,
+        is_policy_cf_allowed,
+    )
+
     card.identification = IdentificationBlock(
         claim_level=id_result.claim_level,
         risks=id_result.risks,
@@ -930,11 +967,55 @@ def attach_identification(
         testable_threats_passed=id_result.testable_threats_passed,
         testable_threats_failed=id_result.testable_threats_failed,
     )
+
+    # Load mode config
+    config = QueryModeConfig.load()
+    mode_spec = config.get_spec(query_mode)
+
+    # Split counterfactual block
+    shock_ok, shock_reason = is_shock_cf_allowed(id_result.claim_level, mode_spec)
+    policy_ok, policy_reason = is_policy_cf_allowed(id_result.claim_level, mode_spec)
+
+    # Mode can only restrict, not expand
+    if id_result.reason_shock_blocked:
+        shock_ok = False
+        shock_reason = id_result.reason_shock_blocked
+    if id_result.reason_policy_blocked:
+        policy_ok = False
+        policy_reason = id_result.reason_policy_blocked
+
     card.counterfactual_block = CounterfactualBlock(
-        allowed=id_result.counterfactual_allowed,
-        reason_blocked=id_result.counterfactual_reason_blocked,
-        supports_policy_intervention=card.counterfactual.supports_policy_intervention,
+        shock_scenario_allowed=shock_ok,
+        policy_intervention_allowed=policy_ok,
+        reason_shock_blocked=shock_reason,
+        reason_policy_blocked=policy_reason,
     )
+
+    # Derive propagation role with per-mode dicts
+    base_edge_id = card.edge_id.replace("_annual", "").replace("_sector", "")
+    et = _infer_edge_type(base_edge_id)
+    role = derive_propagation_role(et, id_result.claim_level)
+
+    mode_prop, mode_shock, mode_policy = {}, {}, {}
+    for mn, ms in config.modes.items():
+        mode_prop[mn] = is_edge_allowed_for_propagation(role, ms)
+        s_ok, _ = is_shock_cf_allowed(id_result.claim_level, ms)
+        p_ok, _ = is_policy_cf_allowed(id_result.claim_level, ms)
+        mode_shock[mn] = s_ok
+        mode_policy[mn] = p_ok
+
+    card.propagation_role = PropagationRole(
+        role=role,
+        mode_propagation_allowed=mode_prop,
+        mode_shock_cf_allowed=mode_shock,
+        mode_policy_cf_allowed=mode_policy,
+        selected_for_counterfactual=mode_shock.get(query_mode, False),
+    )
+
+    # Set variant_of
+    variant = _infer_variant_of(card.edge_id)
+    if variant:
+        card.variant_of = variant
 
 
 def generate_id_dashboard(
@@ -957,14 +1038,21 @@ def generate_report(
     bridge_results: dict[str, AccountingBridgeResult],
     panel_results: dict[str, PanelLPResult],
     annual_lp_results: dict[str, LPResult],
+    query_mode: str = "REDUCED_FORM",
 ) -> str:
     """Generate comprehensive markdown report."""
+    mode_descriptions = {
+        "STRUCTURAL": "Identified causal effects for policy intervention analysis",
+        "REDUCED_FORM": "Shock/scenario responses for stress testing",
+        "DESCRIPTIVE": "Measurement, decomposition, and mechanical relationships",
+    }
     total_cards = len(cards)
     lines = [
         "# KSPI K2 DAG: Real Econometric Estimation Report",
         "",
         f"**Generated:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
         f"**DAG Version Hash:** `{DAG_HASH[:16]}...`",
+        f"**Query Mode:** `{query_mode}` — {mode_descriptions.get(query_mode, '')}",
         f"**Total Edge Cards:** {total_cards}",
         "",
         "---",
@@ -1337,6 +1425,54 @@ def generate_report(
     lines.append("")
 
     # -----------------------------------------------------------------------
+    # Query Mode Permissions
+    # -----------------------------------------------------------------------
+    lines.extend([
+        "---",
+        "",
+        f"## Query Mode Permissions (`{query_mode}`)",
+        "",
+        "| Edge | Role | Propagation | Shock CF | Policy CF | Variant Of |",
+        "|------|------|-------------|----------|-----------|------------|",
+    ])
+    for edge_id in ALL_EDGES:
+        card = cards.get(edge_id)
+        if not card:
+            # Check for annual variants
+            card = cards.get(edge_id + "_annual")
+        if card and card.propagation_role:
+            pr = card.propagation_role
+            prop_ok = pr.is_propagation_allowed(query_mode)
+            shock_ok = pr.is_shock_cf_allowed(query_mode)
+            policy_ok = pr.is_policy_cf_allowed(query_mode)
+            variant = card.variant_of or ""
+            lines.append(
+                f"| `{card.edge_id}` | {pr.role} | "
+                f"{'Yes' if prop_ok else 'NO'} | "
+                f"{'Yes' if shock_ok else 'NO'} | "
+                f"{'Yes' if policy_ok else 'NO'} | "
+                f"{variant} |"
+            )
+    # Also show annual variants
+    for edge_id in ANNUAL_LP_EDGES:
+        annual_id = edge_id + "_annual"
+        card = cards.get(annual_id)
+        if card and card.propagation_role:
+            pr = card.propagation_role
+            prop_ok = pr.is_propagation_allowed(query_mode)
+            shock_ok = pr.is_shock_cf_allowed(query_mode)
+            policy_ok = pr.is_policy_cf_allowed(query_mode)
+            variant = card.variant_of or ""
+            lines.append(
+                f"| `{annual_id}` | {pr.role} | "
+                f"{'Yes' if prop_ok else 'NO'} | "
+                f"{'Yes' if shock_ok else 'NO'} | "
+                f"{'Yes' if policy_ok else 'NO'} | "
+                f"{variant} |"
+            )
+    lines.append("")
+
+    # -----------------------------------------------------------------------
     # Honest limitations
     # -----------------------------------------------------------------------
     lines.extend([
@@ -1391,9 +1527,10 @@ def generate_report(
 # Main entry point
 # ---------------------------------------------------------------------------
 
-def main(output_dir: Path | None = None):
+def main(output_dir: Path | None = None, query_mode: str = "REDUCED_FORM"):
     """Run all estimations and generate report."""
     output_dir = output_dir or Path("outputs/agentic")
+    logger.info(f"Query mode: {query_mode}")
     cards_dir = output_dir / "cards" / "edge_cards"
     cards_dir.mkdir(parents=True, exist_ok=True)
 
@@ -1456,7 +1593,7 @@ def main(output_dir: Path | None = None):
                     diagnostics=card.diagnostics, ts_guard_result=ts_result,
                 )
                 id_results[edge_id] = id_result
-                attach_identification(card, id_result)
+                attach_identification(card, id_result, query_mode=query_mode)
                 print_edge_risk_block(edge_id, card, id_result, ts_result)
             except Exception as e:
                 logger.warning(f"  ID/TSGuard for {edge_id}: {e}")
@@ -1489,7 +1626,7 @@ def main(output_dir: Path | None = None):
             try:
                 id_result = id_screen.screen_post_design(edge_id, "IMMUTABLE_EVIDENCE")
                 id_results[edge_id] = id_result
-                attach_identification(card, id_result)
+                attach_identification(card, id_result, query_mode=query_mode)
             except Exception as e:
                 logger.warning(f"  ID screen for {edge_id}: {e}")
 
@@ -1561,7 +1698,7 @@ def main(output_dir: Path | None = None):
                     diagnostics=card.diagnostics, ts_guard_result=ts_result,
                 )
                 id_results[edge_id] = id_result
-                attach_identification(card, id_result)
+                attach_identification(card, id_result, query_mode=query_mode)
                 print_edge_risk_block(edge_id, card, id_result, ts_result)
             except Exception as e:
                 logger.warning(f"  ID/TSGuard for {edge_id}: {e}")
@@ -1669,7 +1806,7 @@ def main(output_dir: Path | None = None):
                         diagnostics=card.diagnostics, ts_guard_result=ts_result,
                     )
                     id_results[edge_id + "_annual"] = id_result
-                    attach_identification(card, id_result)
+                    attach_identification(card, id_result, query_mode=query_mode)
                     print_edge_risk_block(edge_id + "_annual", card, id_result, ts_result)
                 except Exception as e:
                     logger.warning(f"  ID/TSGuard for {edge_id}_annual: {e}")
@@ -1761,7 +1898,7 @@ def main(output_dir: Path | None = None):
                         diagnostics=card.diagnostics,
                     )
                     id_results[edge_id] = id_result
-                    attach_identification(card, id_result)
+                    attach_identification(card, id_result, query_mode=query_mode)
                     print_edge_risk_block(edge_id, card, id_result)
                 except Exception as e:
                     logger.warning(f"  ID screen for {edge_id}: {e}")
@@ -1819,7 +1956,7 @@ def main(output_dir: Path | None = None):
                     diagnostics=card.diagnostics, ts_guard_result=ts_result,
                 )
                 id_results[edge_id] = id_result
-                attach_identification(card, id_result)
+                attach_identification(card, id_result, query_mode=query_mode)
                 print_edge_risk_block(edge_id, card, id_result, ts_result)
             except Exception as e:
                 logger.warning(f"  ID/TSGuard for {edge_id}: {e}")
@@ -1866,7 +2003,7 @@ def main(output_dir: Path | None = None):
                 try:
                     id_result = id_screen.screen_post_design(edge_id, "ACCOUNTING_BRIDGE")
                     id_results[edge_id] = id_result
-                    attach_identification(card, id_result)
+                    attach_identification(card, id_result, query_mode=query_mode)
                     print_edge_risk_block(edge_id, card, id_result)
                 except Exception as e:
                     logger.warning(f"  ID screen for {edge_id}: {e}")
@@ -1908,13 +2045,49 @@ def main(output_dir: Path | None = None):
             try:
                 id_result = id_screen.screen_post_design(edge_id, "IDENTITY")
                 id_results[edge_id] = id_result
-                attach_identification(card, id_result)
+                attach_identification(card, id_result, query_mode=query_mode)
                 print_edge_risk_block(edge_id, card, id_result)
             except Exception as e:
                 logger.warning(f"  ID screen for {edge_id}: {e}")
 
     except Exception as e:
         logger.error(f"  Identity computation FAILED: {e}")
+
+    # ===================================================================
+    # Validate all EdgeCards (W5B)
+    # ===================================================================
+    logger.info("=" * 60)
+    logger.info("VALIDATING EDGE CARDS")
+    logger.info("=" * 60)
+
+    from shared.agentic.validation import (
+        validate_edge_card,
+        validate_chain_units,
+        ValidationSeverity,
+    )
+
+    for edge_id, card in cards.items():
+        card_validation = validate_edge_card(card)
+        for issue in card_validation.issues:
+            if issue.severity == ValidationSeverity.ERROR:
+                logger.error(f"EdgeCard validation [{edge_id}]: {issue.check_id}: {issue.message}")
+            else:
+                logger.warning(f"EdgeCard validation [{edge_id}]: {issue.check_id}: {issue.message}")
+
+    # ===================================================================
+    # Chain unit compatibility check (W5C)
+    # ===================================================================
+    logger.info("Checking chain unit compatibility...")
+
+    # Build dag_edges dict from EDGE_NODE_MAP for estimated edges only
+    estimated_dag_edges = {
+        eid: EDGE_NODE_MAP[eid]
+        for eid in cards
+        if eid in EDGE_NODE_MAP
+    }
+    chain_result = validate_chain_units(cards, estimated_dag_edges)
+    for issue in chain_result.issues:
+        logger.warning(f"Chain units: {issue.message}")
 
     # ===================================================================
     # Save EdgeCards as YAML
@@ -1939,6 +2112,7 @@ def main(output_dir: Path | None = None):
     report_md = generate_report(
         cards, lp_results, immutable_results, identity_results,
         bridge_results, panel_results, annual_lp_results,
+        query_mode=query_mode,
     )
 
     # Append identifiability dashboard
@@ -1950,6 +2124,27 @@ def main(output_dir: Path | None = None):
     with open(report_path, "w") as f:
         f.write(report_md)
     logger.info(f"Report saved to {report_path}")
+
+    # ===================================================================
+    # Report consistency check (W5D)
+    # ===================================================================
+    logger.info("Running ReportConsistencyChecker...")
+    try:
+        from shared.agentic.report_checker import ReportConsistencyChecker
+        rf_edges = ["cpi_to_nbk_rate", "fx_to_nbk_rate"]
+        checker = ReportConsistencyChecker(report_md, cards, rf_edges)
+        check_result = checker.check()
+        for err in check_result.errors:
+            logger.error(f"ReportChecker: {err}")
+        for warn in check_result.warnings:
+            logger.warning(f"ReportChecker: {warn}")
+
+        check_path = output_dir / "REPORT_CONSISTENCY_CHECK.md"
+        with open(check_path, "w") as f:
+            f.write(check_result.to_markdown())
+        logger.info(f"Report consistency check saved to {check_path}")
+    except Exception as e:
+        logger.warning(f"ReportConsistencyChecker failed: {e}")
 
     # ===================================================================
     # Final summary
@@ -1983,5 +2178,11 @@ if __name__ == "__main__":
         default=Path("outputs/agentic"),
         help="Output directory",
     )
+    parser.add_argument(
+        "--query-mode",
+        choices=["STRUCTURAL", "REDUCED_FORM", "DESCRIPTIVE"],
+        default="REDUCED_FORM",
+        help="Query mode: STRUCTURAL (identified causal), REDUCED_FORM (shock scenarios), DESCRIPTIVE (accounting)",
+    )
     args = parser.parse_args()
-    main(args.output_dir)
+    main(args.output_dir, query_mode=args.query_mode)

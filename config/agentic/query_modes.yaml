@@ -1,0 +1,46 @@
+# Query Mode Definitions
+# Determines what kind of question the DAG run answers:
+#   STRUCTURAL: identified causal effects for policy intervention analysis
+#   REDUCED_FORM: shock/scenario responses for stress testing
+#   DESCRIPTIVE: accounting decomposition, measurement summaries
+#
+# Policy and shock counterfactuals are gated independently per mode.
+
+modes:
+  STRUCTURAL:
+    description: "Identified causal effects for intervention analysis"
+    propagation_requires: ["structural", "bridge", "identity"]
+    counterfactual:
+      policy_requires_claim: "IDENTIFIED_CAUSAL"
+      shock_requires_claim: "IDENTIFIED_CAUSAL"
+    allows_policy_intervention: true
+    allows_shock_scenario: true
+    strict_diagnostics: true
+
+  REDUCED_FORM:
+    description: "Shock responses for stress testing / scenario analysis"
+    propagation_requires: ["structural", "reduced_form", "bridge", "identity"]
+    counterfactual:
+      policy_requires_claim: null     # policy never allowed in RF mode
+      shock_requires_claim: "REDUCED_FORM"
+    allows_policy_intervention: false
+    allows_shock_scenario: true
+    strict_diagnostics: false
+
+  DESCRIPTIVE:
+    description: "Measurement, decomposition, and mechanical relationships"
+    propagation_requires: ["structural", "reduced_form", "bridge", "identity", "diagnostic_only"]
+    counterfactual:
+      policy_requires_claim: null
+      shock_requires_claim: null
+    allows_policy_intervention: false
+    allows_shock_scenario: false
+    strict_diagnostics: false
+
+default_mode: REDUCED_FORM
+
+claim_hierarchy:
+  - IDENTIFIED_CAUSAL
+  - REDUCED_FORM
+  - DESCRIPTIVE
+  - BLOCKED_ID

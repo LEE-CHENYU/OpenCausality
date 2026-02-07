@@ -15,6 +15,14 @@
 # - Added propagation_rules for automated chain multiplication
 # - Added validation_pipeline configuration
 # - Domain-agnostic: works for any causal DAG, not just KSPI/banking
+#
+# V3.1 CHANGES (Query Mode Separation):
+# - Added "identity" to edge_type (pure arithmetic, e.g., K2 = Capital / RWA)
+# - Added variant_of field for robustness variants (annual, sector companions)
+# - Added optional mode_permissions override for edge-specific gating
+# - edge_type now REQUIRED in CONFIRMATION mode (inferred with warning in EXPLORATION)
+# - Query modes (STRUCTURAL, REDUCED_FORM, DESCRIPTIVE) gate propagation and counterfactuals
+#   per edge based on edge_type + claim_level. See config/agentic/query_modes.yaml.
 
 schema_version: 3
 
@@ -103,12 +111,33 @@ edges:
     to: "<node_id>"
 
     # NEW v3: Edge Type Classification
-    # CRITICAL for interpretation and propagation
-    edge_type: "causal"             # causal|reaction_function|mechanical|immutable
-    # - causal: Standard causal edge, supports shock propagation
-    # - reaction_function: Endogenous policy response (NOT for shock propagation)
-    # - mechanical: Deterministic accounting/identity relationship
-    # - immutable: Validated evidence, locked from re-estimation
+    # CRITICAL for interpretation, propagation, and query mode gating
+    edge_type: "causal"             # causal|reaction_function|mechanical|immutable|identity
+    # - causal: Standard causal edge, supports shock propagation (claim-level dependent)
+    # - reaction_function: Endogenous policy response (NEVER propagates in any mode)
+    # - mechanical: Deterministic accounting relationship (bridge role, always propagates)
+    # - immutable: Validated evidence, locked from re-estimation (structural role)
+    # - identity: Pure arithmetic identity (e.g., K2 = Capital / RWA; always propagates)
+    #
+    # REQUIRED in CONFIRMATION mode. In EXPLORATION mode, inferred from edge_status with
+    # INFO-level warning. If absent:
+    #   IMMUTABLE -> "immutable", IDENTITY -> "identity",
+    #   ESTIMABLE_REDUCED_FORM -> "causal", NEEDS_CONNECTOR -> "causal"
+
+    # NEW v3.1: Variant Tracking
+    # Marks robustness variants (annual, sector, etc.) of a primary edge
+    variant_of: "<parent_edge_id>"  # Optional. e.g., "shock_to_npl_kspi" for sector companion
+    # Variants inherit parent's edge_type. They are NOT on the propagation critical path.
+    # Only the primary edge participates in propagation and counterfactual gating.
+
+    # NEW v3.1: Mode Permissions Override (rare, edge-specific)
+    # Allows overriding the default mode permissions derived from edge_type + claim_level.
+    # Use only when the truth table default is inappropriate for a specific edge.
+    # mode_permissions:
+    #   STRUCTURAL:
+    #     propagation: true
+    #     shock_cf: false
+    #     policy_cf: false
 
     # NEW v3: Unit Specification (REQUIRED for chain propagation)
     # Without units, chain multiplication produces meaningless numbers

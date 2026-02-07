@@ -82,6 +82,7 @@ class IssueGates:
         self,
         ledger: IssueLedger,
         current_mode: str = "EXPLORATION",
+        query_mode: str | None = None,
     ) -> GateEvaluation:
         """Evaluate all gates against current issue state."""
         open_issues = ledger.get_open_issues()
@@ -145,6 +146,47 @@ class IssueGates:
             blocking_issues=timing_fail,
             description="Timing failures block shock propagation",
         ))
+
+        # Gate 6: structural_path_blocked (STRUCTURAL mode only)
+        if query_mode == "STRUCTURAL":
+            struct_blocked = [
+                i for i in open_issues
+                if i.rule_id == "CLAIM_BELOW_STRUCTURAL_THRESHOLD"
+            ]
+            results.append(GateResult(
+                gate_name="structural_path_blocked",
+                triggered=len(struct_blocked) > 0,
+                action="HITL must redesign identification or downgrade to REDUCED_FORM",
+                blocking_issues=struct_blocked,
+                description="STRUCTURAL mode: critical-path edge has claim < IDENTIFIED_CAUSAL",
+            ))
+
+        # Gate 7: reaction_function_on_path (all modes)
+        reaction_on_path = [
+            i for i in open_issues
+            if i.rule_id == "REACTION_FUNCTION_ON_PROPAGATION_PATH"
+        ]
+        results.append(GateResult(
+            gate_name="reaction_function_on_path",
+            triggered=len(reaction_on_path) > 0,
+            action="block propagation through reaction function edge",
+            blocking_issues=reaction_on_path,
+            description="Reaction function edge on propagation path",
+        ))
+
+        # Gate 8: double_counting_risk (REDUCED_FORM and STRUCTURAL)
+        if query_mode in ("STRUCTURAL", "REDUCED_FORM"):
+            double_count = [
+                i for i in open_issues
+                if i.rule_id == "DIRECT_INDIRECT_OVERLAP"
+            ]
+            results.append(GateResult(
+                gate_name="double_counting_risk",
+                triggered=len(double_count) > 0,
+                action="HITL must choose direct reduced-form or decomposed chain",
+                blocking_issues=double_count,
+                description="Direct and indirect paths both active; double counting risk",
+            ))
 
         # Compute aggregate state
         can_promote = not any(

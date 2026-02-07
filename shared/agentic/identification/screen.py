@@ -52,6 +52,12 @@ class IdentifiabilityResult:
     counterfactual_allowed: bool = False
     counterfactual_reason_blocked: str | None = None
 
+    # Split counterfactual fields (mode-aware)
+    shock_scenario_allowed: bool = False
+    policy_intervention_allowed: bool = False
+    reason_shock_blocked: str | None = None
+    reason_policy_blocked: str | None = None
+
     # Diagnostics that were used to determine claim level
     testable_threats_passed: list[str] = field(default_factory=list)
     testable_threats_failed: list[str] = field(default_factory=list)
@@ -65,6 +71,10 @@ class IdentifiabilityResult:
             "untestable_assumptions": self.untestable_assumptions,
             "counterfactual_allowed": self.counterfactual_allowed,
             "counterfactual_reason_blocked": self.counterfactual_reason_blocked,
+            "shock_scenario_allowed": self.shock_scenario_allowed,
+            "policy_intervention_allowed": self.policy_intervention_allowed,
+            "reason_shock_blocked": self.reason_shock_blocked,
+            "reason_policy_blocked": self.reason_policy_blocked,
             "testable_threats_passed": self.testable_threats_passed,
             "testable_threats_failed": self.testable_threats_failed,
         }
@@ -88,6 +98,10 @@ class IdentifiabilityResult:
                 self.counterfactual_reason_blocked = (
                     f"Claim level capped to {max_level}"
                 )
+                self.shock_scenario_allowed = False
+                self.policy_intervention_allowed = False
+                self.reason_shock_blocked = f"Claim level capped to {max_level}"
+                self.reason_policy_blocked = f"Claim level capped to {max_level}"
 
 
 class IdentifiabilityScreen:
@@ -242,6 +256,7 @@ class IdentifiabilityScreen:
         design: str,
         diagnostics: dict[str, Any],
         ts_guard_result: Any | None = None,
+        query_mode: str | None = None,
     ) -> IdentifiabilityResult:
         """
         Screen 3: Post-estimation. Given diagnostics, what's the final claim?
@@ -290,6 +305,37 @@ class IdentifiabilityScreen:
             cap = getattr(ts_guard_result, "claim_level_cap", None)
             if cap:
                 result.cap_to(cap)
+
+        # Initialize split CF fields from legacy field
+        result.shock_scenario_allowed = result.counterfactual_allowed
+        result.policy_intervention_allowed = (
+            result.counterfactual_allowed
+            and result.claim_level == "IDENTIFIED_CAUSAL"
+        )
+        if not result.shock_scenario_allowed:
+            result.reason_shock_blocked = result.counterfactual_reason_blocked
+        if not result.policy_intervention_allowed:
+            result.reason_policy_blocked = (
+                result.counterfactual_reason_blocked
+                or f"Policy CF requires IDENTIFIED_CAUSAL, edge has {result.claim_level}"
+            )
+
+        # Apply mode-aware gating (mode can only RESTRICT, never EXPAND)
+        if query_mode is not None:
+            from shared.agentic.query_mode import (
+                QueryModeConfig, QueryMode,
+                is_shock_cf_allowed, is_policy_cf_allowed,
+            )
+            config = QueryModeConfig.load()
+            mode_spec = config.get_spec(query_mode)
+            shock_ok, shock_reason = is_shock_cf_allowed(result.claim_level, mode_spec)
+            policy_ok, policy_reason = is_policy_cf_allowed(result.claim_level, mode_spec)
+            if not shock_ok:
+                result.shock_scenario_allowed = False
+                result.reason_shock_blocked = shock_reason
+            if not policy_ok:
+                result.policy_intervention_allowed = False
+                result.reason_policy_blocked = policy_reason
 
         return result
 

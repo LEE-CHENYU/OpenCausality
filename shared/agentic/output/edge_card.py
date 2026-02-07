@@ -23,6 +23,26 @@ from typing import Any, Literal
 
 import yaml
 
+# ---------------------------------------------------------------------------
+# Centralized rating thresholds (single source of truth)
+# ---------------------------------------------------------------------------
+
+RATING_THRESHOLDS: list[tuple[float, str]] = [
+    (0.80, "A"),
+    (0.60, "B"),
+    (0.40, "C"),
+]
+RATING_DEFAULT = "D"
+
+
+def rating_from_score(score: float) -> str:
+    """Return rating letter for a clamped score. Single source of truth."""
+    for threshold, letter in RATING_THRESHOLDS:
+        if score >= threshold:
+            return letter
+    return RATING_DEFAULT
+
+
 from shared.agentic.output.provenance import (
     DataProvenance,
     SpecDetails,
@@ -56,17 +76,37 @@ class IdentificationBlock:
 
 @dataclass
 class CounterfactualBlock:
-    """Counterfactual eligibility assessment."""
+    """Counterfactual eligibility assessment (split policy vs shock)."""
 
-    allowed: bool = False
-    reason_blocked: str | None = None
-    supports_policy_intervention: bool = False
+    shock_scenario_allowed: bool = False
+    policy_intervention_allowed: bool = False
+    reason_shock_blocked: str | None = None
+    reason_policy_blocked: str | None = None
+
+    @property
+    def allowed(self) -> bool:
+        """Backward compat: True if either shock or policy CF is allowed."""
+        return self.shock_scenario_allowed or self.policy_intervention_allowed
+
+    @property
+    def reason_blocked(self) -> str | None:
+        """Backward compat: first non-None reason."""
+        return self.reason_shock_blocked or self.reason_policy_blocked
+
+    @property
+    def supports_policy_intervention(self) -> bool:
+        """Backward compat alias."""
+        return self.policy_intervention_allowed
 
     def to_dict(self) -> dict[str, Any]:
         return {
+            "shock_scenario_allowed": self.shock_scenario_allowed,
+            "policy_intervention_allowed": self.policy_intervention_allowed,
+            "reason_shock_blocked": self.reason_shock_blocked,
+            "reason_policy_blocked": self.reason_policy_blocked,
+            # Backward compat keys
             "allowed": self.allowed,
             "reason_blocked": self.reason_blocked,
-            "supports_policy_intervention": self.supports_policy_intervention,
         }
 
 
@@ -74,15 +114,30 @@ class CounterfactualBlock:
 class PropagationRole:
     """Role of an edge in the causal propagation chain."""
 
-    role: Literal["structural", "reduced_form", "bridge", "diagnostic_only"] = "reduced_form"
+    role: Literal["structural", "reduced_form", "bridge", "identity", "diagnostic_only"] = "reduced_form"
     overlapping_paths: list[str] = field(default_factory=list)
     selected_for_counterfactual: bool = False
+    mode_propagation_allowed: dict[str, bool] = field(default_factory=dict)
+    mode_shock_cf_allowed: dict[str, bool] = field(default_factory=dict)
+    mode_policy_cf_allowed: dict[str, bool] = field(default_factory=dict)
+
+    def is_propagation_allowed(self, mode: str) -> bool:
+        return self.mode_propagation_allowed.get(mode, False)
+
+    def is_shock_cf_allowed(self, mode: str) -> bool:
+        return self.mode_shock_cf_allowed.get(mode, False)
+
+    def is_policy_cf_allowed(self, mode: str) -> bool:
+        return self.mode_policy_cf_allowed.get(mode, False)
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "role": self.role,
             "overlapping_paths": self.overlapping_paths,
             "selected_for_counterfactual": self.selected_for_counterfactual,
+            "mode_propagation_allowed": self.mode_propagation_allowed,
+            "mode_shock_cf_allowed": self.mode_shock_cf_allowed,
+            "mode_policy_cf_allowed": self.mode_policy_cf_allowed,
         }
 
 
@@ -405,9 +460,27 @@ class EdgeCard:
     # Literature citations
     literature: LiteratureBlock = field(default_factory=LiteratureBlock)
 
+    # Variant tracking (robustness variants are not primary DAG edges)
+    variant_of: str | None = None
+
     # Null acceptance
     is_precisely_null: bool = False
     null_equivalence_bound: float | None = None
+
+    def is_usable_in_mode(self, mode: str, use: str = "propagation") -> bool:
+        """Check if this edge is usable in a given mode.
+
+        Args:
+            mode: "STRUCTURAL", "REDUCED_FORM", or "DESCRIPTIVE"
+            use: "propagation", "shock_cf", or "policy_cf"
+        """
+        if use == "propagation":
+            return self.propagation_role.is_propagation_allowed(mode)
+        elif use == "shock_cf":
+            return self.propagation_role.is_shock_cf_allowed(mode)
+        elif use == "policy_cf":
+            return self.propagation_role.is_policy_cf_allowed(mode)
+        return False
 
     def all_diagnostics_pass(self) -> bool:
         """Check if all diagnostics pass."""
@@ -488,6 +561,7 @@ class EdgeCard:
             "propagation_role": self.propagation_role.to_dict(),
             "literature": self.literature.to_dict(),
             "companion_edge_id": self.companion_edge_id,
+            "variant_of": self.variant_of,
             "is_precisely_null": self.is_precisely_null,
             "null_equivalence_bound": self.null_equivalence_bound,
         }
@@ -604,12 +678,22 @@ class EdgeCard:
                 for assumption in self.identification.untestable_assumptions:
                     lines.append(f"- {assumption}")
             lines.append("")
-            cf_status = "ALLOWED" if self.counterfactual_block.allowed else "BLOCKED"
-            lines.append(f"**Counterfactual Use:** {cf_status}")
-            if self.counterfactual_block.reason_blocked:
-                lines.append(f"Reason: {self.counterfactual_block.reason_blocked}")
+            shock_ok = self.counterfactual_block.shock_scenario_allowed
+            policy_ok = self.counterfactual_block.policy_intervention_allowed
+            lines.append(f"**Shock CF:** {'ALLOWED' if shock_ok else 'BLOCKED'}")
+            if not shock_ok and self.counterfactual_block.reason_shock_blocked:
+                lines.append(f"  Reason: {self.counterfactual_block.reason_shock_blocked}")
+            lines.append(f"**Policy CF:** {'ALLOWED' if policy_ok else 'BLOCKED'}")
+            if not policy_ok and self.counterfactual_block.reason_policy_blocked:
+                lines.append(f"  Reason: {self.counterfactual_block.reason_policy_blocked}")
             lines.append("")
             lines.append(f"**Propagation Role:** {self.propagation_role.role}")
+            if self.propagation_role.mode_propagation_allowed:
+                mode_perms = ", ".join(
+                    f"{m}={'Y' if v else 'N'}"
+                    for m, v in self.propagation_role.mode_propagation_allowed.items()
+                )
+                lines.append(f"**Mode Propagation:** {mode_perms}")
             lines.append("")
 
         # Literature
@@ -681,6 +765,10 @@ def compute_credibility_score(
     Returns:
         Tuple of (score, rating)
     """
+    # Clamp inputs to [0, 1]
+    design_weight = min(max(design_weight, 0.0), 1.0)
+    data_coverage = min(max(data_coverage, 0.0), 1.0)
+
     # Diagnostics pass rate (40%)
     if diagnostics:
         pass_rate = sum(1 for d in diagnostics.values() if d.passed) / len(diagnostics)
@@ -712,14 +800,10 @@ def compute_credibility_score(
         0.20 * coverage_score
     )
 
-    # Rating
-    if score >= 0.80:
-        rating = "A"
-    elif score >= 0.60:
-        rating = "B"
-    elif score >= 0.40:
-        rating = "C"
-    else:
-        rating = "D"
+    # Clamp final score to [0, 1]
+    score = min(max(score, 0.0), 1.0)
+
+    # Rating (centralized thresholds)
+    rating = rating_from_score(score)
 
     return score, rating

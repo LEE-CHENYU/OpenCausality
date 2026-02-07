@@ -874,6 +874,7 @@ edges:
   - id: "oil_supply_to_brent"
     from: "oil_supply_shock"
     to: "brent_price"
+    edge_type: "causal"
     timing:
       lag: 0
       lag_unit: "month"
@@ -912,6 +913,7 @@ edges:
   - id: "oil_supply_to_fx"
     from: "oil_supply_shock"
     to: "kzt_usd"
+    edge_type: "causal"
     timing:
       lag: 0
       lag_unit: "month"
@@ -951,6 +953,7 @@ edges:
   - id: "oil_demand_to_fx"
     from: "oil_demand_shock"
     to: "kzt_usd"
+    edge_type: "causal"
     timing:
       lag: 0
       lag_unit: "month"
@@ -990,6 +993,7 @@ edges:
   - id: "vix_to_fx"
     from: "vix_shock"
     to: "kzt_usd"
+    edge_type: "causal"
     timing:
       lag: 0
       lag_unit: "month"
@@ -1032,6 +1036,7 @@ edges:
   - id: "fx_to_cpi_tradable"
     from: "kzt_usd"
     to: "cpi_tradable"
+    edge_type: "immutable"
     timing:
       lag: 1
       lag_unit: "month"
@@ -1081,6 +1086,7 @@ edges:
   - id: "fx_to_cpi_nontradable"
     from: "kzt_usd"
     to: "cpi_nontradable"
+    edge_type: "immutable"
     timing:
       lag: 1
       lag_unit: "month"
@@ -1130,6 +1136,7 @@ edges:
   - id: "cpi_to_nbk_rate"
     from: "cpi_headline"
     to: "nbk_policy_rate"
+    edge_type: "reaction_function"
     timing:
       lag: 1
       lag_unit: "month"
@@ -1170,6 +1177,7 @@ edges:
   - id: "fx_to_nbk_rate"
     from: "kzt_usd"
     to: "nbk_policy_rate"
+    edge_type: "reaction_function"
     timing:
       lag: 1
       lag_unit: "month"
@@ -1210,6 +1218,7 @@ edges:
   - id: "nbk_rate_to_deposit_cost"
     from: "nbk_policy_rate"
     to: "deposit_cost_kspi"
+    edge_type: "causal"
     timing:
       lag: 1
       lag_unit: "quarter"
@@ -1250,6 +1259,7 @@ edges:
   - id: "nbk_rate_to_cor"
     from: "nbk_policy_rate"
     to: "cor_kspi"
+    edge_type: "causal"
     timing:
       lag: 2
       lag_unit: "quarter"
@@ -1293,6 +1303,7 @@ edges:
   - id: "cpi_to_nominal_income"
     from: "cpi_headline"
     to: "nominal_income"
+    edge_type: "immutable"
     timing:
       lag: 1
       lag_unit: "quarter"
@@ -1342,6 +1353,7 @@ edges:
   - id: "fx_to_real_expenditure"
     from: "kzt_usd"
     to: "real_expenditure"
+    edge_type: "immutable"
     timing:
       lag: 1
       lag_unit: "quarter"
@@ -1394,6 +1406,7 @@ edges:
   - id: "shock_to_npl_kspi"
     from: "imported_inflation_instrument"
     to: "npl_kspi"
+    edge_type: "causal"
     timing:
       lag: 2
       lag_unit: "quarter"
@@ -1434,6 +1447,7 @@ edges:
   - id: "shock_to_cor_kspi"
     from: "imported_inflation_instrument"
     to: "cor_kspi"
+    edge_type: "causal"
     timing:
       lag: 1
       lag_unit: "quarter"
@@ -1477,6 +1491,7 @@ edges:
   - id: "expenditure_to_payments_revenue"
     from: "real_expenditure"
     to: "payments_revenue_kspi"
+    edge_type: "causal"
     timing:
       lag: 0
       lag_unit: "quarter"
@@ -1520,6 +1535,7 @@ edges:
   - id: "cor_to_capital"
     from: "cor_kspi"
     to: "total_capital_kspi"
+    edge_type: "mechanical"
     timing:
       lag: 0
       lag_unit: "quarter"
@@ -1562,6 +1578,7 @@ edges:
   - id: "loan_portfolio_to_rwa"
     from: "loan_portfolio_kspi"
     to: "rwa_kspi"
+    edge_type: "mechanical"
     timing:
       lag: 0
       lag_unit: "quarter"
@@ -1597,6 +1614,7 @@ edges:
   - id: "portfolio_mix_to_rwa"
     from: "portfolio_mix_kspi"
     to: "rwa_kspi"
+    edge_type: "causal"
     timing:
       lag: 0
       lag_unit: "quarter"
@@ -1637,6 +1655,7 @@ edges:
   - id: "capital_to_k2"
     from: "total_capital_kspi"
     to: "k2_ratio_kspi"
+    edge_type: "identity"
     timing:
       lag: 0
       lag_unit: "quarter"
@@ -1659,6 +1678,7 @@ edges:
   - id: "rwa_to_k2"
     from: "rwa_kspi"
     to: "k2_ratio_kspi"
+    edge_type: "identity"
     timing:
       lag: 0
       lag_unit: "quarter"

@@ -498,6 +498,10 @@ class EdgeSpec:
     # IMMUTABLE, ESTIMABLE_REDUCED_FORM, BLOCKED_DECOMPOSITION, NEEDS_CONNECTOR, IDENTITY
     edge_status: str = ""
 
+    # Query mode support
+    edge_type: str = ""        # causal|reaction_function|mechanical|immutable|identity
+    variant_of: str = ""       # parent edge_id if this is a robustness variant
+
     notes: str = ""
 
     def to_dict(self) -> dict:
@@ -530,10 +534,26 @@ class EdgeSpec:
             d["validated_evidence"] = self.validated_evidence.to_dict()
         if self.edge_status:
             d["edge_status"] = self.edge_status
+        if self.edge_type:
+            d["edge_type"] = self.edge_type
+        if self.variant_of:
+            d["variant_of"] = self.variant_of
         if self.notes:
             d["notes"] = self.notes
 
         return d
+
+    def get_edge_type(self) -> str:
+        """Infer edge_type from edge_status if not explicitly set."""
+        if self.edge_type:
+            return self.edge_type
+        status_map = {
+            "IMMUTABLE": "immutable",
+            "IDENTITY": "identity",
+            "ESTIMABLE_REDUCED_FORM": "causal",
+            "NEEDS_CONNECTOR": "causal",
+        }
+        return status_map.get(self.edge_status, "causal")
 
     def is_immutable(self) -> bool:
         """Check if this edge is marked as immutable (validated evidence)."""
@@ -951,6 +971,8 @@ def _parse_edge(data: dict) -> EdgeSpec:
         interpretation=_parse_edge_interpretation(data.get("interpretation")),
         validated_evidence=_parse_validated_evidence(data.get("validated_evidence")),
         edge_status=data.get("edge_status", ""),
+        edge_type=data.get("edge_type", ""),
+        variant_of=data.get("variant_of", ""),
         notes=data.get("notes", ""),
     )
 

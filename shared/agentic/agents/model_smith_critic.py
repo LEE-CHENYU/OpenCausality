@@ -53,6 +53,9 @@ class ModelSmithCritic:
         has_panel: bool = False,
         has_exposure_variation: bool = False,
         ledger: IssueLedger | None = None,
+        query_mode: str | None = None,
+        is_critical_path: bool = False,
+        identifiability: IdentifiabilityResult | None = None,
     ) -> CriticVerdict:
         """Review a design proposal."""
         issues_raised = []
@@ -96,6 +99,28 @@ class ModelSmithCritic:
                     edge_id=edge_id,
                     auto_fixable=True,
                     suggested_fix={"action": "convert_to_bridge"},
+                )
+
+        # Check: STRUCTURAL mode requires IDENTIFIED_CAUSAL on critical path
+        if (
+            query_mode == "STRUCTURAL"
+            and is_critical_path
+            and identifiability is not None
+            and identifiability.claim_level != "IDENTIFIED_CAUSAL"
+        ):
+            issues_raised.append("CLAIM_BELOW_STRUCTURAL_THRESHOLD")
+            if ledger:
+                ledger.add_from_rule(
+                    rule_id="CLAIM_BELOW_STRUCTURAL_THRESHOLD",
+                    severity="CRITICAL",
+                    message=(
+                        f"STRUCTURAL mode: edge {edge_id} has claim_level "
+                        f"{identifiability.claim_level} on critical path. "
+                        f"Requires IDENTIFIED_CAUSAL. Consider IV, DiD, RDD, "
+                        f"or downgrade to REDUCED_FORM mode."
+                    ),
+                    edge_id=edge_id,
+                    requires_human=True,
                 )
 
         approved = len(issues_raised) == 0
