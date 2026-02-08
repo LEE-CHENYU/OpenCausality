@@ -506,6 +506,93 @@ intervals for propagated effects.
 
 ---
 
+## Vision & Roadmap
+
+OpenCausality treats causal models as first-class software artifacts — versioned,
+testable, citable. The long-term goal is a composable infrastructure where any
+researcher can build, audit, and share causal claims with the same rigor applied to
+source code.
+
+### What Makes OpenCausality Different
+
+1. **Causal models as citable artifacts.** DAGs are versioned YAML with provenance
+   metadata, edge-level citations, and hash-chained audit logs. Every claim traces
+   back to a specific graph version.
+
+2. **Assumption audit by design.** 29 issue-detection rules, front-door/back-door
+   identification screening, and an immutable ledger run before any result is
+   surfaced — not as an afterthought.
+
+3. **Orchestration layer, not another estimator.** OpenCausality defines plugin
+   contracts for estimation engines. It does not compete with DoWhy, EconML, or
+   CausalML — it orchestrates them.
+
+4. **Dual-audience interface.** Expert users edit DAG YAML directly; non-specialists
+   query through natural language. The NL layer enforces hedged language — it never
+   says "causes" unless the path is identified-causal.
+
+5. **Unit-aware propagation.** The PropagationEngine performs dimensional analysis
+   across nine unit types (pp, pct, log_point, bn_kzt, ratio, index, sd, bps,
+   count) during multi-edge effect propagation — catching unit mismatches before
+   they become wrong conclusions.
+
+6. **Counterfactual gating.** Each edge declares shock/policy eligibility with
+   explicit blocking reasons. Three query modes (STRUCTURAL, REDUCED_FORM,
+   DESCRIPTIVE) gate which edges participate at runtime, preventing misuse of
+   correlational paths in causal claims.
+
+7. **Time-series diagnostics.** TSGuard runs seven checks (leads test, regime
+   stability, HAC sensitivity, Granger pre-test, stationarity, seasonal residuals,
+   structural breaks) and automatically caps claim levels when diagnostics fail.
+
+### Roadmap
+
+1. **Interoperable Data & Graph Registry.** A shared catalog of DAGs and datasets
+   with semantic search, so researchers can discover and fork existing causal models.
+   *(Builds on: DataSource ABC, auto-ingest pipeline, DAG YAML schema.)*
+
+2. **Threats-to-Validity Registry.** A structured, extensible database of known
+   threats to causal identification — indexed by design type, with automated
+   matching to user DAGs.
+   *(Builds on: issue_registry.yaml, 29 detection rules.)*
+
+3. **Composable Causal World Model.** Merge compatible sub-DAGs into larger causal
+   graphs with conflict detection and provenance tracking across research teams.
+   *(Builds on: DAG schema v2, edge cards, propagation_role.)*
+
+4. **Guided Natural-Language Causal Assistant.** Multi-turn NL sessions that walk
+   users from a vague research question to a fully specified, identified DAG —
+   with literature-backed edge suggestions at each step.
+   *(Builds on: Query REPL, PropagationEngine, PaperDAGExtractor.)*
+
+5. **Sensor & Intervention Interface.** Connect live data streams (IoT, admin
+   databases) to DAG nodes for real-time monitoring and automated intervention
+   triggering when causal thresholds are crossed.
+   *(Builds on: auto-ingest, data watch, edge shock eligibility.)*
+
+### Ecosystem Integration
+
+Candidate upstream tools, grouped by function. OpenCausality orchestrates these
+through its plugin contracts — it does not re-implement their algorithms.
+
+| Category | Tool | License | Integration Point |
+|---|---|---|---|
+| Inference | DoWhy | MIT | Orchestration target (identify → estimate → refute) |
+| Inference | causallib | Apache-2.0 | Estimator building blocks |
+| Causal ML | EconML | MIT | HTE / DML / DR / IV estimators |
+| Causal ML | CausalML | Apache-2.0 | Uplift modeling |
+| Causal ML | DoubleML | BSD-3 | Double/debiased ML |
+| Discovery | causal-learn | MIT | Classical discovery algorithms |
+| Discovery | gCastle | Apache-2.0 | Gradient-based discovery (NOTEARS) |
+| Graphs | pywhy-graphs | MIT | Graph interop with PyWhy ecosystem |
+| Benchmarks | example-causal-datasets | CC0 | Standard test datasets |
+| Benchmarks | ACIC 2023 | MIT | Competition benchmark tasks |
+
+GPL-licensed tools (Tetrad, Tigramite, DAGitty) are supported as optional external
+executors — they are never bundled as dependencies.
+
+---
+
 ## Contributing
 
 Contributions are welcome. Fork the repository, create a feature branch from `main`,
