@@ -34,8 +34,27 @@ config_app = typer.Typer(
     name="config",
     help="Configuration management commands",
 )
+data_app = typer.Typer(
+    name="data",
+    help="Data ingestion and management commands",
+)
 app.add_typer(dag_app, name="dag")
 app.add_typer(config_app, name="config")
+app.add_typer(data_app, name="data")
+
+
+@app.callback()
+def main_callback(ctx: typer.Context):
+    """Auto-ingest new data files on every command."""
+    # Skip auto-ingest for data subcommands (they handle it explicitly)
+    # and for help/completion commands
+    cmd_name = ctx.invoked_subcommand
+    if cmd_name not in ("data",):
+        try:
+            from shared.engine.ingest import auto_ingest
+            auto_ingest(quiet=True)
+        except Exception:
+            pass  # Never block CLI on ingest failure
 
 console = Console()
 
@@ -560,6 +579,267 @@ def dag_list(
         console.print("[yellow]Could not import DAG parser[/yellow]")
         for dag_file in sorted(dag_files):
             console.print(f"  {dag_file.name}")
+
+
+# ============================================================================
+# Data Commands
+# ============================================================================
+
+@data_app.command("ingest")
+def data_ingest(
+    force: bool = typer.Option(False, "--force", "-f", help="Re-ingest even if unchanged"),
+    file: Optional[Path] = typer.Option(None, "--file", help="Ingest a specific file"),
+):
+    """Scan data/raw/ and ingest new or changed files."""
+    from shared.engine.ingest import IngestPipeline
+
+    pipeline = IngestPipeline()
+
+    if file:
+        if not file.exists():
+            console.print(f"[red]File not found: {file}[/red]")
+            raise typer.Exit(1)
+        try:
+            profile = pipeline.ingest_file(file, force=force)
+            results = [profile]
+        except Exception as e:
+            console.print(f"[red]Ingest failed: {e}[/red]")
+            raise typer.Exit(1)
+    else:
+        results = pipeline.ingest_all(force=force)
+
+    if not results:
+        console.print("[dim]No new or changed files to ingest.[/dim]")
+        return
+
+    count = pipeline.register_loaders()
+
+    table = Table(title="Ingested Files")
+    table.add_column("File ID", style="cyan")
+    table.add_column("Format", style="white")
+    table.add_column("Rows", style="white", justify="right")
+    table.add_column("Frequency", style="yellow")
+    table.add_column("Date Range", style="white")
+    table.add_column("Value Columns", style="white")
+
+    for profile in results:
+        dr = f"{profile.date_range[0]} to {profile.date_range[1]}" if profile.date_range else "-"
+        table.add_row(
+            profile.file_id,
+            profile.format,
+            str(profile.rows),
+            profile.frequency or "-",
+            dr,
+            ", ".join(profile.value_columns[:5]) + ("..." if len(profile.value_columns) > 5 else ""),
+        )
+
+    console.print(table)
+    console.print(f"\n[green]Ingested {len(results)} file(s), registered {count} loader(s).[/green]")
+
+
+@data_app.command("list")
+def data_list():
+    """List all ingested datasets from the manifest."""
+    from shared.engine.ingest import IngestPipeline, _slugify_column
+
+    pipeline = IngestPipeline()
+    datasets = pipeline.manifest.datasets
+
+    if not datasets:
+        console.print("[dim]No ingested datasets. Drop files into data/raw/ and run 'opencausality data ingest'.[/dim]")
+        return
+
+    table = Table(title="Ingested Datasets")
+    table.add_column("File ID", style="cyan")
+    table.add_column("Format", style="white")
+    table.add_column("Rows", style="white", justify="right")
+    table.add_column("Frequency", style="yellow")
+    table.add_column("Date Range", style="white")
+    table.add_column("Node IDs", style="dim")
+    table.add_column("Ingested At", style="dim")
+
+    for ds in datasets:
+        dr = f"{ds.date_range[0]} to {ds.date_range[1]}" if ds.date_range else "-"
+        node_ids = [f"{ds.file_id}__{_slugify_column(c)}" for c in ds.value_columns[:3]]
+        node_str = ", ".join(node_ids)
+        if len(ds.value_columns) > 3:
+            node_str += f" (+{len(ds.value_columns) - 3})"
+        ingested = ds.ingested_at[:19] if ds.ingested_at else "-"
+        table.add_row(
+            ds.file_id,
+            ds.format,
+            str(ds.rows),
+            ds.frequency or "-",
+            dr,
+            node_str,
+            ingested,
+        )
+
+    console.print(table)
+
+
+@data_app.command("profile")
+def data_profile(
+    file_id: str = typer.Argument(..., help="File ID to profile (from 'data list')"),
+):
+    """Show detailed column-level profile for an ingested dataset."""
+    from shared.engine.ingest import IngestPipeline
+
+    pipeline = IngestPipeline()
+    ds = pipeline.manifest.get_dataset(file_id)
+
+    if ds is None:
+        console.print(f"[red]Dataset not found: {file_id}[/red]")
+        available = [d.file_id for d in pipeline.manifest.datasets]
+        if available:
+            console.print(f"[dim]Available: {', '.join(available)}[/dim]")
+        raise typer.Exit(1)
+
+    # Dataset summary panel
+    dr = f"{ds.date_range[0]} to {ds.date_range[1]}" if ds.date_range else "N/A"
+    summary = (
+        f"[bold]File ID:[/bold] {ds.file_id}\n"
+        f"[bold]Source:[/bold] {ds.original_path}\n"
+        f"[bold]Format:[/bold] {ds.format}\n"
+        f"[bold]Rows:[/bold] {ds.rows}\n"
+        f"[bold]Date Column:[/bold] {ds.date_column or 'N/A'}\n"
+        f"[bold]Frequency:[/bold] {ds.frequency or 'N/A'}\n"
+        f"[bold]Date Range:[/bold] {dr}\n"
+        f"[bold]Unique Dates:[/bold] {ds.n_unique_dates}\n"
+        f"[bold]Duplicate Dates:[/bold] {ds.n_duplicate_dates}\n"
+        f"[bold]Output:[/bold] {ds.output_path}\n"
+        f"[bold]Ingested:[/bold] {ds.ingested_at}"
+    )
+    console.print(Panel(summary, title=f"Dataset: {file_id}"))
+
+    # Column details table
+    table = Table(title="Column Profiles")
+    table.add_column("Column", style="cyan")
+    table.add_column("Type", style="yellow")
+    table.add_column("Non-null", style="white", justify="right")
+    table.add_column("Null", style="white", justify="right")
+    table.add_column("Mean", style="white", justify="right")
+    table.add_column("Std", style="white", justify="right")
+    table.add_column("Min", style="white", justify="right")
+    table.add_column("Max", style="white", justify="right")
+    table.add_column("Value?", style="green")
+
+    for col in ds.columns:
+        is_value = "Y" if col.name in ds.value_columns else ""
+        table.add_row(
+            col.name,
+            col.dtype,
+            str(col.non_null_count),
+            str(col.null_count),
+            f"{col.mean:.4f}" if col.mean is not None else "-",
+            f"{col.std:.4f}" if col.std is not None else "-",
+            f"{col.min_val:.4f}" if col.min_val is not None else "-",
+            f"{col.max_val:.4f}" if col.max_val is not None else "-",
+            is_value,
+        )
+
+    console.print(table)
+
+    if ds.sidecar:
+        console.print(f"\n[dim]Sidecar metadata: {ds.sidecar}[/dim]")
+
+
+@data_app.command("watch")
+def data_watch():
+    """Watch data/raw/ for new or modified files and auto-ingest them."""
+    try:
+        from watchdog.observers import Observer
+        from watchdog.events import FileSystemEventHandler
+    except ImportError:
+        console.print(
+            "[red]watchdog not installed. Install with:[/red]\n"
+            "  pip install watchdog"
+        )
+        raise typer.Exit(1)
+
+    import time
+    from shared.engine.ingest import IngestPipeline
+
+    raw_dir = Path("data/raw")
+    if not raw_dir.exists():
+        raw_dir.mkdir(parents=True, exist_ok=True)
+
+    supported = IngestPipeline.SUPPORTED_EXTENSIONS
+    managed = IngestPipeline.KNOWN_MANAGED_DIRS
+
+    # Track pending files for stability check
+    pending: dict[str, float] = {}  # path -> last_mtime
+    STABILITY_SECONDS = 2.0
+
+    class IngestHandler(FileSystemEventHandler):
+        def on_created(self, event):
+            if not event.is_directory:
+                self._enqueue(event.src_path)
+
+        def on_modified(self, event):
+            if not event.is_directory:
+                self._enqueue(event.src_path)
+
+        def _enqueue(self, src_path: str):
+            p = Path(src_path)
+            if p.suffix.lower() not in supported:
+                return
+            if p.suffix.lower() in (".yaml", ".yml"):
+                return
+            try:
+                rel = p.relative_to(raw_dir)
+                first_dir = rel.parts[0] if len(rel.parts) > 1 else None
+                if first_dir and first_dir.lower() in managed:
+                    return
+            except ValueError:
+                return
+            pending[str(p)] = time.time()
+
+    handler = IngestHandler()
+    observer = Observer()
+    observer.schedule(handler, str(raw_dir), recursive=True)
+    observer.start()
+
+    console.print(f"[bold cyan]Watching {raw_dir} for changes...[/bold cyan]")
+    console.print("[dim]Press Ctrl+C to stop.[/dim]")
+
+    try:
+        while True:
+            time.sleep(0.5)
+            now = time.time()
+            ready = []
+            for path_str, enqueue_time in list(pending.items()):
+                p = Path(path_str)
+                if not p.exists():
+                    del pending[path_str]
+                    continue
+                # Stability check: wait until mtime hasn't changed for STABILITY_SECONDS
+                try:
+                    current_mtime = p.stat().st_mtime
+                except OSError:
+                    del pending[path_str]
+                    continue
+                if now - current_mtime >= STABILITY_SECONDS and now - enqueue_time >= STABILITY_SECONDS:
+                    ready.append(path_str)
+
+            for path_str in ready:
+                del pending[path_str]
+                p = Path(path_str)
+                pipeline = IngestPipeline()
+                try:
+                    profile = pipeline.ingest_file(p, force=True)
+                    pipeline.register_loaders()
+                    console.print(
+                        f"[green]Ingested:[/green] {profile.file_id} "
+                        f"({profile.rows} rows, {profile.frequency or '?'} freq, "
+                        f"{len(profile.value_columns)} value col(s))"
+                    )
+                except Exception as e:
+                    console.print(f"[red]Failed to ingest {p.name}: {e}[/red]")
+    except KeyboardInterrupt:
+        observer.stop()
+        console.print("\n[dim]Stopped watching.[/dim]")
+    observer.join()
 
 
 # ============================================================================

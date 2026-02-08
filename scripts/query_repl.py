@@ -260,6 +260,23 @@ class QueryREPL:
 
         self.mode = mode
 
+        # Auto-ingest and register virtual nodes
+        try:
+            from shared.engine.ingest import auto_ingest
+            pipeline = auto_ingest(quiet=False)
+            virtual_nodes = pipeline.get_virtual_nodes()
+            if virtual_nodes:
+                added = 0
+                for node in virtual_nodes:
+                    if not self.dag.get_node(node.id):
+                        self.dag.nodes.append(node)
+                        added += 1
+                if added:
+                    self.dag._build_indexes()
+                    console.print(f"[dim]Auto-registered {added} ingested data node(s)[/dim]")
+        except Exception as e:
+            logger.debug(f"Auto-ingest skipped: {e}")
+
         # Try to get LLM client
         self.llm = None
         try:

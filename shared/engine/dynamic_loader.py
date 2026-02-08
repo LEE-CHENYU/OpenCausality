@@ -88,6 +88,14 @@ _CONNECTOR_STRATEGIES: dict[str, ConnectorStrategy] = {
             "data/backup/worldbank/{series}.parquet",
         ],
     ),
+    "ingested": ConnectorStrategy(
+        name="ingested",
+        local_path_templates=[
+            "data/processed/ingested/{dataset}.parquet",
+        ],
+        single_file=True,
+        notes="Auto-ingested user data; series resolves to column within dataset parquet",
+    ),
 }
 
 
@@ -249,6 +257,7 @@ _CONNECTOR_SCAN_DIRS: dict[str, list[Path]] = {
     "baumeister": [RAW_DIR / "baumeister_shocks"],
     "nbk": [RAW_DIR / "nbk"],
     "world_bank": [BACKUP_DIR / "worldbank"],
+    "ingested": [PROCESSED_DIR / "ingested"],
 }
 
 
