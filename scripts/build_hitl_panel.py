@@ -31,6 +31,7 @@ DEFAULT_CARDS_DIR = PROJECT_ROOT / "outputs" / "agentic" / "cards" / "edge_cards
 DEFAULT_ACTIONS = PROJECT_ROOT / "config" / "agentic" / "hitl_actions.yaml"
 DEFAULT_REGISTRY = PROJECT_ROOT / "config" / "agentic" / "issue_registry.yaml"
 DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "outputs" / "agentic"
+DEFAULT_DAG = PROJECT_ROOT / "config" / "agentic" / "dags" / "kspi_k2_full.yaml"
 
 
 # ── Data extraction ─────────────────────────────────────────────────────────
@@ -103,6 +104,13 @@ def load_edge_summary(card_path: Path) -> dict | None:
     elif (card.get("data_provenance") or {}).get("combined_row_count"):
         n_obs = int(card["data_provenance"]["combined_row_count"])
 
+    # Interpretation block
+    interp = card.get("interpretation") or {}
+    # Counterfactual block
+    cf = card.get("counterfactual_block") or {}
+    # Propagation role
+    prop = card.get("propagation_role") or {}
+
     return {
         "point": estimates.get("point"),
         "se": estimates.get("se"),
@@ -116,6 +124,19 @@ def load_edge_summary(card_path: Path) -> dict | None:
         "diagnostics": diagnostics,
         "failure_flags": failure_flags,
         "panel": panel,
+        # Additional fields for decision guides
+        "estimand": interp.get("estimand", ""),
+        "is_not": interp.get("is_not", []),
+        "allowed_uses": interp.get("allowed_uses", []),
+        "forbidden_uses": interp.get("forbidden_uses", []),
+        "cf_shock_allowed": cf.get("shock_scenario_allowed"),
+        "cf_policy_allowed": cf.get("policy_intervention_allowed"),
+        "cf_reason_blocked": cf.get("reason_blocked", ""),
+        "id_risks": identification.get("risks", {}),
+        "untestable_assumptions": identification.get("untestable_assumptions", []),
+        "testable_passed": identification.get("testable_threats_passed", []),
+        "testable_failed": identification.get("testable_threats_failed", []),
+        "propagation_role": prop.get("role", ""),
     }
 
 
@@ -150,6 +171,65 @@ def load_rule_info(registry_path: Path) -> dict:
                 "guidance": _html.escape(rule.get("guidance", "")),
             }
     return rules
+
+
+def load_dag_edges(dag_path: Path) -> dict:
+    """Load edge metadata from DAG YAML → {edge_id: {from, to, edge_type, expected_sign, interpretation, notes}}."""
+    import html as _html
+
+    if not dag_path.exists():
+        print(f"  Warning: DAG file not found: {dag_path}")
+        return {}
+    with open(dag_path) as f:
+        dag = yaml.safe_load(f)
+    if not dag:
+        return {}
+    result = {}
+    for edge in dag.get("edges", []):
+        eid = edge.get("id")
+        if not eid:
+            continue
+        ac = edge.get("acceptance_criteria") or {}
+        plaus = ac.get("plausibility") or {}
+        stab = ac.get("stability") or {}
+        interp = edge.get("interpretation") or {}
+        result[eid] = {
+            "from": edge.get("from", ""),
+            "to": edge.get("to", ""),
+            "edge_type": edge.get("edge_type", ""),
+            "expected_sign": plaus.get("expected_sign", ""),
+            "magnitude_range": plaus.get("magnitude_range"),
+            "regime_split_date": stab.get("regime_split_date", ""),
+            "interpretation": _html.escape(str(interp.get("is", ""))),
+            "is_not": [_html.escape(str(x)) for x in (interp.get("is_not") or [] if isinstance(interp.get("is_not"), list) else [interp.get("is_not", "")] if interp.get("is_not") else [])],
+            "allowed_uses": interp.get("allowed_uses", []),
+            "forbidden_uses": interp.get("forbidden_uses", []),
+            "notes": _html.escape(str(edge.get("notes", ""))),
+        }
+    return result
+
+
+def load_dag_nodes(dag_path: Path) -> dict:
+    """Load node metadata from DAG YAML → {node_id: {name, unit, description}}."""
+    import html as _html
+
+    if not dag_path.exists():
+        return {}
+    with open(dag_path) as f:
+        dag = yaml.safe_load(f)
+    if not dag:
+        return {}
+    result = {}
+    for node in dag.get("nodes", []):
+        nid = node.get("id")
+        if not nid:
+            continue
+        result[nid] = {
+            "name": _html.escape(str(node.get("name", nid))),
+            "unit": _html.escape(str(node.get("unit", ""))),
+            "description": _html.escape(str(node.get("description", ""))),
+        }
+    return result
 
 
 # ── HTML template ────────────────────────────────────────────────────────────
@@ -524,6 +604,37 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
             min-height: 16px;
         }
 
+        /* Decision guide */
+        .decision-guide {
+            margin-bottom: 10px;
+            padding: 10px 14px;
+            background: #fffbf0;
+            border-left: 3px solid #c8a000;
+            font-size: 11px;
+            line-height: 1.7;
+        }
+        .decision-guide-title {
+            font-weight: 600;
+            font-size: 11px;
+            margin-bottom: 6px;
+            color: #7a6400;
+        }
+        .decision-guide .risk-tag {
+            display: inline-block;
+            font-size: 9px;
+            padding: 1px 5px;
+            border: 1px solid #c8a000;
+            margin-right: 3px;
+            background: #fff8e0;
+        }
+        .decision-guide .risk-tag.high { border-color: #c00; background: #fff0f0; }
+        .decision-guide .sign-match { color: #080; }
+        .decision-guide .sign-mismatch { color: #c00; font-weight: 600; }
+        .decision-guide .implication {
+            margin-top: 6px; padding: 4px 8px;
+            background: #fff; border: 1px solid #e8e0c0;
+        }
+
         /* Hidden */
         .hidden { display: none !important; }
     </style>
@@ -591,6 +702,8 @@ const EDGES = __EDGES_JSON__;
 const ACTIONS_BY_RULE = __ACTIONS_JSON__;
 const RULE_DESCRIPTIONS = __RULES_JSON__;
 const GENERATED_AT = "__GENERATED_AT__";
+const DAG_EDGES = __DAG_EDGES_JSON__;
+const DAG_NODES = __DAG_NODES_JSON__;
 
 // Severity sort order
 const SEVERITY_ORDER = {CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3};
@@ -673,6 +786,226 @@ var DEFAULT_COLUMNS = {
         `;
     }
 };
+
+// ── DAG helpers ───────────────────────────────────────────────────────
+function edgeLabel(edgeId) {
+    var de = DAG_EDGES[edgeId];
+    if (!de) return edgeId;
+    var fromName = (DAG_NODES[de.from] || {}).name || de.from;
+    var toName = (DAG_NODES[de.to] || {}).name || de.to;
+    return fromName + ' \u2192 ' + toName;
+}
+
+function edgeInterpretation(edgeId) {
+    var de = DAG_EDGES[edgeId];
+    return de ? (de.interpretation || '') : '';
+}
+
+function escHtml(s) {
+    if (!s) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function signLabel(val) {
+    if (val === null || val === undefined) return 'unknown';
+    return val > 0 ? 'positive' : val < 0 ? 'negative' : 'zero';
+}
+
+function checkSignConsistency(edge, dagEdge) {
+    if (!dagEdge || !dagEdge.expected_sign || edge.point === null || edge.point === undefined) return null;
+    var actual = edge.point > 0 ? 'positive' : edge.point < 0 ? 'negative' : 'zero';
+    var expected = dagEdge.expected_sign;
+    return actual === expected;
+}
+
+function renderRiskTags(risks) {
+    if (!risks || typeof risks !== 'object') return '';
+    var html = '';
+    for (var k in risks) {
+        var level = risks[k];
+        var cls = (level === 'high') ? ' high' : '';
+        html += '<span class="risk-tag' + cls + '">' + escHtml(k.replace(/_/g,' ')) + ' ' + escHtml(level) + '</span>';
+    }
+    return html;
+}
+
+// ── Decision Guides (per-rule template functions) ─────────────────────
+var DECISION_GUIDES = {
+    SIGNIFICANT_BUT_NOT_IDENTIFIED: function(item, edge, dagEdge) {
+        var label = edgeLabel(item.edge_id);
+        var interp = edgeInterpretation(item.edge_id);
+        var signOk = checkSignConsistency(edge, dagEdge);
+        var signHtml = '';
+        if (signOk !== null) {
+            var expected = dagEdge.expected_sign || '?';
+            var actual = signLabel(edge.point);
+            if (signOk) {
+                signHtml = '<div>Expected sign: <strong>' + escHtml(expected) + '</strong>. ' +
+                    'Estimated: <span class="sign-match"><strong>' + escHtml(actual) + '</strong> \u2713 consistent</span></div>';
+            } else {
+                signHtml = '<div>Expected sign: <strong>' + escHtml(expected) + '</strong>. ' +
+                    'Estimated: <span class="sign-mismatch"><strong>' + escHtml(actual) + '</strong> \u2717 inconsistent</span></div>';
+            }
+        }
+
+        var claimHtml = '';
+        var cl = edge.claim_level || '';
+        if (cl === 'REDUCED_FORM') {
+            claimHtml = '<div>Current claim: <strong>REDUCED_FORM</strong> \u2014 already acknowledged as reduced-form. Consider upgrading if you have IV/RDD/DiD evidence.</div>';
+        } else if (cl === 'BLOCKED_ID') {
+            claimHtml = '<div>Current claim: <strong>BLOCKED_ID</strong> \u2014 identification is currently blocked. Resolve identification concern before using in counterfactuals.</div>';
+        } else {
+            claimHtml = '<div>Current claim: <strong>' + escHtml(cl || 'none') + '</strong> \u2014 no claim level set. This is the most urgent: significant result with no acknowledgement.</div>';
+        }
+
+        var risksHtml = renderRiskTags(edge.id_risks);
+
+        var cfHtml = '';
+        if (edge.cf_reason_blocked) {
+            cfHtml = '<div class="implication"><strong>Counterfactual status:</strong> ' + escHtml(edge.cf_reason_blocked) + '</div>';
+        }
+
+        var implHtml = '<div class="implication"><strong>If you select IDENTIFIED_CAUSAL:</strong> This edge will be used in shock and policy counterfactuals. Requires documented identification strategy (IV, RDD, DiD).</div>' +
+            '<div class="implication"><strong>If you select REDUCED_FORM:</strong> Informative but excluded from causal counterfactuals. Reduced-form edges cannot support policy intervention claims.</div>' +
+            '<div class="implication"><strong>If you select BLOCKED_ID:</strong> Edge remains blocked. No counterfactual propagation until resolved.</div>';
+
+        return '<div class="decision-guide">' +
+            '<div class="decision-guide-title">Decision Guide: ' + escHtml(label) + '</div>' +
+            (interp ? '<div>' + escHtml(interp) + '</div>' : '') +
+            signHtml +
+            claimHtml +
+            (risksHtml ? '<div style="margin-top:4px">Identification risks: ' + risksHtml + '</div>' : '') +
+            cfHtml +
+            implHtml +
+            '</div>';
+    },
+
+    LOO_INSTABILITY: function(item, edge, dagEdge) {
+        var label = edgeLabel(item.edge_id);
+        var interp = edgeInterpretation(item.edge_id);
+
+        // Extract influential unit from message
+        var unitMatch = (item.message || '').match(/excluding[:\s]+(\S+)/i);
+        var unitName = unitMatch ? unitMatch[1] : 'unknown unit';
+
+        var panelHtml = '';
+        if (edge.panel) {
+            var nUnits = edge.panel.n_units || '?';
+            var nPeriods = edge.panel.n_periods || '?';
+            var fraction = edge.panel.n_units ? (1 / edge.panel.n_units * 100).toFixed(1) : '?';
+            panelHtml = '<div>Panel: <strong>' + nUnits + ' units \u00d7 ' + nPeriods + ' periods</strong>. ' +
+                'Dropping <strong>' + escHtml(unitName) + '</strong> removes ~' + fraction + '% of cross-sectional variation.</div>';
+        } else {
+            panelHtml = '<div>Influential unit: <strong>' + escHtml(unitName) + '</strong></div>';
+        }
+
+        var implHtml = '<div class="implication"><strong>Suggested actions:</strong> ' +
+            '(1) Winsorize extreme values from this unit. ' +
+            '(2) Trim/exclude and report both results. ' +
+            '(3) Accept with caveat noting sensitivity to this unit.</div>';
+
+        return '<div class="decision-guide">' +
+            '<div class="decision-guide-title">Decision Guide: ' + escHtml(label) + '</div>' +
+            (interp ? '<div>' + escHtml(interp) + '</div>' : '') +
+            '<div>' + escHtml(item.message) + '</div>' +
+            panelHtml +
+            implHtml +
+            '</div>';
+    },
+
+    RATING_DIAGNOSTICS_CONFLICT: function(item, edge, dagEdge) {
+        var label = edgeLabel(item.edge_id);
+        var interp = edgeInterpretation(item.edge_id);
+
+        var failedDiags = (edge.diagnostics || []).filter(function(d){return !d.passed;});
+        var diagNames = {
+            'effective_obs': 'Tests whether the sample has enough observations for reliable inference',
+            'ts_leads_test': 'Tests whether future values predict current treatment (anticipation/reverse causality)',
+            'sign_consistency': 'Tests whether the estimated sign matches the expected direction from theory',
+            'ts_residual_autocorr': 'Tests for autocorrelation in residuals that could bias standard errors',
+            'ts_hac_sensitivity': 'Tests whether HAC standard error corrections materially change inference',
+            'ts_lag_sensitivity': 'Tests whether results are robust to different lag specifications',
+            'ts_regime_stability': 'Tests for structural breaks in the estimated relationship',
+            'ts_shock_support': 'Tests whether the shock variable has sufficient variation',
+            'hac_bandwidth': 'Checks Newey-West bandwidth selection'
+        };
+
+        var failedHtml = '';
+        if (failedDiags.length > 0) {
+            failedHtml = '<div style="margin-top:4px"><strong>Failed diagnostics:</strong><ul style="margin:2px 0 0 16px;padding:0">';
+            failedDiags.forEach(function(d) {
+                var desc = diagNames[d.name] || 'Diagnostic test';
+                failedHtml += '<li><span class="diag-fail">\u2717 ' + escHtml(d.name) + '</span> \u2014 ' + escHtml(desc) + '</li>';
+            });
+            failedHtml += '</ul></div>';
+        }
+
+        var ratingHtml = '<div>Current rating: <strong>' + escHtml(edge.rating || '--') + '</strong> (score: ' +
+            (edge.score ? edge.score.toFixed(3) : '--') + ') but <strong>' + failedDiags.length +
+            '</strong> diagnostic(s) failed.</div>';
+
+        var implHtml = '<div class="implication"><strong>Options:</strong> ' +
+            '(1) Downgrade rating to match diagnostic evidence. ' +
+            '(2) Re-estimate with different specification to resolve failures. ' +
+            '(3) Accept with caveat, documenting why the rating override is justified.</div>';
+
+        return '<div class="decision-guide">' +
+            '<div class="decision-guide-title">Decision Guide: ' + escHtml(label) + '</div>' +
+            (interp ? '<div>' + escHtml(interp) + '</div>' : '') +
+            ratingHtml +
+            failedHtml +
+            implHtml +
+            '</div>';
+    },
+
+    REGIME_INSTABILITY: function(item, edge, dagEdge) {
+        var label = edgeLabel(item.edge_id);
+        var interp = edgeInterpretation(item.edge_id);
+
+        var splitDate = (dagEdge && dagEdge.regime_split_date) ? dagEdge.regime_split_date : '';
+        var splitHtml = splitDate ?
+            '<div>DAG regime split date: <strong>' + escHtml(splitDate) + '</strong></div>' : '';
+
+        var implHtml = '<div class="implication"><strong>Options:</strong> ' +
+            '(1) Split sample at the break date and estimate separately. ' +
+            '(2) Restrict counterfactual scope to post-break regime only. ' +
+            '(3) Use a regime-switching model that accounts for the structural change.</div>';
+
+        return '<div class="decision-guide">' +
+            '<div class="decision-guide-title">Decision Guide: ' + escHtml(label) + '</div>' +
+            (interp ? '<div>' + escHtml(interp) + '</div>' : '') +
+            '<div>' + escHtml(item.message) + '</div>' +
+            splitHtml +
+            implHtml +
+            '</div>';
+    }
+};
+
+function defaultDecisionGuide(item, edge, dagEdge) {
+    var label = edgeLabel(item.edge_id);
+    var interp = edgeInterpretation(item.edge_id);
+    var signOk = checkSignConsistency(edge, dagEdge);
+    var signHtml = '';
+    if (signOk !== null) {
+        var expected = dagEdge.expected_sign || '?';
+        var actual = signLabel(edge.point);
+        if (signOk) {
+            signHtml = '<div>Sign: <span class="sign-match">' + escHtml(actual) + ' (expected ' + escHtml(expected) + ') \u2713</span></div>';
+        } else {
+            signHtml = '<div>Sign: <span class="sign-mismatch">' + escHtml(actual) + ' (expected ' + escHtml(expected) + ') \u2717</span></div>';
+        }
+    }
+    var risksHtml = renderRiskTags(edge.id_risks);
+    return '<div class="decision-guide">' +
+        '<div class="decision-guide-title">Decision Guide: ' + escHtml(label) + '</div>' +
+        (interp ? '<div>' + escHtml(interp) + '</div>' : '') +
+        '<div>Estimate: <strong>' + fmtNum(edge.point) + '</strong> (SE ' + fmtNum(edge.se) + ', p=' + fmtP(edge.pvalue) + '). ' +
+        'Claim: <strong>' + escHtml(edge.claim_level || 'none') + '</strong>. Rating: <strong>' + escHtml(edge.rating || '--') + '</strong>.</div>' +
+        signHtml +
+        (risksHtml ? '<div style="margin-top:4px">Identification risks: ' + risksHtml + '</div>' : '') +
+        '<div style="margin-top:4px"><strong>Issue:</strong> ' + escHtml(item.message) + '</div>' +
+        '</div>';
+}
 
 // ── State ─────────────────────────────────────────────────────────────
 var decisions = {}; // key -> {value, rationale}
@@ -894,12 +1227,16 @@ function render() {
             tr.innerHTML = colCfg.renderRow(item, edge, actCfg, isResolved, decVal);
             tbody.appendChild(tr);
 
-            // Details row
+            // Details row with decision guide
             var detailTr = document.createElement('tr');
             detailTr.className = 'details-row';
             var safeId = item.key.replace(/[^a-zA-Z0-9]/g, '_');
+            var dagEdge = DAG_EDGES[item.edge_id] || {};
+            var guideFn = DECISION_GUIDES[item.rule_id] || defaultDecisionGuide;
+            var guideHtml = guideFn(item, edge, dagEdge);
             detailTr.innerHTML = '<td colspan="' + colCfg.colspan + '">' +
                 '<div class="details-content" id="detail-' + safeId + '">' +
+                    guideHtml +
                     '<div class="detail-row"><span class="detail-label">Edge ID</span><span class="detail-value">' + item.edge_id + '</span></div>' +
                     '<div class="detail-row"><span class="detail-label">Design</span><span class="detail-value">' + (edge.design || '--') + '</span></div>' +
                     '<div class="detail-row"><span class="detail-label">Point (SE)</span><span class="detail-value">' + fmtNum(edge.point) + ' (' + fmtNum(edge.se) + ')</span></div>' +
@@ -1052,8 +1389,12 @@ def build(
     actions_path: Path,
     registry_path: Path,
     output_dir: Path,
+    dag_path: Path | None = None,
 ) -> Path:
     """Build the HITL panel HTML and return the output path."""
+    if dag_path is None:
+        dag_path = DEFAULT_DAG
+
     # 1. Load issues
     open_issues, closed_count = load_state(state_path)
     print(f"  {len(open_issues)} open issues, {closed_count} closed")
@@ -1077,6 +1418,12 @@ def build(
                 "design": None, "rating": None, "score": None,
                 "claim_level": None, "all_pass": False, "n_obs": None,
                 "diagnostics": [], "failure_flags": [], "panel": None,
+                "estimand": "", "is_not": [], "allowed_uses": [],
+                "forbidden_uses": [], "cf_shock_allowed": None,
+                "cf_policy_allowed": None, "cf_reason_blocked": "",
+                "id_risks": {}, "untestable_assumptions": [],
+                "testable_passed": [], "testable_failed": [],
+                "propagation_role": "",
             }
     print(f"  {len(edges)} edge cards loaded")
 
@@ -1088,7 +1435,12 @@ def build(
     rules = load_rule_info(registry_path)
     print(f"  {len(rules)} rule descriptions loaded")
 
-    # 6. Build HTML via placeholder replacement
+    # 6. Load DAG edge/node metadata
+    dag_edges = load_dag_edges(dag_path)
+    dag_nodes = load_dag_nodes(dag_path)
+    print(f"  {len(dag_edges)} DAG edges, {len(dag_nodes)} DAG nodes loaded")
+
+    # 7. Build HTML via placeholder replacement
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
 
     html = HTML_TEMPLATE
@@ -1096,10 +1448,12 @@ def build(
     html = html.replace("__EDGES_JSON__", json.dumps(edges, indent=2))
     html = html.replace("__ACTIONS_JSON__", json.dumps(actions, indent=2))
     html = html.replace("__RULES_JSON__", json.dumps(rules, indent=2))
+    html = html.replace("__DAG_EDGES_JSON__", json.dumps(dag_edges, indent=2))
+    html = html.replace("__DAG_NODES_JSON__", json.dumps(dag_nodes, indent=2))
     html = html.replace("__CLOSED_COUNT__", str(closed_count))
     html = html.replace("__GENERATED_AT__", generated_at)
 
-    # 7. Write output
+    # 8. Write output
     output_path = output_dir / "hitl_panel.html"
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with open(output_path, "w") as f:
@@ -1146,10 +1500,16 @@ def main():
         default=DEFAULT_OUTPUT_DIR,
         help="Output directory for hitl_panel.html (default: outputs/agentic)",
     )
+    parser.add_argument(
+        "--dag-file",
+        type=Path,
+        default=DEFAULT_DAG,
+        help="Path to DAG YAML for edge/node context (default: config/agentic/dags/kspi_k2_full.yaml)",
+    )
     args = parser.parse_args()
 
     print("Building HITL panel...")
-    build(args.state_file, args.cards_dir, args.actions_file, args.registry_file, args.output_dir)
+    build(args.state_file, args.cards_dir, args.actions_file, args.registry_file, args.output_dir, args.dag_file)
     print("Done.")
 
 
