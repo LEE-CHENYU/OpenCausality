@@ -80,37 +80,22 @@ report with credibility ratings, and a hash-chained JSONL audit log.
 
 ### The Pipeline
 
-1. **DAG Specification** -- Define nodes (variables) and edges (causal links) in YAML.
-   Each edge carries metadata: expected sign, identification strategy, lag structure,
-   and unit specification (percentage points, percent change, basis points, etc.).
-
-2. **Data Scout** -- Automatically catalog available datasets, match variables to DAG
-   nodes, and assemble estimation-ready panels. Supports CSV and Parquet ingestion
-   with automatic frequency detection.
-
-3. **Paper Scout** -- Search Semantic Scholar and other academic databases for
-   literature supporting or challenging each edge. Results are attached to EdgeCards
-   as structured citations with relevance scores.
-
-4. **Design Selection** -- Choose an identification strategy for each edge based on
-   the DAG structure. The system checks whether back-door or front-door criteria are
-   satisfied and flags edges where identification is absent.
-
-5. **Estimation** -- Run Local Projections with HAC standard errors for each edge at
-   multiple impulse-response horizons. Control sets are derived from the DAG to block
-   confounding paths.
-
-6. **Issue Detection** -- 29 rules check for methodological problems including
-   overclaiming, control shopping, null dropping, specification drift, and timing
-   failures. Each rule produces a typed issue with severity and suggested resolution.
-
-7. **HITL Review** -- Issues requiring human judgment are surfaced in an interactive
-   HTML panel. The analyst reviews each flagged issue, selects an action (accept,
-   reject, revise, escalate), and provides justification.
-
-8. **System Report** -- Aggregated results across all edges with per-edge credibility
-   ratings, overall DAG assessment, and links to supporting literature. Output as
-   markdown with embedded tables and diagnostic summaries.
+1. **DAG Specification** -- Define nodes and edges in YAML with expected signs,
+   identification strategies, lag structures, and unit specs.
+2. **Data Scout** -- Catalog datasets, match variables to DAG nodes, assemble
+   estimation-ready panels (CSV/Parquet, automatic frequency detection).
+3. **Paper Scout** -- Search Semantic Scholar for literature supporting or challenging
+   each edge. Citations attached to EdgeCards with relevance scores.
+4. **Design Selection** -- Check back-door/front-door criteria for each edge; flag
+   edges where identification is absent.
+5. **Estimation** -- Local Projections with HAC standard errors at multiple
+   impulse-response horizons. Controls derived from DAG structure.
+6. **Issue Detection** -- 29 rules flag overclaiming, control shopping, null dropping,
+   specification drift, timing failures. Each produces a typed issue with severity.
+7. **HITL Review** -- Flagged issues surfaced in an interactive HTML panel. Analyst
+   selects action (accept, reject, revise, escalate) with justification.
+8. **System Report** -- Aggregated results with per-edge credibility ratings, DAG
+   assessment, and literature links. Output as markdown.
 
 ---
 
@@ -135,17 +120,12 @@ estimating each edge independently while enforcing consistency across the full D
 
 ### Approach 1: Manual DAG Construction
 
-The expert-built DAG for the Kazakhstan stress testing case contains 32 nodes and 20
-directed edges. Nodes include macroeconomic variables (exchange rate, CPI, GDP, policy
-rate), banking sector variables (capital adequacy ratio, non-performing loans, loan
-growth, deposit dollarization), and external variables (oil price, global risk appetite).
-Edges encode hypothesized causal links with expected signs and lag structures derived
-from domain knowledge and prior empirical work.
-
-Building this DAG required approximately 40 hours of literature review, consultation
-with Kazakhstan banking specialists, and iterative refinement. The resulting
-specification is stored in `config/agentic/dags/kspi_k2_full.yaml` and serves as the
-benchmark for comparison with automated extraction.
+The expert-built DAG contains 32 nodes and 20 directed edges spanning macroeconomic
+variables (exchange rate, CPI, GDP, policy rate), banking variables (capital adequacy,
+NPLs, loan growth, deposit dollarization), and external variables (oil price, global
+risk appetite). Building it required ~40 hours of literature review and consultation
+with Kazakhstan banking specialists. The specification is stored in
+`config/agentic/dags/kspi_k2_full.yaml`.
 
 ### Approach 2: Natural Language to DAG
 
@@ -190,14 +170,11 @@ that domain specialists may overlook when focused on a specific transmission cha
 
 ### What Experts Built That NL Missed
 
-Six edges in the expert DAG were absent from the NL extraction. These predominantly
-involved institutional and regulatory mechanisms: the central bank's FX intervention
-rule, the deposit insurance threshold effect on bank runs, the loan classification
-policy change in 2016, and several edges encoding Kazakhstan-specific regulatory
-responses. These omissions reflect a fundamental limitation of literature-based
-extraction -- institutional details and country-specific policy rules are rarely
-stated as explicit causal claims in academic papers. They require the kind of tacit
-knowledge that comes from direct engagement with the regulatory environment.
+Six edges in the expert DAG were absent from NL extraction. These involved institutional
+mechanisms: the central bank's FX intervention rule, deposit insurance threshold
+effects, and the 2016 loan classification policy change. Literature-based extraction
+cannot capture country-specific regulatory details that are rarely stated as explicit
+causal claims in papers.
 
 ---
 
@@ -206,20 +183,15 @@ knowledge that comes from direct engagement with the regulatory environment.
 ### Why It Matters
 
 Automated estimation pipelines are efficient but dangerous. A system that runs
-regressions, selects specifications, and reports results without human oversight can
-produce statistically significant findings that are methodologically indefensible.
-The history of empirical economics is littered with examples: researchers who search
-over control sets until significance emerges, who drop null results from robustness
-tables, who claim causal identification from designs that do not satisfy the relevant
-conditions.
+regressions and reports results without human oversight can produce statistically
+significant findings that are methodologically indefensible -- control shopping until
+significance emerges, dropping null results, claiming identification from invalid
+designs.
 
-OpenCausality addresses this by making human oversight a first-class component of the
-pipeline rather than an afterthought. The system does not silently resolve ambiguous
-cases. When an edge shows statistical significance but lacks a valid identification
-strategy, the system flags the issue and halts until an analyst makes an explicit
-decision. This design ensures that every published result carries an auditable record
-of the human judgment calls that produced it. The goal is not to slow down research
-but to make the inevitable judgment calls visible and traceable.
+OpenCausality makes human oversight a first-class pipeline component. When an edge
+shows significance but lacks valid identification, the system flags the issue and halts
+until an analyst decides. Every published result carries an auditable record of the
+judgment calls that produced it.
 
 ### How OpenCausality Catches Loopholes
 
@@ -261,19 +233,10 @@ where the proposed causal direction is contradicted by temporal ordering, a nece
 ### The HITL Panel
 
 The HITL panel is an interactive HTML document generated by `scripts/build_hitl_panel.py`.
-It presents each flagged issue as a card with the following elements:
-
-- **Issue type and severity** -- color-coded header (red for blocking, amber for warning)
-- **Edge context** -- which edge triggered the issue, with coefficient estimate and
-  standard error
-- **Rule description** -- what the detection rule checks and why it matters
-- **Action dropdown** -- accept (with justification), reject (suppress the edge),
-  revise (modify specification), or escalate (flag for senior review)
-- **Justification field** -- free-text input for the analyst's reasoning
-- **Tooltip references** -- links to relevant methodological literature for each rule
-
-The panel supports bulk actions (accept all warnings, escalate all blocking issues)
-and exports decisions as a structured JSON file that feeds back into the pipeline.
+Each flagged issue appears as a card with: severity-coded header (red/amber), edge
+context with estimates, rule description, action dropdown (accept/reject/revise/
+escalate), justification field, and tooltip references to methodological literature.
+Supports bulk actions and exports decisions as JSON for pipeline re-ingestion.
 
 ### The Review and Approval Process
 
@@ -422,23 +385,17 @@ examples/                     # Example narratives and tutorial data
 
 ### Key Design Decisions
 
-**Dataclasses over Pydantic.** Internal data structures use Python dataclasses rather
-than Pydantic models. This avoids a heavy dependency and keeps serialization explicit.
-YAML and JSON I/O is handled through dedicated reader/writer functions.
+**Dataclasses over Pydantic.** Avoids heavy dependencies; serialization is explicit
+via dedicated reader/writer functions.
 
-**YAML for DAGs, JSONL for logs.** DAG specifications are YAML because they are
-human-authored and human-read. Audit logs are JSONL because they are append-only and
-machine-processed. EdgeCards are YAML because they serve both roles.
+**YAML for DAGs, JSONL for logs.** DAGs are human-authored (YAML). Audit logs are
+append-only (JSONL). EdgeCards serve both roles (YAML).
 
-**Hash chains over databases.** The audit log uses file-based hash chains rather than
-a database. This is a deliberate choice for portability -- the entire audit trail is a
-set of text files that can be committed to git, emailed, or archived without any
-infrastructure dependency.
+**Hash chains over databases.** File-based hash chains for portability -- the entire
+audit trail can be committed to git with no infrastructure dependency.
 
-**LLM abstraction layer.** The `shared/llm/client.py` module defines an abstract base
-class `LLMClient` with concrete implementations for Anthropic (default) and LiteLLM
-(which supports OpenAI, Cohere, and dozens of other providers). Switching backends
-requires changing one environment variable.
+**LLM abstraction layer.** `LLMClient` ABC with Anthropic (default) and LiteLLM
+(OpenAI, Cohere, etc.) implementations. Switching requires one environment variable.
 
 ---
 
@@ -506,10 +463,9 @@ edges:
     unit_spec: "1pp FX depreciation -> X pp inflation"
 ```
 
-Each edge defines a testable causal hypothesis. The `identification` field declares
-which criterion the researcher claims is satisfied. The `controls` field specifies the
-conditioning set. The `unit_spec` field describes the expected magnitude in natural
-language, which is validated against estimation output using regex-based unit matching.
+Each edge defines a testable causal hypothesis. The `identification` field declares the
+claimed criterion, `controls` specifies the conditioning set, and `unit_spec` describes
+expected magnitude in natural language (validated via regex-based unit matching).
 
 ---
 
@@ -552,24 +508,17 @@ intervals for propagated effects.
 
 ## Contributing
 
-Contributions are welcome. Please follow these guidelines:
+Contributions are welcome. Fork the repository, create a feature branch from `main`,
+and open a pull request.
 
-1. **Fork the repository** and create a feature branch from `main`.
-2. **Write tests** for new functionality. The test suite uses pytest and is located
-   in `tests/`.
-3. **Follow existing patterns.** The codebase uses dataclasses, YAML configuration,
-   and JSONL logging. New modules should be consistent with these conventions.
-4. **Do not introduce new dependencies** without discussion. The project deliberately
-   minimizes its dependency footprint.
-5. **Run the linter** before submitting: `ruff check shared/ scripts/`.
-6. **Open a pull request** with a clear description of the change and its motivation.
+1. **Write tests** (pytest, in `tests/`).
+2. **Follow existing patterns** -- dataclasses, YAML config, JSONL logging.
+3. **Avoid new dependencies** without discussion.
+4. **Run the linter**: `ruff check shared/ scripts/`.
 
-For bug reports, please include: the DAG specification (or a minimal reproducer), the
-full traceback, and the output of `opencausality config doctor`.
-
-For feature requests, please describe the use case and how it relates to the existing
-pipeline. Proposals that extend the issue detection rules or add new identification
-strategies are especially welcome.
+For bug reports include the DAG spec (or minimal reproducer), full traceback, and
+output of `opencausality config doctor`. Feature proposals that extend issue detection
+rules or add identification strategies are especially welcome.
 
 ---
 
