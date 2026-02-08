@@ -678,191 +678,27 @@ const ISSUES = {
 const CLOSED_ISSUES_COUNT = 29;
 const EDGES = {
   "cor_to_capital": {
-    "point": -8.279877170645383,
-    "se": 0.9271160839206617,
-    "pvalue": 4.229850937660592e-19,
-    "design": "LOCAL_PROJECTIONS",
-    "rating": "B",
-    "score": 0.7155555555555556,
-    "claim_level": "BLOCKED_ID",
-    "all_pass": false,
-    "n_obs": 25,
-    "diagnostics": [
-      {
-        "name": "hac_bandwidth",
-        "passed": true
-      },
-      {
-        "name": "effective_obs",
-        "passed": true
-      },
-      {
-        "name": "sign_consistency",
-        "passed": true
-      },
-      {
-        "name": "ts_leads_test",
-        "passed": false
-      },
-      {
-        "name": "ts_residual_autocorr",
-        "passed": true
-      },
-      {
-        "name": "ts_hac_sensitivity",
-        "passed": true
-      },
-      {
-        "name": "ts_lag_sensitivity",
-        "passed": true
-      },
-      {
-        "name": "ts_regime_stability",
-        "passed": true
-      },
-      {
-        "name": "ts_shock_support",
-        "passed": true
-      }
-    ],
-    "failure_flags": [
-      "small_sample"
-    ],
-    "panel": null,
-    "estimand": "IRF of total_capital_kspi to a unit shock in cor_kspi",
-    "is_not": "Structural causal effect under all interventions",
-    "allowed_uses": [],
-    "forbidden_uses": [],
-    "cf_shock_allowed": false,
-    "cf_policy_allowed": false,
-    "cf_reason_blocked": "Shock CF requires REDUCED_FORM+, edge has BLOCKED_ID",
-    "id_risks": {
-      "unmeasured_confounding": "medium",
-      "simultaneity": "low",
-      "weak_variation": "low",
-      "measurement_error": "low",
-      "selection": "low"
-    },
-    "untestable_assumptions": [
-      "No omitted common cause of treatment and outcome"
-    ],
-    "testable_passed": [
-      "hac_bandwidth",
-      "effective_obs",
-      "sign_consistency",
-      "ts_residual_autocorr",
-      "ts_hac_sensitivity",
-      "ts_lag_sensitivity",
-      "ts_regime_stability",
-      "ts_shock_support"
-    ],
-    "testable_failed": [
-      "ts_leads_test"
-    ],
-    "propagation_role": "bridge"
-  },
-  "cpi_to_nbk_rate": {
-    "point": -0.5352595428653101,
-    "se": 13.96562608868574,
-    "pvalue": 0.9694270212706624,
-    "design": "LOCAL_PROJECTIONS",
-    "rating": "B",
-    "score": 0.7706666666666667,
-    "claim_level": "BLOCKED_ID",
-    "all_pass": false,
-    "n_obs": 67,
-    "diagnostics": [
-      {
-        "name": "hac_bandwidth",
-        "passed": true
-      },
-      {
-        "name": "effective_obs",
-        "passed": true
-      },
-      {
-        "name": "sign_consistency",
-        "passed": false
-      },
-      {
-        "name": "ts_leads_test",
-        "passed": false
-      },
-      {
-        "name": "ts_residual_autocorr",
-        "passed": true
-      },
-      {
-        "name": "ts_hac_sensitivity",
-        "passed": true
-      },
-      {
-        "name": "ts_lag_sensitivity",
-        "passed": false
-      },
-      {
-        "name": "ts_regime_stability",
-        "passed": true
-      },
-      {
-        "name": "ts_shock_support",
-        "passed": true
-      }
-    ],
-    "failure_flags": [],
-    "panel": null,
-    "estimand": "IRF of nbk_policy_rate to a unit shock in cpi_headline",
-    "is_not": "Structural causal effect under all interventions",
-    "allowed_uses": [],
-    "forbidden_uses": [],
-    "cf_shock_allowed": false,
-    "cf_policy_allowed": false,
-    "cf_reason_blocked": "Shock CF requires REDUCED_FORM+, edge has BLOCKED_ID",
-    "id_risks": {
-      "unmeasured_confounding": "medium",
-      "simultaneity": "low",
-      "weak_variation": "low",
-      "measurement_error": "low",
-      "selection": "low"
-    },
-    "untestable_assumptions": [
-      "No omitted common cause of treatment and outcome"
-    ],
-    "testable_passed": [
-      "hac_bandwidth",
-      "effective_obs",
-      "ts_residual_autocorr",
-      "ts_hac_sensitivity",
-      "ts_regime_stability",
-      "ts_shock_support"
-    ],
-    "testable_failed": [
-      "sign_consistency",
-      "ts_leads_test",
-      "ts_lag_sensitivity"
-    ],
-    "propagation_role": "diagnostic_only"
-  },
-  "cpi_to_nominal_income": {
-    "point": 0.65,
-    "se": 0.18,
-    "pvalue": 0.0003,
-    "design": "IMMUTABLE_EVIDENCE",
+    "point": -22.4,
+    "se": 0.0,
+    "pvalue": null,
+    "design": "ACCOUNTING_BRIDGE",
     "rating": "A",
-    "score": 0.99,
+    "score": 0.9299999999999999,
     "claim_level": "IDENTIFIED_CAUSAL",
     "all_pass": true,
     "n_obs": null,
     "diagnostics": [
       {
-        "name": "validated_evidence",
+        "name": "identity_consistency",
         "passed": true
       }
     ],
-    "failure_flags": [],
+    "failure_flags": [
+      "mechanical_identity_risk"
+    ],
     "panel": null,
-    "estimand": "Effect of CPI inflation on nominal income growth from LP-IV using imported inflation as instrument. Partial pass-through.",
-    "is_not": "Re-estimated result; locked validated evidence",
+    "estimand": "Accounting sensitivity: d(capital)/d(CoR) = -avg_loans * (1 - tax_rate) / 100",
+    "is_not": "Causal effect; this is a near-mechanical accounting relationship",
     "allowed_uses": [],
     "forbidden_uses": [],
     "cf_shock_allowed": true,
@@ -876,22 +712,123 @@ const EDGES = {
       "selection": "low"
     },
     "untestable_assumptions": [],
-    "testable_passed": [
-      "validated_evidence"
+    "testable_passed": [],
+    "testable_failed": [],
+    "propagation_role": "bridge"
+  },
+  "cpi_to_nbk_rate": {
+    "point": -0.5352595428653101,
+    "se": 13.96562608868574,
+    "pvalue": 0.9694270212706624,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "A",
+    "score": 0.8240000000000001,
+    "claim_level": "BLOCKED_ID",
+    "all_pass": false,
+    "n_obs": 67,
+    "diagnostics": [
+      {
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": true
+      },
+      {
+        "name": "r_squared_h0",
+        "passed": true
+      },
+      {
+        "name": "residual_ac1",
+        "passed": true
+      },
+      {
+        "name": "sign_consistency",
+        "passed": false
+      }
     ],
+    "failure_flags": [],
+    "panel": null,
+    "estimand": "IRF of nbk_policy_rate to a unit shock in cpi_headline",
+    "is_not": "Structural causal effect under all interventions",
+    "allowed_uses": [],
+    "forbidden_uses": [],
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Claim level capped to BLOCKED_ID",
+    "id_risks": {
+      "unmeasured_confounding": "medium",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "untestable_assumptions": [
+      "No omitted common cause of treatment and outcome"
+    ],
+    "testable_passed": [
+      "hac_bandwidth",
+      "effective_obs",
+      "r_squared_h0",
+      "residual_ac1"
+    ],
+    "testable_failed": [
+      "sign_consistency"
+    ],
+    "propagation_role": "diagnostic_only"
+  },
+  "cpi_to_nominal_income": {
+    "point": 0.65,
+    "se": 0.18,
+    "pvalue": 0.0003,
+    "design": "IMMUTABLE_EVIDENCE",
+    "rating": "A",
+    "score": 0.99,
+    "claim_level": "IDENTIFIED_CAUSAL",
+    "all_pass": true,
+    "n_obs": 80,
+    "diagnostics": [
+      {
+        "name": "validated_evidence",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": true
+      }
+    ],
+    "failure_flags": [],
+    "panel": null,
+    "estimand": "Effect of CPI inflation on nominal income growth from LP-IV using imported inflation as instrument. Partial pass-through.",
+    "is_not": "Re-estimated result; this is locked validated evidence",
+    "allowed_uses": [],
+    "forbidden_uses": [],
+    "cf_shock_allowed": true,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "REDUCED_FORM mode does not allow policy interventions",
+    "id_risks": {
+      "unmeasured_confounding": "low",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "untestable_assumptions": [],
+    "testable_passed": [],
     "testable_failed": [],
     "propagation_role": "structural"
   },
   "expenditure_to_payments_revenue": {
-    "point": -941.7936624255602,
-    "se": 8.228939256166718e-09,
-    "pvalue": 0.0,
+    "point": 333.40898842797117,
+    "se": 70.95395662999425,
+    "pvalue": 2.615043739933785e-06,
     "design": "LOCAL_PROJECTIONS",
-    "rating": "C",
-    "score": 0.522,
+    "rating": "B",
+    "score": 0.6923529411764707,
     "claim_level": "REDUCED_FORM",
     "all_pass": false,
-    "n_obs": 6,
+    "n_obs": 7,
     "diagnostics": [
       {
         "name": "hac_bandwidth",
@@ -902,28 +839,16 @@ const EDGES = {
         "passed": false
       },
       {
+        "name": "r_squared_h0",
+        "passed": true
+      },
+      {
+        "name": "residual_ac1",
+        "passed": true
+      },
+      {
         "name": "sign_consistency",
         "passed": true
-      },
-      {
-        "name": "ts_residual_autocorr",
-        "passed": false
-      },
-      {
-        "name": "ts_hac_sensitivity",
-        "passed": true
-      },
-      {
-        "name": "ts_lag_sensitivity",
-        "passed": false
-      },
-      {
-        "name": "ts_regime_stability",
-        "passed": true
-      },
-      {
-        "name": "ts_shock_support",
-        "passed": false
       }
     ],
     "failure_flags": [
@@ -949,15 +874,12 @@ const EDGES = {
     ],
     "testable_passed": [
       "hac_bandwidth",
-      "sign_consistency",
-      "ts_hac_sensitivity",
-      "ts_regime_stability"
+      "r_squared_h0",
+      "residual_ac1",
+      "sign_consistency"
     ],
     "testable_failed": [
-      "effective_obs",
-      "ts_residual_autocorr",
-      "ts_lag_sensitivity",
-      "ts_shock_support"
+      "effective_obs"
     ],
     "propagation_role": "reduced_form"
   },
@@ -970,17 +892,21 @@ const EDGES = {
     "score": 0.99,
     "claim_level": "IDENTIFIED_CAUSAL",
     "all_pass": true,
-    "n_obs": null,
+    "n_obs": 1200,
     "diagnostics": [
       {
         "name": "validated_evidence",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
         "passed": true
       }
     ],
     "failure_flags": [],
     "panel": null,
     "estimand": "FX pass-through to tradable CPI from difference-in-differences estimation. 11.3% pass-through at 6 months post-shock.",
-    "is_not": "Re-estimated result; locked validated evidence",
+    "is_not": "Re-estimated result; this is locked validated evidence",
     "allowed_uses": [],
     "forbidden_uses": [],
     "cf_shock_allowed": true,
@@ -994,9 +920,7 @@ const EDGES = {
       "selection": "low"
     },
     "untestable_assumptions": [],
-    "testable_passed": [
-      "validated_evidence"
-    ],
+    "testable_passed": [],
     "testable_failed": [],
     "propagation_role": "structural"
   },
@@ -1009,17 +933,21 @@ const EDGES = {
     "score": 0.99,
     "claim_level": "IDENTIFIED_CAUSAL",
     "all_pass": true,
-    "n_obs": null,
+    "n_obs": 60,
     "diagnostics": [
       {
         "name": "validated_evidence",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
         "passed": true
       }
     ],
     "failure_flags": [],
     "panel": null,
     "estimand": "Effect of exchange rate depreciation on real household expenditure. 10% depreciation reduces real spending by ~1%.",
-    "is_not": "Re-estimated result; locked validated evidence",
+    "is_not": "Re-estimated result; this is locked validated evidence",
     "allowed_uses": [],
     "forbidden_uses": [],
     "cf_shock_allowed": true,
@@ -1033,9 +961,7 @@ const EDGES = {
       "selection": "low"
     },
     "untestable_assumptions": [],
-    "testable_passed": [
-      "validated_evidence"
-    ],
+    "testable_passed": [],
     "testable_failed": [],
     "propagation_role": "structural"
   },
@@ -1081,85 +1007,41 @@ const EDGES = {
     "propagation_role": "reduced_form"
   },
   "loan_portfolio_to_rwa": {
-    "point": 0.8319284122580308,
-    "se": 0.12166997222480182,
-    "pvalue": 8.05409884280449e-12,
-    "design": "LOCAL_PROJECTIONS",
-    "rating": "B",
-    "score": 0.758,
-    "claim_level": "REDUCED_FORM",
+    "point": 0.5714285714285714,
+    "se": 0.0,
+    "pvalue": null,
+    "design": "ACCOUNTING_BRIDGE",
+    "rating": "A",
+    "score": 0.9299999999999999,
+    "claim_level": "IDENTIFIED_CAUSAL",
     "all_pass": true,
-    "n_obs": 24,
+    "n_obs": null,
     "diagnostics": [
       {
-        "name": "hac_bandwidth",
-        "passed": true
-      },
-      {
-        "name": "effective_obs",
-        "passed": true
-      },
-      {
-        "name": "sign_consistency",
-        "passed": true
-      },
-      {
-        "name": "ts_leads_test",
-        "passed": true
-      },
-      {
-        "name": "ts_residual_autocorr",
-        "passed": true
-      },
-      {
-        "name": "ts_hac_sensitivity",
-        "passed": true
-      },
-      {
-        "name": "ts_lag_sensitivity",
-        "passed": true
-      },
-      {
-        "name": "ts_regime_stability",
-        "passed": true
-      },
-      {
-        "name": "ts_shock_support",
+        "name": "identity_consistency",
         "passed": true
       }
     ],
     "failure_flags": [
-      "small_sample"
+      "mechanical_identity_risk"
     ],
     "panel": null,
-    "estimand": "IRF of rwa_kspi to a unit shock in loan_portfolio_kspi",
-    "is_not": "Structural causal effect under all interventions",
+    "estimand": "Accounting sensitivity: d(RWA)/d(loans) = avg_risk_weight = RWA / total_loans",
+    "is_not": "Causal effect; this is a near-mechanical accounting relationship",
     "allowed_uses": [],
     "forbidden_uses": [],
-    "cf_shock_allowed": false,
+    "cf_shock_allowed": true,
     "cf_policy_allowed": false,
-    "cf_reason_blocked": "Design LOCAL_PROJECTIONS provides REDUCED_FORM level only",
+    "cf_reason_blocked": "REDUCED_FORM mode does not allow policy interventions",
     "id_risks": {
-      "unmeasured_confounding": "medium",
+      "unmeasured_confounding": "low",
       "simultaneity": "low",
       "weak_variation": "low",
       "measurement_error": "low",
       "selection": "low"
     },
-    "untestable_assumptions": [
-      "No omitted common cause of treatment and outcome"
-    ],
-    "testable_passed": [
-      "hac_bandwidth",
-      "effective_obs",
-      "sign_consistency",
-      "ts_leads_test",
-      "ts_residual_autocorr",
-      "ts_hac_sensitivity",
-      "ts_lag_sensitivity",
-      "ts_regime_stability",
-      "ts_shock_support"
-    ],
+    "untestable_assumptions": [],
+    "testable_passed": [],
     "testable_failed": [],
     "propagation_role": "bridge"
   },
@@ -1183,31 +1065,15 @@ const EDGES = {
         "passed": false
       },
       {
+        "name": "r_squared_h0",
+        "passed": true
+      },
+      {
+        "name": "residual_ac1",
+        "passed": true
+      },
+      {
         "name": "sign_consistency",
-        "passed": true
-      },
-      {
-        "name": "ts_leads_test",
-        "passed": false
-      },
-      {
-        "name": "ts_residual_autocorr",
-        "passed": true
-      },
-      {
-        "name": "ts_hac_sensitivity",
-        "passed": true
-      },
-      {
-        "name": "ts_lag_sensitivity",
-        "passed": true
-      },
-      {
-        "name": "ts_regime_stability",
-        "passed": true
-      },
-      {
-        "name": "ts_shock_support",
         "passed": true
       }
     ],
@@ -1221,7 +1087,7 @@ const EDGES = {
     "forbidden_uses": [],
     "cf_shock_allowed": false,
     "cf_policy_allowed": false,
-    "cf_reason_blocked": "Shock CF requires REDUCED_FORM+, edge has BLOCKED_ID",
+    "cf_reason_blocked": "Claim level capped to BLOCKED_ID",
     "id_risks": {
       "unmeasured_confounding": "medium",
       "simultaneity": "low",
@@ -1234,22 +1100,18 @@ const EDGES = {
     ],
     "testable_passed": [
       "hac_bandwidth",
-      "sign_consistency",
-      "ts_residual_autocorr",
-      "ts_hac_sensitivity",
-      "ts_lag_sensitivity",
-      "ts_regime_stability",
-      "ts_shock_support"
+      "r_squared_h0",
+      "residual_ac1",
+      "sign_consistency"
     ],
     "testable_failed": [
-      "effective_obs",
-      "ts_leads_test"
+      "effective_obs"
     ],
     "propagation_role": "diagnostic_only"
   },
   "nbk_rate_to_cor_sector": {
-    "point": 0.13488220323461572,
-    "se": 1.3888893767706443,
+    "point": 0.13488220323461544,
+    "se": 1.3888893767706447,
     "pvalue": 0.9257977355121394,
     "design": "PANEL_LP_EXPOSURE_FE",
     "rating": "C",
@@ -1291,9 +1153,9 @@ const EDGES = {
     "is_not": "Aggregate causal effect of shock on outcome; this is a differential effect by exposure level",
     "allowed_uses": [],
     "forbidden_uses": [],
-    "cf_shock_allowed": null,
-    "cf_policy_allowed": null,
-    "cf_reason_blocked": null,
+    "cf_shock_allowed": true,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Policy CF requires IDENTIFIED_CAUSAL, edge has REDUCED_FORM",
     "id_risks": {
       "unmeasured_confounding": "low",
       "simultaneity": "low",
@@ -1321,7 +1183,7 @@ const EDGES = {
     "pvalue": 0.00031350811161777947,
     "design": "LOCAL_PROJECTIONS",
     "rating": "B",
-    "score": 0.7566666666666666,
+    "score": 0.73,
     "claim_level": "BLOCKED_ID",
     "all_pass": false,
     "n_obs": 18,
@@ -1335,31 +1197,15 @@ const EDGES = {
         "passed": false
       },
       {
+        "name": "r_squared_h0",
+        "passed": true
+      },
+      {
+        "name": "residual_ac1",
+        "passed": false
+      },
+      {
         "name": "sign_consistency",
-        "passed": true
-      },
-      {
-        "name": "ts_leads_test",
-        "passed": false
-      },
-      {
-        "name": "ts_residual_autocorr",
-        "passed": false
-      },
-      {
-        "name": "ts_hac_sensitivity",
-        "passed": true
-      },
-      {
-        "name": "ts_lag_sensitivity",
-        "passed": true
-      },
-      {
-        "name": "ts_regime_stability",
-        "passed": true
-      },
-      {
-        "name": "ts_shock_support",
         "passed": true
       }
     ],
@@ -1373,7 +1219,7 @@ const EDGES = {
     "forbidden_uses": [],
     "cf_shock_allowed": false,
     "cf_policy_allowed": false,
-    "cf_reason_blocked": "Shock CF requires REDUCED_FORM+, edge has BLOCKED_ID",
+    "cf_reason_blocked": "Claim level capped to BLOCKED_ID",
     "id_risks": {
       "unmeasured_confounding": "medium",
       "simultaneity": "low",
@@ -1386,16 +1232,12 @@ const EDGES = {
     ],
     "testable_passed": [
       "hac_bandwidth",
-      "sign_consistency",
-      "ts_hac_sensitivity",
-      "ts_lag_sensitivity",
-      "ts_regime_stability",
-      "ts_shock_support"
+      "r_squared_h0",
+      "sign_consistency"
     ],
     "testable_failed": [
       "effective_obs",
-      "ts_leads_test",
-      "ts_residual_autocorr"
+      "residual_ac1"
     ],
     "propagation_role": "diagnostic_only"
   },
@@ -1405,9 +1247,9 @@ const EDGES = {
     "pvalue": 0.06408866840834736,
     "design": "LOCAL_PROJECTIONS",
     "rating": "A",
-    "score": 0.8655555555555556,
+    "score": 0.97,
     "claim_level": "REDUCED_FORM",
-    "all_pass": false,
+    "all_pass": true,
     "n_obs": 187,
     "diagnostics": [
       {
@@ -1419,37 +1261,19 @@ const EDGES = {
         "passed": true
       },
       {
+        "name": "r_squared_h0",
+        "passed": true
+      },
+      {
+        "name": "residual_ac1",
+        "passed": true
+      },
+      {
         "name": "sign_consistency",
-        "passed": true
-      },
-      {
-        "name": "ts_leads_test",
-        "passed": true
-      },
-      {
-        "name": "ts_residual_autocorr",
-        "passed": true
-      },
-      {
-        "name": "ts_hac_sensitivity",
-        "passed": true
-      },
-      {
-        "name": "ts_lag_sensitivity",
-        "passed": true
-      },
-      {
-        "name": "ts_regime_stability",
-        "passed": false
-      },
-      {
-        "name": "ts_shock_support",
         "passed": true
       }
     ],
-    "failure_flags": [
-      "regime_break_detected"
-    ],
+    "failure_flags": [],
     "panel": null,
     "estimand": "IRF of kzt_usd to a unit shock in oil_demand_shock",
     "is_not": "Structural causal effect under all interventions",
@@ -1471,16 +1295,11 @@ const EDGES = {
     "testable_passed": [
       "hac_bandwidth",
       "effective_obs",
-      "sign_consistency",
-      "ts_leads_test",
-      "ts_residual_autocorr",
-      "ts_hac_sensitivity",
-      "ts_lag_sensitivity",
-      "ts_shock_support"
+      "r_squared_h0",
+      "residual_ac1",
+      "sign_consistency"
     ],
-    "testable_failed": [
-      "ts_regime_stability"
-    ],
+    "testable_failed": [],
     "propagation_role": "reduced_form"
   },
   "oil_demand_to_income": {
@@ -1544,31 +1363,15 @@ const EDGES = {
         "passed": true
       },
       {
+        "name": "r_squared_h0",
+        "passed": true
+      },
+      {
+        "name": "residual_ac1",
+        "passed": true
+      },
+      {
         "name": "sign_consistency",
-        "passed": true
-      },
-      {
-        "name": "ts_leads_test",
-        "passed": true
-      },
-      {
-        "name": "ts_residual_autocorr",
-        "passed": true
-      },
-      {
-        "name": "ts_hac_sensitivity",
-        "passed": true
-      },
-      {
-        "name": "ts_lag_sensitivity",
-        "passed": true
-      },
-      {
-        "name": "ts_regime_stability",
-        "passed": true
-      },
-      {
-        "name": "ts_shock_support",
         "passed": true
       }
     ],
@@ -1594,13 +1397,9 @@ const EDGES = {
     "testable_passed": [
       "hac_bandwidth",
       "effective_obs",
-      "sign_consistency",
-      "ts_leads_test",
-      "ts_residual_autocorr",
-      "ts_hac_sensitivity",
-      "ts_lag_sensitivity",
-      "ts_regime_stability",
-      "ts_shock_support"
+      "r_squared_h0",
+      "residual_ac1",
+      "sign_consistency"
     ],
     "testable_failed": [],
     "propagation_role": "reduced_form"
@@ -1611,9 +1410,9 @@ const EDGES = {
     "pvalue": 0.9972006009022166,
     "design": "LOCAL_PROJECTIONS",
     "rating": "A",
-    "score": 0.8211111111111111,
+    "score": 0.97,
     "claim_level": "REDUCED_FORM",
-    "all_pass": false,
+    "all_pass": true,
     "n_obs": 187,
     "diagnostics": [
       {
@@ -1625,37 +1424,19 @@ const EDGES = {
         "passed": true
       },
       {
+        "name": "r_squared_h0",
+        "passed": true
+      },
+      {
+        "name": "residual_ac1",
+        "passed": true
+      },
+      {
         "name": "sign_consistency",
-        "passed": true
-      },
-      {
-        "name": "ts_leads_test",
-        "passed": true
-      },
-      {
-        "name": "ts_residual_autocorr",
-        "passed": true
-      },
-      {
-        "name": "ts_hac_sensitivity",
-        "passed": true
-      },
-      {
-        "name": "ts_lag_sensitivity",
-        "passed": false
-      },
-      {
-        "name": "ts_regime_stability",
-        "passed": false
-      },
-      {
-        "name": "ts_shock_support",
         "passed": true
       }
     ],
-    "failure_flags": [
-      "regime_break_detected"
-    ],
+    "failure_flags": [],
     "panel": null,
     "estimand": "IRF of kzt_usd to a unit shock in oil_supply_shock",
     "is_not": "Structural causal effect under all interventions",
@@ -1677,16 +1458,11 @@ const EDGES = {
     "testable_passed": [
       "hac_bandwidth",
       "effective_obs",
-      "sign_consistency",
-      "ts_leads_test",
-      "ts_residual_autocorr",
-      "ts_hac_sensitivity",
-      "ts_shock_support"
+      "r_squared_h0",
+      "residual_ac1",
+      "sign_consistency"
     ],
-    "testable_failed": [
-      "ts_lag_sensitivity",
-      "ts_regime_stability"
-    ],
+    "testable_failed": [],
     "propagation_role": "reduced_form"
   },
   "oil_supply_to_income": {
@@ -1731,15 +1507,15 @@ const EDGES = {
     "propagation_role": "reduced_form"
   },
   "portfolio_mix_to_rwa": {
-    "point": 19000.05740094491,
-    "se": 4989.087998634041,
-    "pvalue": 0.00013991257392659715,
+    "point": 18195.962971994624,
+    "se": 3952.75417946752,
+    "pvalue": 4.157223824460209e-06,
     "design": "LOCAL_PROJECTIONS",
     "rating": "B",
-    "score": 0.6511111111111112,
+    "score": 0.7982352941176472,
     "claim_level": "BLOCKED_ID",
     "all_pass": false,
-    "n_obs": 15,
+    "n_obs": 16,
     "diagnostics": [
       {
         "name": "hac_bandwidth",
@@ -1750,31 +1526,15 @@ const EDGES = {
         "passed": false
       },
       {
+        "name": "r_squared_h0",
+        "passed": true
+      },
+      {
+        "name": "residual_ac1",
+        "passed": true
+      },
+      {
         "name": "sign_consistency",
-        "passed": true
-      },
-      {
-        "name": "ts_leads_test",
-        "passed": false
-      },
-      {
-        "name": "ts_residual_autocorr",
-        "passed": true
-      },
-      {
-        "name": "ts_hac_sensitivity",
-        "passed": true
-      },
-      {
-        "name": "ts_lag_sensitivity",
-        "passed": true
-      },
-      {
-        "name": "ts_regime_stability",
-        "passed": true
-      },
-      {
-        "name": "ts_shock_support",
         "passed": true
       }
     ],
@@ -1788,7 +1548,7 @@ const EDGES = {
     "forbidden_uses": [],
     "cf_shock_allowed": false,
     "cf_policy_allowed": false,
-    "cf_reason_blocked": "Shock CF requires REDUCED_FORM+, edge has BLOCKED_ID",
+    "cf_reason_blocked": "Claim level capped to BLOCKED_ID",
     "id_risks": {
       "unmeasured_confounding": "medium",
       "simultaneity": "low",
@@ -1801,16 +1561,12 @@ const EDGES = {
     ],
     "testable_passed": [
       "hac_bandwidth",
-      "sign_consistency",
-      "ts_residual_autocorr",
-      "ts_hac_sensitivity",
-      "ts_lag_sensitivity",
-      "ts_regime_stability",
-      "ts_shock_support"
+      "r_squared_h0",
+      "residual_ac1",
+      "sign_consistency"
     ],
     "testable_failed": [
-      "effective_obs",
-      "ts_leads_test"
+      "effective_obs"
     ],
     "propagation_role": "diagnostic_only"
   },
@@ -1834,31 +1590,15 @@ const EDGES = {
         "passed": true
       },
       {
+        "name": "r_squared_h0",
+        "passed": true
+      },
+      {
+        "name": "residual_ac1",
+        "passed": true
+      },
+      {
         "name": "sign_consistency",
-        "passed": true
-      },
-      {
-        "name": "ts_leads_test",
-        "passed": true
-      },
-      {
-        "name": "ts_residual_autocorr",
-        "passed": true
-      },
-      {
-        "name": "ts_hac_sensitivity",
-        "passed": true
-      },
-      {
-        "name": "ts_lag_sensitivity",
-        "passed": true
-      },
-      {
-        "name": "ts_regime_stability",
-        "passed": true
-      },
-      {
-        "name": "ts_shock_support",
         "passed": true
       }
     ],
@@ -1886,21 +1626,17 @@ const EDGES = {
     "testable_passed": [
       "hac_bandwidth",
       "effective_obs",
-      "sign_consistency",
-      "ts_leads_test",
-      "ts_residual_autocorr",
-      "ts_hac_sensitivity",
-      "ts_lag_sensitivity",
-      "ts_regime_stability",
-      "ts_shock_support"
+      "r_squared_h0",
+      "residual_ac1",
+      "sign_consistency"
     ],
     "testable_failed": [],
     "propagation_role": "reduced_form"
   },
   "shock_to_cor_kspi_annual": {
-    "point": 360.11826362019025,
-    "se": 45.441643112091796,
-    "pvalue": 2.2841954119676474e-15,
+    "point": 360.1182636201903,
+    "se": 45.441643112091604,
+    "pvalue": 2.2841954119670294e-15,
     "design": "LOCAL_PROJECTIONS_ANNUAL",
     "rating": "B",
     "score": 0.6260000000000001,
@@ -1937,8 +1673,8 @@ const EDGES = {
     "is_not": "Structural causal effect under all interventions",
     "allowed_uses": [],
     "forbidden_uses": [],
-    "cf_shock_allowed": null,
-    "cf_policy_allowed": null,
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
     "cf_reason_blocked": "Design LOCAL_PROJECTIONS provides REDUCED_FORM level only",
     "id_risks": {
       "unmeasured_confounding": "medium",
@@ -1963,7 +1699,7 @@ const EDGES = {
   },
   "shock_to_cor_sector": {
     "point": 36.1781124278706,
-    "se": 6.694567535398896,
+    "se": 6.6945675353989,
     "pvalue": 4.747533899274181e-05,
     "design": "PANEL_LP_EXPOSURE_FE",
     "rating": "C",
@@ -2005,9 +1741,9 @@ const EDGES = {
     "is_not": "Aggregate causal effect of shock on outcome; this is a differential effect by exposure level",
     "allowed_uses": [],
     "forbidden_uses": [],
-    "cf_shock_allowed": null,
-    "cf_policy_allowed": null,
-    "cf_reason_blocked": null,
+    "cf_shock_allowed": true,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Policy CF requires IDENTIFIED_CAUSAL, edge has REDUCED_FORM",
     "id_risks": {
       "unmeasured_confounding": "low",
       "simultaneity": "low",
@@ -2049,31 +1785,15 @@ const EDGES = {
         "passed": true
       },
       {
+        "name": "r_squared_h0",
+        "passed": true
+      },
+      {
+        "name": "residual_ac1",
+        "passed": true
+      },
+      {
         "name": "sign_consistency",
-        "passed": true
-      },
-      {
-        "name": "ts_leads_test",
-        "passed": true
-      },
-      {
-        "name": "ts_residual_autocorr",
-        "passed": true
-      },
-      {
-        "name": "ts_hac_sensitivity",
-        "passed": true
-      },
-      {
-        "name": "ts_lag_sensitivity",
-        "passed": true
-      },
-      {
-        "name": "ts_regime_stability",
-        "passed": true
-      },
-      {
-        "name": "ts_shock_support",
         "passed": true
       }
     ],
@@ -2101,21 +1821,17 @@ const EDGES = {
     "testable_passed": [
       "hac_bandwidth",
       "effective_obs",
-      "sign_consistency",
-      "ts_leads_test",
-      "ts_residual_autocorr",
-      "ts_hac_sensitivity",
-      "ts_lag_sensitivity",
-      "ts_regime_stability",
-      "ts_shock_support"
+      "r_squared_h0",
+      "residual_ac1",
+      "sign_consistency"
     ],
     "testable_failed": [],
     "propagation_role": "reduced_form"
   },
   "shock_to_npl_kspi_annual": {
-    "point": 349.1598896557757,
-    "se": 33.42158223881191,
-    "pvalue": 1.5101332360091475e-25,
+    "point": 349.15988965577566,
+    "se": 33.4215822388119,
+    "pvalue": 1.510133236009147e-25,
     "design": "LOCAL_PROJECTIONS_ANNUAL",
     "rating": "B",
     "score": 0.6260000000000001,
@@ -2152,8 +1868,8 @@ const EDGES = {
     "is_not": "Structural causal effect under all interventions",
     "allowed_uses": [],
     "forbidden_uses": [],
-    "cf_shock_allowed": null,
-    "cf_policy_allowed": null,
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
     "cf_reason_blocked": "Design LOCAL_PROJECTIONS provides REDUCED_FORM level only",
     "id_risks": {
       "unmeasured_confounding": "medium",
@@ -2177,8 +1893,8 @@ const EDGES = {
     "propagation_role": "reduced_form"
   },
   "shock_to_npl_sector": {
-    "point": -46.548475059120626,
-    "se": 13.416397639038799,
+    "point": -46.54847505912064,
+    "se": 13.416397639038792,
     "pvalue": 0.0029314539629232694,
     "design": "PANEL_LP_EXPOSURE_FE",
     "rating": "C",
@@ -2221,9 +1937,9 @@ const EDGES = {
     "is_not": "Aggregate causal effect of shock on outcome; this is a differential effect by exposure level",
     "allowed_uses": [],
     "forbidden_uses": [],
-    "cf_shock_allowed": null,
-    "cf_policy_allowed": null,
-    "cf_reason_blocked": null,
+    "cf_shock_allowed": true,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Policy CF requires IDENTIFIED_CAUSAL, edge has REDUCED_FORM",
     "id_risks": {
       "unmeasured_confounding": "low",
       "simultaneity": "low",
@@ -2251,7 +1967,7 @@ const EDGES = {
     "pvalue": 0.768067585702398,
     "design": "LOCAL_PROJECTIONS",
     "rating": "A",
-    "score": 0.8811111111111112,
+    "score": 0.8900000000000001,
     "claim_level": "REDUCED_FORM",
     "all_pass": false,
     "n_obs": 190,
@@ -2265,32 +1981,16 @@ const EDGES = {
         "passed": true
       },
       {
+        "name": "r_squared_h0",
+        "passed": true
+      },
+      {
+        "name": "residual_ac1",
+        "passed": true
+      },
+      {
         "name": "sign_consistency",
         "passed": false
-      },
-      {
-        "name": "ts_leads_test",
-        "passed": true
-      },
-      {
-        "name": "ts_residual_autocorr",
-        "passed": true
-      },
-      {
-        "name": "ts_hac_sensitivity",
-        "passed": true
-      },
-      {
-        "name": "ts_lag_sensitivity",
-        "passed": false
-      },
-      {
-        "name": "ts_regime_stability",
-        "passed": true
-      },
-      {
-        "name": "ts_shock_support",
-        "passed": true
       }
     ],
     "failure_flags": [],
@@ -2315,15 +2015,11 @@ const EDGES = {
     "testable_passed": [
       "hac_bandwidth",
       "effective_obs",
-      "ts_leads_test",
-      "ts_residual_autocorr",
-      "ts_hac_sensitivity",
-      "ts_regime_stability",
-      "ts_shock_support"
+      "r_squared_h0",
+      "residual_ac1"
     ],
     "testable_failed": [
-      "sign_consistency",
-      "ts_lag_sensitivity"
+      "sign_consistency"
     ],
     "propagation_role": "reduced_form"
   }
@@ -3042,7 +2738,7 @@ const RULE_DESCRIPTIONS = {
     "guidance": "The system will auto-populate units from the DAG spec. Verify that the inferred units match the actual estimation specification.\n"
   }
 };
-const GENERATED_AT = "2026-02-08 06:12:08 UTC";
+const GENERATED_AT = "2026-02-08 18:35:31 UTC";
 const DAG_EDGES = {
   "oil_supply_to_brent": {
     "from": "oil_supply_shock",

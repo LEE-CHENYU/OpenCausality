@@ -1527,10 +1527,42 @@ def generate_report(
 # Main entry point
 # ---------------------------------------------------------------------------
 
+def _start_sentinel_loop() -> None:
+    """Auto-start the codex sentinel loop in the background if not already running."""
+    import subprocess
+    pidfile = Path("outputs/codex_loop.pid")
+    if pidfile.exists():
+        try:
+            pid = int(pidfile.read_text().strip())
+            import os, signal
+            os.kill(pid, 0)  # Check if process is alive
+            logger.info(f"Sentinel loop already running (PID {pid})")
+            return
+        except (ProcessLookupError, ValueError):
+            pidfile.unlink(missing_ok=True)
+
+    control = Path("scripts/codex_loop/control.sh")
+    if control.exists():
+        try:
+            subprocess.Popen(
+                [str(control), "start"],
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            )
+            logger.info("Sentinel loop auto-started in background")
+        except Exception as e:
+            logger.warning(f"Could not auto-start sentinel loop: {e}")
+    else:
+        logger.debug("Sentinel loop control script not found, skipping")
+
+
 def main(output_dir: Path | None = None, query_mode: str = "REDUCED_FORM"):
     """Run all estimations and generate report."""
     output_dir = output_dir or Path("outputs/agentic")
     logger.info(f"Query mode: {query_mode}")
+
+    # Auto-start sentinel loop
+    _start_sentinel_loop()
+
     cards_dir = output_dir / "cards" / "edge_cards"
     cards_dir.mkdir(parents=True, exist_ok=True)
 
@@ -2166,6 +2198,54 @@ def main(output_dir: Path | None = None, query_mode: str = "REDUCED_FORM"):
     null_count = sum(1 for c in cards.values() if c.is_precisely_null)
     logger.info(f"  Precisely null: {null_count}")
     logger.info("=" * 60)
+
+    # ===================================================================
+    # Build interactive panels and auto-open
+    # ===================================================================
+    dag_path = Path("config/agentic/dags/kspi_k2_full.yaml")
+    cards_dir = output_dir / "cards" / "edge_cards"
+    state_path = output_dir / "issues" / "state.json"
+
+    # DAG Visualization
+    try:
+        from scripts.build_dag_viz import build as build_dag_viz
+        viz_path = build_dag_viz(
+            dag_path=dag_path,
+            cards_dir=cards_dir,
+            state_path=state_path,
+            output_path=output_dir / "dag_visualization.html",
+        )
+        logger.info(f"DAG visualization built: {viz_path}")
+    except Exception as e:
+        logger.warning(f"DAG visualization build failed (non-blocking): {e}")
+        viz_path = None
+
+    # HITL Panel
+    try:
+        from scripts.build_hitl_panel import build as build_hitl
+        hitl_path = build_hitl(
+            state_path=state_path,
+            cards_dir=cards_dir,
+            actions_path=Path("config/agentic/hitl_actions.yaml"),
+            registry_path=Path("config/agentic/issue_registry.yaml"),
+            output_dir=output_dir,
+            dag_path=dag_path,
+        )
+        logger.info(f"HITL panel built: {hitl_path}")
+    except Exception as e:
+        logger.warning(f"HITL panel build failed (non-blocking): {e}")
+        hitl_path = None
+
+    # Auto-open panels in browser
+    import subprocess, platform
+    open_cmd = "open" if platform.system() == "Darwin" else "xdg-open"
+    for panel_path in [viz_path, hitl_path]:
+        if panel_path and panel_path.exists():
+            try:
+                subprocess.Popen([open_cmd, str(panel_path)])
+                logger.info(f"Opened: {panel_path}")
+            except Exception as e:
+                logger.warning(f"Could not open {panel_path}: {e}")
 
     return cards
 

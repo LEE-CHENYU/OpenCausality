@@ -1,6 +1,6 @@
 edge_id: expenditure_to_payments_revenue
 dag_version_hash: a0d5c383631c52aa262f288704c6f7868d48b73d5034761245939de8eeea1d72
-created_at: '2026-02-08T10:29:35.142214'
+created_at: '2026-02-08T10:35:30.222224'
 data_provenance:
   treatment_source:
     connector: parquet_file

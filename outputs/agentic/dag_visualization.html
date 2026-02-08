@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KSPI K2 DAG</title>
+    <title>kspi_k2_stress</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -20,6 +20,8 @@
             cursor: grab;
         }
         .node circle:hover { stroke-width: 2.5px; }
+        .node circle.latent { stroke-dasharray: 4, 3; }
+        .node circle.id-risk { stroke: #c00; stroke-width: 2.5px; }
         .node text {
             font-size: 9px;
             font-weight: 400;
@@ -32,6 +34,7 @@
         }
         .link:hover { stroke-opacity: 1; stroke-width: 3px !important; }
         .link.null { stroke-dasharray: 4, 3; stroke-opacity: 0.4; }
+        .link.critical-issue { stroke: #f59e0b; stroke-width: 3px; }
         .label-bg {
             fill: white;
             stroke: none;
@@ -52,16 +55,21 @@
             font-size: 11px;
             pointer-events: none;
             opacity: 0;
-            max-width: 300px;
+            max-width: 380px;
             line-height: 1.5;
             z-index: 1000;
         }
         .tooltip.visible { opacity: 1; }
         .tooltip h3 { font-size: 12px; font-weight: 600; margin-bottom: 8px; border-bottom: 1px solid #000; padding-bottom: 6px; }
-        .tooltip-row { display: flex; justify-content: space-between; margin: 3px 0; }
-        .tooltip-label { color: #666; }
-        .tooltip-value { font-weight: 500; font-variant-numeric: tabular-nums; }
+        .tooltip-row { display: flex; justify-content: space-between; margin: 3px 0; gap: 12px; }
+        .tooltip-label { color: #666; white-space: nowrap; }
+        .tooltip-value { font-weight: 500; font-variant-numeric: tabular-nums; text-align: right; }
         .tooltip-value.null { color: #999; }
+        .tooltip-annotation { margin-top: 8px; padding-top: 8px; border-top: 1px solid #eee; color: #444; font-style: italic; }
+        .tooltip-issues { margin-top: 6px; padding-top: 6px; border-top: 1px solid #eee; }
+        .tooltip-issue { font-size: 10px; margin: 2px 0; }
+        .tooltip-issue.critical { color: #c00; font-weight: 600; }
+        .tooltip-issue.high { color: #a16207; }
         .controls {
             position: fixed;
             top: 20px;
@@ -71,9 +79,10 @@
             padding: 16px;
             border: 1px solid #000;
             z-index: 100;
+            max-width: 220px;
         }
         .controls h1 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
-        .controls p { color: #666; margin-bottom: 12px; }
+        .controls .subtitle { color: #666; margin-bottom: 12px; font-size: 10px; }
         .control-row { margin: 8px 0; }
         .control-row label { color: #666; margin-right: 8px; }
         .control-row select {
@@ -84,8 +93,10 @@
             font-family: inherit;
         }
         .legend { margin-top: 12px; padding-top: 12px; border-top: 1px solid #ddd; }
+        .legend-title { font-weight: 600; font-size: 10px; margin-bottom: 6px; }
         .legend-item { display: flex; align-items: center; margin: 4px 0; font-size: 10px; }
         .legend-line { width: 20px; height: 2px; margin-right: 8px; }
+        .legend-line.dashed { border-top: 2px dashed; height: 0; }
         .stats {
             position: fixed;
             bottom: 20px;
@@ -95,24 +106,42 @@
         }
         .stats span { margin-right: 16px; }
         .stats strong { color: #000; }
+        /* Pitfall sidebar */
+        .pitfall-sidebar {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 280px;
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+            background: rgba(255,255,255,0.95);
+            border: 1px solid #000;
+            padding: 16px;
+            font-size: 11px;
+            z-index: 100;
+        }
+        .pitfall-sidebar h2 { font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+        .pitfall-item { padding: 6px 0; border-bottom: 1px solid #eee; }
+        .pitfall-item:last-child { border-bottom: none; }
+        .pitfall-edge { font-weight: 600; font-size: 10px; }
+        .pitfall-severity { font-size: 9px; font-weight: 600; padding: 1px 5px; border: 1px solid; display: inline-block; margin-left: 4px; }
+        .pitfall-severity.CRITICAL { background: #000; color: #fff; border-color: #000; }
+        .pitfall-severity.HIGH { background: #fff; color: #000; border-color: #000; }
+        .pitfall-severity.MEDIUM { background: #eee; color: #000; border-color: #ccc; }
+        .pitfall-severity.LOW { background: #fff; color: #999; border-color: #ccc; }
+        .pitfall-msg { font-size: 10px; color: #555; margin-top: 2px; }
+        .pitfall-empty { color: #999; font-style: italic; }
     </style>
 </head>
 <body>
     <svg id="graph"></svg>
     <div class="controls">
-        <h1>KSPI K2 DAG</h1>
-        <p>26 edges, 19 nodes</p>
+        <h1 id="dagTitle">kspi_k2_stress</h1>
+        <div class="subtitle" id="dagSubtitle"></div>
         <div class="control-row">
-            <label>Group</label>
-            <select id="groupFilter">
+            <label>Edge type</label>
+            <select id="typeFilter">
                 <option value="all">All</option>
-                <option value="monthly_lp">Monthly LP</option>
-                <option value="immutable">Immutable</option>
-                <option value="quarterly_lp">Quarterly LP</option>
-                <option value="panel_lp">Panel LP</option>
-                <option value="kspi_only">KSPI Only</option>
-                <option value="bridge">Accounting</option>
-                <option value="identity">Identity</option>
             </select>
         </div>
         <div class="control-row">
@@ -122,6 +151,7 @@
                 <option value="A">A</option>
                 <option value="B">B</option>
                 <option value="C">C</option>
+                <option value="D">D</option>
             </select>
         </div>
         <div class="control-row">
@@ -130,290 +160,1747 @@
         <div class="control-row">
             <label><input type="checkbox" id="showLabels" checked> Show labels</label>
         </div>
-        <div class="legend">
-            <div class="legend-item"><div class="legend-line" style="background: #2563eb;"></div>Significant (p&lt;0.05)</div>
-            <div class="legend-item"><div class="legend-line" style="background: #9333ea;"></div>Deterministic</div>
-            <div class="legend-item"><div class="legend-line" style="background: #999; border-style: dashed;"></div>Null / Insig.</div>
+        <div class="legend" id="legendContainer">
+            <div class="legend-title">Edge Types</div>
         </div>
     </div>
     <div class="stats">
-        <span>Edges: <strong id="statEdges">26</strong></span>
-        <span>A: <strong id="statA">15</strong></span>
-        <span>B: <strong id="statB">8</strong></span>
-        <span>C: <strong id="statC">3</strong></span>
-        <span>Null: <strong id="statNull">7</strong></span>
+        <span>Edges: <strong id="statEdges">0</strong></span>
+        <span>Nodes: <strong id="statNodes">0</strong></span>
+        <span>A: <strong id="statA">0</strong></span>
+        <span>B: <strong id="statB">0</strong></span>
+        <span>C: <strong id="statC">0</strong></span>
+        <span>Issues: <strong id="statIssues">0</strong></span>
+    </div>
+    <div class="pitfall-sidebar" id="pitfallSidebar">
+        <h2>Open Issues</h2>
+        <div id="pitfallList"></div>
     </div>
     <div class="tooltip" id="tooltip"></div>
 
     <script>
-        const nodes = [
-            { id: "oil_supply", label: "Oil Supply", layer: 0 },
-            { id: "oil_demand", label: "Oil Demand", layer: 0 },
-            { id: "vix", label: "VIX", layer: 0 },
-            { id: "brent", label: "Brent", layer: 1 },
-            { id: "fx", label: "USD/KZT", layer: 1 },
-            { id: "cpi_tradable", label: "CPI Trad.", layer: 2 },
-            { id: "cpi_nontradable", label: "CPI Non-T.", layer: 2 },
-            { id: "nbk_rate", label: "NBK Rate", layer: 2 },
-            { id: "nominal_income", label: "Income", layer: 3 },
-            { id: "real_expenditure", label: "Expenditure", layer: 3 },
-            { id: "npl_kspi", label: "NPL", layer: 4 },
-            { id: "cor_kspi", label: "CoR", layer: 4 },
-            { id: "deposit_cost_kspi", label: "Dep. Cost", layer: 4 },
-            { id: "payments_revenue", label: "Payments", layer: 4 },
-            { id: "portfolio_mix", label: "Portfolio", layer: 4 },
-            { id: "net_loans", label: "Loans", layer: 4 },
-            { id: "rwa", label: "RWA", layer: 5 },
-            { id: "total_capital", label: "Capital", layer: 5 },
-            { id: "k2_ratio", label: "K2", layer: 6 },
-        ];
+// ── INJECTED DATA ────────────────────────────────────────────────────────
+const NODES = [
+  {
+    "id": "oil_supply_shock",
+    "label": "Oil supply shock",
+    "description": "Baumeister oil supply shock (exogenous to Kazakhstan).",
+    "unit": "sd",
+    "frequency": "monthly",
+    "observed": true,
+    "latent": false
+  },
+  {
+    "id": "oil_demand_shock",
+    "label": "Oil demand shock",
+    "description": "Baumeister oil demand shock (global demand-driven).",
+    "unit": "sd",
+    "frequency": "monthly",
+    "observed": true,
+    "latent": false
+  },
+  {
+    "id": "global_activity_shock",
+    "label": "Global activity innovation",
+    "description": "Innovation in global activity index (IGREA).",
+    "unit": "innovation",
+    "frequency": "monthly",
+    "observed": true,
+    "latent": false
+  },
+  {
+    "id": "vix_shock",
+    "label": "VIX shock",
+    "description": "Innovation in VIX (risk aversion shock).",
+    "unit": "innovation",
+    "frequency": "daily",
+    "observed": true,
+    "latent": false
+  },
+  {
+    "id": "kzt_usd",
+    "label": "KZT/USD exchange rate",
+    "description": "Kazakh tenge per US dollar, log level.",
+    "unit": "log",
+    "frequency": "daily",
+    "observed": true,
+    "latent": false
+  },
+  {
+    "id": "brent_price",
+    "label": "Brent crude oil price",
+    "description": "Brent spot price, USD per barrel, log level.",
+    "unit": "log",
+    "frequency": "daily",
+    "observed": true,
+    "latent": false
+  },
+  {
+    "id": "nbk_policy_rate",
+    "label": "NBK base rate",
+    "description": "National Bank of Kazakhstan policy rate.",
+    "unit": "pct",
+    "frequency": "event",
+    "observed": true,
+    "latent": false
+  },
+  {
+    "id": "cpi_headline",
+    "label": "Headline CPI",
+    "description": "Kazakhstan headline CPI index, log level.",
+    "unit": "log",
+    "frequency": "monthly",
+    "observed": true,
+    "latent": false
+  },
+  {
+    "id": "cpi_tradable",
+    "label": "Tradable CPI",
+    "description": "CPI for tradable goods (import-weighted). Block A validated.",
+    "unit": "log",
+    "frequency": "monthly",
+    "observed": true,
+    "latent": false
+  },
+  {
+    "id": "cpi_nontradable",
+    "label": "Non-tradable CPI",
+    "description": "CPI for non-tradable goods (services). Block A falsification.",
+    "unit": "log",
+    "frequency": "monthly",
+    "observed": true,
+    "latent": false
+  },
+  {
+    "id": "imported_inflation_instrument",
+    "label": "Imported inflation IV",
+    "description": "Constructed instrument for imported inflation (FX change \u00d7 pre-period import share).",
+    "unit": "pct",
+    "frequency": "monthly",
+    "observed": true,
+    "latent": false
+  },
+  {
+    "id": "E_import_share",
+    "label": "Pre-period import share",
+    "description": "Pre-period regional import intensity (static exposure).",
+    "unit": "share",
+    "frequency": "static",
+    "observed": true,
+    "latent": false
+  },
+  {
+    "id": "nominal_income",
+    "label": "Nominal monetary income",
+    "description": "Regional household nominal monetary income. Block B validated.",
+    "unit": "log",
+    "frequency": "quarterly",
+    "observed": true,
+    "latent": false
+  },
+  {
+    "id": "real_income",
+    "label": "Real monetary income",
+    "description": "Nominal income deflated by CPI. Identity node.",
+    "unit": "log",
+    "frequency": "quarterly",
+    "observed": true,
+    "latent": false
+  },
+  {
+    "id": "wage_income",
+    "label": "Wage income",
+    "description": "Household income from wages and salaries.",
+    "unit": "log",
+    "frequency": "quarterly",
+    "observed": true,
+    "latent": false
+  },
+  {
+    "id": "transfer_income",
+    "label": "Transfer income",
+    "description": "Household income from government transfers.",
+    "unit": "log",
+    "frequency": "quarterly",
+    "observed": true,
+    "latent": false
+  },
+  {
+    "id": "nominal_expenditure",
+    "label": "Nominal consumption expenditure",
+    "description": "Household nominal consumption expenditure. Block F validated.",
+    "unit": "log",
+    "frequency": "quarterly",
+    "observed": true,
+    "latent": false
+  },
+  {
+    "id": "real_expenditure",
+    "label": "Real consumption expenditure",
+    "description": "Nominal expenditure deflated by CPI. Block F validated.",
+    "unit": "log",
+    "frequency": "quarterly",
+    "observed": true,
+    "latent": false
+  },
+  {
+    "id": "npl_aggregate",
+    "label": "Aggregate NPL ratio",
+    "description": "Banking sector NPL ratio from NBK.",
+    "unit": "pct",
+    "frequency": "monthly",
+    "observed": true,
+    "latent": false
+  },
+  {
+    "id": "npl_kspi",
+    "label": "KSPI NPL ratio",
+    "description": "Kaspi.kz non-performing loan ratio.",
+    "unit": "pct",
+    "frequency": "quarterly",
+    "observed": true,
+    "latent": false
+  },
+  {
+    "id": "cor_kspi",
+    "label": "KSPI cost of risk",
+    "description": "Kaspi.kz cost of risk (annualized provisions / avg loans).",
+    "unit": "pct",
+    "frequency": "quarterly",
+    "observed": true,
+    "latent": false
+  },
+  {
+    "id": "loan_portfolio_kspi",
+    "label": "KSPI net loan portfolio",
+    "description": "Kaspi.kz net loan portfolio level (bn KZT).",
+    "unit": "log",
+    "frequency": "quarterly",
+    "observed": true,
+    "latent": false
+  },
+  {
+    "id": "portfolio_mix_kspi",
+    "label": "KSPI portfolio mix",
+    "description": "Shares by product type (BNPL, car loans, merchant).",
+    "unit": "share",
+    "frequency": "quarterly",
+    "observed": true,
+    "latent": false
+  },
+  {
+    "id": "deposits_kspi",
+    "label": "KSPI deposits",
+    "description": "Kaspi.kz total deposits (bn KZT).",
+    "unit": "log",
+    "frequency": "quarterly",
+    "observed": true,
+    "latent": false
+  },
+  {
+    "id": "deposit_cost_kspi",
+    "label": "KSPI deposit cost",
+    "description": "Kaspi.kz average deposit rate.",
+    "unit": "pct",
+    "frequency": "quarterly",
+    "observed": true,
+    "latent": false
+  },
+  {
+    "id": "rwa_kspi",
+    "label": "KSPI risk-weighted assets",
+    "description": "Kaspi.kz risk-weighted assets for regulatory capital.",
+    "unit": "log",
+    "frequency": "quarterly",
+    "observed": true,
+    "latent": false
+  },
+  {
+    "id": "ppop_kspi",
+    "label": "KSPI pre-provision operating profit",
+    "description": "Kaspi.kz PPOP (revenue - opex, before provisions).",
+    "unit": "log",
+    "frequency": "quarterly",
+    "observed": true,
+    "latent": false
+  },
+  {
+    "id": "total_capital_kspi",
+    "label": "KSPI total capital",
+    "description": "Kaspi.kz total regulatory capital (Tier 1 + Tier 2).",
+    "unit": "log",
+    "frequency": "quarterly",
+    "observed": true,
+    "latent": false
+  },
+  {
+    "id": "k2_ratio_kspi",
+    "label": "KSPI K2 capital ratio",
+    "description": "Kaspi.kz K2 capital adequacy ratio (Total Capital / RWA).",
+    "unit": "pct",
+    "frequency": "quarterly",
+    "observed": true,
+    "latent": false
+  },
+  {
+    "id": "payments_revenue_kspi",
+    "label": "KSPI Payments revenue",
+    "description": "Kaspi.kz payments segment revenue.",
+    "unit": "log",
+    "frequency": "quarterly",
+    "observed": true,
+    "latent": false
+  },
+  {
+    "id": "marketplace_revenue_kspi",
+    "label": "KSPI Marketplace revenue",
+    "description": "Kaspi.kz marketplace segment revenue.",
+    "unit": "log",
+    "frequency": "quarterly",
+    "observed": true,
+    "latent": false
+  },
+  {
+    "id": "fintech_revenue_kspi",
+    "label": "KSPI Fintech revenue",
+    "description": "Kaspi.kz fintech (lending) segment revenue.",
+    "unit": "log",
+    "frequency": "quarterly",
+    "observed": true,
+    "latent": false
+  }
+];
+const EDGES = [
+  {
+    "id": "oil_supply_to_brent",
+    "source": "oil_supply_shock",
+    "target": "brent_price",
+    "edge_type": "causal",
+    "expected_sign": "negative",
+    "interpretation": "Oil price response to supply shock",
+    "notes": "Exogenous supply shock identification from Baumeister.",
+    "point": -0.05166562593634781,
+    "se": 0.005406555751311881,
+    "pvalue": 1.2226952161375292e-21,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "A",
+    "score": 0.97,
+    "claim_level": "REDUCED_FORM",
+    "all_pass": true,
+    "diagnostics": [
+      {
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": true
+      },
+      {
+        "name": "r_squared_h0",
+        "passed": true
+      },
+      {
+        "name": "residual_ac1",
+        "passed": true
+      },
+      {
+        "name": "sign_consistency",
+        "passed": true
+      }
+    ],
+    "failure_flags": [],
+    "id_risks": {
+      "unmeasured_confounding": "medium",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Design LOCAL_PROJECTIONS provides REDUCED_FORM level only",
+    "issues": [
+      {
+        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+        "severity": "CRITICAL",
+        "message": "p=0.0000 but claim_level=. Significance does not establish causation."
+      }
+    ],
+    "has_critical_issue": true
+  },
+  {
+    "id": "oil_supply_to_fx",
+    "source": "oil_supply_shock",
+    "target": "kzt_usd",
+    "edge_type": "causal",
+    "expected_sign": "positive",
+    "interpretation": "KZT response to oil supply shock",
+    "notes": "Oil exporter commodity currency dynamics.",
+    "point": 0.00044787194670315805,
+    "se": 0.1276521731480084,
+    "pvalue": 0.9972006009022166,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "A",
+    "score": 0.97,
+    "claim_level": "REDUCED_FORM",
+    "all_pass": true,
+    "diagnostics": [
+      {
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": true
+      },
+      {
+        "name": "r_squared_h0",
+        "passed": true
+      },
+      {
+        "name": "residual_ac1",
+        "passed": true
+      },
+      {
+        "name": "sign_consistency",
+        "passed": true
+      }
+    ],
+    "failure_flags": [],
+    "id_risks": {
+      "unmeasured_confounding": "medium",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Counterfactual Use: BLOCKED\nReason: regime break risk\n\nEven if p<0.05, this does not establish a causal effect.",
+    "issues": [
+      {
+        "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
+        "severity": "HIGH",
+        "message": "A-rating despite failed diagnostics."
+      }
+    ],
+    "has_critical_issue": false
+  },
+  {
+    "id": "oil_demand_to_fx",
+    "source": "oil_demand_shock",
+    "target": "kzt_usd",
+    "edge_type": "causal",
+    "expected_sign": "negative",
+    "interpretation": "KZT response to oil demand shock",
+    "notes": "Commodity currency responds to global demand.",
+    "point": -0.29825697639309134,
+    "se": 0.16108393436726334,
+    "pvalue": 0.06408866840834736,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "A",
+    "score": 0.97,
+    "claim_level": "REDUCED_FORM",
+    "all_pass": true,
+    "diagnostics": [
+      {
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": true
+      },
+      {
+        "name": "r_squared_h0",
+        "passed": true
+      },
+      {
+        "name": "residual_ac1",
+        "passed": true
+      },
+      {
+        "name": "sign_consistency",
+        "passed": true
+      }
+    ],
+    "failure_flags": [],
+    "id_risks": {
+      "unmeasured_confounding": "medium",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Counterfactual Use: BLOCKED\nReason: regime break risk\n\nEven if p<0.05, this does not establish a causal effect.",
+    "issues": [
+      {
+        "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
+        "severity": "HIGH",
+        "message": "A-rating despite failed diagnostics."
+      }
+    ],
+    "has_critical_issue": false
+  },
+  {
+    "id": "vix_to_fx",
+    "source": "vix_shock",
+    "target": "kzt_usd",
+    "edge_type": "causal",
+    "expected_sign": "positive",
+    "interpretation": "KZT response to global risk aversion",
+    "notes": "EM risk-off channel.",
+    "point": -0.032423327653582856,
+    "se": 0.10994554441748393,
+    "pvalue": 0.768067585702398,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "A",
+    "score": 0.8900000000000001,
+    "claim_level": "REDUCED_FORM",
+    "all_pass": false,
+    "diagnostics": [
+      {
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": true
+      },
+      {
+        "name": "r_squared_h0",
+        "passed": true
+      },
+      {
+        "name": "residual_ac1",
+        "passed": true
+      },
+      {
+        "name": "sign_consistency",
+        "passed": false
+      }
+    ],
+    "failure_flags": [],
+    "id_risks": {
+      "unmeasured_confounding": "medium",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Design LOCAL_PROJECTIONS provides REDUCED_FORM level only",
+    "issues": [
+      {
+        "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
+        "severity": "HIGH",
+        "message": "A-rating despite failed diagnostics."
+      }
+    ],
+    "has_critical_issue": false
+  },
+  {
+    "id": "fx_to_cpi_tradable",
+    "source": "kzt_usd",
+    "target": "cpi_tradable",
+    "edge_type": "immutable",
+    "expected_sign": "positive",
+    "interpretation": "Differential inflation response by import intensity",
+    "notes": "Block A validated result: 11.3% FX pass-through to tradable CPI.",
+    "point": 0.113,
+    "se": 0.028,
+    "pvalue": 0.0001,
+    "design": "IMMUTABLE_EVIDENCE",
+    "rating": "A",
+    "score": 0.99,
+    "claim_level": "IDENTIFIED_CAUSAL",
+    "all_pass": true,
+    "diagnostics": [
+      {
+        "name": "validated_evidence",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": true
+      }
+    ],
+    "failure_flags": [],
+    "id_risks": {
+      "unmeasured_confounding": "low",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "cf_shock_allowed": true,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "REDUCED_FORM mode does not allow policy interventions",
+    "issues": [
+      {
+        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+        "severity": "CRITICAL",
+        "message": "p=0.0001 but claim_level=. Significance does not establish causation."
+      }
+    ],
+    "has_critical_issue": true
+  },
+  {
+    "id": "fx_to_cpi_nontradable",
+    "source": "kzt_usd",
+    "target": "cpi_nontradable",
+    "edge_type": "immutable",
+    "expected_sign": "any",
+    "interpretation": "Falsification test for FX pass-through",
+    "notes": "Block A falsification: Near-zero pass-through to non-tradable CPI.",
+    "point": 0.0,
+    "se": 0.015,
+    "pvalue": 0.99,
+    "design": "IMMUTABLE_EVIDENCE",
+    "rating": "A",
+    "score": 0.99,
+    "claim_level": "IDENTIFIED_CAUSAL",
+    "all_pass": true,
+    "diagnostics": [
+      {
+        "name": "validated_evidence",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": true
+      }
+    ],
+    "failure_flags": [],
+    "id_risks": {
+      "unmeasured_confounding": "low",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "cf_shock_allowed": true,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "REDUCED_FORM mode does not allow policy interventions",
+    "issues": [],
+    "has_critical_issue": false
+  },
+  {
+    "id": "cpi_to_nbk_rate",
+    "source": "cpi_headline",
+    "target": "nbk_policy_rate",
+    "edge_type": "reaction_function",
+    "expected_sign": "positive",
+    "interpretation": "NBK reaction function to inflation",
+    "notes": "NBK responds to inflation. Requires nbk_policy_rate connector.",
+    "point": -0.5352595428653101,
+    "se": 13.96562608868574,
+    "pvalue": 0.9694270212706624,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "A",
+    "score": 0.8240000000000001,
+    "claim_level": "BLOCKED_ID",
+    "all_pass": false,
+    "diagnostics": [
+      {
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": true
+      },
+      {
+        "name": "r_squared_h0",
+        "passed": true
+      },
+      {
+        "name": "residual_ac1",
+        "passed": true
+      },
+      {
+        "name": "sign_consistency",
+        "passed": false
+      }
+    ],
+    "failure_flags": [],
+    "id_risks": {
+      "unmeasured_confounding": "medium",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Claim level capped to BLOCKED_ID",
+    "issues": [
+      {
+        "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
+        "severity": "HIGH",
+        "message": "A-rating despite failed diagnostics."
+      }
+    ],
+    "has_critical_issue": false
+  },
+  {
+    "id": "fx_to_nbk_rate",
+    "source": "kzt_usd",
+    "target": "nbk_policy_rate",
+    "edge_type": "reaction_function",
+    "expected_sign": "positive",
+    "interpretation": "NBK reaction function to FX depreciation",
+    "notes": "NBK responds to FX conditions. Requires nbk_policy_rate connector.",
+    "point": 0.018354935930909422,
+    "se": 1.1164573166093024,
+    "pvalue": 0.9868830988186311,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "A",
+    "score": 0.904,
+    "claim_level": "REDUCED_FORM",
+    "all_pass": true,
+    "diagnostics": [
+      {
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": true
+      },
+      {
+        "name": "r_squared_h0",
+        "passed": true
+      },
+      {
+        "name": "residual_ac1",
+        "passed": true
+      },
+      {
+        "name": "sign_consistency",
+        "passed": true
+      }
+    ],
+    "failure_flags": [],
+    "id_risks": {
+      "unmeasured_confounding": "medium",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Counterfactual Use: BLOCKED\nReason: regime break risk\n\nEven if p<0.05, this does not establish a causal effect.",
+    "issues": [],
+    "has_critical_issue": false
+  },
+  {
+    "id": "nbk_rate_to_deposit_cost",
+    "source": "nbk_policy_rate",
+    "target": "deposit_cost_kspi",
+    "edge_type": "causal",
+    "expected_sign": "positive",
+    "interpretation": "Association between policy rate and KSPI funding cost",
+    "notes": "Funding cost channel. Requires both connectors.",
+    "point": 0.22265648578368194,
+    "se": 0.06178252515647664,
+    "pvalue": 0.00031350811161777947,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "B",
+    "score": 0.73,
+    "claim_level": "BLOCKED_ID",
+    "all_pass": false,
+    "diagnostics": [
+      {
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": false
+      },
+      {
+        "name": "r_squared_h0",
+        "passed": true
+      },
+      {
+        "name": "residual_ac1",
+        "passed": false
+      },
+      {
+        "name": "sign_consistency",
+        "passed": true
+      }
+    ],
+    "failure_flags": [
+      "small_sample"
+    ],
+    "id_risks": {
+      "unmeasured_confounding": "medium",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Claim level capped to BLOCKED_ID",
+    "issues": [
+      {
+        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+        "severity": "CRITICAL",
+        "message": "p=0.0003 but claim_level=. Significance does not establish causation."
+      }
+    ],
+    "has_critical_issue": true
+  },
+  {
+    "id": "nbk_rate_to_cor",
+    "source": "nbk_policy_rate",
+    "target": "cor_kspi",
+    "edge_type": "causal",
+    "expected_sign": "positive",
+    "interpretation": "Association between policy rate and KSPI credit losses",
+    "notes": "Borrower stress channel. Lagged 2Q for credit deterioration.",
+    "point": 0.3559558353990485,
+    "se": 0.11934467793177896,
+    "pvalue": 0.002858237880200499,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "B",
+    "score": 0.79,
+    "claim_level": "BLOCKED_ID",
+    "all_pass": false,
+    "diagnostics": [
+      {
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": false
+      },
+      {
+        "name": "r_squared_h0",
+        "passed": true
+      },
+      {
+        "name": "residual_ac1",
+        "passed": true
+      },
+      {
+        "name": "sign_consistency",
+        "passed": true
+      }
+    ],
+    "failure_flags": [
+      "small_sample"
+    ],
+    "id_risks": {
+      "unmeasured_confounding": "medium",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Claim level capped to BLOCKED_ID",
+    "issues": [
+      {
+        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+        "severity": "CRITICAL",
+        "message": "p=0.0029 but claim_level=. Significance does not establish causation."
+      }
+    ],
+    "has_critical_issue": true
+  },
+  {
+    "id": "cpi_to_nominal_income",
+    "source": "cpi_headline",
+    "target": "nominal_income",
+    "edge_type": "immutable",
+    "expected_sign": "positive",
+    "interpretation": "Nominal income response to external inflation (IV)",
+    "notes": "Block B validated: LP-IV estimate using imported inflation IV.",
+    "point": 0.65,
+    "se": 0.18,
+    "pvalue": 0.0003,
+    "design": "IMMUTABLE_EVIDENCE",
+    "rating": "A",
+    "score": 0.99,
+    "claim_level": "IDENTIFIED_CAUSAL",
+    "all_pass": true,
+    "diagnostics": [
+      {
+        "name": "validated_evidence",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": true
+      }
+    ],
+    "failure_flags": [],
+    "id_risks": {
+      "unmeasured_confounding": "low",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "cf_shock_allowed": true,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "REDUCED_FORM mode does not allow policy interventions",
+    "issues": [
+      {
+        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+        "severity": "CRITICAL",
+        "message": "p=0.0003 but claim_level=. Significance does not establish causation."
+      }
+    ],
+    "has_critical_issue": true
+  },
+  {
+    "id": "fx_to_real_expenditure",
+    "source": "kzt_usd",
+    "target": "real_expenditure",
+    "edge_type": "immutable",
+    "expected_sign": "negative",
+    "interpretation": "MPC-like ratio to FX shocks",
+    "notes": "Block F validated: IRF(0) = -0.10 for real expenditure.",
+    "point": -0.1,
+    "se": 0.04,
+    "pvalue": 0.012,
+    "design": "IMMUTABLE_EVIDENCE",
+    "rating": "A",
+    "score": 0.99,
+    "claim_level": "IDENTIFIED_CAUSAL",
+    "all_pass": true,
+    "diagnostics": [
+      {
+        "name": "validated_evidence",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": true
+      }
+    ],
+    "failure_flags": [],
+    "id_risks": {
+      "unmeasured_confounding": "low",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "cf_shock_allowed": true,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "REDUCED_FORM mode does not allow policy interventions",
+    "issues": [
+      {
+        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+        "severity": "CRITICAL",
+        "message": "p=0.0120 but claim_level=. Significance does not establish causation."
+      }
+    ],
+    "has_critical_issue": true
+  },
+  {
+    "id": "shock_to_npl_kspi",
+    "source": "imported_inflation_instrument",
+    "target": "npl_kspi",
+    "edge_type": "causal",
+    "expected_sign": "positive",
+    "interpretation": "Aggregate NPL response to imported inflation shock",
+    "notes": "Reduced-form NPL response. Cannot decompose channels without loan-level data.",
+    "point": 72.79719737828836,
+    "se": 10.297353981285937,
+    "pvalue": 1.5548712171304386e-12,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "B",
+    "score": 0.79,
+    "claim_level": "REDUCED_FORM",
+    "all_pass": true,
+    "diagnostics": [
+      {
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": true
+      },
+      {
+        "name": "r_squared_h0",
+        "passed": true
+      },
+      {
+        "name": "residual_ac1",
+        "passed": true
+      },
+      {
+        "name": "sign_consistency",
+        "passed": true
+      }
+    ],
+    "failure_flags": [
+      "small_sample"
+    ],
+    "id_risks": {
+      "unmeasured_confounding": "medium",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Design LOCAL_PROJECTIONS provides REDUCED_FORM level only",
+    "issues": [
+      {
+        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+        "severity": "CRITICAL",
+        "message": "p=0.0000 but claim_level=. Significance does not establish causation."
+      }
+    ],
+    "has_critical_issue": true
+  },
+  {
+    "id": "shock_to_cor_kspi",
+    "source": "imported_inflation_instrument",
+    "target": "cor_kspi",
+    "edge_type": "causal",
+    "expected_sign": "positive",
+    "interpretation": "Total provisioning response to imported inflation shock",
+    "notes": "Reduced-form CoR response. IFRS 9 overlay is latent.",
+    "point": 85.95725782265163,
+    "se": 7.40220359386492,
+    "pvalue": 3.565189467439174e-31,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "B",
+    "score": 0.79,
+    "claim_level": "REDUCED_FORM",
+    "all_pass": true,
+    "diagnostics": [
+      {
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": true
+      },
+      {
+        "name": "r_squared_h0",
+        "passed": true
+      },
+      {
+        "name": "residual_ac1",
+        "passed": true
+      },
+      {
+        "name": "sign_consistency",
+        "passed": true
+      }
+    ],
+    "failure_flags": [
+      "small_sample"
+    ],
+    "id_risks": {
+      "unmeasured_confounding": "medium",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Design LOCAL_PROJECTIONS provides REDUCED_FORM level only",
+    "issues": [
+      {
+        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+        "severity": "CRITICAL",
+        "message": "p=0.0000 but claim_level=. Significance does not establish causation."
+      }
+    ],
+    "has_critical_issue": true
+  },
+  {
+    "id": "expenditure_to_payments_revenue",
+    "source": "real_expenditure",
+    "target": "payments_revenue_kspi",
+    "edge_type": "causal",
+    "expected_sign": "positive",
+    "interpretation": "Association between spending and KSPI payments revenue",
+    "notes": "Spending -&gt; GMV -&gt; Interchange -&gt; Revenue. Requires KSPI connector.",
+    "point": 333.40898842797117,
+    "se": 70.95395662999425,
+    "pvalue": 2.615043739933785e-06,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "B",
+    "score": 0.6923529411764707,
+    "claim_level": "REDUCED_FORM",
+    "all_pass": false,
+    "diagnostics": [
+      {
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": false
+      },
+      {
+        "name": "r_squared_h0",
+        "passed": true
+      },
+      {
+        "name": "residual_ac1",
+        "passed": true
+      },
+      {
+        "name": "sign_consistency",
+        "passed": true
+      }
+    ],
+    "failure_flags": [
+      "small_sample"
+    ],
+    "id_risks": {
+      "unmeasured_confounding": "medium",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Counterfactual Use: BLOCKED\nReason: insufficient shock episodes\n\nEven if p<0.05, this does not establish a causal effect.",
+    "issues": [
+      {
+        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+        "severity": "CRITICAL",
+        "message": "p=0.0000 but claim_level=. Significance does not establish causation."
+      }
+    ],
+    "has_critical_issue": true
+  },
+  {
+    "id": "cor_to_capital",
+    "source": "cor_kspi",
+    "target": "total_capital_kspi",
+    "edge_type": "mechanical",
+    "expected_sign": "negative",
+    "interpretation": "Capital impact from provisioning",
+    "notes": "Provisioning reduces capital. Control for PPOP.",
+    "point": -22.4,
+    "se": 0.0,
+    "pvalue": null,
+    "design": "ACCOUNTING_BRIDGE",
+    "rating": "A",
+    "score": 0.9299999999999999,
+    "claim_level": "IDENTIFIED_CAUSAL",
+    "all_pass": true,
+    "diagnostics": [
+      {
+        "name": "identity_consistency",
+        "passed": true
+      }
+    ],
+    "failure_flags": [
+      "mechanical_identity_risk"
+    ],
+    "id_risks": {
+      "unmeasured_confounding": "low",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "cf_shock_allowed": true,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "REDUCED_FORM mode does not allow policy interventions",
+    "issues": [
+      {
+        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+        "severity": "CRITICAL",
+        "message": "p=0.0000 but claim_level=BLOCKED_ID. Significance does not establish causation."
+      }
+    ],
+    "has_critical_issue": true
+  },
+  {
+    "id": "loan_portfolio_to_rwa",
+    "source": "loan_portfolio_kspi",
+    "target": "rwa_kspi",
+    "edge_type": "mechanical",
+    "expected_sign": "positive",
+    "interpretation": "Mechanical volume effect on RWA",
+    "notes": "Volume \u00d7 avg RW. Mechanical relationship.",
+    "point": 0.5714285714285714,
+    "se": 0.0,
+    "pvalue": null,
+    "design": "ACCOUNTING_BRIDGE",
+    "rating": "A",
+    "score": 0.9299999999999999,
+    "claim_level": "IDENTIFIED_CAUSAL",
+    "all_pass": true,
+    "diagnostics": [
+      {
+        "name": "identity_consistency",
+        "passed": true
+      }
+    ],
+    "failure_flags": [
+      "mechanical_identity_risk"
+    ],
+    "id_risks": {
+      "unmeasured_confounding": "low",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "cf_shock_allowed": true,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "REDUCED_FORM mode does not allow policy interventions",
+    "issues": [
+      {
+        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+        "severity": "CRITICAL",
+        "message": "p=0.0000 but claim_level=REDUCED_FORM. Significance does not establish causation."
+      }
+    ],
+    "has_critical_issue": true
+  },
+  {
+    "id": "portfolio_mix_to_rwa",
+    "source": "portfolio_mix_kspi",
+    "target": "rwa_kspi",
+    "edge_type": "causal",
+    "expected_sign": "any",
+    "interpretation": "RWA composition effect from product mix shifts",
+    "notes": "Product mix shifts risk weights. NBK uses 150%+ for unsecured.",
+    "point": 18195.962971994624,
+    "se": 3952.75417946752,
+    "pvalue": 4.157223824460209e-06,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "B",
+    "score": 0.7982352941176472,
+    "claim_level": "BLOCKED_ID",
+    "all_pass": false,
+    "diagnostics": [
+      {
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": false
+      },
+      {
+        "name": "r_squared_h0",
+        "passed": true
+      },
+      {
+        "name": "residual_ac1",
+        "passed": true
+      },
+      {
+        "name": "sign_consistency",
+        "passed": true
+      }
+    ],
+    "failure_flags": [
+      "small_sample"
+    ],
+    "id_risks": {
+      "unmeasured_confounding": "medium",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Claim level capped to BLOCKED_ID",
+    "issues": [
+      {
+        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+        "severity": "CRITICAL",
+        "message": "p=0.0000 but claim_level=. Significance does not establish causation."
+      }
+    ],
+    "has_critical_issue": true
+  },
+  {
+    "id": "capital_to_k2",
+    "source": "total_capital_kspi",
+    "target": "k2_ratio_kspi",
+    "edge_type": "identity",
+    "expected_sign": "",
+    "interpretation": "K2 identity: Capital / RWA",
+    "notes": "K2 = Total Capital / RWA. Mechanical identity.",
+    "point": 0.0625,
+    "se": 0.0,
+    "pvalue": null,
+    "design": "IDENTITY",
+    "rating": "A",
+    "score": 0.94,
+    "claim_level": "IDENTIFIED_CAUSAL",
+    "all_pass": true,
+    "diagnostics": [
+      {
+        "name": "identity_check",
+        "passed": true
+      }
+    ],
+    "failure_flags": [
+      "mechanical_identity_risk"
+    ],
+    "id_risks": {
+      "unmeasured_confounding": "low",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "cf_shock_allowed": true,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "REDUCED_FORM mode does not allow policy interventions",
+    "issues": [],
+    "has_critical_issue": false
+  },
+  {
+    "id": "rwa_to_k2",
+    "source": "rwa_kspi",
+    "target": "k2_ratio_kspi",
+    "edge_type": "identity",
+    "expected_sign": "",
+    "interpretation": "K2 identity: Capital / RWA",
+    "notes": "K2 = Total Capital / RWA. Mechanical identity.",
+    "point": -0.010125,
+    "se": 0.0,
+    "pvalue": null,
+    "design": "IDENTITY",
+    "rating": "A",
+    "score": 0.94,
+    "claim_level": "IDENTIFIED_CAUSAL",
+    "all_pass": true,
+    "diagnostics": [
+      {
+        "name": "identity_check",
+        "passed": true
+      }
+    ],
+    "failure_flags": [
+      "mechanical_identity_risk"
+    ],
+    "id_risks": {
+      "unmeasured_confounding": "low",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "cf_shock_allowed": true,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "REDUCED_FORM mode does not allow policy interventions",
+    "issues": [],
+    "has_critical_issue": false
+  }
+];
+const LATENTS = [
+  {
+    "id": "ifrs9_overlay",
+    "description": "Forward-looking macro overlay in IFRS 9 ECL provisioning.",
+    "affects": [
+      "cor_kspi"
+    ]
+  },
+  {
+    "id": "regulatory_changes",
+    "description": "NBK RW rule changes affecting unsecured consumer loans.",
+    "affects": [
+      "rwa_kspi"
+    ]
+  },
+  {
+    "id": "kspi_customer_composition",
+    "description": "Unobserved changes in KSPI customer risk profile.",
+    "affects": [
+      "npl_kspi",
+      "cor_kspi"
+    ]
+  },
+  {
+    "id": "migration",
+    "description": "Labor migration affecting regional income dynamics.",
+    "affects": [
+      "nominal_income",
+      "real_income"
+    ]
+  },
+  {
+    "id": "fiscal_policy",
+    "description": "Unobserved fiscal policy responses to shocks.",
+    "affects": [
+      "transfer_income",
+      "nominal_income"
+    ]
+  }
+];
+const METADATA = {
+  "name": "kspi_k2_stress",
+  "description": "Global shocks -> KZ macro -> KSPI balance sheet -> K2 capital ratio",
+  "target_node": "k2_ratio_kspi",
+  "created": "2026-02-02",
+  "owner": "research_team",
+  "scope_default": "kazakhstan_only",
+  "tags": [
+    "kspi",
+    "capital",
+    "stress_test",
+    "k2"
+  ]
+};
+const EDGE_TYPE_COLORS = {"causal": "#2563eb", "reaction_function": "#059669", "bridge": "#9333ea", "identity": "#9333ea", "mechanical": "#9333ea", "immutable": "#d97706"};
+const EDGE_TYPE_LABELS = {"causal": "Causal", "reaction_function": "Reaction Function", "bridge": "Accounting Bridge", "identity": "Identity", "mechanical": "Mechanical", "immutable": "Immutable (Validated)"};
 
-        // Deduplicate edges for visualization - only show primary edges
-        // Panel edges duplicate quarterly edges visually, so filter them
-        const allEdges = [
-            { source: "oil_supply", target: "brent", id: "oil_supply_to_brent", beta: -0.052, se: 0.0054, pvalue: 0.0000, n_obs: 306, rating: "A", group: "monthly_lp", is_null: false },
-            { source: "oil_supply", target: "fx", id: "oil_supply_to_fx", beta: 0.0004, se: 0.1277, pvalue: 0.9972, n_obs: 187, rating: "A", group: "monthly_lp", is_null: true },
-            { source: "oil_demand", target: "fx", id: "oil_demand_to_fx", beta: -0.30, se: 0.1611, pvalue: 0.0641, n_obs: 187, rating: "A", group: "monthly_lp", is_null: false },
-            { source: "vix", target: "fx", id: "vix_to_fx", beta: -0.032, se: 0.1099, pvalue: 0.7681, n_obs: 190, rating: "A", group: "monthly_lp", is_null: true },
-            { source: "cpi_tradable", target: "nbk_rate", id: "cpi_to_nbk_rate", beta: -0.54, se: 13.97, pvalue: 0.9694, n_obs: 67, rating: "A", group: "monthly_lp", is_null: true },
-            { source: "fx", target: "nbk_rate", id: "fx_to_nbk_rate", beta: 0.018, se: 1.12, pvalue: 0.9869, n_obs: 67, rating: "A", group: "monthly_lp", is_null: true },
-            { source: "fx", target: "cpi_tradable", id: "fx_to_cpi_tradable", beta: 0.11, se: 0.028, pvalue: 0.0001, n_obs: null, rating: "A", group: "immutable", is_null: false },
-            { source: "fx", target: "cpi_nontradable", id: "fx_to_cpi_nontradable", beta: 0.00, se: 0.015, pvalue: 1.0000, n_obs: null, rating: "A", group: "immutable", is_null: true },
-            { source: "cpi_tradable", target: "nominal_income", id: "cpi_to_nominal_income", beta: 0.65, se: 0.18, pvalue: 0.0003, n_obs: null, rating: "A", group: "immutable", is_null: false },
-            { source: "fx", target: "real_expenditure", id: "fx_to_real_expenditure", beta: -0.10, se: 0.04, pvalue: 0.0125, n_obs: null, rating: "A", group: "immutable", is_null: false },
-            { source: "cpi_tradable", target: "npl_kspi", id: "shock_to_npl_kspi", beta: 73, se: 10.3, pvalue: 0.0000, n_obs: 26, rating: "B", group: "quarterly_lp", is_null: false },
-            { source: "cpi_tradable", target: "cor_kspi", id: "shock_to_cor_kspi", beta: 86, se: 7.4, pvalue: 0.0000, n_obs: 26, rating: "B", group: "quarterly_lp", is_null: false },
-            { source: "nbk_rate", target: "deposit_cost_kspi", id: "nbk_rate_to_deposit_cost", beta: 0.22, se: 0.062, pvalue: 0.0003, n_obs: 18, rating: "B", group: "quarterly_lp", is_null: false },
-            { source: "nbk_rate", target: "cor_kspi", id: "nbk_rate_to_cor", beta: 0.36, se: 0.12, pvalue: 0.0029, n_obs: 18, rating: "B", group: "quarterly_lp", is_null: false },
-            { source: "real_expenditure", target: "payments_revenue", id: "expenditure_to_payments_revenue", beta: 333, se: 71, pvalue: 0.0000, n_obs: 7, rating: "B", group: "kspi_only", is_null: false },
-            { source: "portfolio_mix", target: "rwa", id: "portfolio_mix_to_rwa", beta: 18196, se: 3953, pvalue: 0.0000, n_obs: 16, rating: "B", group: "kspi_only", is_null: false },
-            { source: "net_loans", target: "rwa", id: "loan_portfolio_to_rwa", beta: 0.57, se: 0, pvalue: null, n_obs: null, rating: "A", group: "bridge", is_null: false, formula: "RWA/loans" },
-            { source: "cor_kspi", target: "total_capital", id: "cor_to_capital", beta: -22, se: 0, pvalue: null, n_obs: null, rating: "A", group: "bridge", is_null: false, formula: "-loans*(1-t)/100" },
-            { source: "total_capital", target: "k2_ratio", id: "capital_to_k2", beta: 0.063, se: 0, pvalue: null, n_obs: null, rating: "A", group: "identity", is_null: false, formula: "100/RWA" },
-            { source: "rwa", target: "k2_ratio", id: "rwa_to_k2", beta: -0.010, se: 0, pvalue: null, n_obs: null, rating: "A", group: "identity", is_null: false, formula: "-100*K/RWA²" },
-        ];
+// ── Setup ────────────────────────────────────────────────────────────────
+document.getElementById('dagSubtitle').textContent =
+    NODES.length + ' nodes, ' + EDGES.length + ' edges';
+document.getElementById('statNodes').textContent = NODES.length;
 
-        // Filter to unique source-target pairs (keep first/primary edge)
-        const seenPairs = new Set();
-        const edges = allEdges.filter(e => {
-            const key = `${e.source}-${e.target}`;
-            if (seenPairs.has(key)) return false;
-            seenPairs.add(key);
-            return true;
+// Compute node layers via topological distance from roots
+var inDegree = {};
+NODES.forEach(function(n) { inDegree[n.id] = 0; });
+EDGES.forEach(function(e) { inDegree[e.target] = (inDegree[e.target] || 0) + 1; });
+
+var layers = {};
+var visited = {};
+function computeLayer(nodeId) {
+    if (visited[nodeId]) return layers[nodeId] || 0;
+    visited[nodeId] = true;
+    var incoming = EDGES.filter(function(e) { return e.target === nodeId; });
+    if (incoming.length === 0) { layers[nodeId] = 0; return 0; }
+    var maxParent = 0;
+    incoming.forEach(function(e) {
+        var pLayer = computeLayer(e.source);
+        if (pLayer + 1 > maxParent) maxParent = pLayer + 1;
+    });
+    layers[nodeId] = maxParent;
+    return maxParent;
+}
+NODES.forEach(function(n) { computeLayer(n.id); });
+NODES.forEach(function(n) { n.layer = layers[n.id] || 0; });
+
+// Populate type filter
+var typeSet = {};
+EDGES.forEach(function(e) { typeSet[e.edge_type || 'causal'] = true; });
+var typeFilter = document.getElementById('typeFilter');
+Object.keys(typeSet).sort().forEach(function(t) {
+    var opt = document.createElement('option');
+    opt.value = t;
+    opt.textContent = EDGE_TYPE_LABELS[t] || t;
+    typeFilter.appendChild(opt);
+});
+
+// Build legend
+var legendContainer = document.getElementById('legendContainer');
+Object.keys(typeSet).sort().forEach(function(t) {
+    var color = EDGE_TYPE_COLORS[t] || '#2563eb';
+    var div = document.createElement('div');
+    div.className = 'legend-item';
+    div.innerHTML = '<div class="legend-line" style="background:' + color + '"></div>' +
+        (EDGE_TYPE_LABELS[t] || t);
+    legendContainer.appendChild(div);
+});
+// Null/insig legend
+var nullLeg = document.createElement('div');
+nullLeg.className = 'legend-item';
+nullLeg.innerHTML = '<div class="legend-line dashed" style="border-color:#999"></div>Null / Insig.';
+legendContainer.appendChild(nullLeg);
+
+// Build pitfall sidebar
+var pitfallList = document.getElementById('pitfallList');
+var SEVERITY_ORDER = {CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3};
+var edgesWithIssues = EDGES.filter(function(e) { return e.issues && e.issues.length > 0; });
+edgesWithIssues.sort(function(a, b) {
+    var aMax = Math.min.apply(null, a.issues.map(function(i) { return SEVERITY_ORDER[i.severity] || 99; }));
+    var bMax = Math.min.apply(null, b.issues.map(function(i) { return SEVERITY_ORDER[i.severity] || 99; }));
+    return aMax - bMax;
+});
+if (edgesWithIssues.length === 0) {
+    pitfallList.innerHTML = '<div class="pitfall-empty">No open issues.</div>';
+} else {
+    edgesWithIssues.forEach(function(e) {
+        e.issues.forEach(function(issue) {
+            var div = document.createElement('div');
+            div.className = 'pitfall-item';
+            div.innerHTML = '<div><span class="pitfall-edge">' + e.id + '</span>' +
+                '<span class="pitfall-severity ' + issue.severity + '">' + issue.severity + '</span></div>' +
+                '<div class="pitfall-msg">' + escHtml(issue.message) + '</div>';
+            pitfallList.appendChild(div);
         });
+    });
+}
 
-        // Format beta for display - smart formatting
-        function formatBeta(beta) {
-            if (beta === 0) return "0";
-            const abs = Math.abs(beta);
-            // Very large numbers: use k notation
-            if (abs >= 10000) return (beta / 1000).toFixed(0) + "k";
-            if (abs >= 1000) return (beta / 1000).toFixed(1) + "k";
-            // Regular large numbers
-            if (abs >= 100) return beta.toFixed(0);
-            if (abs >= 10) return beta.toFixed(1);
-            if (abs >= 1) return beta.toFixed(1);
-            // Small numbers
-            if (abs >= 0.1) return beta.toFixed(2);
-            if (abs >= 0.01) return beta.toFixed(2);
-            // Very small - use scientific
-            if (abs >= 0.001) return beta.toFixed(3);
-            return beta.toExponential(1);
-        }
+function escHtml(s) {
+    if (!s) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
 
-        // Get edge color based on significance
-        function getEdgeColor(d) {
-            if (d.pvalue === null) return "#9333ea"; // deterministic - purple
-            if (d.is_null) return "#999"; // null - gray
-            if (d.pvalue < 0.05) return "#2563eb"; // significant - blue
-            return "#999"; // insignificant
-        }
+// ── Helpers ──────────────────────────────────────────────────────────────
+function formatBeta(beta) {
+    if (beta === null || beta === undefined) return '--';
+    if (beta === 0) return '0';
+    var abs = Math.abs(beta);
+    if (abs >= 10000) return (beta / 1000).toFixed(0) + 'k';
+    if (abs >= 1000) return (beta / 1000).toFixed(1) + 'k';
+    if (abs >= 100) return beta.toFixed(0);
+    if (abs >= 10) return beta.toFixed(1);
+    if (abs >= 1) return beta.toFixed(1);
+    if (abs >= 0.01) return beta.toFixed(2);
+    if (abs >= 0.001) return beta.toFixed(3);
+    return beta.toExponential(1);
+}
+function fmtP(p) {
+    if (p === null || p === undefined) return '--';
+    if (p < 0.0001) return p.toExponential(2);
+    return p.toFixed(4);
+}
 
-        const svg = d3.select("#graph");
-        const width = window.innerWidth;
-        const height = window.innerHeight;
-        svg.attr("width", width).attr("height", height);
+function getEdgeColor(d) {
+    var isNull = d.pvalue !== null && d.pvalue !== undefined && d.pvalue >= 0.05;
+    if (isNull) return '#999';
+    return EDGE_TYPE_COLORS[d.edge_type] || '#2563eb';
+}
+function isEdgeNull(d) {
+    return d.pvalue !== null && d.pvalue !== undefined && d.pvalue >= 0.05;
+}
 
-        svg.append("defs").append("marker")
-            .attr("id", "arrow")
-            .attr("viewBox", "0 -3 6 6")
-            .attr("refX", 18)
-            .attr("refY", 0)
-            .attr("markerWidth", 5)
-            .attr("markerHeight", 5)
-            .attr("orient", "auto")
-            .append("path")
-            .attr("d", "M0,-3L6,0L0,3")
-            .attr("fill", "#000");
+// ── D3 Graph ─────────────────────────────────────────────────────────────
+var svg = d3.select('#graph');
+var width = window.innerWidth;
+var height = window.innerHeight;
+svg.attr('width', width).attr('height', height);
 
-        // Create colored arrow markers
-        ["#2563eb", "#9333ea", "#999"].forEach(color => {
-            svg.select("defs").append("marker")
-                .attr("id", "arrow-" + color.replace("#", ""))
-                .attr("viewBox", "0 -3 6 6")
-                .attr("refX", 18)
-                .attr("refY", 0)
-                .attr("markerWidth", 5)
-                .attr("markerHeight", 5)
-                .attr("orient", "auto")
-                .append("path")
-                .attr("d", "M0,-3L6,0L0,3")
-                .attr("fill", color);
+// Arrow markers
+var defs = svg.append('defs');
+var defaultColors = Object.values(EDGE_TYPE_COLORS).concat(['#999']);
+var colorSet = {};
+defaultColors.forEach(function(c) { colorSet[c] = true; });
+Object.keys(colorSet).forEach(function(color) {
+    defs.append('marker')
+        .attr('id', 'arrow-' + color.replace('#', ''))
+        .attr('viewBox', '0 -3 6 6')
+        .attr('refX', 18)
+        .attr('refY', 0)
+        .attr('markerWidth', 5)
+        .attr('markerHeight', 5)
+        .attr('orient', 'auto')
+        .append('path')
+        .attr('d', 'M0,-3L6,0L0,3')
+        .attr('fill', color);
+});
+
+var g = svg.append('g');
+svg.call(d3.zoom().scaleExtent([0.3, 3]).on('zoom', function(e) { g.attr('transform', e.transform); }));
+
+var simulation = d3.forceSimulation(NODES)
+    .force('link', d3.forceLink(EDGES).id(function(d) { return d.id; }).distance(120).strength(0.3))
+    .force('charge', d3.forceManyBody().strength(-400))
+    .force('center', d3.forceCenter(width / 2, height / 2))
+    .force('y', d3.forceY(function(d) { return 80 + d.layer * 90; }).strength(0.7))
+    .force('x', d3.forceX(width / 2).strength(0.02))
+    .force('collision', d3.forceCollide(40));
+
+var linkGroup = g.append('g');
+var links = linkGroup.selectAll('path')
+    .data(EDGES)
+    .enter()
+    .append('path')
+    .attr('class', function(d) { return 'link' + (isEdgeNull(d) ? ' null' : '') + (d.has_critical_issue ? ' critical-issue' : ''); })
+    .attr('stroke', function(d) { return getEdgeColor(d); })
+    .attr('stroke-width', function(d) { return d.pvalue !== null && d.pvalue < 0.05 ? 2.5 : 1.5; })
+    .attr('marker-end', function(d) { return 'url(#arrow-' + getEdgeColor(d).replace('#', '') + ')'; })
+    .on('mouseover', showEdgeTooltip)
+    .on('mouseout', hideTooltip);
+
+var labelGroup = g.append('g');
+var labelBgs = labelGroup.selectAll('rect')
+    .data(EDGES)
+    .enter()
+    .append('rect')
+    .attr('class', 'label-bg')
+    .attr('rx', 2)
+    .attr('ry', 2);
+
+var linkLabels = labelGroup.selectAll('text')
+    .data(EDGES)
+    .enter()
+    .append('text')
+    .attr('class', 'link-label')
+    .text(function(d) { return formatBeta(d.point); });
+
+var nodeGroup = g.append('g');
+var node = nodeGroup.selectAll('g')
+    .data(NODES)
+    .enter()
+    .append('g')
+    .attr('class', 'node')
+    .call(d3.drag()
+        .on('start', function(e, d) { if (!e.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
+        .on('drag', function(e, d) { d.fx = e.x; d.fy = e.y; })
+        .on('end', function(e, d) { if (!e.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; }))
+    .on('mouseover', showNodeTooltip)
+    .on('mouseout', hideTooltip);
+
+// Check if node has ID risks from any edge
+var nodeIdRisks = {};
+EDGES.forEach(function(e) {
+    if (e.id_risks && Object.keys(e.id_risks).length > 0) {
+        nodeIdRisks[e.source] = true;
+        nodeIdRisks[e.target] = true;
+    }
+});
+
+node.append('circle')
+    .attr('r', 18)
+    .attr('class', function(d) {
+        var cls = '';
+        if (d.latent) cls += ' latent';
+        if (nodeIdRisks[d.id]) cls += ' id-risk';
+        return cls;
+    });
+node.append('text').attr('dy', 4).text(function(d) { return d.label; });
+
+var tooltip = d3.select('#tooltip');
+
+function showEdgeTooltip(e, d) {
+    var html = '<h3>' + d.source.id.replace(/_/g, ' ') + ' &rarr; ' + d.target.id.replace(/_/g, ' ') + '</h3>';
+    html += '<div class="tooltip-row"><span class="tooltip-label">Edge ID</span><span class="tooltip-value">' + d.id + '</span></div>';
+    html += '<div class="tooltip-row"><span class="tooltip-label">Type</span><span class="tooltip-value">' + (EDGE_TYPE_LABELS[d.edge_type] || d.edge_type) + '</span></div>';
+    if (d.point !== null && d.point !== undefined) {
+        html += '<div class="tooltip-row"><span class="tooltip-label">&beta;</span><span class="tooltip-value">' + d.point.toFixed(4) + '</span></div>';
+    }
+    if (d.se !== null && d.se !== undefined) {
+        html += '<div class="tooltip-row"><span class="tooltip-label">SE</span><span class="tooltip-value">' + d.se.toFixed(4) + '</span></div>';
+    }
+    if (d.pvalue !== null && d.pvalue !== undefined) {
+        html += '<div class="tooltip-row"><span class="tooltip-label">p-value</span><span class="tooltip-value ' + (isEdgeNull(d) ? 'null' : '') + '">' + fmtP(d.pvalue) + '</span></div>';
+    }
+    if (d.claim_level) html += '<div class="tooltip-row"><span class="tooltip-label">Claim</span><span class="tooltip-value">' + d.claim_level + '</span></div>';
+    if (d.rating) html += '<div class="tooltip-row"><span class="tooltip-label">Rating</span><span class="tooltip-value">' + d.rating + '</span></div>';
+    if (d.design) html += '<div class="tooltip-row"><span class="tooltip-label">Design</span><span class="tooltip-value">' + d.design + '</span></div>';
+    if (d.diagnostics && d.diagnostics.length > 0) {
+        var passed = d.diagnostics.filter(function(x) { return x.passed; }).length;
+        html += '<div class="tooltip-row"><span class="tooltip-label">Diagnostics</span><span class="tooltip-value">' + passed + '/' + d.diagnostics.length + ' pass</span></div>';
+    }
+    if (d.interpretation) html += '<div class="tooltip-row"><span class="tooltip-label">Interpretation</span><span class="tooltip-value" style="text-align:left;font-weight:400">' + d.interpretation + '</span></div>';
+    // LLM annotation
+    if (d.llm_annotation) {
+        html += '<div class="tooltip-annotation">' + d.llm_annotation + '</div>';
+    }
+    // Issues
+    if (d.issues && d.issues.length > 0) {
+        html += '<div class="tooltip-issues">';
+        d.issues.forEach(function(issue) {
+            html += '<div class="tooltip-issue ' + (issue.severity || '').toLowerCase() + '">[' + issue.severity + '] ' + escHtml(issue.message) + '</div>';
         });
+        html += '</div>';
+    }
+    tooltip.html(html).style('left', (e.pageX + 15) + 'px').style('top', (e.pageY - 15) + 'px').classed('visible', true);
+}
 
-        const g = svg.append("g");
-        svg.call(d3.zoom().scaleExtent([0.3, 3]).on("zoom", e => g.attr("transform", e.transform)));
+function showNodeTooltip(e, d) {
+    var html = '<h3>' + d.label + '</h3>';
+    html += '<div class="tooltip-row"><span class="tooltip-label">ID</span><span class="tooltip-value">' + d.id + '</span></div>';
+    if (d.description) html += '<div class="tooltip-row"><span class="tooltip-label">Description</span><span class="tooltip-value" style="text-align:left;font-weight:400">' + d.description + '</span></div>';
+    if (d.unit) html += '<div class="tooltip-row"><span class="tooltip-label">Unit</span><span class="tooltip-value">' + d.unit + '</span></div>';
+    if (d.frequency) html += '<div class="tooltip-row"><span class="tooltip-label">Frequency</span><span class="tooltip-value">' + d.frequency + '</span></div>';
+    if (d.latent) html += '<div class="tooltip-row"><span class="tooltip-label">Observed</span><span class="tooltip-value null">Latent (unobserved)</span></div>';
+    tooltip.html(html).style('left', (e.pageX + 15) + 'px').style('top', (e.pageY - 15) + 'px').classed('visible', true);
+}
 
-        const simulation = d3.forceSimulation(nodes)
-            .force("link", d3.forceLink(edges).id(d => d.id).distance(120).strength(0.3))
-            .force("charge", d3.forceManyBody().strength(-400))
-            .force("center", d3.forceCenter(width / 2, height / 2))
-            .force("y", d3.forceY(d => 80 + d.layer * 90).strength(0.7))
-            .force("x", d3.forceX(width / 2).strength(0.02))
-            .force("collision", d3.forceCollide(40));
+function hideTooltip() { tooltip.classed('visible', false); }
 
-        const linkGroup = g.append("g");
-        let links = linkGroup.selectAll("path")
-            .data(edges)
-            .enter()
-            .append("path")
-            .attr("class", d => `link ${d.is_null ? 'null' : ''}`)
-            .attr("stroke", d => getEdgeColor(d))
-            .attr("stroke-width", d => d.pvalue !== null && d.pvalue < 0.05 ? 2.5 : 1.5)
-            .attr("marker-end", d => `url(#arrow-${getEdgeColor(d).replace("#", "")})`)
-            .on("mouseover", showTooltip)
-            .on("mouseout", hideTooltip);
+function getLabelPos(d) {
+    var dx = d.target.x - d.source.x;
+    var dy = d.target.y - d.source.y;
+    var dist = Math.sqrt(dx*dx + dy*dy) || 1;
+    var t = 0.4;
+    var mx = d.source.x + dx * t;
+    var my = d.source.y + dy * t;
+    var offset = 12;
+    var px = -dy / dist * offset;
+    var py = dx / dist * offset;
+    return { x: mx + px, y: my + py };
+}
 
-        // Edge labels with background
-        const labelGroup = g.append("g");
+simulation.on('tick', function() {
+    links.attr('d', function(d) {
+        var dx = d.target.x - d.source.x, dy = d.target.y - d.source.y;
+        var dr = Math.sqrt(dx * dx + dy * dy) * 1.8;
+        return 'M' + d.source.x + ',' + d.source.y + 'A' + dr + ',' + dr + ' 0 0,1 ' + d.target.x + ',' + d.target.y;
+    });
+    linkLabels.each(function(d) {
+        var pos = getLabelPos(d);
+        d3.select(this).attr('x', pos.x).attr('y', pos.y);
+    });
+    labelBgs.each(function(d, i) {
+        var pos = getLabelPos(d);
+        var textNode = linkLabels.nodes()[i];
+        var bbox = textNode.getBBox();
+        d3.select(this)
+            .attr('x', pos.x - bbox.width/2 - 2)
+            .attr('y', pos.y - bbox.height/2 - 1)
+            .attr('width', bbox.width + 4)
+            .attr('height', bbox.height + 2);
+    });
+    node.attr('transform', function(d) { return 'translate(' + d.x + ',' + d.y + ')'; });
+});
 
-        // Background rectangles for labels
-        let labelBgs = labelGroup.selectAll("rect")
-            .data(edges)
-            .enter()
-            .append("rect")
-            .attr("class", "label-bg")
-            .attr("rx", 2)
-            .attr("ry", 2);
+// ── Filters ──────────────────────────────────────────────────────────────
+function applyFilters() {
+    var typeVal = document.getElementById('typeFilter').value;
+    var ratVal = document.getElementById('ratingFilter').value;
+    var showNullVal = document.getElementById('showNull').checked;
+    var showLabelsVal = document.getElementById('showLabels').checked;
 
-        let linkLabels = labelGroup.selectAll("text")
-            .data(edges)
-            .enter()
-            .append("text")
-            .attr("class", "link-label")
-            .text(d => formatBeta(d.beta));
+    var isVisible = function(d) {
+        if (typeVal !== 'all' && d.edge_type !== typeVal) return false;
+        if (ratVal !== 'all' && d.rating !== ratVal) return false;
+        if (!showNullVal && isEdgeNull(d)) return false;
+        return true;
+    };
 
-        const nodeGroup = g.append("g");
-        const node = nodeGroup.selectAll("g")
-            .data(nodes)
-            .enter()
-            .append("g")
-            .attr("class", "node")
-            .call(d3.drag()
-                .on("start", (e, d) => { if (!e.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
-                .on("drag", (e, d) => { d.fx = e.x; d.fy = e.y; })
-                .on("end", (e, d) => { if (!e.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; }));
+    links.style('display', function(d) { return isVisible(d) ? null : 'none'; });
+    linkLabels.style('display', function(d) { return (isVisible(d) && showLabelsVal) ? null : 'none'; });
+    labelBgs.style('display', function(d) { return (isVisible(d) && showLabelsVal) ? null : 'none'; });
 
-        node.append("circle").attr("r", 18);
-        node.append("text").attr("dy", 4).text(d => d.label);
+    var visible = EDGES.filter(isVisible);
+    document.getElementById('statEdges').textContent = visible.length;
+    document.getElementById('statA').textContent = visible.filter(function(e) { return e.rating === 'A'; }).length;
+    document.getElementById('statB').textContent = visible.filter(function(e) { return e.rating === 'B'; }).length;
+    document.getElementById('statC').textContent = visible.filter(function(e) { return e.rating === 'C'; }).length;
+    var totalIssues = visible.reduce(function(s, e) { return s + (e.issues ? e.issues.length : 0); }, 0);
+    document.getElementById('statIssues').textContent = totalIssues;
+}
 
-        const tooltip = d3.select("#tooltip");
+document.getElementById('typeFilter').addEventListener('change', applyFilters);
+document.getElementById('ratingFilter').addEventListener('change', applyFilters);
+document.getElementById('showNull').addEventListener('change', applyFilters);
+document.getElementById('showLabels').addEventListener('change', applyFilters);
 
-        function showTooltip(e, d) {
-            let html = `<h3>${d.id.replace(/_/g, ' ')}</h3>`;
-            html += `<div class="tooltip-row"><span class="tooltip-label">β (coefficient)</span><span class="tooltip-value">${d.beta.toFixed(4)}</span></div>`;
-            html += `<div class="tooltip-row"><span class="tooltip-label">SE</span><span class="tooltip-value">${d.se.toFixed(4)}</span></div>`;
-            if (d.pvalue !== null) {
-                html += `<div class="tooltip-row"><span class="tooltip-label">p-value</span><span class="tooltip-value ${d.is_null ? 'null' : ''}">${d.pvalue.toFixed(4)}</span></div>`;
-            } else {
-                html += `<div class="tooltip-row"><span class="tooltip-label">Type</span><span class="tooltip-value">Deterministic</span></div>`;
-            }
-            if (d.n_obs) html += `<div class="tooltip-row"><span class="tooltip-label">N (obs)</span><span class="tooltip-value">${d.n_obs}</span></div>`;
-            html += `<div class="tooltip-row"><span class="tooltip-label">Rating</span><span class="tooltip-value">${d.rating}</span></div>`;
-            html += `<div class="tooltip-row"><span class="tooltip-label">Group</span><span class="tooltip-value">${d.group.replace(/_/g, ' ')}</span></div>`;
-            if (d.is_null) html += `<div class="tooltip-row"><span class="tooltip-label">Status</span><span class="tooltip-value null">Precisely Null</span></div>`;
-            if (d.formula) html += `<div class="tooltip-row"><span class="tooltip-label">Formula</span><span class="tooltip-value">${d.formula}</span></div>`;
-            tooltip.html(html).style("left", (e.pageX + 15) + "px").style("top", (e.pageY - 15) + "px").classed("visible", true);
-        }
-
-        function hideTooltip() { tooltip.classed("visible", false); }
-
-        // Compute label position along the curve
-        function getLabelPos(d) {
-            const dx = d.target.x - d.source.x;
-            const dy = d.target.y - d.source.y;
-            const dist = Math.sqrt(dx*dx + dy*dy);
-
-            // Position at 40% along the path, with perpendicular offset
-            const t = 0.4;
-            const mx = d.source.x + dx * t;
-            const my = d.source.y + dy * t;
-
-            // Perpendicular offset (to the side of the curve)
-            const offset = 12;
-            const px = -dy / dist * offset;
-            const py = dx / dist * offset;
-
-            return { x: mx + px, y: my + py };
-        }
-
-        simulation.on("tick", () => {
-            links.attr("d", d => {
-                const dx = d.target.x - d.source.x, dy = d.target.y - d.source.y;
-                const dr = Math.sqrt(dx * dx + dy * dy) * 1.8;
-                return `M${d.source.x},${d.source.y}A${dr},${dr} 0 0,1 ${d.target.x},${d.target.y}`;
-            });
-
-            // Position labels
-            linkLabels.each(function(d) {
-                const pos = getLabelPos(d);
-                d3.select(this).attr("x", pos.x).attr("y", pos.y);
-            });
-
-            // Position label backgrounds
-            labelBgs.each(function(d, i) {
-                const pos = getLabelPos(d);
-                const textNode = linkLabels.nodes()[i];
-                const bbox = textNode.getBBox();
-                d3.select(this)
-                    .attr("x", pos.x - bbox.width/2 - 2)
-                    .attr("y", pos.y - bbox.height/2 - 1)
-                    .attr("width", bbox.width + 4)
-                    .attr("height", bbox.height + 2);
-            });
-
-            node.attr("transform", d => `translate(${d.x},${d.y})`);
-        });
-
-        function applyFilters() {
-            const grp = document.getElementById("groupFilter").value;
-            const rat = document.getElementById("ratingFilter").value;
-            const showNull = document.getElementById("showNull").checked;
-            const showLabels = document.getElementById("showLabels").checked;
-
-            const isVisible = d => {
-                if (grp !== "all" && d.group !== grp) return false;
-                if (rat !== "all" && d.rating !== rat) return false;
-                if (!showNull && d.is_null) return false;
-                return true;
-            };
-
-            links.style("display", d => isVisible(d) ? null : "none");
-            linkLabels.style("display", d => (isVisible(d) && showLabels) ? null : "none");
-            labelBgs.style("display", d => (isVisible(d) && showLabels) ? null : "none");
-
-            const visible = edges.filter(isVisible);
-            document.getElementById("statEdges").textContent = visible.length;
-            document.getElementById("statA").textContent = visible.filter(e => e.rating === "A").length;
-            document.getElementById("statB").textContent = visible.filter(e => e.rating === "B").length;
-            document.getElementById("statC").textContent = visible.filter(e => e.rating === "C").length;
-            document.getElementById("statNull").textContent = visible.filter(e => e.is_null).length;
-        }
-
-        document.getElementById("groupFilter").addEventListener("change", applyFilters);
-        document.getElementById("ratingFilter").addEventListener("change", applyFilters);
-        document.getElementById("showNull").addEventListener("change", applyFilters);
-        document.getElementById("showLabels").addEventListener("change", applyFilters);
+applyFilters();
     </script>
 </body>
 </html>
