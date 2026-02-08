@@ -1,36 +1,51 @@
-# Confirmation Freeze Manifest Template
+# Confirmation Freeze Manifest — Schema & Template
 #
-# Before entering CONFIRMATION mode, this manifest must be populated
-# with the exact hashes and sample windows that define the frozen spec.
+# This file serves as both the schema definition and a template for
+# freeze manifests. FreezeValidator reads manifests in this format.
+#
+# At the end of EXPLORATION, `FreezeValidator.create_manifest()` snapshots
+# the current state. Before entering CONFIRMATION, `validate_before_confirmation()`
+# checks that the live state still matches the frozen manifest.
+#
+# Usage:
+#   from shared.agentic.governance.freeze_validator import FreezeValidator, FreezeManifest
+#
+#   # After exploration:
+#   validator = FreezeValidator()
+#   manifest = validator.create_manifest(agent_loop)
+#   manifest.save(Path("outputs/agentic/freeze_manifest.yaml"))
+#
+#   # Before confirmation:
+#   manifest = FreezeManifest.load(Path("outputs/agentic/freeze_manifest.yaml"))
+#   violations = validator.validate_before_confirmation(agent_loop, manifest)
 
 freeze_manifest:
-  required_hashes:
-    dag_hash: ""           # SHA-256 of the DAG specification
-    design_assignments_hash: ""  # SHA-256 of design assignments
-    data_hash: ""          # SHA-256 of the data catalog
+  # SHA-256 hashes computed at freeze time
+  dag_hash: ""                     # DAGSpec.compute_hash()
+  design_assignments_hash: ""      # Hash of {edge_id: {design, spec_hash}} for all edges
+  data_hash: ""                    # Hash of the data catalog state
 
-  sample_windows:
-    exploration_sample:
-      start: ""            # e.g., "2011-01-01"
-      end: ""              # e.g., "2022-12-31"
-    confirmation_sample:
-      start: ""            # e.g., "2023-01-01"
-      end: ""              # e.g., "2024-12-31"
-    overlap_policy: "FORBIDDEN"
-    # For TS edges: exploration and confirmation samples MUST NOT overlap.
-    # For panel edges: leave-one-period-out or rolling-window acceptable.
+  # Timestamps and provenance
+  frozen_at: ""                    # ISO-8601 timestamp when manifest was created
+  frozen_by: ""                    # Who/what created the freeze (e.g. "agent_loop")
+  exploration_run_id: ""           # Run ID of the exploration that produced this freeze
 
-  holdout_rule: |
-    For time-series edges: confirmation runs on a pre-specified holdout window
-    not used during exploration refinement. For panel edges: leave-one-period-out
-    or rolling-window evaluation acceptable.
+  # Sample windows (critical for time-series p-hacking prevention)
+  exploration_window:
+    - ""                           # start date, e.g. "2011-01-01"
+    - ""                           # end date, e.g. "2022-12-31"
+  confirmation_window:
+    - ""                           # start date, e.g. "2023-01-01"
+    - ""                           # end date, e.g. "2024-12-31"
 
+  # Overlap policy: FORBIDDEN means exploration and confirmation windows
+  # must not share any dates. This prevents the most common form of
+  # specification search: tuning on in-sample data then "confirming"
+  # on overlapping periods.
+  overlap_policy: "FORBIDDEN"
+
+  # Fields that must be present on every EdgeCard entering confirmation
   edgecard_fields_required:
     - "spec_hash"
     - "data_hash"
     - "sample_window"
-
-  # Populated at freeze time:
-  frozen_at: ""
-  frozen_by: ""
-  exploration_run_id: ""

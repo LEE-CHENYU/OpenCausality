@@ -520,6 +520,27 @@ class AgentLoop:
             logger.error(f"Cannot enter CONFIRMATION mode: {msg}")
             return self._create_error_report(f"CONFIRMATION blocked: {msg}")
 
+        # Freeze validation: verify state matches exploration manifest
+        from shared.agentic.governance.freeze_validator import FreezeValidator, FreezeManifest
+
+        freeze_validator = FreezeValidator()
+        try:
+            manifest = FreezeManifest.load(frozen_spec_path)
+            violations = freeze_validator.validate_before_confirmation(self, manifest)
+            if violations:
+                for v in violations:
+                    logger.error(f"Freeze violation: {v}")
+                return self._create_error_report(
+                    f"CONFIRMATION blocked: {len(violations)} freeze violation(s). "
+                    f"First: {violations[0]}"
+                )
+            logger.info("Freeze validation passed: state matches exploration manifest")
+        except FileNotFoundError:
+            logger.error(f"Freeze manifest not found: {frozen_spec_path}")
+            return self._create_error_report(
+                f"CONFIRMATION blocked: freeze manifest not found at {frozen_spec_path}"
+            )
+
         self.mode = "CONFIRMATION"
         self.config.holdout_period = holdout_period
         self.config.frozen_spec_path = frozen_spec_path

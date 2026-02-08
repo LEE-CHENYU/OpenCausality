@@ -224,34 +224,30 @@ def _print_comparison(base_dag: Any, new_dag: Any) -> None:
     )
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Generate a DAG from a narrative text using LLM extraction.",
-    )
-    parser.add_argument("--narrative", type=Path, default=DEFAULT_NARRATIVE,
-                        help="Path to narrative text file.")
-    parser.add_argument("--base-dag", type=Path, default=DEFAULT_BASE_DAG,
-                        help="Path to base DAG YAML for node matching.")
-    parser.add_argument("--out", type=Path, default=DEFAULT_OUT,
-                        help="Output path for generated DAG YAML.")
-    parser.add_argument("--verbose", action="store_true", help="Enable debug logging.")
-    args = parser.parse_args()
+def generate(
+    narrative_path: Path = DEFAULT_NARRATIVE,
+    base_dag_path: Path = DEFAULT_BASE_DAG,
+    output_path: Path = DEFAULT_OUT,
+) -> Path:
+    """Generate a DAG from narrative text using LLM extraction.
 
-    logging.basicConfig(
-        level=logging.DEBUG if args.verbose else logging.INFO,
-        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-    )
+    Args:
+        narrative_path: Path to narrative text file.
+        base_dag_path: Path to base DAG YAML for node matching.
+        output_path: Output path for generated DAG YAML.
 
+    Returns:
+        Path to the generated DAG YAML.
+    """
     # Load narrative
-    if not args.narrative.exists():
-        logger.error(f"Narrative file not found: {args.narrative}")
-        sys.exit(1)
-    narrative_text = args.narrative.read_text(encoding="utf-8")
-    logger.info(f"Loaded narrative ({len(narrative_text)} chars) from {args.narrative}")
+    if not narrative_path.exists():
+        raise FileNotFoundError(f"Narrative file not found: {narrative_path}")
+    narrative_text = narrative_path.read_text(encoding="utf-8")
+    logger.info(f"Loaded narrative ({len(narrative_text)} chars) from {narrative_path}")
 
     # Load base DAG
     from shared.agentic.dag.parser import parse_dag
-    base_dag = parse_dag(args.base_dag)
+    base_dag = parse_dag(base_dag_path)
     logger.info(f"Loaded base DAG '{base_dag.metadata.name}': "
                 f"{len(base_dag.nodes)} nodes, {len(base_dag.edges)} edges")
 
@@ -268,8 +264,8 @@ def main() -> None:
     claims = extractor.extract_causal_claims([paper])
     logger.info(f"Extracted {len(claims)} causal claims")
     if not claims:
-        logger.warning("No causal claims found in narrative. Exiting.")
-        sys.exit(0)
+        logger.warning("No causal claims found in narrative.")
+        return output_path
 
     # Stage 2: Match claims to existing DAG nodes
     logger.info("Stage 2: Matching claims to existing DAG nodes...")
@@ -296,23 +292,49 @@ def main() -> None:
     # Build and write DAG
     logger.info("Building narrative DAG...")
     new_dag = _build_dag(base_dag, proposed_edges, new_nodes)
-    args.out.parent.mkdir(parents=True, exist_ok=True)
-    with open(args.out, "w", encoding="utf-8") as f:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(output_path, "w", encoding="utf-8") as f:
         yaml.dump(new_dag.to_dict(), f, sort_keys=False, allow_unicode=True,
                   default_flow_style=False)
-    logger.info(f"Wrote narrative DAG to {args.out}")
+    logger.info(f"Wrote narrative DAG to {output_path}")
 
     # Validate round-trip
-    try:
-        validated = parse_dag(args.out)
-        logger.info(f"Validation passed: {len(validated.nodes)} nodes, "
-                    f"{len(validated.edges)} edges")
-    except Exception as e:
-        logger.error(f"Validation failed on written DAG: {e}")
-        sys.exit(1)
+    validated = parse_dag(output_path)
+    logger.info(f"Validation passed: {len(validated.nodes)} nodes, "
+                f"{len(validated.edges)} edges")
 
     # Print comparison table
     _print_comparison(base_dag, new_dag)
+
+    return output_path
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="Generate a DAG from a narrative text using LLM extraction.",
+    )
+    parser.add_argument("--narrative", type=Path, default=DEFAULT_NARRATIVE,
+                        help="Path to narrative text file.")
+    parser.add_argument("--base-dag", type=Path, default=DEFAULT_BASE_DAG,
+                        help="Path to base DAG YAML for node matching.")
+    parser.add_argument("--out", type=Path, default=DEFAULT_OUT,
+                        help="Output path for generated DAG YAML.")
+    parser.add_argument("--verbose", action="store_true", help="Enable debug logging.")
+    args = parser.parse_args()
+
+    logging.basicConfig(
+        level=logging.DEBUG if args.verbose else logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    )
+
+    try:
+        generate(args.narrative, args.base_dag, args.out)
+    except FileNotFoundError as e:
+        logger.error(str(e))
+        sys.exit(1)
+    except Exception as e:
+        logger.error(f"Generation failed: {e}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":

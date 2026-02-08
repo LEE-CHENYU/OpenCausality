@@ -426,6 +426,48 @@ def generate_comparison_report(
     return "\n".join(lines)
 
 
+def compare(
+    baseline_dir: Path,
+    new_dir: Path,
+    output_path: Path | None = None,
+) -> Path:
+    """Compare edge cards from two estimation runs.
+
+    Args:
+        baseline_dir: Path to baseline (Run A) output directory.
+        new_dir: Path to new (Run B) output directory.
+        output_path: Output path for report (default: <new_dir>/COMPARISON_REPORT.md).
+
+    Returns:
+        Path to the written report.
+    """
+    if not baseline_dir.exists():
+        raise FileNotFoundError(f"Baseline directory does not exist: {baseline_dir}")
+    if not new_dir.exists():
+        raise FileNotFoundError(f"New directory does not exist: {new_dir}")
+
+    print(f"Loading Run A cards from {baseline_dir}...")
+    cards_a = _load_cards(baseline_dir)
+    print(f"  Loaded {len(cards_a)} edge cards")
+
+    print(f"Loading Run B cards from {new_dir}...")
+    cards_b = _load_cards(new_dir)
+    print(f"  Loaded {len(cards_b)} edge cards")
+
+    report = generate_comparison_report(cards_a, cards_b, baseline_dir, new_dir)
+
+    out = output_path or (new_dir / "COMPARISON_REPORT.md")
+    with open(out, "w") as f:
+        f.write(report)
+
+    print(f"\nReport written to {out}")
+    print(f"  Common edges: {len(set(cards_a) & set(cards_b))}")
+    print(f"  Only in A: {len(set(cards_a) - set(cards_b))}")
+    print(f"  Only in B: {len(set(cards_b) - set(cards_a))}")
+
+    return out
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Compare edge cards from two estimation runs"
@@ -472,31 +514,11 @@ def main():
     if dir_a is None or dir_b is None:
         parser.error("Both run-a and run-b directories are required")
 
-    if not dir_a.exists():
-        print(f"Error: Run A directory does not exist: {dir_a}", file=sys.stderr)
+    try:
+        compare(dir_a, dir_b, args.output)
+    except FileNotFoundError as e:
+        print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
-    if not dir_b.exists():
-        print(f"Error: Run B directory does not exist: {dir_b}", file=sys.stderr)
-        sys.exit(1)
-
-    print(f"Loading Run A cards from {dir_a}...")
-    cards_a = _load_cards(dir_a)
-    print(f"  Loaded {len(cards_a)} edge cards")
-
-    print(f"Loading Run B cards from {dir_b}...")
-    cards_b = _load_cards(dir_b)
-    print(f"  Loaded {len(cards_b)} edge cards")
-
-    report = generate_comparison_report(cards_a, cards_b, dir_a, dir_b)
-
-    output_path = args.output or (dir_b / "COMPARISON_REPORT.md")
-    with open(output_path, "w") as f:
-        f.write(report)
-
-    print(f"\nReport written to {output_path}")
-    print(f"  Common edges: {len(set(cards_a) & set(cards_b))}")
-    print(f"  Only in A: {len(set(cards_a) - set(cards_b))}")
-    print(f"  Only in B: {len(set(cards_b) - set(cards_a))}")
 
 
 if __name__ == "__main__":

@@ -395,50 +395,55 @@ def print_status_table(tracker: DownloadStatusTracker) -> None:
     console.print(table)
 
 
-def main():
-    """Run data download with status tracking."""
-    parser = argparse.ArgumentParser(description="Download all research data sources")
-    parser.add_argument("--verify", action="store_true", help="Verify existing data only")
-    parser.add_argument("--force", action="store_true", help="Force re-download all sources")
-    parser.add_argument("--status", action="store_true", help="Show status only")
-    args = parser.parse_args()
+def download_data(
+    force: bool = False,
+    verify_only: bool = False,
+    source_filter: str | None = None,
+) -> None:
+    """Download research data sources with status tracking.
 
+    Args:
+        force: Force re-download all sources.
+        verify_only: Only verify existing data, don't download.
+        source_filter: Only process sources matching this name.
+    """
     from config.settings import get_settings
     settings = get_settings()
     project_root = settings.project_root
 
-    # Initialize tracker
     status_file = project_root / "data/metadata/download_status.json"
     tracker = DownloadStatusTracker(status_file)
 
     console.print("[bold green]Research Data Download Tool[/bold green]")
     console.print("=" * 50)
 
-    if args.status:
-        print_status_table(tracker)
-        return
-
-    if args.verify:
+    if verify_only:
         verify_existing_data(project_root, tracker)
     else:
-        # Verify existing first, then download missing
         verify_existing_data(project_root, tracker)
-        download_all(project_root, tracker, force=args.force)
+        if source_filter:
+            # Filter DATA_SOURCES to only matching
+            filtered = {k: v for k, v in DATA_SOURCES.items() if source_filter in k}
+            if not filtered:
+                console.print(f"[red]No sources matching '{source_filter}'[/red]")
+                return
+            original = dict(DATA_SOURCES)
+            DATA_SOURCES.clear()
+            DATA_SOURCES.update(filtered)
+            download_all(project_root, tracker, force=force)
+            DATA_SOURCES.clear()
+            DATA_SOURCES.update(original)
+        else:
+            download_all(project_root, tracker, force=force)
 
-    # Save status
     tracker.save()
     logger.info(f"\nStatus saved to: {status_file}")
-
-    # Print summary
     print_status_table(tracker)
 
-    # Check for synthetic data
     if tracker.has_synthetic_data():
         console.print("\n[bold red]WARNING: Synthetic data detected![/bold red]")
         console.print("Run with --force to re-download real data.")
-        sys.exit(1)
 
-    # Check for required failures
     required_failures = []
     for source_name, config in DATA_SOURCES.items():
         if not config.get("optional"):
@@ -447,12 +452,31 @@ def main():
                 required_failures.append(source_name)
 
     if required_failures:
-        console.print(f"\n[bold red]ERROR: {len(required_failures)} required sources failed to download[/bold red]")
+        console.print(f"\n[bold red]ERROR: {len(required_failures)} required sources failed[/bold red]")
         for name in required_failures:
             console.print(f"  - {name}")
-        sys.exit(1)
+    else:
+        console.print("\n[bold green]All required data sources are available![/bold green]")
 
-    console.print("\n[bold green]All required data sources are available![/bold green]")
+
+def main():
+    """Run data download with status tracking."""
+    parser = argparse.ArgumentParser(description="Download all research data sources")
+    parser.add_argument("--verify", action="store_true", help="Verify existing data only")
+    parser.add_argument("--force", action="store_true", help="Force re-download all sources")
+    parser.add_argument("--status", action="store_true", help="Show status only")
+    parser.add_argument("--source", type=str, default=None, help="Filter by source name")
+    args = parser.parse_args()
+
+    if args.status:
+        from config.settings import get_settings
+        settings = get_settings()
+        status_file = settings.project_root / "data/metadata/download_status.json"
+        tracker = DownloadStatusTracker(status_file)
+        print_status_table(tracker)
+        return
+
+    download_data(force=args.force, verify_only=args.verify, source_filter=args.source)
 
 
 if __name__ == "__main__":

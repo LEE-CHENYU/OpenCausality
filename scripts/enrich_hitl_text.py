@@ -130,25 +130,51 @@ def enrich_actions(dry_run: bool = False, suffix: str = "") -> int:
     return count
 
 
+def enrich(
+    dry_run: bool = False,
+    registry_only: bool = False,
+    actions_only: bool = False,
+) -> int:
+    """Enrich HITL YAML files with LLM-generated text.
+
+    Args:
+        dry_run: Don't write files, just show what would be generated.
+        registry_only: Only enrich issue_registry.yaml.
+        actions_only: Only enrich hitl_actions.yaml.
+
+    Returns:
+        Total number of LLM calls made.
+    """
+    print("Enriching HITL text...")
+    total = 0
+
+    if not actions_only:
+        print("\n[1/2] issue_registry.yaml")
+        reg_count = enrich_registry(dry_run=dry_run)
+        print(f"  Generated {reg_count} explanation/guidance pairs")
+        total += reg_count
+
+    if not registry_only:
+        print("\n[2/2] hitl_actions.yaml")
+        act_count = enrich_actions(dry_run=dry_run)
+        print(f"  Generated {act_count} tooltips")
+        total += act_count
+
+    print(f"\nDone. Total LLM calls: {total}")
+    if dry_run:
+        print("(Dry run -- no files written)")
+
+    return total
+
+
 def main():
     parser = argparse.ArgumentParser(description="Enrich HITL YAML files with LLM-generated text.")
     parser.add_argument("--dry-run", action="store_true", help="Don't write files, just show what would be generated")
-    parser.add_argument("--output-suffix", default="", help="Suffix for output files (e.g., '.enriched')")
+    parser.add_argument("--registry-only", action="store_true", help="Only enrich issue_registry.yaml")
+    parser.add_argument("--actions-only", action="store_true", help="Only enrich hitl_actions.yaml")
     args = parser.parse_args()
 
-    print("Enriching HITL text...")
-
-    print("\n[1/2] issue_registry.yaml")
-    reg_count = enrich_registry(dry_run=args.dry_run, suffix=args.output_suffix)
-    print(f"  Generated {reg_count} explanation/guidance pairs")
-
-    print("\n[2/2] hitl_actions.yaml")
-    act_count = enrich_actions(dry_run=args.dry_run, suffix=args.output_suffix)
-    print(f"  Generated {act_count} tooltips")
-
-    print(f"\nDone. Total LLM calls: {reg_count + act_count}")
-    if args.dry_run:
-        print("(Dry run -- no files written)")
+    enrich(dry_run=args.dry_run, registry_only=args.registry_only, actions_only=args.actions_only)
 
 
 if __name__ == "__main__":

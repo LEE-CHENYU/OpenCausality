@@ -1173,5 +1173,172 @@ def query_repl(
     start_repl(dag_path=dag_path, cards_dir=cards_dir, mode=mode)
 
 
+# ============================================================================
+# DAG Generate Command
+# ============================================================================
+
+@dag_app.command("generate")
+def dag_generate(
+    narrative: Path = typer.Argument(
+        ...,
+        help="Path to narrative text file",
+        exists=True,
+        dir_okay=False,
+        readable=True,
+    ),
+    base_dag: Optional[Path] = typer.Option(
+        None, "--base-dag", "-b",
+        help="Path to base DAG YAML for node matching",
+    ),
+    output: Optional[Path] = typer.Option(
+        None, "--output", "-o",
+        help="Output path for generated DAG YAML",
+    ),
+):
+    """Generate a DAG from a natural language narrative via LLM extraction."""
+    from scripts.generate_narrative_dag import generate, DEFAULT_BASE_DAG, DEFAULT_OUT
+
+    console.print(f"[bold cyan]Generating DAG from narrative: {narrative}[/bold cyan]")
+    try:
+        result = generate(
+            narrative_path=narrative,
+            base_dag_path=base_dag or DEFAULT_BASE_DAG,
+            output_path=output or DEFAULT_OUT,
+        )
+        console.print(f"[green]Written: {result}[/green]")
+    except Exception as e:
+        console.print(f"[bold red]Error: {e}[/bold red]")
+        raise typer.Exit(1)
+
+
+# ============================================================================
+# DAG Compare Command
+# ============================================================================
+
+@dag_app.command("compare")
+def dag_compare(
+    baseline_dir: Path = typer.Argument(
+        ...,
+        help="Path to baseline (Run A) output directory",
+        exists=True,
+        file_okay=False,
+    ),
+    new_dir: Path = typer.Argument(
+        ...,
+        help="Path to new (Run B) output directory",
+        exists=True,
+        file_okay=False,
+    ),
+    output: Optional[Path] = typer.Option(
+        None, "--output", "-o",
+        help="Output path for comparison report",
+    ),
+):
+    """Compare EdgeCards between two estimation runs."""
+    from scripts.compare_runs import compare
+
+    console.print(f"[bold cyan]Comparing runs: {baseline_dir} vs {new_dir}[/bold cyan]")
+    try:
+        result = compare(baseline_dir, new_dir, output)
+        console.print(f"[green]Report written: {result}[/green]")
+    except Exception as e:
+        console.print(f"[bold red]Error: {e}[/bold red]")
+        raise typer.Exit(1)
+
+
+# ============================================================================
+# Data Download Command
+# ============================================================================
+
+@data_app.command("download")
+def data_download(
+    force: bool = typer.Option(False, "--force", "-f", help="Force re-download all sources"),
+    verify_only: bool = typer.Option(False, "--verify-only", help="Only verify existing data"),
+    source: Optional[str] = typer.Option(None, "--source", "-s", help="Filter by source name"),
+):
+    """Download all research data sources with status tracking."""
+    from scripts.download_all_data import download_data
+
+    console.print("[bold cyan]Data Download[/bold cyan]")
+    download_data(force=force, verify_only=verify_only, source_filter=source)
+
+
+# ============================================================================
+# Config Enrich Command
+# ============================================================================
+
+@config_app.command("enrich")
+def config_enrich(
+    dry_run: bool = typer.Option(
+        False, "--dry-run", help="Don't write files",
+    ),
+    registry_only: bool = typer.Option(
+        False, "--registry-only", help="Only enrich issue_registry",
+    ),
+    actions_only: bool = typer.Option(
+        False, "--actions-only", help="Only enrich hitl_actions",
+    ),
+):
+    """Enrich HITL YAML configs with LLM-generated descriptions."""
+    from scripts.enrich_hitl_text import enrich
+
+    console.print("[bold cyan]Enriching HITL text...[/bold cyan]")
+    total = enrich(dry_run=dry_run, registry_only=registry_only, actions_only=actions_only)
+    console.print(f"[green]Done. Total LLM calls: {total}[/green]")
+
+
+# ============================================================================
+# HITL Commands
+# ============================================================================
+
+hitl_app = typer.Typer(
+    name="hitl",
+    help="Human-in-the-Loop panel commands",
+)
+app.add_typer(hitl_app, name="hitl")
+
+
+@hitl_app.command("build")
+def hitl_build(
+    state_file: Optional[Path] = typer.Option(
+        None, "--state-file",
+        help="Path to state.json",
+    ),
+    dag_file: Optional[Path] = typer.Option(
+        None, "--dag-file",
+        help="Path to DAG YAML for edge/node context",
+    ),
+    llm_annotate: bool = typer.Option(
+        False, "--llm-annotate",
+        help="Generate LLM-powered contextual decision guidance",
+    ),
+    output_dir: Optional[Path] = typer.Option(
+        None, "--output-dir", "-o",
+        help="Output directory for hitl_panel.html",
+    ),
+):
+    """Build the HITL Resolution Panel HTML."""
+    from scripts.build_hitl_panel import (
+        build, DEFAULT_STATE, DEFAULT_CARDS_DIR,
+        DEFAULT_ACTIONS, DEFAULT_REGISTRY, DEFAULT_OUTPUT_DIR, DEFAULT_DAG,
+    )
+
+    console.print("[bold cyan]Building HITL panel...[/bold cyan]")
+    try:
+        result = build(
+            state_path=state_file or DEFAULT_STATE,
+            cards_dir=DEFAULT_CARDS_DIR,
+            actions_path=DEFAULT_ACTIONS,
+            registry_path=DEFAULT_REGISTRY,
+            output_dir=output_dir or DEFAULT_OUTPUT_DIR,
+            dag_path=dag_file or DEFAULT_DAG,
+            llm_annotate=llm_annotate,
+        )
+        console.print(f"[green]Written: {result}[/green]")
+    except Exception as e:
+        console.print(f"[bold red]Error: {e}[/bold red]")
+        raise typer.Exit(1)
+
+
 if __name__ == "__main__":
     app()
