@@ -1,30 +1,41 @@
 """
-Unified CLI for Kazakhstan econometric research.
+OpenCausality Platform — Unified CLI.
 
 Usage:
-    kzresearch list-studies
-    kzresearch welfare <command>
-    kzresearch credit <command>
-    kzresearch dag run <path>
+    opencausality list-studies
+    opencausality welfare <command>
+    opencausality credit <command>
+    opencausality dag run <path>
+    opencausality query --dag <path>
+    opencausality init
+    opencausality config show
 """
 
+import os
+import re
 from pathlib import Path
 from typing import Optional
 
 import typer
 from rich.console import Console
 from rich.table import Table
+from rich.panel import Panel
 
 app = typer.Typer(
-    name="kzresearch",
-    help="Kazakhstan Econometric Research Platform",
+    name="opencausality",
+    help="OpenCausality — Open-Source Causal Inference Platform",
     no_args_is_help=True,
 )
 dag_app = typer.Typer(
     name="dag",
     help="DAG-based agentic estimation commands",
 )
+config_app = typer.Typer(
+    name="config",
+    help="Configuration management commands",
+)
 app.add_typer(dag_app, name="dag")
+app.add_typer(config_app, name="config")
 
 console = Console()
 
@@ -52,7 +63,7 @@ except ImportError:
 @app.command("list-studies")
 def list_studies():
     """List all available research studies."""
-    table = Table(title="Kazakhstan Econometric Research Studies")
+    table = Table(title="OpenCausality Research Studies")
 
     table.add_column("Study", style="cyan", no_wrap=True)
     table.add_column("Description", style="white")
@@ -61,21 +72,21 @@ def list_studies():
 
     table.add_row(
         "household_welfare",
-        "Oil price shocks → household income",
+        "Oil price shocks -> household income",
         "Active",
-        "kzresearch welfare",
+        "opencausality welfare",
     )
     table.add_row(
         "credit_default",
-        "Income changes → credit default risk",
+        "Income changes -> credit default risk",
         "Active",
-        "kzresearch credit",
+        "opencausality credit",
     )
     table.add_row(
         "fx_passthrough",
-        "FX → inflation → income → expenditure",
+        "FX -> inflation -> income -> expenditure",
         "Active",
-        "kzresearch passthrough",
+        "opencausality passthrough",
     )
 
     console.print(table)
@@ -84,23 +95,219 @@ def list_studies():
 @app.command("info")
 def info():
     """Show information about the research platform."""
-    console.print("\n[bold cyan]Kazakhstan Econometric Research Platform[/bold cyan]\n")
+    console.print("\n[bold cyan]OpenCausality Platform[/bold cyan]\n")
     console.print("Version: 0.3.0")
     console.print("\n[bold]Studies:[/bold]")
-    console.print("  1. [cyan]household_welfare[/cyan] - Oil shocks → household income")
-    console.print("  2. [cyan]credit_default[/cyan] - Income → credit default")
-    console.print("  3. [cyan]fx_passthrough[/cyan] - FX → inflation → expenditure\n")
+    console.print("  1. [cyan]household_welfare[/cyan] - Oil shocks -> household income")
+    console.print("  2. [cyan]credit_default[/cyan] - Income -> credit default")
+    console.print("  3. [cyan]fx_passthrough[/cyan] - FX -> inflation -> expenditure\n")
     console.print("[bold]Shared Infrastructure:[/bold]")
     console.print("  - shared/data/ - Data clients (BNS, FRED, exchange rate, CPI)")
     console.print("  - shared/model/ - Inference, event study, small-N methods")
     console.print("  - shared/engine/ - Scenario simulation base")
-    console.print("  - shared/agentic/ - DAG-based agentic estimation\n")
+    console.print("  - shared/agentic/ - DAG-based agentic estimation")
+    console.print("  - shared/llm/ - LLM abstraction layer\n")
     console.print("[bold]Usage:[/bold]")
-    console.print("  kzresearch list-studies       List all studies")
-    console.print("  kzresearch welfare --help     Household welfare commands")
-    console.print("  kzresearch credit --help      Credit default commands")
-    console.print("  kzresearch passthrough --help FX passthrough commands")
-    console.print("  kzresearch dag run <path>     Run a DAG specification\n")
+    console.print("  opencausality list-studies       List all studies")
+    console.print("  opencausality welfare --help     Household welfare commands")
+    console.print("  opencausality credit --help      Credit default commands")
+    console.print("  opencausality passthrough --help FX passthrough commands")
+    console.print("  opencausality dag run <path>     Run a DAG specification")
+    console.print("  opencausality query              Interactive query REPL")
+    console.print("  opencausality init               Setup wizard")
+    console.print("  opencausality config show        Show configuration\n")
+
+
+# ============================================================================
+# Init Command
+# ============================================================================
+
+@app.command("init")
+def init_project():
+    """Interactive setup wizard: create .env with API keys."""
+    env_path = Path(".env")
+    if env_path.exists():
+        overwrite = typer.confirm(".env already exists. Overwrite?", default=False)
+        if not overwrite:
+            console.print("[dim]Aborted.[/dim]")
+            raise typer.Exit(0)
+
+    console.print(Panel("[bold cyan]OpenCausality Setup[/bold cyan]", subtitle="Creates .env"))
+    console.print()
+
+    # Collect keys interactively
+    anthropic_key = typer.prompt(
+        "Anthropic API key (for query REPL)", default="", show_default=False,
+    )
+    fred_key = typer.prompt(
+        "FRED API key (https://fred.stlouisfed.org/docs/api/api_key.html)",
+        default="", show_default=False,
+    )
+    s2_key = typer.prompt(
+        "Semantic Scholar API key (optional)", default="", show_default=False,
+    )
+
+    llm_provider = typer.prompt("LLM provider", default="anthropic")
+    llm_model = typer.prompt("LLM model", default="claude-sonnet-4-5-20250929")
+    dag_path = typer.prompt("Default DAG path", default="config/agentic/dags/kspi_k2_full.yaml")
+
+    # Validate FRED key format if provided
+    if fred_key and len(fred_key) < 10:
+        console.print("[yellow]Warning: FRED API key looks too short.[/yellow]")
+
+    # Write .env
+    lines = [
+        "# OpenCausality Platform",
+        f"ANTHROPIC_API_KEY={anthropic_key}",
+        f"LLM_PROVIDER={llm_provider}",
+        f"LLM_MODEL={llm_model}",
+        "",
+        f"FRED_API_KEY={fred_key}",
+        f"SEMANTIC_SCHOLAR_API_KEY={s2_key}",
+        "OPENALEX_MAILTO=",
+        "UNPAYWALL_EMAIL=",
+        "CORE_API_KEY=",
+        "",
+        "CACHE_DIR=.cache",
+        "DATA_DIR=data",
+        "OUTPUT_DIR=outputs",
+        "",
+        f"DEFAULT_DAG_PATH={dag_path}",
+        "DEFAULT_QUERY_MODE=REDUCED_FORM",
+        "LOG_LEVEL=INFO",
+    ]
+    env_path.write_text("\n".join(lines) + "\n")
+    console.print(f"\n[green]Wrote {env_path}[/green]")
+    console.print("[dim]Run 'opencausality config doctor' to verify.[/dim]")
+
+
+# ============================================================================
+# Config Commands
+# ============================================================================
+
+def _mask_key(value: str) -> str:
+    """Mask an API key for display — NEVER print full secrets."""
+    if not value:
+        return "[dim]<not set>[/dim]"
+    if len(value) <= 8:
+        return "*" * len(value)
+    return value[:4] + "*" * (len(value) - 8) + value[-4:]
+
+
+@config_app.command("show")
+def config_show():
+    """Show current configuration (API keys masked)."""
+    from config.settings import get_settings
+
+    settings = get_settings()
+
+    table = Table(title="OpenCausality Configuration")
+    table.add_column("Setting", style="cyan")
+    table.add_column("Value", style="white")
+
+    table.add_row("llm_provider", settings.llm_provider)
+    table.add_row("llm_model", settings.llm_model)
+    table.add_row("anthropic_api_key", _mask_key(settings.anthropic_api_key))
+    table.add_row("fred_api_key", _mask_key(settings.fred_api_key))
+    table.add_row("semantic_scholar_api_key", _mask_key(settings.semantic_scholar_api_key))
+    table.add_row("openalex_mailto", settings.openalex_mailto or "[dim]<not set>[/dim]")
+    table.add_row("unpaywall_email", settings.unpaywall_email or "[dim]<not set>[/dim]")
+    table.add_row("core_api_key", _mask_key(settings.core_api_key))
+    table.add_row("", "")
+    table.add_row("default_dag_path", settings.default_dag_path)
+    table.add_row("default_query_mode", settings.default_query_mode)
+    table.add_row("cache_dir", str(settings.cache_dir))
+    table.add_row("data_dir", str(settings.data_dir))
+    table.add_row("output_dir", str(settings.output_dir))
+    table.add_row("log_level", settings.log_level)
+
+    console.print(table)
+
+
+@config_app.command("set")
+def config_set(
+    key: str = typer.Argument(..., help="Configuration key (e.g. ANTHROPIC_API_KEY)"),
+    value: str = typer.Argument(..., help="New value"),
+):
+    """Set a configuration value in .env."""
+    env_path = Path(".env")
+    if not env_path.exists():
+        console.print("[red].env not found. Run 'opencausality init' first.[/red]")
+        raise typer.Exit(1)
+
+    content = env_path.read_text()
+    key_upper = key.upper()
+
+    # Replace existing line or append
+    pattern = re.compile(rf"^{re.escape(key_upper)}=.*$", re.MULTILINE)
+    if pattern.search(content):
+        content = pattern.sub(f"{key_upper}={value}", content)
+    else:
+        content = content.rstrip("\n") + f"\n{key_upper}={value}\n"
+
+    env_path.write_text(content)
+    console.print(f"[green]Set {key_upper} in .env[/green]")
+
+
+@config_app.command("doctor")
+def config_doctor():
+    """Diagnose configuration: check API keys, files, connectivity."""
+    from config.settings import get_settings
+
+    settings = get_settings()
+    issues: list[str] = []
+    ok: list[str] = []
+
+    console.print(Panel("[bold cyan]Configuration Doctor[/bold cyan]"))
+
+    # Check API keys
+    if settings.anthropic_api_key:
+        ok.append("Anthropic API key is set")
+    else:
+        issues.append("ANTHROPIC_API_KEY not set (query REPL will use regex fallback)")
+
+    if settings.fred_api_key:
+        ok.append("FRED API key is set")
+    else:
+        issues.append("FRED_API_KEY not set (data fetching will fail)")
+
+    if settings.semantic_scholar_api_key:
+        ok.append("Semantic Scholar API key is set")
+    else:
+        issues.append("SEMANTIC_SCHOLAR_API_KEY not set (literature search may be rate-limited)")
+
+    # Check default DAG file
+    dag_path = Path(settings.default_dag_path)
+    if dag_path.exists():
+        ok.append(f"Default DAG exists: {dag_path}")
+    else:
+        issues.append(f"Default DAG not found: {dag_path}")
+
+    # Check cards directory
+    cards_dir = Path(settings.output_dir) / "agentic" / "edge_cards"
+    if cards_dir.exists():
+        card_count = len(list(cards_dir.glob("*.yaml")) + list(cards_dir.glob("*.json")))
+        ok.append(f"Edge cards directory exists ({card_count} cards)")
+    else:
+        issues.append(f"Edge cards directory not found: {cards_dir}")
+
+    # Check .env exists
+    if Path(".env").exists():
+        ok.append(".env file exists")
+    else:
+        issues.append(".env file not found (run 'opencausality init')")
+
+    # Display results
+    for item in ok:
+        console.print(f"  [green]OK[/green]  {item}")
+    for item in issues:
+        console.print(f"  [yellow]!![/yellow]  {item}")
+
+    console.print()
+    if not issues:
+        console.print("[bold green]All checks passed.[/bold green]")
+    else:
+        console.print(f"[yellow]{len(issues)} issue(s) found.[/yellow]")
 
 
 # ============================================================================
@@ -141,7 +348,7 @@ def dag_run(
     Run a DAG specification through the agentic estimation loop.
 
     Example:
-        kzresearch dag run config/agentic/dags/example_kz_welfare.yaml
+        opencausality dag run config/agentic/dags/example_welfare.yaml
 
     The command will:
     1. Parse and validate the DAG
@@ -353,6 +560,22 @@ def dag_list(
         console.print("[yellow]Could not import DAG parser[/yellow]")
         for dag_file in sorted(dag_files):
             console.print(f"  {dag_file.name}")
+
+
+# ============================================================================
+# Query REPL Command
+# ============================================================================
+
+@app.command("query")
+def query_repl(
+    dag_path: Optional[Path] = typer.Option(None, "--dag", "-d", help="Path to DAG YAML"),
+    cards_dir: Optional[Path] = typer.Option(None, "--cards", "-c", help="Edge cards directory"),
+    mode: str = typer.Option("REDUCED_FORM", "--mode", "-m", help="Query mode"),
+):
+    """Start the interactive causal query REPL."""
+    from scripts.query_repl import start_repl
+
+    start_repl(dag_path=dag_path, cards_dir=cards_dir, mode=mode)
 
 
 if __name__ == "__main__":

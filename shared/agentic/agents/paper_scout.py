@@ -215,6 +215,66 @@ class PaperScout:
         )
         return bundle
 
+    def search_and_extract(
+        self,
+        dag: Any,
+        llm: Any,
+        edge_id: str | None = None,
+    ) -> list:
+        """
+        Search literature and extract causal claims as proposed DAG edges.
+
+        Args:
+            dag: DAGSpec instance
+            llm: LLMClient instance
+            edge_id: If specified, search for papers related to this edge only.
+                     If None, search broadly for the DAG's target node.
+
+        Returns:
+            List of ProposedEdge from paper_dag_extractor
+        """
+        from shared.agentic.agents.paper_dag_extractor import PaperDAGExtractor
+
+        # Gather citations
+        if edge_id:
+            node_map = {n.id: n for n in dag.nodes}
+            edge = dag.get_edge(edge_id)
+            if edge is None:
+                logger.warning(f"Edge {edge_id} not found in DAG")
+                return []
+            from_node = node_map.get(edge.from_node)
+            to_node = node_map.get(edge.to_node)
+            if from_node is None or to_node is None:
+                return []
+            bundle = self.search_for_edge(
+                edge_id=edge.id,
+                from_node_name=from_node.name,
+                from_node_desc=getattr(from_node, "description", ""),
+                to_node_name=to_node.name,
+                to_node_desc=getattr(to_node, "description", ""),
+                limit=10,
+            )
+            papers = bundle.citations
+        else:
+            # Search broadly using DAG target node
+            target_name = dag.metadata.target_node or ""
+            target_node = dag.get_node(target_name)
+            desc = getattr(target_node, "description", "") if target_node else ""
+            target_label = getattr(target_node, "name", target_name) if target_node else target_name
+            bundle = self.search_for_edge(
+                edge_id="dag_broad_search",
+                from_node_name="causal factors",
+                from_node_desc="various economic variables",
+                to_node_name=target_label,
+                to_node_desc=desc,
+                limit=10,
+            )
+            papers = bundle.citations
+
+        # Extract and propose
+        extractor = PaperDAGExtractor(llm=llm, dag=dag)
+        return extractor.propose_edges(papers)
+
     def search_all_edges(self, dag: Any) -> dict[str, CitationBundle]:
         """
         Search literature for all edges in a DAG.

@@ -1,0 +1,315 @@
+# Example DAG: Kazakhstan Household Welfare
+# Oil shocks and global activity shocks affecting regional household income.
+#
+# This DAG demonstrates the v2 schema features including:
+# - Temporal semantics (timing, release_lag)
+# - Credibility-based acceptance criteria
+# - Mixed-frequency alignment
+
+schema_version: 2
+metadata:
+  name: "kz_household_welfare"
+  description: "Oil shocks and global activity shocks affecting regional household income."
+  target_node: "log_income_pc"
+  created: "2026-02-02"
+  owner: "research_team"
+  tags: ["kazakhstan", "household", "oil"]
+
+# =============================================================================
+# NODES
+# =============================================================================
+
+nodes:
+  # Target outcome
+  - id: "log_income_pc"
+    name: "Log per-capita monetary income"
+    description: "Regional household monetary income per capita, log-transformed."
+    unit: "log"
+    frequency: "quarterly"
+    type: "continuous"
+    observed: true
+    latent: false
+    release_lag:
+      periods: 1
+      lag_unit: "quarter"
+    source:
+      preferred:
+        - connector: "bns"
+          dataset: "household_income"
+          series: "log_income_pc"
+    transforms: ["log"]
+    aggregation:
+      method: "average"
+      seasonal_adjust: true
+    tags: ["household", "outcome"]
+
+  # Exposure variables (static)
+  - id: "E_oil_r"
+    name: "Oil exposure"
+    description: "Pre-period regional mining share exposure."
+    unit: "share"
+    frequency: "static"
+    type: "exposure"
+    observed: true
+    latent: false
+    source:
+      preferred:
+        - connector: "bns"
+          dataset: "regional_accounts"
+          series: "mining_share"
+    transforms: []
+    tags: ["exposure"]
+
+  - id: "E_cyc_r"
+    name: "Cyclical exposure"
+    description: "Pre-period cyclical employment/GRP shares."
+    unit: "share"
+    frequency: "static"
+    type: "exposure"
+    observed: true
+    latent: false
+    source:
+      preferred:
+        - connector: "bns"
+          dataset: "regional_accounts"
+          series: "cyclical_share"
+    transforms: []
+    tags: ["exposure"]
+
+  # Shock variables (monthly, need aggregation)
+  - id: "oil_supply_shock"
+    name: "Oil supply shock"
+    description: "Baumeister oil supply shock (exogenous)."
+    unit: "sd"
+    frequency: "monthly"
+    type: "continuous"
+    observed: true
+    latent: false
+    source:
+      preferred:
+        - connector: "baumeister"
+          dataset: "oil_shocks"
+          series: "oil_supply_shock"
+    transforms: ["aggregate_mean_to_quarter"]
+    aggregation:
+      method: "average"
+      seasonal_adjust: false
+    role_constraints:
+      never_control: true  # This is a treatment, not a control
+    tags: ["oil", "shock"]
+
+  - id: "oil_demand_shock"
+    name: "Oil demand shock"
+    description: "Baumeister oil demand shock."
+    unit: "sd"
+    frequency: "monthly"
+    type: "continuous"
+    observed: true
+    latent: false
+    source:
+      preferred:
+        - connector: "baumeister"
+          dataset: "oil_shocks"
+          series: "oil_demand_shock"
+    transforms: ["aggregate_mean_to_quarter"]
+    aggregation:
+      method: "average"
+      seasonal_adjust: false
+    role_constraints:
+      never_control: true
+    tags: ["oil", "shock"]
+
+  - id: "global_activity_innovation"
+    name: "Global activity innovation"
+    description: "Innovation in global activity index (IGREA)."
+    unit: "innovation"
+    frequency: "monthly"
+    type: "continuous"
+    observed: true
+    latent: false
+    source:
+      preferred:
+        - connector: "fred"
+          dataset: "global_activity"
+          series: "IGREA"
+    transforms: ["innovation", "aggregate_mean_to_quarter"]
+    aggregation:
+      method: "average"
+      seasonal_adjust: false
+    role_constraints:
+      never_control: true
+    tags: ["global", "shock"]
+
+# =============================================================================
+# EDGES
+# =============================================================================
+
+edges:
+  # Edge 1: Oil supply shock → Income
+  - id: "oil_supply_to_income"
+    from: "oil_supply_shock"
+    to: "log_income_pc"
+    timing:
+      lag: 1
+      lag_unit: "quarter"
+      contemporaneous: false
+      max_anticipation: 0
+    estimand:
+      type: "elasticity"
+      horizon: [0, 1, 2, 3, 4]  # IRF horizons
+      scale: "log"
+    allowed_designs: ["PANEL_FE_BACKDOOR", "LOCAL_PROJECTIONS"]
+    design_priority: ["LOCAL_PROJECTIONS", "PANEL_FE_BACKDOOR"]
+    required_adjustments: ["E_oil_r"]
+    forbidden_controls: []  # Auto-computed: descendants of treatment
+    instruments: []
+    diagnostics_required:
+      - "pre_trends"
+      - "placebo"
+      - "stability"
+    acceptance_criteria:
+      diagnostics:
+        pretrend_p_min: 0.10
+        first_stage_f_min: 10.0
+        placebo_p_min: 0.10
+      data:
+        max_missing_rate: 0.05
+        min_obs: 50
+        min_pre_periods: 4
+      plausibility:
+        expected_sign: "positive"  # Oil windfall should increase income
+        magnitude_range: [-0.5, 0.5]
+      stability:
+        regime_split_date: "2015-08"  # Tenge float
+        max_coefficient_change: 0.5
+      null_acceptance:
+        enabled: true
+        equivalence_bound: 0.05
+    notes: "Exposure-weighted shock. Effect should be positive for oil regions."
+
+  # Edge 2: Oil demand shock → Income
+  - id: "oil_demand_to_income"
+    from: "oil_demand_shock"
+    to: "log_income_pc"
+    timing:
+      lag: 1
+      lag_unit: "quarter"
+      contemporaneous: false
+      max_anticipation: 0
+    estimand:
+      type: "elasticity"
+      horizon: [0, 1, 2, 3, 4]
+      scale: "log"
+    allowed_designs: ["PANEL_FE_BACKDOOR", "LOCAL_PROJECTIONS"]
+    design_priority: ["LOCAL_PROJECTIONS", "PANEL_FE_BACKDOOR"]
+    required_adjustments: ["E_oil_r"]
+    forbidden_controls: []
+    instruments: []
+    diagnostics_required:
+      - "pre_trends"
+      - "placebo"
+      - "stability"
+    acceptance_criteria:
+      diagnostics:
+        pretrend_p_min: 0.10
+        first_stage_f_min: 10.0
+        placebo_p_min: 0.10
+      data:
+        max_missing_rate: 0.05
+        min_obs: 50
+        min_pre_periods: 4
+      plausibility:
+        expected_sign: "positive"
+        magnitude_range: [-0.5, 0.5]
+      stability:
+        regime_split_date: "2015-08"
+        max_coefficient_change: 0.5
+      null_acceptance:
+        enabled: true
+        equivalence_bound: 0.05
+    notes: "Exposure-weighted shock. Global demand drives prices."
+
+  # Edge 3: Global activity → Income
+  - id: "global_activity_to_income"
+    from: "global_activity_innovation"
+    to: "log_income_pc"
+    timing:
+      lag: 1
+      lag_unit: "quarter"
+      contemporaneous: false
+      max_anticipation: 0
+    estimand:
+      type: "elasticity"
+      horizon: [0, 1, 2, 3, 4]
+      scale: "log"
+    allowed_designs: ["PANEL_FE_BACKDOOR", "LOCAL_PROJECTIONS"]
+    design_priority: ["LOCAL_PROJECTIONS", "PANEL_FE_BACKDOOR"]
+    required_adjustments: ["E_cyc_r"]
+    forbidden_controls: []
+    instruments: []
+    diagnostics_required:
+      - "pre_trends"
+      - "placebo"
+      - "stability"
+    acceptance_criteria:
+      diagnostics:
+        pretrend_p_min: 0.10
+        first_stage_f_min: 10.0
+        placebo_p_min: 0.10
+      data:
+        max_missing_rate: 0.05
+        min_obs: 50
+        min_pre_periods: 4
+      plausibility:
+        expected_sign: "positive"
+        magnitude_range: [-0.5, 0.5]
+      stability:
+        regime_split_date: "2020-03"  # COVID
+        max_coefficient_change: 0.5
+      null_acceptance:
+        enabled: true
+        equivalence_bound: 0.05
+    notes: "Exposure-weighted shock. Cyclical regions more sensitive."
+
+# =============================================================================
+# ASSUMPTIONS
+# =============================================================================
+
+assumptions:
+  - id: "shock_exogeneity"
+    statement: "Baumeister oil shocks are exogenous to Kazakhstan household outcomes."
+    applies_to_edges: ["oil_supply_to_income", "oil_demand_to_income"]
+    testable: false
+
+  - id: "exposure_exogeneity"
+    statement: "Pre-period exposure shares are not affected by contemporaneous shocks."
+    applies_to_edges: ["oil_supply_to_income", "oil_demand_to_income", "global_activity_to_income"]
+    testable: true
+    test_method: "Check that exposure shares are computed from pre-2010 data."
+
+# =============================================================================
+# LATENT CONFOUNDERS
+# =============================================================================
+
+latents:
+  - id: "regional_policy"
+    description: "Unobserved regional fiscal policy responses to shocks."
+    affects: ["log_income_pc"]
+
+  - id: "migration"
+    description: "Labor migration between regions in response to shocks."
+    affects: ["log_income_pc", "E_oil_r"]
+
+# =============================================================================
+# GOVERNANCE
+# =============================================================================
+
+allowed_refinements:
+  - id: "add_control"
+    allowed_controls: ["lag_cpi", "lag_oil_price", "lag_interest_rate"]
+
+  - id: "change_lag_length"
+    range: [1, 6]
+
+  - id: "regime_split"
+    allowed_dates: ["2015-08", "2020-03"]

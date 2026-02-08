@@ -1,5 +1,5 @@
 """
-Pydantic settings for Kazakhstan Welfare Model.
+OpenCausality Platform settings.
 """
 
 from pathlib import Path
@@ -16,6 +16,14 @@ class Settings(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         extra="ignore",
+    )
+
+    # LLM
+    anthropic_api_key: str = Field(default="", description="Anthropic API key")
+    llm_provider: str = Field(default="anthropic", description="LLM provider: anthropic | litellm")
+    llm_model: str = Field(
+        default="claude-sonnet-4-5-20250929",
+        description="Model ID for chosen LLM provider",
     )
 
     # API Keys
@@ -35,6 +43,16 @@ class Settings(BaseSettings):
     cache_dir: Path = Field(default=Path(".cache"), description="Cache directory")
     data_dir: Path = Field(default=Path("data"), description="Data directory")
     output_dir: Path = Field(default=Path("outputs"), description="Output directory")
+
+    # Defaults
+    default_dag_path: str = Field(
+        default="config/agentic/dags/kspi_k2_full.yaml",
+        description="Default DAG specification path",
+    )
+    default_query_mode: str = Field(
+        default="REDUCED_FORM",
+        description="Default query mode: STRUCTURAL | REDUCED_FORM | DESCRIPTIVE",
+    )
 
     # Logging
     log_level: str = Field(default="INFO", description="Logging level")

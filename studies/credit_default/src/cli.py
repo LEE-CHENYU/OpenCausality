@@ -2,14 +2,14 @@
 CLI for credit default study.
 
 Usage:
-    kzcredit check-confounds
-    kzcredit build-panel
-    kzcredit estimate mw-diff-discs
-    kzcredit estimate pension-rdd
-    kzcredit diagnostics
-    kzcredit simulate
-    kzcredit stress-test
-    kzcredit run-mvp
+    opencausality credit check-confounds
+    opencausality credit build-panel
+    opencausality credit estimate mw-diff-discs
+    opencausality credit estimate pension-rdd
+    opencausality credit diagnostics
+    opencausality credit simulate
+    opencausality credit stress-test
+    opencausality credit run-mvp
 """
 
 from datetime import date

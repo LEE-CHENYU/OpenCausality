@@ -1,7 +1,7 @@
 [project]
-name = "kazakhstan-econometric-research"
-version = "0.2.0"
-description = "Causal econometric research platform for Kazakhstan studies"
+name = "opencausality"
+version = "0.3.0"
+description = "Open-source platform for causal inference at scale"
 readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "MIT"}
@@ -36,6 +36,8 @@ dependencies = [
     "rich>=13.0.0",
     # YAML parsing
     "pyyaml>=6.0.0",
+    # LLM
+    "anthropic>=0.40.0",
 ]
 
 [project.optional-dependencies]
@@ -48,6 +50,7 @@ dev = [
     "jupyter>=1.0.0",
 ]
 
+litellm = ["litellm>=1.0.0"]
 rdd = [
     # RDD estimation (optional, install separately if needed)
     # "rdrobust>=1.0.0",  # May require R installation
@@ -55,8 +58,8 @@ rdd = [
 
 [project.scripts]
 # Unified CLI
-kzresearch = "scripts.cli:app"
-# Legacy/study-specific CLIs
+opencausality = "scripts.cli:app"
+# Study-specific CLIs
 kzwelfare = "studies.household_welfare.src.cli:app"
 kzcredit = "studies.credit_default.src.cli:app"
 kzkaspi = "studies.kaspi_holdco.src.cli:app"

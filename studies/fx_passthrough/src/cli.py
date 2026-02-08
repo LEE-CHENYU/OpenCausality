@@ -2,12 +2,12 @@
 CLI for FX Passthrough Study.
 
 Usage:
-    kzresearch passthrough fetch-data [source]
-    kzresearch passthrough build-cpi-panel
-    kzresearch passthrough build-income-series
-    kzresearch passthrough estimate [block]
-    kzresearch passthrough falsification
-    kzresearch passthrough run-full-chain
+    opencausality passthrough fetch-data [source]
+    opencausality passthrough build-cpi-panel
+    opencausality passthrough build-income-series
+    opencausality passthrough estimate [block]
+    opencausality passthrough falsification
+    opencausality passthrough run-full-chain
 """
 
 import logging

@@ -1,7 +1,7 @@
 """
 CLI commands for Kaspi.kz Holding Company Capital Adequacy Study.
 
-Entry point: kzkaspi
+Entry point: opencausality kaspi (or standalone kzkaspi)
 """
 
 import json

@@ -1,12 +1,12 @@
 """
-CLI for Kazakhstan Household Welfare Study.
+CLI for Household Welfare Study.
 
 Usage:
-    kzwelfare fetch-data <source>
-    kzwelfare build-panel
-    kzwelfare estimate <spec>
-    kzwelfare local-projections
-    kzwelfare simulate <scenario>
+    opencausality welfare fetch-data <source>
+    opencausality welfare build-panel
+    opencausality welfare estimate <spec>
+    opencausality welfare local-projections
+    opencausality welfare simulate <scenario>
 """
 
 import logging
@@ -19,7 +19,7 @@ from rich.logging import RichHandler
 
 app = typer.Typer(
     name="welfare",
-    help="Kazakhstan Household Welfare Causal Econometric Model",
+    help="Household Welfare Causal Econometric Model",
 )
 console = Console()
 
