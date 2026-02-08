@@ -2,6 +2,8 @@
 
 Open-source platform for transparent, auditable causal inference. Combines DAG-based causal reasoning with agentic estimation, human-in-the-loop governance, LLM-assisted literature extraction, and an always-on sentinel loop that continuously validates, heals, and surfaces results.
 
+> **Paper:** [OpenCausality: Auditable Agentic Causal Inference with DAG-Based Reasoning and LLM-Assisted Discovery](paper/main.pdf) (Li, 2025)
+
 Causal inference in applied economics is fragile. Automated pipelines scale but hide
 methodological choices; manual analysis is transparent but slow. OpenCausality resolves
 this by treating every estimation decision as an auditable event. You specify a causal
@@ -163,6 +165,33 @@ with Kazakhstan banking specialists. The specification is stored in
 
 ### Approach 2: Natural Language to DAG
 
+Given a plain-text narrative describing causal mechanisms, the pipeline extracts a
+structured DAG automatically. Here is the input narrative
+([`examples/kaspi_narrative.txt`](examples/kaspi_narrative.txt)):
+
+<details>
+<summary><b>Example narrative input (click to expand)</b></summary>
+
+> When the tenge depreciates, it doesn't raise all prices equally -- it shows up first
+> and most clearly in import-heavy parts of the CPI (like clothing, furnishings, and
+> some food), while regulated categories (utilities, education, communications) mostly
+> don't react, which is exactly the pattern you'd expect if the exchange rate is causally
+> feeding "imported inflation." That imported inflation then squeezes households'
+> purchasing power because incomes -- especially wages -- don't instantly adjust, so real
+> disposable income and real spending tend to soften even if headline nominal income looks
+> steadier on paper (often because transfers and regulated prices buffer the shock). For
+> Kaspi, the key point is that this household squeeze can translate into balance-sheet
+> pressure through two main routes: repayment stress (higher delinquencies/provisions)
+> and profitability pressure from tighter financial conditions (higher funding costs and
+> lower margins), and there's also a direct macro channel where an increase in "macro
+> provisioning" even before realized defaults rise. All of this ultimately matters because
+> Kaspi's capital headroom is driven by what happens to profits and provisions (capital
+> numerator) and by loan/risk-weight dynamics (RWA denominator), while the holding
+> company's ability to support the bank depends on whether consumer spending holds up
+> enough to sustain non-bank revenues and dividends during stress.
+
+</details>
+
 ```bash
 python scripts/generate_narrative_dag.py \
     --narrative examples/kaspi_narrative.txt \
@@ -214,6 +243,55 @@ mechanisms: the central bank's FX intervention rule, deposit insurance threshold
 effects, and the 2016 loan classification policy change. Literature-based extraction
 cannot capture country-specific regulatory details that are rarely stated as explicit
 causal claims in papers.
+
+### Generated Panels
+
+After estimation completes, the sentinel auto-builds and opens two interactive HTML
+panels. Both are self-contained single-file HTML documents with no external dependencies
+(except D3.js CDN for the visualization).
+
+#### DAG Visualization ([`outputs/agentic/dag_visualization.html`](outputs/agentic/dag_visualization.html))
+
+Interactive force-directed graph of the full causal DAG, built with D3.js v7.
+
+<details>
+<summary><b>Panel features</b></summary>
+
+- **Nodes** as draggable circles with labels; dashed borders for latent variables,
+  red rings for identification risks
+- **Edges** color-coded by type (back-door, front-door, IV, etc.) with coefficient
+  labels; dashed lines for null results; orange stroke for edges with CRITICAL issues
+- **Hover tooltips** showing edge estimates, p-values, identification status, controls,
+  and any open issues with severity
+- **Controls panel** (top-left): filter by edge type, toggle labels, zoom reset
+- **Pitfall sidebar**: open issues sorted by severity, click to highlight the
+  affected edge in the graph
+- **Keyboard shortcuts**: `R` reset zoom, `L` toggle labels, `F` fit graph
+
+</details>
+
+#### HITL Resolution Panel ([`outputs/agentic/hitl_panel.html`](outputs/agentic/hitl_panel.html))
+
+Interactive review board for human-in-the-loop issue resolution.
+
+<details>
+<summary><b>Panel features</b></summary>
+
+- **Stats bar** at top: total issues, critical/high/medium counts, resolution progress
+- **Filter controls**: filter by severity, edge, issue type; full-text search
+- **Issue cards** with severity-coded headers (red = critical, amber = high),
+  edge context with estimates, rule description, and methodological references
+- **Action dropdowns**: accept / reject / revise / escalate, with justification
+  text fields for audit trail
+- **Bulk actions**: select multiple issues for batch resolution
+- **Export**: download all decisions as JSON for pipeline re-ingestion
+- **Progress bar**: tracks resolution percentage across all open issues
+
+</details>
+
+> **To view the panels:** Clone the repo and open the HTML files in any browser,
+> or run the full pipeline (`python scripts/run_real_estimation.py`) and the sentinel
+> will build and open them automatically.
 
 ---
 

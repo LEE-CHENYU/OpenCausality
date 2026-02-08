@@ -954,3 +954,459 @@ exec
 | `oil_supply_to_brent` | 1 SD Baumeister supply shock (mbd equivalent) | % change in Brent price |
 | `oil_supply_to_fx` | 1 SD Baumeister supply shock | % change in USD/KZT |
 
+
+
+thinking
+**Updating report generation**
+
+I see that the unit table has many edges but is missing annual ones. That’s important since warnings indicate we need to update the report generator to include annual edges. I’m considering treating them like quarterly edges, but the report checker expects documentation for annual variants like shock_to_npl_kspi_annual. We must add those rows to the unit table to resolve the warnings and ensure a clean report. I’ll also check the reaction function warnings and prepare for post-estimation validation.
+thinking
+**Validating EdgeCards**
+
+I think we're facing potential issues like unit_in_card errors, but since EdgeCards from run_real_estimation.py have estimates, they likely pass. We must validate the existing EdgeCards stored on disk using a robust parser. If we adjust the report generator and decide to rerun the estimation script, we could use in-memory cards for validation. However, we still need to run DAGValidator.validate_post_estimation and ensure all checks are completed, including DAG acyclicity and report consistency. We can't skip those important validations.
+thinking
+**Ensuring validation checks**
+
+I can use run_full_validation in validation.py after loading edge_cards from disk to ensure all checks pass. Given that we want to keep changes minimal, I might only adjust the report generator to add annual edges to the unit table and regenerate the report—possibly without re-estimating. However, we also need to address any sign inconsistencies, as indicated in the objective. I'll check the expected signs for edges like vix_to_fx in the DAG YAML to clarify any discrepancies.
+exec
+/bin/zsh -lc "cd /Users/lichenyu/econometric-research && rg -n \"id: \\\"vix_to_fx\\\"|id: \\\"cpi_to_nbk_rate\\\"|id: \\\"oil_supply_to_fx\\\"|expected_sign\" -n config/agentic/dags/kspi_k2_full.yaml | head -n 80" in /Users/lichenyu/econometric-research succeeded in 51ms:
+904:        expected_sign: "negative"  # Supply shock reduces price
+916:  - id: "oil_supply_to_fx"
+946:        expected_sign: "positive"  # Supply shock depreciates KZT
+989:        expected_sign: "negative"  # Demand shock appreciates KZT
+1002:  - id: "vix_to_fx"
+1032:        expected_sign: "positive"  # Risk-off depreciates EM currencies
+1078:        expected_sign: "positive"
+1131:        expected_sign: "any"
+1154:  - id: "cpi_to_nbk_rate"
+1183:        expected_sign: "positive"  # NBK raises rate when inflation rises
+1227:        expected_sign: "positive"  # NBK raises rate when KZT depreciates
+1271:        expected_sign: "positive"  # Higher policy rate -> higher deposit cost
+1315:        expected_sign: "positive"  # Higher rates -> higher borrower stress
+1365:        expected_sign: "positive"
+1416:        expected_sign: "negative"  # FX depreciation reduces real spending
+1471:        expected_sign: "positive"  # Inflation shock worsens credit quality
+1515:        expected_sign: "positive"  # Inflation shock increases provisions
+1562:        expected_sign: "positive"
+1609:        expected_sign: "negative"  # Higher CoR reduces capital
+1652:        expected_sign: "positive"
+
+
+
+
+
+thinking
+**Identifying sign inconsistencies in estimations**
+
+I'm seeing that the expected sign for vix_to_fx should be positive, but the report shows a negative estimate of -0.0324, creating a sign inconsistency. The same goes for cpi_to_nbk_rate, which is expected positive but has an estimate of -0.5353. However, the oil_supply_to_fx estimate is positive at 0.0004, which is consistent. For shock_to_npl_kspi, the estimate is positively aligned too. I need to re-run estimations for edges with sign inconsistencies, but there may be data or specification differences at play.
+thinking
+**Investigating potential bugs and sign flips**
+
+I think we should check if there's a bug causing sign flips, especially with the vix_to_fx treatment and outcome mapping. The treatment here refers to an increase in VIX, while the outcome is the percentage change in USD/KZT, which indicates depreciation. Typically, if VIX goes up, USD appreciates and KZT depreciates, leading to an increase in USD/KZT. However, a negative estimate suggests something odd, possibly due to sign convention confusion. If they're mistakenly using the inverse exchange rate, it could lead to inconsistent interpretations.
+thinking
+**Verifying the FX series construction**
+
+I need to check how the FX series is constructed. In the data assembler, it may be treated as KZT per USD. It’s vital to ensure that the expected positive effects align with our definitions. We shouldn't change expected signs, but we can improve consistency by clearly defining variables—like stating the FX return indicates depreciation positively. If the current outcome is based on a change in KZT per USD, it should reflect positive depreciation. For sector panel edges, any negative signs may relate to exposures, but we need to stick to domain knowledge decisions and constraints while considering reruns or bug fixes.
+thinking
+**Revisiting estimations for sign inconsistencies**
+
+The objective indicates we should re-run estimations for edges with sign inconsistencies to see if the signs persist. If they do, we’ll need to keep them but ensure the report documents these inconsistencies with appropriate warnings. It might be helpful to update EdgeCard fields to reflect the sign issues, even if it's not mandatory. The main goal is validation and report consistency, not necessarily sign alignment. We’ll perform post-estimation checks too, including consistency metrics and reaction function labels as per the DAGValidator requirements.
+thinking
+**Clarifying reaction function edge rules**
+
+There’s something odd here about the reaction function edges. They’re supposed to forbid policy_counterfactual but might allow shock_counterfactual since they estimate the endogenous response of policy to shocks. However, their rules indicate that shock_counterfactual use shouldn't be allowed because using these edges for shock propagation would be incorrect. So, it's crucial to ensure allowed_uses doesn’t include shock_counterfactual. If allowed_uses is empty, any non-forbidden use might pass, but we need to check if forbidden_uses are correctly set in the EdgeCards created by the run_real_estimation.py. I'll look into the build_lp_edge_card function to clarify.
+exec
+/bin/zsh -lc 'cd /Users/lichenyu/econometric-research && rg -n "def build_lp_edge_card" -n scripts/run_real_estimation.py' in /Users/lichenyu/econometric-research succeeded in 51ms:
+294:def build_lp_edge_card(
+exec
+/bin/zsh -lc "cd /Users/lichenyu/econometric-research && sed -n '260,420p' scripts/run_real_estimation.py" in /Users/lichenyu/econometric-research succeeded in 52ms:
+    # Group C-KSPI: KSPI-only
+    "expenditure_to_payments_revenue": {
+        "treatment_unit": "1% real expenditure change",
+        "outcome_unit": "bn KZT payments revenue",
+    },
+    "portfolio_mix_to_rwa": {
+        "treatment_unit": "1pp consumer loan share change",
+        "outcome_unit": "bn KZT RWA change",
+    },
+    # Group C-Bridge: Accounting
+    "loan_portfolio_to_rwa": {
+        "treatment_unit": "1 bn KZT net loans increase",
+        "outcome_unit": "bn KZT RWA increase (avg risk weight)",
+    },
+    "cor_to_capital": {
+        "treatment_unit": "1pp CoR increase",
+        "outcome_unit": "bn KZT capital decline (provisions)",
+    },
+    # Group D: Identity
+    "capital_to_k2": {
+exec
+/bin/zsh -lc "cd /Users/lichenyu/econometric-research && sed -n '420,560p' scripts/run_real_estimation.py" in /Users/lichenyu/econometric-research succeeded in 51ms:
+    design_weight = 0.7  # LOCAL_PROJECTIONS default
+    data_coverage = min(1.0, n_obs / 100) if not is_quarterly else min(1.0, n_obs / 17)
+    if is_quarterly or is_annual_robustness:
+        design_weight = 0.5  # Downweight for small sample
+
+    # B-cap: only if n_obs < 30 AND share_interpolated < 0.30 (not blanket quarterly cap)
+    score, rating = compute_credibility_score(
+        diagnostics=diagnostics,
+        failure_flags=failure_flags,
+        design_weight=design_weight,
+        data_coverage=data_coverage,
+    )
+
+    if (n_obs < 30 and share_interpolated < 0.30) and rating == "A":
+        rating = "B"
+        score = min(score, 0.79)
+    elif share_interpolated >= 0.30 and rating in ("A", "B"):
+        rating = "C"
+        score = min(score, 0.59)
+
+exec
+/bin/zsh -lc "cd /Users/lichenyu/econometric-research && sed -n '1,220p' outputs/agentic/cards/edge_cards/global_activity_to_income.yaml" in /Users/lichenyu/econometric-research succeeded in 52ms:
+edge_id: global_activity_to_income
+dag_version_hash: 1c7bd8fe01609fd7d4926c38e6134a089c1c4e450ca44d017023564f04d8220f
+created_at: '2026-02-06T00:18:45.043687'
+data_provenance:
+  treatment_source: null
+  outcome_source: null
+  control_sources: {}
+  instrument_sources: {}
+  combined_row_count: null
+  combined_date_range: null
+  missing_rate: null
+  panel_dimensions: null
+  entity_boundary_note: null
+  kpi_definitions: null
+spec_hash: b6876d1132f29867fe9f992b97ddb472075389c1e5ae41b06653325575f6f7f9
+spec_details:
+  design: LOCAL_PROJECTIONS
+  controls: []
+  instruments: []
+  fixed_effects: []
+
+
+
+thinking
+**Evaluating EdgeCard validation**
+
+I'm noticing this EdgeCard isn't produced by the current script, which raises concerns about including it in the outputs. Since it could cause validation checks to fail, I need to think: should it remain in the outputs directory? It might make sense for the validation pipeline to focus solely on the current run's cards. However, if we're aiming to ensure all EdgeCards pass validation, old placeholders might need fixing or removal. Maybe updating or archiving those should be the way forward, while ensuring no changes to domain knowledge or adding edges.
+thinking
+**Carefully considering EdgeCards**
+
+I need to be cautious about the outputs in the agentic directory, as they might be tracked and used elsewhere. Those extra cards could correspond to edges not currently in the DAG, which might confuse validations. Ideally, the validation script should only read cards relevant to the current DAG or report. One option could be updating the validation functions to ignore cards not in the DAG edges during checks. However, the user's objective suggests that all EdgeCards in that directory should pass validation, so I need to ensure I'm aligning with their expectations.
+thinking
+**Deciding on outdated EdgeCards**
+
+I’m considering that some of those cards might have come from an earlier DAG (kspi_k2_full). They should pass basic checks, but they currently don’t, so I need to decide whether to delete or update them with the necessary fields. However, updating could require domain knowledge, especially for things like units, which I can’t guess without context. Since these edges aren’t in the current DAG, it seems best to remove them from the output directory. Alternatively, moving them to an archive or legacy folder could work, but I'd want to keep changes minimal. Then, I should check other extra cards as well.
+exec
+/bin/zsh -lc "cd /Users/lichenyu/econometric-research && sed -n '1,220p' outputs/agentic/cards/edge_cards/oil_supply_to_income.yaml" in /Users/lichenyu/econometric-research succeeded in 52ms:
+edge_id: oil_supply_to_income
+dag_version_hash: 1c7bd8fe01609fd7d4926c38e6134a089c1c4e450ca44d017023564f04d8220f
+created_at: '2026-02-06T00:18:45.038339'
+data_provenance:
+  treatment_source: null
+  outcome_source: null
+  control_sources: {}
+  instrument_sources: {}
+  combined_row_count: null
+  combined_date_range: null
+  missing_rate: null
+  panel_dimensions: null
+  entity_boundary_note: null
+  kpi_definitions: null
+spec_hash: ebe53498eec1f2c6a3eccf21bc3cc7510411342cb8a173b3f0c7e12196dd9473
+spec_details:
+  design: LOCAL_PROJECTIONS
+  controls: []
+  instruments: []
+  fixed_effects: []
+exec
+/bin/zsh -lc "cd /Users/lichenyu/econometric-research && python - <<'PY'
+import yaml
+from pathlib import Path
+cards_dir=Path('outputs/agentic/cards/edge_cards')
+missing_units=[]
+missing_n=[]
+for p in sorted(cards_dir.glob('*.yaml')):
+    d=yaml.safe_load(p.read_text())
+    est=d.get('estimates') or {}
+    tu=est.get('treatment_unit')
+    ou=est.get('outcome_unit')
+    if not tu or not ou:
+        missing_units.append(p.name)
+    n_cal=est.get('n_calendar_periods')
+    n_eff=est.get('n_effective_obs_h0')
+    if n_cal is None and n_eff is None:
+        missing_n.append(p.name)
+print('cards:', len(list(cards_dir.glob('*.yaml'))))
+print('missing_units:', len(missing_units))
+for x in missing_units:
+    print(' -', x)
+print('missing_n:', len(missing_n))
+for x in missing_n:
+    print(' -', x)
+PY" in /Users/lichenyu/econometric-research succeeded in 218ms:
+cards: 29
+missing_units: 15
+ - capital_to_k2.yaml
+ - cor_to_capital.yaml
+ - cpi_to_nominal_income.yaml
+ - fx_to_cpi_nontradable.yaml
+ - fx_to_cpi_tradable.yaml
+ - fx_to_real_expenditure.yaml
+ - global_activity_to_income.yaml
+ - loan_portfolio_to_rwa.yaml
+ - nbk_rate_to_cor_sector.yaml
+ - nbk_rate_to_deposit_cost_sector.yaml
+ - oil_demand_to_income.yaml
+ - oil_supply_to_income.yaml
+ - rwa_to_k2.yaml
+ - shock_to_cor_sector.yaml
+ - shock_to_npl_sector.yaml
+missing_n: 15
+ - capital_to_k2.yaml
+ - cor_to_capital.yaml
+exec
+/bin/zsh -lc "cd /Users/lichenyu/econometric-research && sed -n '1,220p' outputs/agentic/cards/edge_cards/capital_to_k2.yaml" in /Users/lichenyu/econometric-research succeeded in 51ms:
+edge_id: capital_to_k2
+dag_version_hash: a0d5c383631c52aa262f288704c6f7868d48b73d5034761245939de8eeea1d72
+created_at: '2026-02-08T10:35:30.255102'
+data_provenance:
+  treatment_source: null
+  outcome_source: null
+  control_sources: {}
+  instrument_sources: {}
+  combined_row_count: null
+  combined_date_range: null
+  missing_rate: null
+  panel_dimensions: null
+  entity_boundary_note: null
+  kpi_definitions: null
+spec_hash: e582f930ce9896f4f11444ee5cacdafd5fe5affd270856c3a0d680d029846d79
+spec_details:
+  design: IDENTITY
+  controls: []
+  instruments: []
+  fixed_effects: []
+
+thinking
+**Addressing EdgeCard Units**
+
+I'm looking at how to load EdgeCards using the artifact store, but it seems like it's discarding units for many edges, particularly identity edges, which are genuinely missing. I should consider fixing this by adding the necessary units and possibly adding N fields for identity, bridge, immutable edges, and panel edges. 
+
+My earlier missing_units list has several edges that should have units, like the cor_to_capital.yaml bridge edge. I’ll need to check if panel edges, like shock_to_npl_sector, have units — it seems the builder might not have set the treatment/unit and outcome unit correctly. I'll inspect the shock_to_npl_sector.yaml further.
+exec
+/bin/zsh -lc "cd /Users/lichenyu/econometric-research && sed -n '1,240p' outputs/agentic/cards/edge_cards/shock_to_npl_sector.yaml" in /Users/lichenyu/econometric-research succeeded in 51ms:
+edge_id: shock_to_npl_sector
+dag_version_hash: a0d5c383631c52aa262f288704c6f7868d48b73d5034761245939de8eeea1d72
+created_at: '2026-02-08T10:35:28.821264'
+data_provenance:
+  treatment_source: null
+  outcome_source: null
+  control_sources: {}
+  instrument_sources: {}
+  combined_row_count: 48
+  combined_date_range: null
+  missing_rate: null
+  panel_dimensions:
+    n_units: 4
+    n_periods: 27
+    balance: unbalanced
+  entity_boundary_note: 'Multi-bank panel: kaspi, halyk, forte, bcc'
+  kpi_definitions: null
+spec_hash: e19a69de52014bfee37b9ba7706c0bf94d42389f35e1bcfff1ee6f214a5baeb0
+spec_details:
+  design: PANEL_LP_EXPOSURE_FE
+
+
+
+
+
+thinking
+**Updating estimation functions**
+
+I need to update the builder functions in run_real_estimation.py to include units and N fields for all edges, then rerun the estimation to regenerate EdgeCards. Alternatively, I could patch the EdgeCards YAML directly by adding the missing fields. However, since the pipeline script regenerates them, it's better to fix the script and rerun it. The objective emphasizes minimal changes, but adding units is necessary to pass validation, so addressing it at the source is essential. I'll also need to consider updating existing YAMLs for consistency.
+thinking
+**Considering YAML management**
+
+I'm thinking about the placeholder cards that might be outside the DAG. I could remove them from the output directory or update them by adding units, but since those units are unknown, it seems better to just remove or archive them. If I rerun the script, these files might remain intact, as the script only saves cards from its own dict. So, I should clean them up, but first, I need to check if they're tracked in git. Before any changes, I should also run post-estimation validation once I load EdgeCards with necessary units.
+thinking
+**Creating a proper loader**
+
+I notice there are missing units, and that's going to lead to errors. I should create a loader that preserves units from the YAML; it will flag any missing units as errors. Even so, I can still run it to compile a full list of issues. To validate post-estimation, I need to parse the YAML into EdgeCard objects. Although I could use a direct dictionary for minimal fields, it’s best to implement a loader function as a Python snippet. This way, I can perform the validation without modifying the repository right now, following my rule to always validate before making changes.
+thinking
+**Implementing a loader snippet**
+
+For the post-estimation phase, I can run full validation using the edge cards I loaded, but first, I need to implement a loader. Creating a Python snippet won't change the repository, so I’ll proceed with that. I want to write a snippet that reads all YAML files from outputs/agentic/cards/edge_cards and uses a custom `load_edge_card_dict` to create EdgeCard objects. It might be tempting to reuse some existing functions, but they currently don't preserve important fields. Instead, I’ll parse the YAML and create EdgeCard objects using dataclass constructors while reflecting the actual YAML to identify validation failures. It might get tricky with the dataclasses, so using `types.SimpleNamespace` for required attributes could be a practical workaround.
+thinking
+**Utilizing existing dataclasses**
+
+I realize it might be easier to use the dataclasses from `shared.agentic.output`, such as Estimates, DiagnosticResult, Interpretation, and others, including those from the provenance module like DataProvenance and SourceProvenance. I'll take a closer look at these provenance dataclasses. It seems like a good plan to open the `provenance.py` file in `shared/agentic/output` to check how they are structured and see how I can leverage them in my project.
+exec
+/bin/zsh -lc "cd /Users/lichenyu/econometric-research && sed -n '1,240p' shared/agentic/output/provenance.py" in /Users/lichenyu/econometric-research succeeded in 52ms:
+"""
+Data Provenance Tracking.
+
+Tracks the full lineage of data used in estimation for:
+- Reproducibility
+- Audit trails
+- Version control
+"""
+
+from __future__ import annotations
+
+import hashlib
+import json
+from dataclasses import dataclass, field
+from datetime import datetime
+from typing import Any
+
+
+@dataclass
+class SourceProvenance:
+exec
+/bin/zsh -lc "cd /Users/lichenyu/econometric-research && rg -n \"@dataclass\\s+class CounterfactualBlock|@dataclass\\s+class IdentificationBlock|@dataclass\\s+class FailureFlags\" -n shared/agentic/output/edge_card.py" in /Users/lichenyu/econometric-research exited 1 in 52ms:
+
+exec
+/bin/zsh -lc 'cd /Users/lichenyu/econometric-research && rg -n "class (FailureFlags|CounterfactualBlock|IdentificationBlock|UseNotAllowedError)" shared/agentic/output/edge_card.py' in /Users/lichenyu/econometric-research succeeded in 52ms:
+58:class IdentificationBlock:
+78:class CounterfactualBlock:
+327:class UseNotAllowedError(Exception):
+337:class FailureFlags:
+exec
+/bin/zsh -lc "cd /Users/lichenyu/econometric-research && sed -n '40,140p' shared/agentic/output/edge_card.py" in /Users/lichenyu/econometric-research succeeded in 51ms:
+    for threshold, letter in RATING_THRESHOLDS:
+        if score >= threshold:
+            return letter
+    return RATING_DEFAULT
+
+
+from shared.agentic.output.provenance import (
+    DataProvenance,
+    SpecDetails,
+    AuditRecord,
+)
+
+# ---------------------------------------------------------------------------
+# Identification and propagation blocks (Plan Section 2.2)
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class IdentificationBlock:
+    """Identification assessment attached to an EdgeCard."""
+exec
+/bin/zsh -lc "cd /Users/lichenyu/econometric-research && sed -n '320,420p' shared/agentic/output/edge_card.py" in /Users/lichenyu/econometric-research succeeded in 52ms:
+        if isinstance(self.is_not, list):
+            return self.is_not
+        elif self.is_not:
+            return [self.is_not]
+        return []
+
+
+class UseNotAllowedError(Exception):
+    """Exception raised when an edge is used for a forbidden purpose."""
+
+    def __init__(self, edge_id: str, use_case: str, message: str):
+        self.edge_id = edge_id
+        self.use_case = use_case
+        super().__init__(f"Edge '{edge_id}': {message}")
+
+
+@dataclass
+class FailureFlags:
+    """
+    Flags indicating potential issues with the estimate.
+
+
+
+
+thinking
+**Implementing validation methods**
+
+I think we should create methods like `EdgeCard.from_dict` and nested `from_dict` methods for various components like `DataProvenance` and `SourceProvenance`. It's also important to implement the loader inside `artifact_store` to handle parsing the complete dictionary. Before making any changes, I want to run validations using the current YAML files with a tailored loader specifically for this check. 
+
+I’m planning to write a Python snippet to load edge cards and run validations to confirm everything is accurate.
+thinking
+**Setting up code changes and validations**
+
+Since we're changing the code anyway, I'll run validations first, as the rule states. We can use the raw YAML dictionary and some bridging for nested fields. However, the validation expects `EdgeCard` objects with attributes, so it might be easier to create those objects correctly.
+
+I'll quickly write a Python snippet with a helper function, `load_card(path)`, designed to return an `EdgeCard` object. This will involve parsing various components like `Estimates`, diagnostics, `DataProvenance`, and `SourceProvenance`. I’ll ensure to handle unknown fields while still processing nested ones. After implementing this, I'll run a full validation check.
+thinking
+**Reviewing identification validation process**
+
+I need to consider how `validation.validate_identifiability` behaves when `id_result.claim_level` equals "BLOCKED_ID," as that raises an error. If some edges are truly blocked, it might lead to a validation failure, but perhaps their claim level is actually "REDUCED_FORM." 
+
+The `IdentifiabilityScreen` likely returns some claim level. In `run_real_estimation.py`, they attach identification results, and it seems possible some edges might be flagged as blocked. I’ll need to check the logic in `IdentifiabilityScreen` to see if it only returns "BLOCKED_ID" due to missing required structures or if it's truly blocked.
+thinking
+**Exploring claim levels in reports**
+
+I’m noticing the report’s ID dashboard shows a claim level as "BLOCKED," which could be truncated. Specifically, at certain lines like 309, I see entries marked as `shock_to_npl_kspi_annual | REDUCED_FORM | unmeasured_confounding | 4/5 pass | BLOCKED`. This suggests that something, potentially `ts_guard`, might have produced a risk block, but I'm unsure if it relates to `IdentifiabilityResult.claim_level` or another field.
+
+I should inspect the `generate_id_dashboard` function to get more clarity. Let's search for that now.
+exec
+/bin/zsh -lc 'cd /Users/lichenyu/econometric-research && rg -n "def generate_id_dashboard" -n scripts/run_real_estimation.py' in /Users/lichenyu/econometric-research succeeded in 52ms:
+1021:def generate_id_dashboard(
+exec
+/bin/zsh -lc "cd /Users/lichenyu/econometric-research && sed -n '1020,1120p' scripts/run_real_estimation.py" in /Users/lichenyu/econometric-research succeeded in 52ms:
+
+def generate_id_dashboard(
+    id_results: dict[str, IdentifiabilityResult],
+) -> str:
+    """Generate the identifiability risk dashboard as markdown."""
+    screen = IdentifiabilityScreen()
+    return screen.generate_dashboard(id_results)
+
+
+# ---------------------------------------------------------------------------
+# Report generation
+# ---------------------------------------------------------------------------
+
+def generate_report(
+    cards: dict[str, EdgeCard],
+    lp_results: dict[str, LPResult],
+    immutable_results: dict[str, ImmutableResult],
+    identity_results: dict[str, IdentityResult],
+    bridge_results: dict[str, AccountingBridgeResult],
+    panel_results: dict[str, PanelLPResult],
+
+thinking
+**Exploring report generation**
+
+I’m looking into the `generate_report` function, thinking it might use `EDGE_UNITS` later on. I need to find the part of the code that handles unit table generation. My next step is to search within `generate_report` for something like "Unit Normalization Reference". I want to ensure I understand how units are being managed in the report, so I’m keeping an eye out for relevant details.
+exec
+/bin/zsh -lc 'cd /Users/lichenyu/econometric-research && rg -n "Unit Normalization Reference" -n -C 2 scripts/run_real_estimation.py' in /Users/lichenyu/econometric-research succeeded in 52ms:
+1404-
+1405-    # -----------------------------------------------------------------------
+1406:    # Unit Normalization Reference
+1407-    # -----------------------------------------------------------------------
+1408-    lines.extend([
+1409-        "---",
+1410-        "",
+1411:        "## Unit Normalization Reference",
+1412-        "",
+1413-        "**CRITICAL:** All coefficients must be interpreted with correct units for chain propagation.",
+exec
+/bin/zsh -lc "cd /Users/lichenyu/econometric-research && sed -n '1400,1460p' scripts/run_real_estimation.py" in /Users/lichenyu/econometric-research succeeded in 52ms:
+            bound = cards[eid].null_equivalence_bound
+            bound_str = f" (|beta| < {bound:.4f})" if bound else ""
+            lines.append(f"- `{eid}`{bound_str}")
+        lines.append("")
+
+    # -----------------------------------------------------------------------
+    # Unit Normalization Reference
+    # -----------------------------------------------------------------------
+    lines.extend([
+        "---",
+        "",
+        "## Unit Normalization Reference",
+        "",
+        "**CRITICAL:** All coefficients must be interpreted with correct units for chain propagation.",
+        "",
+        "| Edge | Treatment Unit | Outcome Unit |",
+        "|------|---------------|--------------|",
+    ])
+    for edge_id in ALL_EDGES:
+        units = EDGE_UNITS.get(edge_id, {})

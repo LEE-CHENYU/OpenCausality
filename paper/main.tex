@@ -29,7 +29,7 @@ with DAG-Based Reasoning and LLM-Assisted Discovery}
 %% ABSTRACT
 %% ============================================================
 \begin{abstract}
-We introduce \oc{}, an open-source platform that resolves the automation--transparency tradeoff in applied causal inference. \oc{} combines DAG-based causal reasoning with agentic estimation pipelines, where every modeling decision---from identification strategy selection to effect propagation---is logged in a hash-chained audit trail. The platform enforces 29 issue-detection rules that catch overclaiming, control shopping, and specification drift; a 7-guardrail propagation engine that performs unit-aware dimensional analysis across multi-edge causal paths; and a 3-stage identifiability screen that downgrades claims based on diagnostic evidence rather than statistical significance alone. An LLM-assisted pipeline extracts causal claims from the literature and proposes DAG edges, achieving 100\% estimate precision on matched edges in our Kazakhstan bank stress-testing case study while discovering 3 edges absent from the expert-built DAG. All governance decisions---including human-in-the-loop gates and automated patch policies that explicitly prohibit p-hacking---are recorded with cryptographic integrity. \oc{} ships with 18 estimation adapters spanning econometric and ML-based methods, a data-driven causal discovery agent (PC, GES, FCI, NOTEARS), a DoWhy refutation engine for post-estimation robustness, a natural-language query interface, and 204 passing tests across 40{,}969 lines of code.
+We introduce \oc{}, an open-source platform that resolves the automation--transparency tradeoff in applied causal inference. \oc{} combines DAG-based causal reasoning with agentic estimation pipelines, where every modeling decision---from identification strategy selection to effect propagation---is logged in a hash-chained audit trail. An always-on \emph{sentinel loop} runs continuously in the background, re-validating the DAG after every change, auto-fixing schema regressions, and surfacing interactive review panels---so analysts never have to hunt for results or wonder whether the specification is still valid. The platform enforces 29 issue-detection rules that catch overclaiming, control shopping, and specification drift; a 7-guardrail propagation engine that performs unit-aware dimensional analysis across multi-edge causal paths; and a 3-stage identifiability screen that downgrades claims based on diagnostic evidence rather than statistical significance alone. A 4-agent agentic loop (DataScout, ModelSmith, Estimator, Judge) iterates between estimation, issue detection, and auto-repair under LLM guidance, while an LLM-assisted pipeline extracts causal claims from the literature and proposes DAG edges---achieving 100\% estimate precision on matched edges in our Kazakhstan bank stress-testing case study while discovering 3 edges absent from the expert-built DAG. All governance decisions---including human-in-the-loop gates and automated patch policies that explicitly prohibit p-hacking---are recorded with cryptographic integrity. \oc{} ships with 18 estimation adapters spanning econometric and ML-based methods, a data-driven causal discovery agent (PC, GES, FCI, NOTEARS), a DoWhy refutation engine for post-estimation robustness, a natural-language query interface, and 204 passing tests across 40{,}969 lines of code.
 \end{abstract}
 
 %% ============================================================
@@ -56,6 +56,8 @@ We introduce \oc{}, an open-source platform that makes the entire causal inferen
     \item An \textbf{LLM-assisted NL-to-DAG pipeline} that extracts causal claims from academic text, and a \textbf{data-driven causal discovery agent} (PC, GES, FCI, NOTEARS) with graph-format interoperability (NetworkX, DoWhy GML, pywhy-graphs ADMG), achieving 100\% estimate precision on matched edges while discovering novel edges absent from expert specifications (Sections~\ref{sec:llm}--\ref{sec:discovery}).
 
     \item A \textbf{hash-chained governance framework} with human-in-the-loop gates, structured checklists, and cryptographic audit integrity---all without database dependencies (Section~\ref{sec:governance}).
+
+    \item An \textbf{always-on sentinel loop} that continuously validates the DAG, auto-heals schema regressions via PatchBot, and surfaces interactive panels (DAG visualization, HITL review board) without manual intervention; and a \textbf{4-agent agentic pipeline} (DataScout, ModelSmith, Estimator, Judge) with LLM-assisted DAG auto-repair (Section~\ref{sec:sentinel}).
 \end{enumerate}
 
 We evaluate \oc{} on a Kazakhstan bank stress-testing case study involving 32 nodes and 20 causal edges, comparing expert-built DAGs against both LLM-extracted and data-driven discovery DAGs, and verifying pipeline reproducibility across 204 tests (Section~\ref{sec:experiments}).
@@ -84,7 +86,7 @@ The replication crisis~\citep{ioannidis2005why} has motivated pre-registration~\
 \section{System Architecture}
 \label{sec:architecture}
 
-\oc{} is organized around four layers (Figure~\ref{fig:architecture}):
+\oc{} is organized around five layers (Figure~\ref{fig:architecture}):
 
 \begin{enumerate}[leftmargin=*, itemsep=1pt]
     \item \textbf{DAG Layer}: Parses YAML-specified DAGs with typed nodes (observed, latent, policy) and typed edges (causal, reaction function, bridge, identity). Validates acyclicity, unit presence, and node-source bindings.
@@ -94,6 +96,8 @@ The replication crisis~\citep{ioannidis2005why} has motivated pre-registration~\
     \item \textbf{Inference Layer}: Runs 3-stage identifiability screening, TSGuard diagnostics, DoWhy refutation tests (4 robustness checks), 29-rule issue detection, and 7-guardrail effect propagation. Produces EdgeCards (YAML artifacts combining estimates, diagnostics, identification results, and literature references).
 
     \item \textbf{Governance Layer}: Hash-chained audit log, HITL gate with structured checklists, PatchPolicy enforcement, and notification system. No database dependency---the entire audit trail lives in append-only JSONL files that can be committed to Git.
+
+    \item \textbf{Sentinel Layer}: An always-on background monitor that wraps the entire pipeline. After every step, the sentinel re-runs the full validation suite, auto-heals fixable schema regressions (missing unit specs, malformed edge IDs) via PatchBot, and rebuilds interactive panels (DAG visualization, HITL review board) which are opened in the browser on completion. The sentinel auto-starts with the pipeline and polls every 5 minutes during long-running estimations (Section~\ref{sec:sentinel}).
 \end{enumerate}
 
 \begin{figure}[t]
