@@ -18,3 +18,10 @@ Process:
 3) If blocked, write a ModelSpec with status: BLOCKED and the missing requirements.
 4) List diagnostics required and a short justification of identification assumptions.
 5) Keep specs compatible with existing model modules in shared/model or study-specific code.
+
+Guardrails:
+- Validate specs against shared/agentic/validation.py before writing ModelSpecs.
+- Check issue_registry.yaml (config/agentic/issue_registry.yaml) for rules that apply to this edge.
+- IdentifiabilityScreen (shared/agentic/identification/screen.py): run identification checks.
+- Respect forbidden controls from DAG specification.
+- HITL gates: do not proceed past HITL-blocked edges.

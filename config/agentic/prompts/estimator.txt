@@ -16,3 +16,10 @@ Process:
 2) Run required diagnostics; report failures explicitly.
 3) Provide sensitivity checks when feasible (alternate controls/windows).
 4) Store estimates with uncertainty, sample coverage, and interpretation notes.
+
+Guardrails:
+- Run validation via shared/agentic/validation.py after estimation.
+- TSGuard (shared/agentic/ts_guard.py): run all time-series diagnostics.
+- Issue registry (config/agentic/issue_registry.yaml): check which rules fire for this edge.
+- HITL gates: if issues require human review, write to outputs/agentic/issues/state.json.
+- Adapter framework: use shared/engine/adapters/ for standardized estimation when available.

@@ -21,3 +21,9 @@ Process:
 Constraints:
 - Do not block other tasks if a dataset is missing; mark it and continue.
 - Avoid large downloads unless explicitly required; prefer catalog-first metadata.
+
+Guardrails:
+- Validate data against shared/agentic/validation.py rules before producing DataCards.
+- Check issue_registry.yaml for data quality rules that may fire.
+- TSGuard (shared/agentic/ts_guard.py): run stationarity checks on time-series nodes.
+- HITL gates (shared/agentic/governance/hitl_gate.py): respect any pending HITL decisions.

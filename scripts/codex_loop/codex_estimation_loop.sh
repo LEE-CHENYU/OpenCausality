@@ -29,7 +29,8 @@ RESUME_FILE="$ROOT/scripts/codex_loop/codex_resume.md"
 DAG_PATH="$ROOT/config/agentic/dags/kspi_k2_full.yaml"
 REPORT_PATH="$ROOT/outputs/agentic/KSPI_K2_REAL_ESTIMATION_REPORT.md"
 
-# Codex settings
+# Provider and model settings
+PROVIDER="${PROVIDER:-codex}"  # codex | claude
 SANDBOX_MODE="${SANDBOX_MODE:-full-auto}"
 MODEL="${MODEL:-gpt-5.2-codex}"
 
@@ -81,9 +82,7 @@ if [ "${1:-}" = "--once" ]; then
     objective="$(cat "$OBJECTIVE_FILE")"
   fi
 
-  cd "$ROOT"
-  codex exec --full-auto -m "$MODEL" \
-    "You are improving the econometric research repository.
+  PROMPT_TEXT="You are improving the econometric research repository.
 
 OBJECTIVE:
 $objective
@@ -101,6 +100,14 @@ INSTRUCTIONS:
 7. If code changed and tests pass, commit with message: codex(econometric): <summary>
 
 Be thorough but focused. Prefer fixing validation errors over adding features."
+
+  cd "$ROOT"
+  if [ "$PROVIDER" = "claude" ]; then
+    claude -p "$PROMPT_TEXT" \
+      --allowedTools "Bash(git:*),Bash(python:*),Read,Write,Edit,Glob,Grep"
+  else
+    codex exec --full-auto -m "$MODEL" "$PROMPT_TEXT"
+  fi
 
   exit 0
 fi
@@ -173,10 +180,8 @@ while [ "$(date +%s)" -lt "$end_ts" ]; do
   # Read resume context
   resume_context="$(cat "$RESUME_FILE" 2>/dev/null || echo 'No previous context.')"
 
-  # Run codex
-  cd "$ROOT"
-  codex exec --full-auto -m "$MODEL" \
-    "You are improving the econometric research repository at $ROOT.
+  # Build prompt
+  ITER_PROMPT="You are improving the econometric research repository at $ROOT.
 
 ITERATION: $iter
 OBJECTIVE:
@@ -202,8 +207,18 @@ RULES:
 5. If code changed and tests pass, commit: codex(iter $iter): <summary>
 6. If no changes needed, say 'No changes required' and explain why
 
-OUTPUT: Brief summary of what was done and validation status." \
-    >> "$LOG" 2>&1 || log "Codex execution had non-zero exit"
+OUTPUT: Brief summary of what was done and validation status."
+
+  # Run with selected provider
+  cd "$ROOT"
+  if [ "$PROVIDER" = "claude" ]; then
+    claude -p "$ITER_PROMPT" \
+      --allowedTools "Bash(git:*),Bash(python:*),Read,Write,Edit,Glob,Grep" \
+      >> "$LOG" 2>&1 || log "Claude execution had non-zero exit"
+  else
+    codex exec --full-auto -m "$MODEL" "$ITER_PROMPT" \
+      >> "$LOG" 2>&1 || log "Codex execution had non-zero exit"
+  fi
 
   # Log git status
   log "Git status after iteration $iter:"

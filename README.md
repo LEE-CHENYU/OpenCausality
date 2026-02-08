@@ -399,6 +399,71 @@ audit trail can be committed to git with no infrastructure dependency.
 
 ---
 
+## Agent Pipeline
+
+OpenCausality includes a 4-agent agentic loop that uses LLM reasoning (via CodeX or Claude Code) to iterate on causal estimation:
+
+| Agent | Role | Prompt |
+|-------|------|--------|
+| **DataScout** | Catalogs data availability, creates DataCards for each DAG node | `config/agentic/prompts/datascout.txt` |
+| **ModelSmith** | Selects designs from the registry, writes ModelSpecs with identification assumptions | `config/agentic/prompts/modelsmith.txt` |
+| **Estimator** | Executes ModelSpecs, runs diagnostics, produces EdgeCards | `config/agentic/prompts/estimator.txt` |
+| **Judge** | Scores credibility, flags weak links, proposes refinements | `config/agentic/prompts/judge.txt` |
+
+### Running Agents
+
+```bash
+# Run one full round (all 4 agents sequentially)
+opencausality agent round --provider claude
+
+# Run a single agent
+opencausality agent run estimator --provider claude
+
+# Start continuous loop (runs in background)
+opencausality loop start --provider claude
+
+# Check status and stop
+opencausality loop status
+opencausality loop stop
+```
+
+### Provider Support
+
+Agents support two providers via the `--provider` flag:
+- **codex** (default): Uses `codex exec` with full-auto mode
+- **claude**: Uses `claude -p` with scoped tool permissions
+
+### Guardrails
+
+All agents reference the governance framework:
+- **validation.py**: Pre/post-estimation validation rules
+- **issue_registry.yaml**: 29-rule issue detection engine
+- **TSGuard**: Time-series stationarity and diagnostic checks
+- **IdentifiabilityScreen**: Causal identification verification
+- **HITL gates**: Human-in-the-loop blocking for critical issues
+- **PatchPolicy**: Constraints on automated specification changes
+
+### DAG Visualization
+
+Generate an interactive D3.js graph from any DAG:
+
+```bash
+# Basic visualization
+opencausality dag viz config/agentic/dags/kspi_k2_full.yaml
+
+# With LLM-powered edge annotations
+opencausality dag viz --llm-annotate -o /tmp/viz.html
+
+# Directly via script (with issue overlay)
+python scripts/build_dag_viz.py config/agentic/dags/kspi_k2_full.yaml \
+  --cards outputs/agentic/cards/edge_cards/ \
+  --state outputs/agentic/issues/state.json
+```
+
+Features: node/edge tooltips, edge type legend, risk indicators (orange stroke for CRITICAL issues, red ring for identification risks), pitfall sidebar with open issues sorted by severity, filter by edge type and rating.
+
+---
+
 ## CLI Reference
 
 | Command | Description |
@@ -415,6 +480,16 @@ audit trail can be committed to git with no infrastructure dependency.
 | `opencausality config show` | Display current configuration (redacts API keys) |
 | `opencausality config set <key> <value>` | Set a configuration value in `.env` |
 | `opencausality config doctor` | Diagnose configuration: check keys, paths, dependencies |
+| `opencausality dag viz [path]` | Generate interactive D3.js DAG visualization HTML |
+| `opencausality agent round` | Run one full round of all 4 agents sequentially |
+| `opencausality agent run <name>` | Run a single agent (datascout, modelsmith, estimator, judge) |
+| `opencausality agent status` | Check which agent loops are running |
+| `opencausality agent stop <name>` | Stop a running agent loop gracefully |
+| `opencausality agent log <name>` | Show recent agent log |
+| `opencausality loop start` | Start estimation loop in background |
+| `opencausality loop stop` | Stop estimation loop gracefully |
+| `opencausality loop status` | Check estimation loop status |
+| `opencausality loop once` | Run single estimation loop iteration |
 
 ### Common Flags
 

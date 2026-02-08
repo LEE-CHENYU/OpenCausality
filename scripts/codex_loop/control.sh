@@ -23,7 +23,9 @@ case "${1:-help}" in
       echo "Loop already running (PID: $(cat "$PIDFILE"))"
       exit 1
     fi
-    echo "Starting codex estimation loop..."
+    # Pass through PROVIDER env var if set
+    export PROVIDER="${PROVIDER:-codex}"
+    echo "Starting estimation loop (provider: $PROVIDER)..."
     nohup "$LOOP_SCRIPT" >> "$LOG" 2>&1 &
     echo $! > "$PIDFILE"
     echo "Started with PID: $!"

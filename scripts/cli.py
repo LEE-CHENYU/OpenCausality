@@ -38,9 +38,19 @@ data_app = typer.Typer(
     name="data",
     help="Data ingestion and management commands",
 )
+agent_app = typer.Typer(
+    name="agent",
+    help="Agent management commands (DataScout, ModelSmith, Estimator, Judge)",
+)
+loop_app = typer.Typer(
+    name="loop",
+    help="Estimation loop control (start/stop/status/once/log)",
+)
 app.add_typer(dag_app, name="dag")
 app.add_typer(config_app, name="config")
 app.add_typer(data_app, name="data")
+app.add_typer(agent_app, name="agent")
+app.add_typer(loop_app, name="loop")
 
 
 @app.callback()
@@ -579,6 +589,223 @@ def dag_list(
         console.print("[yellow]Could not import DAG parser[/yellow]")
         for dag_file in sorted(dag_files):
             console.print(f"  {dag_file.name}")
+
+
+# ============================================================================
+# DAG Viz Command
+# ============================================================================
+
+@dag_app.command("viz")
+def dag_viz(
+    dag_path: Optional[Path] = typer.Argument(
+        None,
+        help="Path to DAG YAML (default: from settings)",
+    ),
+    cards_dir: Optional[Path] = typer.Option(
+        None, "--cards", "-c",
+        help="Path to edge_cards directory",
+    ),
+    state_file: Optional[Path] = typer.Option(
+        None, "--state", "-s",
+        help="Path to state.json for open issues",
+    ),
+    output: Optional[Path] = typer.Option(
+        None, "--output", "-o",
+        help="Output HTML file path",
+    ),
+    llm_annotate: bool = typer.Option(
+        False, "--llm-annotate",
+        help="Generate LLM annotations for edge tooltips",
+    ),
+):
+    """
+    Generate an interactive DAG visualization HTML.
+
+    Example:
+        opencausality dag viz config/agentic/dags/kspi_k2_full.yaml
+        opencausality dag viz --llm-annotate -o /tmp/viz.html
+    """
+    from scripts.build_dag_viz import build, DEFAULT_CARDS_DIR, DEFAULT_STATE
+
+    if dag_path is None:
+        try:
+            from config.settings import get_settings
+            dag_path = Path(get_settings().default_dag_path)
+        except Exception:
+            dag_path = Path("config/agentic/dags/kspi_k2_full.yaml")
+
+    if not dag_path.exists():
+        console.print(f"[red]DAG file not found: {dag_path}[/red]")
+        raise typer.Exit(1)
+
+    console.print(f"[bold cyan]Building DAG visualization: {dag_path}[/bold cyan]")
+    result = build(
+        dag_path=dag_path,
+        cards_dir=cards_dir or DEFAULT_CARDS_DIR,
+        state_path=state_file or DEFAULT_STATE,
+        output_path=output,
+        llm_annotate=llm_annotate,
+    )
+    console.print(f"[green]Written: {result}[/green]")
+
+
+# ============================================================================
+# Agent Commands
+# ============================================================================
+
+AGENT_NAMES = ["datascout", "modelsmith", "estimator", "judge"]
+
+@agent_app.command("round")
+def agent_round(
+    dag: Optional[Path] = typer.Option(None, "--dag", help="Path to DAG YAML"),
+    provider: str = typer.Option("codex", "--provider", "-p", help="Provider: codex or claude"),
+):
+    """Run one full round of all 4 agents sequentially."""
+    import subprocess
+
+    script = Path("scripts/agent_loops/run_agent_round.sh")
+    if not script.exists():
+        console.print(f"[red]Agent round script not found: {script}[/red]")
+        raise typer.Exit(1)
+
+    env = os.environ.copy()
+    env["PROVIDER"] = provider
+    if dag:
+        env["DAG_PATH"] = str(dag)
+
+    console.print(f"[bold cyan]Running agent round (provider={provider})[/bold cyan]")
+    result = subprocess.run(["bash", str(script)], env=env)
+    if result.returncode != 0:
+        console.print("[red]Agent round failed[/red]")
+        raise typer.Exit(result.returncode)
+    console.print("[green]Agent round complete[/green]")
+
+
+@agent_app.command("run")
+def agent_run(
+    agent_name: str = typer.Argument(..., help=f"Agent name: {', '.join(AGENT_NAMES)}"),
+    provider: str = typer.Option("codex", "--provider", "-p", help="Provider: codex or claude"),
+    once: bool = typer.Option(True, "--once/--loop", help="Run once or loop"),
+):
+    """Run a single agent."""
+    import subprocess
+
+    if agent_name not in AGENT_NAMES:
+        console.print(f"[red]Unknown agent: {agent_name}. Choose from: {AGENT_NAMES}[/red]")
+        raise typer.Exit(1)
+
+    script = Path(f"scripts/agent_loops/{agent_name}_loop.sh")
+    if not script.exists():
+        console.print(f"[red]Agent script not found: {script}[/red]")
+        raise typer.Exit(1)
+
+    env = os.environ.copy()
+    env["PROVIDER"] = provider
+    env["RUN_ONCE"] = "1" if once else "0"
+
+    console.print(f"[bold cyan]Running {agent_name} (provider={provider}, once={once})[/bold cyan]")
+    result = subprocess.run(["bash", str(script)], env=env)
+    if result.returncode != 0:
+        console.print(f"[red]{agent_name} failed[/red]")
+        raise typer.Exit(result.returncode)
+    console.print(f"[green]{agent_name} complete[/green]")
+
+
+@agent_app.command("status")
+def agent_status(
+    agent_name: Optional[str] = typer.Argument(None, help="Agent name (or all)"),
+):
+    """Check agent loop status."""
+    agents = [agent_name] if agent_name else AGENT_NAMES
+    for name in agents:
+        pid_file = Path(f"outputs/agentic/{name}/{name}_loop.pid")
+        if pid_file.exists():
+            pid = pid_file.read_text().strip()
+            console.print(f"  [green]{name}[/green]: running (PID {pid})")
+        else:
+            console.print(f"  [dim]{name}[/dim]: not running")
+
+
+@agent_app.command("stop")
+def agent_stop(
+    agent_name: str = typer.Argument(..., help="Agent name to stop"),
+):
+    """Stop a running agent loop gracefully."""
+    stop_file = Path(f"outputs/agentic/{agent_name}/{agent_name}_loop.stop")
+    stop_file.parent.mkdir(parents=True, exist_ok=True)
+    stop_file.touch()
+    console.print(f"[yellow]Stop signal sent to {agent_name}[/yellow]")
+
+
+@agent_app.command("log")
+def agent_log(
+    agent_name: str = typer.Argument(..., help="Agent name"),
+    lines: int = typer.Option(50, "--lines", "-n", help="Number of lines to show"),
+):
+    """Show recent agent log."""
+    import subprocess
+
+    log_path = Path(f"outputs/agentic/logs/{agent_name}_loop.log")
+    if not log_path.exists():
+        console.print(f"[dim]No log file for {agent_name}[/dim]")
+        return
+    subprocess.run(["tail", f"-{lines}", str(log_path)])
+
+
+# ============================================================================
+# Loop Commands (Estimation Loop)
+# ============================================================================
+
+@loop_app.command("start")
+def loop_start(
+    dag: Optional[Path] = typer.Option(None, "--dag", help="Path to DAG YAML"),
+    provider: str = typer.Option("codex", "--provider", "-p", help="Provider: codex or claude"),
+):
+    """Start the estimation loop in the background."""
+    import subprocess
+
+    script = Path("scripts/codex_loop/control.sh")
+    env = os.environ.copy()
+    env["PROVIDER"] = provider
+    if dag:
+        env["DAG_PATH"] = str(dag)
+
+    result = subprocess.run(["bash", str(script), "start"], env=env)
+    raise typer.Exit(result.returncode)
+
+
+@loop_app.command("stop")
+def loop_stop():
+    """Stop the estimation loop gracefully."""
+    import subprocess
+    subprocess.run(["bash", "scripts/codex_loop/control.sh", "stop"])
+
+
+@loop_app.command("status")
+def loop_status():
+    """Check estimation loop status."""
+    import subprocess
+    subprocess.run(["bash", "scripts/codex_loop/control.sh", "status"])
+
+
+@loop_app.command("once")
+def loop_once(
+    provider: str = typer.Option("codex", "--provider", "-p", help="Provider: codex or claude"),
+):
+    """Run a single estimation loop iteration."""
+    import subprocess
+
+    env = os.environ.copy()
+    env["PROVIDER"] = provider
+    result = subprocess.run(["bash", "scripts/codex_loop/control.sh", "once"], env=env)
+    raise typer.Exit(result.returncode)
+
+
+@loop_app.command("log")
+def loop_log():
+    """Show recent estimation loop log."""
+    import subprocess
+    subprocess.run(["bash", "scripts/codex_loop/control.sh", "log"])
 
 
 # ============================================================================

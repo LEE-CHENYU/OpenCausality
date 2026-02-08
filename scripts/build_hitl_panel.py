@@ -1383,6 +1383,57 @@ render();
 # ── Build ────────────────────────────────────────────────────────────────────
 
 
+def generate_llm_decision_guidance(
+    open_issues: dict, edges: dict,
+) -> dict[str, str]:
+    """Generate LLM-powered decision guidance for each open issue."""
+    try:
+        from shared.llm.client import get_llm_client
+        from shared.llm.prompts import DECISION_GUIDANCE_SYSTEM, DECISION_GUIDANCE_USER
+    except ImportError:
+        print("  Warning: LLM client not available, skipping guidance generation")
+        return {}
+
+    client = get_llm_client()
+    guidance: dict[str, str] = {}
+
+    for key, issue in open_issues.items():
+        edge_id = extract_edge_id(key)
+        edge = edges.get(edge_id, {})
+
+        failed_diags = [
+            d["name"] for d in edge.get("diagnostics", []) if not d.get("passed", True)
+        ]
+
+        user_msg = DECISION_GUIDANCE_USER.format(
+            rule_id=issue.get("rule_id", ""),
+            edge_id=edge_id,
+            message=issue.get("message", ""),
+            severity=issue.get("severity", ""),
+            point=edge.get("point", "N/A"),
+            se=edge.get("se", "N/A"),
+            pvalue=edge.get("pvalue", "N/A"),
+            n_obs=edge.get("n_obs", "N/A"),
+            design=edge.get("design", "N/A"),
+            claim_level=edge.get("claim_level", "N/A"),
+            rating=edge.get("rating", "N/A"),
+            failed_diagnostics=", ".join(failed_diags) if failed_diags else "none",
+        )
+
+        try:
+            result = client.complete(
+                system=DECISION_GUIDANCE_SYSTEM,
+                user=user_msg,
+                max_tokens=300,
+            )
+            guidance[key] = result.strip()
+            print(f"  LLM guidance: {key}")
+        except Exception as e:
+            print(f"  Warning: LLM guidance failed for {key}: {e}")
+
+    return guidance
+
+
 def build(
     state_path: Path,
     cards_dir: Path,
@@ -1390,6 +1441,7 @@ def build(
     registry_path: Path,
     output_dir: Path,
     dag_path: Path | None = None,
+    llm_annotate: bool = False,
 ) -> Path:
     """Build the HITL panel HTML and return the output path."""
     if dag_path is None:
@@ -1439,6 +1491,18 @@ def build(
     dag_edges = load_dag_edges(dag_path)
     dag_nodes = load_dag_nodes(dag_path)
     print(f"  {len(dag_edges)} DAG edges, {len(dag_nodes)} DAG nodes loaded")
+
+    # 6b. Optional LLM guidance
+    llm_guidance: dict[str, str] = {}
+    if llm_annotate:
+        print("  Generating LLM decision guidance...")
+        llm_guidance = generate_llm_decision_guidance(open_issues, edges)
+        print(f"  {len(llm_guidance)} LLM guidance entries generated")
+        # Inject into edges for client-side rendering
+        for key, text in llm_guidance.items():
+            edge_id = extract_edge_id(key)
+            if edge_id in edges:
+                edges[edge_id]["llm_guidance"] = text
 
     # 7. Build HTML via placeholder replacement
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
@@ -1506,10 +1570,19 @@ def main():
         default=DEFAULT_DAG,
         help="Path to DAG YAML for edge/node context (default: config/agentic/dags/kspi_k2_full.yaml)",
     )
+    parser.add_argument(
+        "--llm-annotate",
+        action="store_true",
+        help="Generate LLM-powered contextual decision guidance per issue",
+    )
     args = parser.parse_args()
 
     print("Building HITL panel...")
-    build(args.state_file, args.cards_dir, args.actions_file, args.registry_file, args.output_dir, args.dag_file)
+    build(
+        args.state_file, args.cards_dir, args.actions_file,
+        args.registry_file, args.output_dir, args.dag_file,
+        llm_annotate=args.llm_annotate,
+    )
     print("Done.")
 
 

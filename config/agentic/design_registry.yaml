@@ -126,6 +126,7 @@ designs:
   - id: "LOCAL_PROJECTIONS"
     name: "Local Projections IRF"
     description: "Jorda local projections for dynamic impulse responses."
+    adapter_class: "shared.engine.adapters.lp_adapter.LPAdapter"
     credibility_weight: 0.7
     requirements:
       data:
@@ -187,6 +188,7 @@ designs:
   # -------------------------------------------------------------------------
   - id: "PANEL_LP_EXPOSURE_FE"
     name: "Panel LP with Exposure x Shock and Fixed Effects"
+    adapter_class: "shared.engine.adapters.panel_lp_adapter.PanelLPAdapter"
     description: >
       Shift-share panel LP: differential bank response by predetermined exposure.
       Canonical model (first-differenced outcome):

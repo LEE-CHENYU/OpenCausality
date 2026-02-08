@@ -55,6 +55,25 @@ rdd = [
     # RDD estimation (optional, install separately if needed)
     # "rdrobust>=1.0.0",  # May require R installation
 ]
+dowhy = ["dowhy>=0.14"]
+econml = ["econml>=0.16"]
+doubleml = ["DoubleML>=0.10"]
+discovery = ["causal-learn>=0.1.4", "gcastle>=1.0"]
+pywhy = ["pywhy-graphs>=0.1.0"]
+causalml = ["causalml>=0.16.0"]
+all-causal-core = [
+    "dowhy>=0.14",
+    "econml>=0.16",
+    "pywhy-graphs>=0.1.0",
+    "causal-learn>=0.1.4",
+]
+all-causal = [
+    "dowhy>=0.14",
+    "econml>=0.16",
+    "pywhy-graphs>=0.1.0",
+    "causal-learn>=0.1.4",
+    "causalml>=0.16.0",
+]
 
 [project.scripts]
 # Unified CLI

@@ -18,3 +18,12 @@ Process:
 2) Produce a ranked weak-link list focusing on the target path.
 3) Propose refinements (alternative controls, placebos, splits) with clear rationale.
 4) Log every spec change recommendation to the ledger to avoid p-hacking.
+
+Guardrails:
+- Validate all edge cards against shared/agentic/validation.py.
+- Check issue_registry.yaml for rule violations; file issues in state.json.
+- TSGuard: verify all time-series diagnostics passed.
+- IdentifiabilityScreen: verify identification claims match evidence.
+- HITL gates: trigger HITL review for CRITICAL/HIGH issues.
+- PatchPolicy (shared/agentic/governance/patch_policy.py): respect patch constraints.
+- NEVER adjust significance thresholds or override diagnostic failures without HITL approval.

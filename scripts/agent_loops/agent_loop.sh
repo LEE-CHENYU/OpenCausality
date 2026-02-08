@@ -20,6 +20,7 @@ DURATION_SECONDS="${DURATION_SECONDS:-86400}"
 SANDBOX_MODE="${SANDBOX_MODE:-danger-full-access}"
 RUN_ONCE="${RUN_ONCE:-0}"
 ENV_FILE="${ENV_FILE:-$ROOT/.env}"
+PROVIDER="${PROVIDER:-codex}"  # codex | claude
 
 OBJECTIVE_DEFAULT="Maintain backward compatibility while producing agent artifacts for the DAG workflow."
 
@@ -88,7 +89,13 @@ while [ "$(date +%s)" -lt "$end_ts" ]; do
 
   (
     cd "$ROOT"
-    codex exec --sandbox "$SANDBOX_MODE" --full-auto "$(cat "$prompt_path")"
+    if [ "$PROVIDER" = "claude" ]; then
+      claude -p "$(cat "$prompt_path")" \
+        --allowedTools "Bash(git:*),Bash(python:*),Read,Write,Edit,Glob,Grep" \
+        2>&1
+    else
+      codex exec --sandbox "$SANDBOX_MODE" --full-auto "$(cat "$prompt_path")"
+    fi
   ) >> "$LOG" 2>&1
 
   {
