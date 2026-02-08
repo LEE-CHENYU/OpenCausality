@@ -452,6 +452,38 @@ For LLM-assisted repairs, the log additionally records the model identifier and 
 
 The \texttt{HITLGate} detects conditions requiring human decisions from three sources: unspecified DAG parameters (\eg edge type, expected sign), TSGuard flags (regime instability), and issues marked \texttt{requires\_human = True}. When triggered, it generates a structured Markdown checklist and pauses the agent loop until all decisions are recorded. Decisions are exported as JSON and appended to the audit log.
 
+The governance framework catches five categories of methodological loopholes:
+
+\begin{enumerate}[leftmargin=*, itemsep=1pt]
+    \item \textbf{Overclaiming} (\texttt{SIG\_NOT\_ID}): Fires when $p < 0.05$ but the identifiability screen assigns a claim below \texttt{IDENTIFIED\_CAUSAL}---preventing the most common form of overclaiming in applied work.
+    \item \textbf{Control shopping} (\texttt{RefinementWhitelist}): Restricts which controls can be added or removed during refinement. Modifications outside the pre-approved whitelist are blocked and logged.
+    \item \textbf{Null dropping} (\texttt{Null Acceptance}): Requires explicit acknowledgment before an insignificant edge can be excluded, countering the file-drawer problem at the pipeline level.
+    \item \textbf{Specification drift} (\texttt{AuditLog}): Detects when cumulative specification changes exceed a threshold relative to the original DAG, flagging potential drift from the pre-registered design.
+    \item \textbf{Timing failure} (\texttt{LEADS\_TIMING\_FAIL}): Catches cases where the ``effect'' variable leads the ``cause'' in time, contradicting the proposed causal direction.
+\end{enumerate}
+
+\subsection{Interactive Panels}
+
+\oc{} produces two interactive HTML panels as primary output artifacts, both auto-built and opened by the sentinel loop (Section~\ref{sec:sentinel}).
+
+\paragraph{DAG Visualization Panel} (Figure~\ref{fig:dag-panel}). An interactive force-directed graph built with D3.js, framed explicitly as a \emph{``DRAFT PROPOSAL --- Requires analyst review before use.''} Nodes are draggable circles with dashed borders for latent variables and red rings for identification risks. Edges are color-coded by type (backdoor, frontdoor, IV) with coefficient labels; orange strokes indicate \texttt{CRITICAL} issues. A sidebar lists all open issues with severity badges; clicking an issue highlights the corresponding edge with a pulse animation and centers the viewport. Each issue card expands to show registry-powered explanations, rule-specific action dropdowns, justification fields, and confirm/defer buttons. Resolved decisions can be exported as JSON for pipeline re-ingestion.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\textwidth, trim=0 0 0 0, clip]{fig_dag_panel.png}
+    \caption{DAG Visualization Panel. The force-directed graph displays the full causal DAG with color-coded edges (by identification type), severity badges on the issue sidebar, and a ``DRAFT PROPOSAL'' banner framing the output as requiring analyst sign-off. Clicking a sidebar issue highlights and pans to the corresponding edge.}
+    \label{fig:dag-panel}
+\end{figure}
+
+\paragraph{HITL Resolution Panel} (Figure~\ref{fig:hitl-panel}). A structured review board with a stats bar (total/critical/high/medium counts and resolution progress), filter controls (severity, edge, rule type, full-text search), and per-issue cards showing the edge context, estimates, credibility rating, and rule description. Each card has an action dropdown (accept/reject/revise/escalate) with a justification text field. Bulk actions enable batch resolution. All decisions are exported as JSON and appended to the hash-chained audit log.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\textwidth, trim=0 0 0 0, clip]{fig_hitl_panel.png}
+    \caption{HITL Resolution Panel. The review board shows 55 detected issues (19 \texttt{CRITICAL}, 7 \texttt{HIGH}), grouped by rule type. Each issue card displays edge estimates, credibility rating, and action dropdown with justification field. Bulk actions and JSON export support the governance workflow.}
+    \label{fig:hitl-panel}
+\end{figure}
+
 \subsection{EdgeCard: The Primary Output Artifact}
 
 Each estimated edge produces an \texttt{EdgeCard}---a YAML file combining estimates (point, SE, CI, $p$-value, IRF), diagnostics (13 automated checks), identification results (claim level, risks), counterfactual eligibility (shock/policy), propagation role, credibility score and rating (A/B/C/D), and literature references. EdgeCards are both human-readable and machine-parseable, serving as the interface between the estimation and governance layers.
