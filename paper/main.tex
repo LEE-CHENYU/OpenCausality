@@ -42,7 +42,7 @@ Applied causal inference faces a fundamental tension: automation accelerates ana
 
 Existing frameworks address parts of this problem. DoWhy~\citep{sharma2020dowhy} formalizes the identify-estimate-refute workflow. EconML~\citep{battocchi2022econml} provides heterogeneous treatment-effect estimators. CausalML~\citep{chen2020causalml} targets uplift modeling. However, none of these systems treats every estimation decision as an auditable event, enforces claim-level restrictions based on identification strength, or prevents automated specification searching through explicit policy enforcement.
 
-We introduce \oc{}, an open-source platform that makes the entire causal inference workflow---from DAG construction to effect propagation to human review---both automated and transparent. Our key insight is that \emph{the audit trail is not a byproduct of estimation; it is a first-class output}. Every edge estimate, diagnostic result, issue flag, and governance decision is recorded in a hash-chained ledger that can be committed to version control and independently verified. An always-on sentinel loop runs alongside estimation, continuously validating the DAG, auto-healing schema regressions, and surfacing interactive panels---ensuring that the specification never silently degrades.
+We introduce \oc{},\footnote{Code and data: \url{https://github.com/LEE-CHENYU/OpenCausality}} an open-source platform that makes the entire causal inference workflow---from DAG construction to effect propagation to human review---both automated and transparent. Our key insight is that \emph{the audit trail is not a byproduct of estimation; it is a first-class output}. Every edge estimate, diagnostic result, issue flag, and governance decision is recorded in a hash-chained ledger that can be committed to version control and independently verified. An always-on sentinel loop runs alongside estimation, continuously validating the DAG, auto-healing schema regressions, and surfacing interactive panels---ensuring that the specification never silently degrades.
 
 \paragraph{Contributions.} We make the following contributions:
 
@@ -884,5 +884,16 @@ Table~\ref{tab:tsguard-full} details all 7 TSGuard diagnostics with thresholds a
 \paragraph{Dynamics risk categories.} TSGuard assigns 5 risk levels: (1)~\texttt{common\_trend\_risk}---both series persistent ($\text{AC}(1) > 0.9$); (2)~\texttt{autocorr\_risk}---from residual and HAC tests; (3)~\texttt{nonstationarity\_risk}---high AC for both series, cap claim to DESCRIPTIVE unless ECM; (4)~\texttt{regime\_break\_risk}---from split-sample test; (5)~\texttt{timing\_misspec\_risk}---from leads test.
 
 \paragraph{Governance rules.} (1)~Nonstationarity + levels $\Rightarrow$ cap at DESCRIPTIVE; (2)~Lead test failure $\Rightarrow$ BLOCKED\_ID; (3)~Regime instability $\Rightarrow$ cap at REDUCED\_FORM, block CF; (4)~Shock support $< 3$ $\Rightarrow$ block CF. All TSGuard results are stored in EdgeCards and feed into the propagation engine's guardrail~3.
+
+%% ============================================================
+%% CODE AVAILABILITY
+%% ============================================================
+\section*{Code Availability}
+
+\oc{} is open-source software released under the MIT License. The code, DAG specifications, example datasets, and interactive panel outputs are available at:
+
+\begin{center}
+\url{https://github.com/LEE-CHENYU/OpenCausality}
+\end{center}
 
 \end{document}

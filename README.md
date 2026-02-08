@@ -4,20 +4,29 @@ Open-source platform for transparent, auditable causal inference. Combines DAG-b
 
 > **Paper:** [OpenCausality: Auditable Agentic Causal Inference with DAG-Based Reasoning and LLM-Assisted Discovery](paper/main.pdf) (Li, 2025)
 
-Causal inference in applied economics is fragile. Automated pipelines scale but hide
+Causal inference across the sciences — economics, epidemiology, public policy, social
+science, marketing, and beyond — is fragile. Automated pipelines scale but hide
 methodological choices; manual analysis is transparent but slow. OpenCausality resolves
 this by treating every estimation decision as an auditable event. You specify a causal
-DAG in YAML, the system runs Local Projections with HAC standard errors, and a 29-rule
-issue detection engine flags problems -- overclaiming, control shopping, null dropping,
-specification drift, timing failures -- before results reach your paper. A
+DAG in YAML, the system dispatches to the appropriate estimation engine (from local
+projections to double ML to synthetic control), and a 29-rule issue detection engine
+flags problems — overclaiming, control shopping, null dropping, specification drift,
+timing failures — before results reach your paper, report, or dashboard. A
 human-in-the-loop panel ensures no statistical claim passes without explicit analyst
 approval. A **sentinel loop** runs continuously in the background, re-validating the
 DAG after every change, auto-fixing schema issues (missing unit specs, malformed edge
-IDs), and popping up interactive panels -- the DAG visualization and HITL review board
--- so analysts never have to hunt for results. The platform also ships with an
+IDs), and popping up interactive panels — the DAG visualization and HITL review board
+— so analysts never have to hunt for results. The platform also ships with an
 NL-to-DAG pipeline that extracts causal structures from academic papers via LLM,
 letting you bootstrap DAGs from existing literature and compare them against
 expert-built specifications.
+
+**Who is this for?** Researchers, data scientists, and analysts who need to make causal
+claims from observational data — and need those claims to be auditable, reproducible,
+and defensible. Whether you are running a randomized experiment in a tech company,
+estimating treatment effects in a clinical trial, evaluating a policy intervention, or
+building a macroeconomic transmission model, OpenCausality provides the governance
+layer that turns ad-hoc analysis into a structured, reviewable process.
 
 ---
 
@@ -67,26 +76,27 @@ the codex CLI provider with a warning.
 
 OpenCausality operates on a simple premise: every causal claim should be backed by a
 DAG, estimated with appropriate methods, and subjected to automated checks before human
-review.
+review. The framework is domain-agnostic — it works with any observational or
+experimental dataset where causal relationships can be represented as a directed graph.
 
 The starting point is a YAML DAG specification. Each node represents an observable
 variable and each directed edge represents a hypothesized causal relationship, carrying
-metadata -- expected sign, lag structure, identification strategy, unit specs -- that
+metadata — expected sign, lag structure, identification strategy, unit specs — that
 constrain the estimation engine. The causal model is an explicit, version-controlled
 artifact, not something implicit in the code.
 
 The estimation engine processes each edge independently through a unified adapter
-registry. Eleven adapters cover all design types: Local Projections with Newey-West HAC
-standard errors, Panel LP with exposure-shift FE, Panel FE Backdoor with entity/time
-fixed effects (via `linearmodels.PanelOLS`), IV 2SLS with first-stage diagnostics,
-Difference-in-Differences with TWFE and pre-trend tests, Regression Discontinuity (RDD),
-Regression Kink Design (RKD) with local-linear WLS, Synthetic Control, Immutable
-Evidence, Accounting Bridge, and Identity sensitivities. Each adapter implements a common
-`EstimationRequest -> estimate() -> EstimationResult` interface, so new estimation
-methods plug in without touching dispatch code. Data assembly, control set construction
-from DAG conditional independence structure, and impulse response functions at multiple
-horizons are handled upstream; every estimation call is logged with its full
-specification so that no result is an orphan.
+registry. 19 adapters span classical econometrics, machine-learning-based causal
+inference, and quasi-experimental designs: Local Projections (HAC SE), Panel LP, Panel
+FE Backdoor (`linearmodels.PanelOLS`), IV 2SLS, Difference-in-Differences, RDD,
+Regression Kink, Synthetic Control, DoWhy (Backdoor/IV/Frontdoor with automated
+refutation), DoubleML (PLR/IRM/PLIV), EconML (CATE via LinearDML and CausalForest),
+CausalML (S/T/X-learner uplift), plus Immutable Evidence, Accounting Bridge, and
+Identity adapters. Each implements a common `EstimationRequest -> estimate() ->
+EstimationResult` interface, so new methods plug in without touching dispatch code.
+Data assembly, control set construction from DAG conditional independence structure,
+and impulse response functions at multiple horizons are handled upstream; every
+estimation call is logged with its full specification so that no result is an orphan.
 
 After estimation, 29 issue detection rules scan for common methodological failures:
 significant results without valid identification, p-hacking through control selection,
@@ -135,7 +145,11 @@ report with credibility ratings, and a hash-chained JSONL audit log.
 
 ---
 
-## Example: Kazakhstan Bank Stress Testing
+## Case Study: Kazakhstan Bank Stress Testing
+
+This end-to-end example demonstrates OpenCausality on a macroeconomic transmission
+problem. The same workflow applies to clinical trials, A/B test analysis, policy
+evaluation, or any domain where causal structure can be expressed as a DAG.
 
 ### The Research Question
 
@@ -380,10 +394,10 @@ The default build task (`Ctrl+Shift+B`) runs the full pipeline with sentinel.
 ### Why It Matters
 
 Automated estimation pipelines are efficient but dangerous. A system that runs
-regressions and reports results without human oversight can produce statistically
-significant findings that are methodologically indefensible -- control shopping until
-significance emerges, dropping null results, claiming identification from invalid
-designs.
+models and reports results without human oversight can produce statistically significant
+findings that are methodologically indefensible — control shopping until significance
+emerges, dropping null results, claiming identification from invalid designs. This
+applies equally to academic research, industry experimentation, and policy analysis.
 
 OpenCausality makes human oversight a first-class pipeline component. When an edge
 shows significance but lacks valid identification, the system flags the issue and halts
@@ -529,13 +543,14 @@ relationship; it does not mean the relationship has been credibly identified wit
 valid research design. Users should treat NL-extracted DAGs as hypotheses to be tested,
 not as established facts.
 
-### Single-Country Example
+### Example Coverage
 
-The primary example in this repository is Kazakhstan bank stress testing. While the
-platform is designed for general causal inference with panel data, the data clients,
-variable catalogs, and example DAGs are specific to this use case. Applying
-OpenCausality to other settings requires building new data clients and variable
-mappings.
+The primary worked example is Kazakhstan bank stress testing. The platform is
+domain-agnostic, but the bundled data clients, variable catalogs, and example DAGs are
+specific to this use case. Applying OpenCausality to other domains (clinical trials,
+marketing attribution, policy evaluation, etc.) requires building new data clients and
+variable mappings — the estimation adapters, issue detection, and governance layers
+work out of the box.
 
 ### LLM Hallucination Risk
 
@@ -748,7 +763,9 @@ Features: "Draft Proposal" banner, node/edge tooltips, edge type legend, risk in
 
 ## DAG Specification Format
 
-DAG files are YAML documents with the following top-level structure:
+DAG files are YAML documents describing causal hypotheses in any domain. The following
+example is from macroeconomics, but the same schema applies to clinical, social science,
+or industry settings:
 
 ```yaml
 dag:
@@ -790,7 +807,7 @@ expected magnitude in natural language (validated via regex-based unit matching)
 ## Query REPL
 
 The interactive query REPL (`opencausality query`) allows natural language questions
-about the causal structure:
+about causal structure in any domain:
 
 ```
 > What happens to bank capital if the exchange rate depreciates by 10%?
@@ -874,8 +891,8 @@ intervals for propagated effects.
 
 OpenCausality treats causal models as first-class software artifacts — versioned,
 testable, citable. The long-term goal is a composable infrastructure where any
-researcher can build, audit, and share causal claims with the same rigor applied to
-source code.
+researcher, data scientist, or analyst can build, audit, and share causal claims with
+the same rigor applied to source code.
 
 ### What Makes OpenCausality Different
 
@@ -1042,7 +1059,8 @@ and open a pull request.
 
 For bug reports include the DAG spec (or minimal reproducer), full traceback, and
 output of `opencausality config doctor`. Feature proposals that extend issue detection
-rules or add identification strategies are especially welcome.
+rules, add identification strategies, or contribute domain-specific adapters and
+example DAGs (clinical, social science, marketing, etc.) are especially welcome.
 
 ---
 
