@@ -1,0 +1,337 @@
+edge_id: oil_demand_to_income
+dag_version_hash: 1c7bd8fe01609fd7d4926c38e6134a089c1c4e450ca44d017023564f04d8220f
+created_at: '2026-02-08T08:36:44.749640'
+data_provenance:
+  treatment_source:
+    connector: parquet_file
+    dataset: oil_demand_shock
+    series: null
+    retrieval_time: null
+    file_path: null
+    file_checksum: null
+    row_count: 62
+    column_count: null
+    date_range:
+    - '2010-01-01'
+    - '2025-07-01'
+    cache_key: null
+  outcome_source:
+    connector: parquet_file
+    dataset: log_income_pc
+    series: null
+    retrieval_time: null
+    file_path: null
+    file_checksum: null
+    row_count: 62
+    column_count: null
+    date_range:
+    - '2010-01-01'
+    - '2025-07-01'
+    cache_key: null
+  control_sources: {}
+  instrument_sources: {}
+  combined_row_count: 62
+  combined_date_range:
+  - '2010-01-01'
+  - '2025-07-01'
+  missing_rate: null
+  panel_dimensions: null
+  entity_boundary_note: null
+  kpi_definitions: null
+spec_hash: b327b4b58bb76c861cb9ea83d801f78185de731f39d0cf1487f8bfe48ffdf5b0
+spec_details:
+  design: LOCAL_PROJECTIONS
+  controls:
+  - y_lag1
+  - y_lag2
+  - x_lag1
+  - x_lag2
+  instruments: []
+  fixed_effects: []
+  se_method: HAC_newey_west
+  sample_filter: null
+  horizon: &id001
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  bandwidth: null
+estimates:
+  point: 0.01144408630753091
+  se: 0.00898357402199809
+  ci_95:
+  - -0.006163718775585348
+  - 0.029051891390647167
+  pvalue: 0.20270235567781436
+  horizons: *id001
+  irf:
+  - 0.01144408630753091
+  - 0.027751331434703742
+  - 0.019910176725832146
+  - 0.02378205473206628
+  - 0.04018783232819967
+  - 0.04572328011851103
+  - 0.0579658110057754
+  irf_ci_lower:
+  - -0.006163395228034985
+  - 0.011254094810300722
+  - -0.005678653845095048
+  - 0.0017858126805133205
+  - 0.006345405593897499
+  - 0.02056840958544251
+  - 0.023035286133931424
+  irf_ci_upper:
+  - 0.029051567843096805
+  - 0.04424856805910676
+  - 0.04549900729675934
+  - 0.045778296783619235
+  - 0.07403025906250184
+  - 0.07087815065157956
+  - 0.09289633587761938
+diagnostics:
+  hac_bandwidth:
+    name: hac_bandwidth
+    passed: true
+    value: 3.0
+    threshold: null
+    pvalue: null
+    message: 'Newey-West bandwidth: 3'
+  effective_obs:
+    name: effective_obs
+    passed: true
+    value: 60.0
+    threshold: 20.0
+    pvalue: null
+    message: ''
+  sign_consistency:
+    name: sign_consistency
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: No expected sign specified
+  ts_leads_test:
+    name: ts_leads_test
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_residual_autocorr:
+    name: ts_residual_autocorr
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_hac_sensitivity:
+    name: ts_hac_sensitivity
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_lag_sensitivity:
+    name: ts_lag_sensitivity
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_regime_stability:
+    name: ts_regime_stability
+    passed: false
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: fail'
+  ts_shock_support:
+    name: ts_shock_support
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+all_diagnostics_pass: false
+interpretation:
+  estimand: IRF of log_income_pc to a unit shock in oil_demand_shock
+  is_not: Structural causal effect under all interventions
+  channels:
+  - direct
+  - indirect
+  population: ''
+  conditions: ''
+  allowed_uses: []
+  forbidden_uses: []
+failure_flags:
+  weak_identification: false
+  potential_bad_control: false
+  mechanical_identity_risk: false
+  regime_break_detected: true
+  small_sample: false
+  high_missing_rate: false
+  entity_boundary_change: false
+  definition_inconsistency: false
+counterfactual:
+  supports_shock_path: true
+  supports_policy_intervention: false
+  intervention_note: Reduced-form LP estimate
+  external_validity: ''
+credibility_rating: B
+credibility_score: 0.7855555555555556
+identification:
+  claim_level: REDUCED_FORM
+  risks:
+    unmeasured_confounding: medium
+    simultaneity: low
+    weak_variation: low
+    measurement_error: low
+    selection: low
+  untestable_assumptions:
+  - No omitted common cause of treatment and outcome
+  testable_threats_passed:
+  - hac_bandwidth
+  - effective_obs
+  - sign_consistency
+  - ts_leads_test
+  - ts_residual_autocorr
+  - ts_hac_sensitivity
+  - ts_lag_sensitivity
+  - ts_shock_support
+  testable_threats_failed:
+  - ts_regime_stability
+counterfactual_block:
+  shock_scenario_allowed: false
+  policy_intervention_allowed: false
+  reason_shock_blocked: 'Counterfactual Use: BLOCKED
+
+    Reason: regime break risk
+
+
+    Even if p<0.05, this does not establish a causal effect.'
+  reason_policy_blocked: REDUCED_FORM mode does not allow policy interventions
+  allowed: false
+  reason_blocked: 'Counterfactual Use: BLOCKED
+
+    Reason: regime break risk
+
+
+    Even if p<0.05, this does not establish a causal effect.'
+propagation_role:
+  role: reduced_form
+  overlapping_paths: []
+  selected_for_counterfactual: true
+  mode_propagation_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: true
+    DESCRIPTIVE: true
+  mode_shock_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: true
+    DESCRIPTIVE: false
+  mode_policy_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: false
+    DESCRIPTIVE: false
+literature:
+  supporting:
+  - doi: 10.1093/qje/qjaa004
+    title: The Fall of the Labor Share and the Rise of Superstar Firms*
+    authors:
+    - David Autor
+    - David Dorn
+    - Lawrence F. Katz
+    - Christina Patterson
+    - John Van Reenen
+    year: 2020
+    excerpt: Abstract The fall of labor’s share of GDP in the United States and many
+      other countries in recent decades is well documented but its causes remain uncertain.
+      Existing empirical assessments typically rely on industry or macro data, obscuring
+      heterogeneity among firms. In this article, we analyze micr
+    relevance: supporting
+    edge_id: oil_demand_to_income
+    paper_id: ''
+    citation_count: 1935
+    search_query: Oil demand shock Log per-capita monetary income causal effect
+    source: openalex
+    pdf_url: https://academic.oup.com/qje/article-pdf/135/2/645/32994954/qjaa004.pdf
+  - doi: 10.1257/jep.28.3.109
+    title: Informality and Development
+    authors:
+    - Rafael La Porta
+    - Andrei Shleifer
+    year: 2014
+    excerpt: In developing countries, informal firms account for up to half of economic
+      activity. They provide livelihood for billions of people. Yet their role in
+      economic development remains controversial with some viewing informality as
+      pent-up potential and others viewing informality as a parasitic organizat
+    relevance: supporting
+    edge_id: oil_demand_to_income
+    paper_id: ''
+    citation_count: 1322
+    search_query: Oil demand shock Log per-capita monetary income causal effect
+    source: openalex
+    pdf_url: https://www.aeaweb.org/articles/pdf/doi/10.1257/jep.28.3.109
+  - doi: ''
+    title: Trade and Energy Consumption in the OPEC Countries
+    authors:
+    - R. Najarzadeh
+    - M. Reed
+    - Azam Khoshkhoo
+    - A. Gallavani
+    year: 2015
+    excerpt: ''
+    relevance: supporting
+    edge_id: oil_demand_to_income
+    paper_id: 06e286aab51dd37cd3aacb3969055786f203cb6b
+    citation_count: 15
+    search_query: Oil demand shock Log per-capita monetary income causal effect
+    source: semantic_scholar
+    pdf_url: ''
+  - doi: 10.2307/j.ctt183p19n.9
+    title: Business Cycles
+    authors:
+    - Moses Abramovitz
+    - Moses Abram Ovitz
+    - John N. Jacobson
+    year: 1970
+    excerpt: ''
+    relevance: supporting
+    edge_id: oil_demand_to_income
+    paper_id: 585ca86325246573c8510a33b28e247abd320392
+    citation_count: 0
+    search_query: Oil demand shock Log per-capita monetary income causal effect
+    source: semantic_scholar
+    pdf_url: ''
+  challenging:
+  - doi: 10.3386/w9305
+    title: 'Institutions Rule: The Primacy of Institutions over Geography and Integration
+      in Economic Development'
+    authors:
+    - Dani Rodrik
+    - Arvind Subramanian
+    - Francesco Trebbi
+    year: 2002
+    excerpt: We estimate the respective contributions of institutions, geography,
+      and trade in determining income levels around the world, using recently developed
+      instruments for institutions and trade.Our results indicate that the quality
+      of institutions "trumps" everything else.Once institutions are controlle
+    relevance: challenging
+    edge_id: oil_demand_to_income
+    paper_id: ''
+    citation_count: 1711
+    search_query: Oil demand shock Log per-capita monetary income causal effect
+    source: openalex
+    pdf_url: https://doi.org/10.3386/w9305
+  methodological: []
+  search_status: SEARCHED
+  search_timestamp: '2026-02-08T08:36:44.749697'
+  search_query: Oil demand shock Log per-capita monetary income causal effect
+  total_results: 5
+companion_edge_id: null
+variant_of: null
+is_precisely_null: true
+null_equivalence_bound: 0.01796714804399618

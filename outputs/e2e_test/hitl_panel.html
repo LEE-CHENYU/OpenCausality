@@ -1,0 +1,2514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HITL Resolution Panel</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background: #fff;
+            color: #000;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        /* Header */
+        .header {
+            padding: 24px 32px 16px;
+            border-bottom: 1px solid #000;
+        }
+        .header h1 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .header .subtitle {
+            color: #666;
+            font-size: 11px;
+            margin-bottom: 12px;
+        }
+        .stats-row {
+            display: flex;
+            gap: 24px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .stat {
+            font-size: 11px;
+        }
+        .stat strong { font-weight: 600; }
+        .stat .critical { color: #000; font-weight: 700; }
+        .stat .high { color: #555; font-weight: 600; }
+
+        /* Controls bar */
+        .controls-bar {
+            padding: 10px 32px;
+            border-bottom: 1px solid #000;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            background: #fafafa;
+            font-size: 11px;
+        }
+        .controls-bar label {
+            color: #666;
+            margin-right: 4px;
+        }
+        .controls-bar select, .controls-bar input[type="text"] {
+            border: 1px solid #000;
+            background: #fff;
+            padding: 4px 8px;
+            font-size: 11px;
+            font-family: inherit;
+        }
+        .controls-bar input[type="text"] {
+            width: 200px;
+        }
+
+        /* Progress bar */
+        .progress-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: auto;
+        }
+        .progress-bar {
+            width: 120px;
+            height: 8px;
+            border: 1px solid #000;
+            background: #fff;
+        }
+        .progress-fill {
+            height: 100%;
+            background: #000;
+            transition: width 0.3s;
+        }
+        .progress-label {
+            font-size: 11px;
+            font-weight: 500;
+            min-width: 60px;
+        }
+
+        /* Sections */
+        .section {
+            padding: 16px 32px;
+            border-bottom: 1px solid #ddd;
+        }
+        .section:last-of-type {
+            border-bottom: 1px solid #000;
+        }
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+        .section-title {
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .section-count {
+            font-size: 11px;
+            color: #666;
+        }
+        .severity-badge {
+            display: inline-block;
+            font-size: 10px;
+            font-weight: 600;
+            padding: 1px 6px;
+            border: 1px solid #000;
+            margin-left: 8px;
+        }
+        .severity-badge.critical {
+            background: #000;
+            color: #fff;
+        }
+        .severity-badge.high {
+            background: #fff;
+            color: #000;
+        }
+        .severity-badge.medium {
+            background: #eee;
+            color: #000;
+        }
+        .severity-badge.low {
+            background: #fff;
+            color: #999;
+        }
+
+        /* Bulk action */
+        .bulk-action {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            background: #fafafa;
+        }
+        .bulk-action label { color: #666; font-size: 11px; }
+        .bulk-action select {
+            border: 1px solid #000;
+            background: #fff;
+            padding: 3px 6px;
+            font-size: 11px;
+            font-family: inherit;
+        }
+        .btn-sm {
+            border: 1px solid #000;
+            background: #fff;
+            padding: 3px 10px;
+            font-size: 11px;
+            font-family: inherit;
+            cursor: pointer;
+        }
+        .btn-sm:hover { background: #000; color: #fff; }
+
+        /* Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+        }
+        th {
+            text-align: left;
+            font-weight: 600;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 6px 8px;
+            border-bottom: 1px solid #000;
+            color: #666;
+        }
+        td {
+            padding: 8px 8px;
+            border-bottom: 1px solid #eee;
+            vertical-align: top;
+        }
+        tr:hover td { background: #fafafa; }
+        tr.resolved td { opacity: 0.45; }
+
+        .edge-name {
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        .mono {
+            font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+            font-size: 10px;
+        }
+        .diag-pass { color: #000; }
+        .diag-fail { color: #000; font-weight: 700; text-decoration: underline; }
+
+        .claim-tag {
+            display: inline-block;
+            font-size: 9px;
+            font-weight: 600;
+            padding: 1px 5px;
+            border: 1px solid #000;
+            white-space: nowrap;
+        }
+        .rating-tag {
+            display: inline-block;
+            font-size: 10px;
+            font-weight: 700;
+            width: 18px;
+            text-align: center;
+            border: 1px solid #000;
+        }
+
+        .flag-list {
+            font-size: 10px;
+            color: #666;
+        }
+        .flag-list .flag {
+            display: inline-block;
+            margin-right: 4px;
+            padding: 0 3px;
+            border: 1px solid #ccc;
+            font-size: 9px;
+        }
+
+        /* Action cells */
+        td select {
+            border: 1px solid #000;
+            background: #fff;
+            padding: 3px 6px;
+            font-size: 11px;
+            font-family: inherit;
+            width: 100%;
+        }
+        td select.decided {
+            background: #000;
+            color: #fff;
+        }
+        td input[type="text"] {
+            border: 1px solid #ccc;
+            padding: 3px 6px;
+            font-size: 10px;
+            font-family: inherit;
+            width: 100%;
+            margin-top: 4px;
+        }
+        td input[type="text"]:focus {
+            border-color: #000;
+            outline: none;
+        }
+
+        /* Details toggle */
+        .details-row td {
+            padding: 0 8px 8px 8px;
+            border-bottom: 1px solid #ddd;
+        }
+        .details-content {
+            display: none;
+            padding: 8px 12px;
+            background: #fafafa;
+            border: 1px solid #eee;
+            font-size: 10px;
+            line-height: 1.6;
+        }
+        .details-content.open { display: block; }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            max-width: 400px;
+        }
+        .detail-label { color: #666; }
+        .detail-value { font-weight: 500; font-variant-numeric: tabular-nums; }
+        .toggle-btn {
+            cursor: pointer;
+            color: #666;
+            font-size: 10px;
+            text-decoration: underline;
+        }
+        .toggle-btn:hover { color: #000; }
+
+        /* Footer */
+        .footer {
+            padding: 16px 32px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .footer label {
+            font-size: 11px;
+            color: #666;
+        }
+        .footer input[type="text"] {
+            border: 1px solid #000;
+            padding: 6px 10px;
+            font-size: 11px;
+            font-family: inherit;
+            width: 220px;
+        }
+        .btn-export {
+            border: 1px solid #000;
+            background: #000;
+            color: #fff;
+            padding: 6px 20px;
+            font-size: 12px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+        }
+        .btn-export:hover { background: #333; }
+        .btn-export:disabled {
+            background: #ccc;
+            border-color: #ccc;
+            cursor: not-allowed;
+        }
+        .footer .timestamp {
+            font-size: 10px;
+            color: #999;
+            margin-left: auto;
+        }
+
+        /* Welcome banner */
+        .welcome-banner {
+            padding: 16px 32px;
+            background: #f8f8f8;
+            border-bottom: 1px solid #ddd;
+            font-size: 11px;
+            line-height: 1.7;
+            color: #333;
+        }
+        .welcome-banner h2 { font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+        .welcome-banner p { margin-bottom: 6px; }
+
+        /* Rule info box */
+        .rule-info {
+            margin-bottom: 12px;
+            padding: 10px 14px;
+            background: #f8f8f8;
+            border-left: 3px solid #000;
+        }
+        .rule-description { font-size: 11px; font-weight: 500; margin-bottom: 4px; }
+        .rule-extra { display: none; }
+        .rule-extra.open { display: block; }
+        .rule-explanation {
+            font-size: 11px; color: #444; line-height: 1.6; margin-bottom: 6px; margin-top: 6px;
+        }
+        .rule-guidance {
+            font-size: 11px; color: #222; padding: 6px 10px;
+            background: #fff; border: 1px solid #ddd;
+        }
+        .rule-guidance strong { font-weight: 600; }
+        .why-toggle {
+            cursor: pointer; color: #666; font-size: 10px;
+            text-decoration: underline; margin-left: 8px;
+        }
+        .why-toggle:hover { color: #000; }
+
+        /* Action tooltip info box */
+        .action-info {
+            font-size: 10px; color: #555; margin-top: 4px;
+            padding: 4px 6px; background: #f8f8f8; border: 1px solid #eee;
+            min-height: 16px;
+        }
+
+        /* Decision guide */
+        .decision-guide {
+            margin-bottom: 10px;
+            padding: 10px 14px;
+            background: #fffbf0;
+            border-left: 3px solid #c8a000;
+            font-size: 11px;
+            line-height: 1.7;
+        }
+        .decision-guide-title {
+            font-weight: 600;
+            font-size: 11px;
+            margin-bottom: 6px;
+            color: #7a6400;
+        }
+        .decision-guide .risk-tag {
+            display: inline-block;
+            font-size: 9px;
+            padding: 1px 5px;
+            border: 1px solid #c8a000;
+            margin-right: 3px;
+            background: #fff8e0;
+        }
+        .decision-guide .risk-tag.high { border-color: #c00; background: #fff0f0; }
+        .decision-guide .sign-match { color: #080; }
+        .decision-guide .sign-mismatch { color: #c00; font-weight: 600; }
+        .decision-guide .implication {
+            margin-top: 6px; padding: 4px 8px;
+            background: #fff; border: 1px solid #e8e0c0;
+        }
+
+        /* LLM guidance */
+        .llm-guidance {
+            margin-bottom: 10px;
+            padding: 10px 14px;
+            background: #f0f4ff;
+            border-left: 3px solid #2563eb;
+            font-size: 11px;
+            line-height: 1.7;
+        }
+        .llm-guidance-title {
+            font-weight: 600;
+            font-size: 11px;
+            margin-bottom: 6px;
+            color: #1e40af;
+        }
+        .llm-guidance-text {
+            color: #333;
+        }
+
+        /* LLM edge annotation */
+        .llm-edge-annotation {
+            margin-top: 6px;
+            padding: 6px 10px;
+            background: #f8f9ff;
+            border: 1px solid #dde3ff;
+            font-size: 10px;
+            line-height: 1.6;
+            color: #444;
+            font-style: italic;
+        }
+
+        /* Hidden */
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>HITL Resolution Panel</h1>
+    <div class="subtitle">Human-in-the-Loop Issue Resolution &mdash; KSPI K2 Agentic Pipeline</div>
+    <div class="stats-row" id="statsRow"></div>
+</div>
+
+<div class="welcome-banner">
+    <h2>How to Use This Panel</h2>
+    <p>This panel presents issues detected by the OpenCausality governance system that require
+    your expert judgment. Each section groups issues by rule type and severity. Your role is to
+    review each flagged issue, understand its implications for causal inference, and select an
+    appropriate resolution action.</p>
+    <p>For each issue, click <strong>[Why?]</strong> to see why it matters and how to decide.
+    Select an action from the dropdown and optionally add a rationale. Your decisions will be
+    logged in the audit trail for reproducibility.</p>
+    <p>When all issues are resolved, click <strong>Export Decisions</strong> to save your
+    decisions as a JSON file that can be fed back into the pipeline.</p>
+</div>
+
+<div class="controls-bar">
+    <label>Severity</label>
+    <select id="filterSeverity">
+        <option value="all">All</option>
+        <option value="CRITICAL">CRITICAL</option>
+        <option value="HIGH">HIGH</option>
+        <option value="MEDIUM">MEDIUM</option>
+        <option value="LOW">LOW</option>
+    </select>
+    <label>Rule</label>
+    <select id="filterRule">
+        <option value="all">All rules</option>
+    </select>
+    <label>Status</label>
+    <select id="filterStatus">
+        <option value="all">All</option>
+        <option value="pending">Pending</option>
+        <option value="resolved">Resolved</option>
+    </select>
+    <div class="progress-container">
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+        <span class="progress-label" id="progressLabel">0 / 0</span>
+    </div>
+</div>
+
+<div id="sectionsContainer"></div>
+
+<div class="footer">
+    <label>Analyst ID</label>
+    <input type="text" id="analystId" placeholder="Your name or initials">
+    <button class="btn-export" id="exportBtn">Export Decisions</button>
+    <span class="timestamp" id="genTimestamp"></span>
+</div>
+
+<script>
+// ── INJECTED DATA (replaced at build time) ──────────────────────────────
+const ISSUES = {};
+const CLOSED_ISSUES_COUNT = 0;
+const EDGES = {};
+const ACTIONS_BY_RULE = {
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED": {
+    "action_type": "set_claim_level",
+    "options": [
+      {
+        "value": "IDENTIFIED_CAUSAL",
+        "label": "IDENTIFIED_CAUSAL",
+        "tooltip": "Asserts credible identification strategy (IV, RDD, DiD). Requires documentation. Unlocks counterfactual propagation at full weight."
+      },
+      {
+        "value": "REDUCED_FORM",
+        "label": "REDUCED_FORM",
+        "tooltip": "Informative but not causally identified. Flagged in reports, excluded from causal counterfactuals. Useful for suggestive evidence."
+      },
+      {
+        "value": "DESCRIPTIVE",
+        "label": "DESCRIPTIVE",
+        "tooltip": "Descriptive association only. No causal weight in propagation or counterfactuals. Kept for reporting and context."
+      },
+      {
+        "value": "BLOCKED_ID",
+        "label": "BLOCKED_ID",
+        "tooltip": "Blocks identification claim entirely. Edge remains in DAG but cannot be used for propagation until resolved."
+      }
+    ]
+  },
+  "REACTION_FUNCTION_EDGE": {
+    "action_type": "set_propagation",
+    "options": [
+      {
+        "value": "RECLASSIFY_DIAGNOSTIC",
+        "label": "Reclassify as diagnostic",
+        "tooltip": "Moves edge to diagnostic-only role. It will appear in reports but not participate in shock propagation or counterfactuals."
+      },
+      {
+        "value": "ACCEPT_WITH_CAVEAT",
+        "label": "Accept with caveat",
+        "tooltip": "Keeps edge in propagation but adds an explicit caveat about endogeneity to all downstream counterfactuals."
+      },
+      {
+        "value": "BLOCK_PROPAGATION",
+        "label": "Block from propagation",
+        "tooltip": "Removes edge from all propagation paths. It remains visible in the DAG for documentation but has zero causal weight."
+      }
+    ]
+  },
+  "TIME_FE_ABSORBS_SHOCK": {
+    "action_type": "set_design_fix",
+    "options": [
+      {
+        "value": "ADD_INTERACTION",
+        "label": "Add Exposure x Shock",
+        "tooltip": "Adds cross-sectional exposure interaction to identify effects absorbed by time FE. Standard DiD approach for common macro shocks."
+      },
+      {
+        "value": "DROP_TIME_FE",
+        "label": "Drop time FE",
+        "tooltip": "Removes time fixed effects to allow common shock identification. Risks confounding from other time-varying factors."
+      },
+      {
+        "value": "ACCEPT",
+        "label": "Accept (document)",
+        "tooltip": "Keeps current specification. Documents that the common shock effect is absorbed and the estimate captures only cross-sectional variation."
+      }
+    ]
+  },
+  "EXPOSURE_NOT_PREDETERMINED": {
+    "action_type": "set_exposure_action",
+    "options": [
+      {
+        "value": "LAG_EXPOSURE",
+        "label": "Lag exposure variable",
+        "tooltip": "Uses pre-treatment period exposure measurement to avoid bad controls bias. Recommended if pre-treatment data is available."
+      },
+      {
+        "value": "ACCEPT_CAVEAT",
+        "label": "Accept with caveat",
+        "tooltip": "Keeps contemporaneous exposure with a documented caveat about potential attenuation bias from endogenous exposure."
+      },
+      {
+        "value": "BLOCK_ID",
+        "label": "Block identification claim",
+        "tooltip": "Downgrades identification to REDUCED_FORM. The edge cannot claim causal identification without predetermined exposure."
+      }
+    ]
+  },
+  "MECHANICAL_EDGE_ESTIMATED": {
+    "action_type": "set_edge_type",
+    "options": [
+      {
+        "value": "CONVERT_BRIDGE",
+        "label": "Convert to bridge edge",
+        "tooltip": "Replaces regression with deterministic sensitivity (partial derivative). Eliminates wasted estimation budget on tautological relationships."
+      },
+      {
+        "value": "ACCEPT",
+        "label": "Accept as regression",
+        "tooltip": "Keeps the regression estimate. Useful if you want to empirically test whether the identity holds (e.g., detecting measurement error)."
+      }
+    ]
+  },
+  "PATH_DOUBLE_COUNTING": {
+    "action_type": "set_path_choice",
+    "options": [
+      {
+        "value": "USE_STRUCTURAL",
+        "label": "Use structural chain",
+        "tooltip": "Uses the full structural decomposition (A-&gt;B-&gt;C). Provides more granular policy levers but requires all intermediate edges to be credible."
+      },
+      {
+        "value": "USE_REDUCED_FORM",
+        "label": "Use reduced-form shortcut",
+        "tooltip": "Uses the direct reduced-form edge (A-&gt;C). Simpler and more robust if intermediate edges are weak, but loses structural detail."
+      },
+      {
+        "value": "ACCEPT_BOTH",
+        "label": "Accept both (document)",
+        "tooltip": "Keeps both paths with documentation. Only valid if paths measure different aspects (e.g., short-run vs long-run effects)."
+      }
+    ]
+  },
+  "ENTITY_BOUNDARY_DRIFT": {
+    "action_type": "set_boundary_action",
+    "options": [
+      {
+        "value": "HARMONIZE",
+        "label": "Harmonize to common scope",
+        "tooltip": "Converts all observations to the same entity scope (bank-level or group-level). May require data adjustments."
+      },
+      {
+        "value": "ACCEPT_CAVEAT",
+        "label": "Accept with caveat",
+        "tooltip": "Keeps mixed scopes with a documented caveat. Appropriate when scope differences are small or unavoidable."
+      },
+      {
+        "value": "EXCLUDE_EDGE",
+        "label": "Exclude edge",
+        "tooltip": "Removes the edge from estimation entirely. Use when scope mixing makes the estimate unreliable."
+      }
+    ]
+  },
+  "KPI_DEFINITION_MISMATCH_CROSS_BANK": {
+    "action_type": "set_kpi_action",
+    "options": [
+      {
+        "value": "HARMONIZE",
+        "label": "Harmonize definitions",
+        "tooltip": "Adjusts data to use consistent definitions across banks. May require recalculation from raw components."
+      },
+      {
+        "value": "ACCEPT_CAVEAT",
+        "label": "Accept with caveat",
+        "tooltip": "Keeps heterogeneous definitions with documentation. Appropriate if differences are minor or well-understood."
+      },
+      {
+        "value": "EXCLUDE_EDGE",
+        "label": "Exclude edge",
+        "tooltip": "Removes the edge. Use when definition differences are fundamental and cannot be reconciled."
+      }
+    ]
+  },
+  "SHOCK_CONSTRUCT_AMBIGUOUS": {
+    "action_type": "set_shock_action",
+    "options": [
+      {
+        "value": "ADD_METADATA",
+        "label": "Add shock metadata",
+        "tooltip": "Populates missing shock_node_id, shock_unit, and shock_scale from DAG spec. Required for counterfactual scenarios."
+      },
+      {
+        "value": "ACCEPT",
+        "label": "Accept as-is",
+        "tooltip": "Keeps edge without shock metadata. Edge will not be usable in counterfactual scenarios."
+      }
+    ]
+  },
+  "FREQUENCY_ALIGNMENT_ERROR": {
+    "action_type": "set_freq_action",
+    "options": [
+      {
+        "value": "AGGREGATE_Q",
+        "label": "Aggregate to quarterly",
+        "tooltip": "Aggregates higher-frequency data to quarterly using the DAG-specified method (average for flows, end-of-period for stocks)."
+      },
+      {
+        "value": "AGGREGATE_A",
+        "label": "Aggregate to annual",
+        "tooltip": "Aggregates to annual frequency. Loses short-run dynamics but may be necessary for data availability reasons."
+      },
+      {
+        "value": "ACCEPT",
+        "label": "Accept (document)",
+        "tooltip": "Keeps mixed frequencies with documentation. Only appropriate if the estimator handles mixed frequencies natively."
+      }
+    ]
+  },
+  "FREQUENCY_SCALING_MISMATCH": {
+    "action_type": "set_scaling_action",
+    "options": [
+      {
+        "value": "NORMALIZE",
+        "label": "Normalize to common unit",
+        "tooltip": "Rescales coefficients to a common time unit (quarterly convention). Ensures cross-run comparability."
+      },
+      {
+        "value": "ACCEPT_CAVEAT",
+        "label": "Accept with caveat",
+        "tooltip": "Keeps different time units with documentation. Cross-run comparisons will include unit conversion caveats."
+      }
+    ]
+  },
+  "EXTRACTION_PROVENANCE_GAPS": {
+    "action_type": "set_provenance_action",
+    "options": [
+      {
+        "value": "ADD_SOURCE",
+        "label": "Add source reference",
+        "tooltip": "Adds source document, page, and table reference to the data extraction metadata for audit trail."
+      },
+      {
+        "value": "ACCEPT",
+        "label": "Accept (low risk)",
+        "tooltip": "Accepts without provenance. Appropriate for public market data or well-known statistical series."
+      }
+    ]
+  },
+  "SMALL_SAMPLE_INFERENCE": {
+    "action_type": "set_sample_action",
+    "options": [
+      {
+        "value": "CAP_B",
+        "label": "Cap rating to B",
+        "tooltip": "Limits credibility rating to B, reflecting asymptotic approximation risk with N &lt; 30. Automatic default action."
+      },
+      {
+        "value": "ACCEPT_CAVEAT",
+        "label": "Accept with caveat",
+        "tooltip": "Keeps current rating with documented small-sample caveat. Only if you have justification for asymptotic validity."
+      },
+      {
+        "value": "RE_ESTIMATE",
+        "label": "Flag for re-estimation",
+        "tooltip": "Queues re-estimation with wild bootstrap standard errors for more reliable small-sample inference."
+      }
+    ]
+  },
+  "PANEL_TOO_FEW_UNITS": {
+    "action_type": "set_panel_action",
+    "options": [
+      {
+        "value": "CAP_B",
+        "label": "Cap rating to B",
+        "tooltip": "Limits rating to B due to cluster-robust SE unreliability with &lt; 5 units. Automatic default action."
+      },
+      {
+        "value": "WILD_BOOTSTRAP",
+        "label": "Use wild cluster bootstrap",
+        "tooltip": "Re-estimates with wild cluster bootstrap (Webb weights) for valid few-cluster inference. May widen confidence intervals."
+      },
+      {
+        "value": "ACCEPT_CAVEAT",
+        "label": "Accept with caveat",
+        "tooltip": "Keeps current estimate with documented caveat about few-cluster inference fragility."
+      }
+    ]
+  },
+  "LOO_INSTABILITY": {
+    "action_type": "set_loo_action",
+    "options": [
+      {
+        "value": "CAP_C",
+        "label": "Cap rating to C",
+        "tooltip": "Limits rating to C reflecting result fragility to single-unit exclusion. Signals low confidence in generalizability."
+      },
+      {
+        "value": "ACCEPT_CAVEAT",
+        "label": "Accept with caveat",
+        "tooltip": "Keeps current rating with documented LOO instability caveat. Identify the influential unit in the rationale."
+      },
+      {
+        "value": "RE_ESTIMATE",
+        "label": "Flag for re-estimation",
+        "tooltip": "Queues re-estimation with the influential unit excluded or winsorized. Produces a robustness comparison."
+      }
+    ]
+  },
+  "BREAKS_UNMODELED": {
+    "action_type": "set_breaks_action",
+    "options": [
+      {
+        "value": "ADD_REGIME",
+        "label": "Add regime dummy",
+        "tooltip": "Adds a structural break dummy at the detected break date. Allows coefficient to differ across regimes."
+      },
+      {
+        "value": "SPLIT_SAMPLE",
+        "label": "Split sample estimation",
+        "tooltip": "Estimates separately for each regime. Provides regime-specific coefficients for targeted counterfactuals."
+      },
+      {
+        "value": "ACCEPT_CAVEAT",
+        "label": "Accept with caveat",
+        "tooltip": "Keeps pooled estimate with caveat about coefficient averaging across regimes."
+      }
+    ]
+  },
+  "MULTIPLE_TESTING_DRIFT": {
+    "action_type": "set_testing_action",
+    "options": [
+      {
+        "value": "BONFERRONI",
+        "label": "Apply Bonferroni correction",
+        "tooltip": "Adjusts p-values for the number of specifications tested. Conservative but protects against false discoveries."
+      },
+      {
+        "value": "ACCEPT_CAVEAT",
+        "label": "Accept with caveat",
+        "tooltip": "Keeps unadjusted p-values with documentation of the specification search. Appropriate for pre-planned robustness."
+      },
+      {
+        "value": "RESET_BUDGET",
+        "label": "Reset spec budget",
+        "tooltip": "Resets the specification budget counter. Use only if the additional specs were pre-planned and documented."
+      }
+    ]
+  },
+  "NONSTATIONARY_LEVELS_RISK": {
+    "action_type": "set_stationarity_action",
+    "options": [
+      {
+        "value": "DIFFERENCE",
+        "label": "First-difference",
+        "tooltip": "Applies first-differencing to both variables. Removes trends but loses long-run level information."
+      },
+      {
+        "value": "ECM",
+        "label": "Use ECM specification",
+        "tooltip": "Uses Error Correction Model to preserve long-run relationship while modeling short-run dynamics. Requires cointegration."
+      },
+      {
+        "value": "ACCEPT",
+        "label": "Accept (document)",
+        "tooltip": "Keeps levels specification with documentation. Only valid if you have theoretical reasons for level relationships."
+      }
+    ]
+  },
+  "RESIDUAL_AUTOCORR_DETECTED": {
+    "action_type": "set_autocorr_action",
+    "options": [
+      {
+        "value": "INCREASE_HAC",
+        "label": "Increase HAC bandwidth",
+        "tooltip": "Increases Newey-West kernel bandwidth to better capture serial correlation. May widen standard errors."
+      },
+      {
+        "value": "ACCEPT_CAVEAT",
+        "label": "Accept with caveat",
+        "tooltip": "Keeps current HAC bandwidth with documented autocorrelation caveat. Appropriate for mild autocorrelation."
+      }
+    ]
+  },
+  "REGIME_BREAK_SUSPECTED": {
+    "action_type": "set_regime_action",
+    "options": [
+      {
+        "value": "ADD_BREAK",
+        "label": "Add structural break",
+        "tooltip": "Adds break dummy and interaction terms at the detected break date. Allows before/after comparison."
+      },
+      {
+        "value": "SPLIT_SAMPLE",
+        "label": "Split sample",
+        "tooltip": "Estimates separately for pre-break and post-break periods. Provides regime-specific coefficients."
+      },
+      {
+        "value": "ACCEPT_CAVEAT",
+        "label": "Accept with caveat",
+        "tooltip": "Keeps pooled estimate with documented regime instability caveat."
+      }
+    ]
+  },
+  "LEADS_SIGNIFICANT_TIMING_FAIL": {
+    "action_type": "set_timing_action",
+    "options": [
+      {
+        "value": "BLOCK_PROPAGATION",
+        "label": "Block from propagation",
+        "tooltip": "Removes edge from all propagation paths. Automatic action for timing failures. Edge kept for diagnostic purposes."
+      },
+      {
+        "value": "ACCEPT_CAVEAT",
+        "label": "Accept with caveat (document)",
+        "tooltip": "Keeps edge with documented timing failure. Only valid if leads reflect anticipated policy changes, not reverse causation."
+      },
+      {
+        "value": "RE_ESTIMATE",
+        "label": "Flag for re-estimation",
+        "tooltip": "Queues re-estimation with adjusted shock timing or additional lead/lag structure to investigate timing failure."
+      }
+    ]
+  },
+  "HAC_LAG_SENSITIVITY_HIGH": {
+    "action_type": "set_hac_action",
+    "options": [
+      {
+        "value": "USE_FIXED_BW",
+        "label": "Fix HAC bandwidth",
+        "tooltip": "Uses a fixed, data-driven bandwidth (Andrews 1991). Removes sensitivity to ad hoc bandwidth choice."
+      },
+      {
+        "value": "ACCEPT_CAVEAT",
+        "label": "Accept with caveat",
+        "tooltip": "Keeps current estimate with documented bandwidth sensitivity caveat. Report results across multiple bandwidths."
+      }
+    ]
+  },
+  "SELECTION_PUBLIC_BANK_ONLY": {
+    "action_type": "set_selection_action",
+    "options": [
+      {
+        "value": "ADD_DISCLAIMER",
+        "label": "Add report disclaimer",
+        "tooltip": "Adds explicit sample restriction disclaimer to the system report. Results clearly labeled as public-bank-only."
+      },
+      {
+        "value": "CAP_SCOPE",
+        "label": "Cap counterfactual scope",
+        "tooltip": "Restricts counterfactual predictions to public banks only. Prevents extrapolation to non-sampled bank types."
+      },
+      {
+        "value": "ACCEPT",
+        "label": "Accept as-is",
+        "tooltip": "No action taken. Use only if the target population is specifically public banks."
+      }
+    ]
+  },
+  "SURVIVORSHIP_BIAS_RISK": {
+    "action_type": "set_survivorship_action",
+    "options": [
+      {
+        "value": "ADD_DISCLAIMER",
+        "label": "Add report disclaimer",
+        "tooltip": "Adds survivorship bias disclaimer. Notes that estimates may understate negative effects due to exit selection."
+      },
+      {
+        "value": "SENSITIVITY_CHECK",
+        "label": "Run sensitivity check",
+        "tooltip": "Re-estimates including failed/merged banks up to their last observation. Compares with survivor-only estimates."
+      },
+      {
+        "value": "ACCEPT_CAVEAT",
+        "label": "Accept with caveat",
+        "tooltip": "Keeps survivor-only estimate with documented caveat about potential downward bias in negative effect estimates."
+      }
+    ]
+  },
+  "COVERAGE_GAP_EXTERNAL_VALIDITY": {
+    "action_type": "set_coverage_action",
+    "options": [
+      {
+        "value": "ADD_DISCLAIMER",
+        "label": "Add report disclaimer",
+        "tooltip": "Adds coverage gap disclaimer. Documents which segments of the target population are missing from the sample."
+      },
+      {
+        "value": "ACCEPT_CAVEAT",
+        "label": "Accept with caveat",
+        "tooltip": "Accepts with documented coverage limitation. Notes direction of likely bias from missing segments."
+      }
+    ]
+  },
+  "RATING_DIAGNOSTICS_CONFLICT": {
+    "action_type": "set_rating",
+    "options": [
+      {
+        "value": "DOWNGRADE_B",
+        "label": "Downgrade to B",
+        "tooltip": "Downgrades from A to B due to failed diagnostics. Standard action to maintain rating-evidence consistency."
+      },
+      {
+        "value": "DOWNGRADE_C",
+        "label": "Downgrade to C",
+        "tooltip": "Downgrades to C for severe diagnostic failures (multiple failed checks or critical timing failure)."
+      },
+      {
+        "value": "ACCEPT",
+        "label": "Accept (document)",
+        "tooltip": "Keeps A rating despite diagnostic issues. Requires strong justification documented in rationale."
+      }
+    ]
+  },
+  "N_REPORTING_INCONSISTENT": {
+    "action_type": "set_n_action",
+    "options": [
+      {
+        "value": "FIX_REPORT",
+        "label": "Fix report N",
+        "tooltip": "Updates the system report header to match EdgeCard N_eff. Standard fix for reporting inconsistencies."
+      },
+      {
+        "value": "FIX_EDGECARD",
+        "label": "Fix EdgeCard N_eff",
+        "tooltip": "Updates EdgeCard N_eff to match report header. Use only if the report header is the authoritative source."
+      },
+      {
+        "value": "ACCEPT",
+        "label": "Accept (document)",
+        "tooltip": "Keeps inconsistency with documentation. Only if the discrepancy reflects a deliberate methodological choice."
+      }
+    ]
+  },
+  "CROSS_EVIDENCE_CONFLICT": {
+    "action_type": "set_conflict_action",
+    "options": [
+      {
+        "value": "PREFER_STRUCTURAL",
+        "label": "Prefer structural edge",
+        "tooltip": "Uses the structural (better-identified) edge estimate. The conflicting reduced-form edge is demoted to diagnostic-only."
+      },
+      {
+        "value": "PREFER_REDUCED",
+        "label": "Prefer reduced-form edge",
+        "tooltip": "Uses the reduced-form edge estimate. The structural edge is demoted. Appropriate if structural identification is suspect."
+      },
+      {
+        "value": "ACCEPT_BOTH",
+        "label": "Accept both (document)",
+        "tooltip": "Keeps both estimates with documented conflict. Reports will show both with an explicit conflict warning."
+      }
+    ]
+  },
+  "UNIT_MISSING_IN_EDGECARD": {
+    "action_type": "set_unit_action",
+    "options": [
+      {
+        "value": "ADD_UNITS",
+        "label": "Add units from spec",
+        "tooltip": "Auto-populates treatment_unit and outcome_unit from the DAG node specifications. Standard auto-fix."
+      },
+      {
+        "value": "ACCEPT",
+        "label": "Accept (not critical)",
+        "tooltip": "Keeps edge without explicit units. Only for edges not used in propagation where unit ambiguity is acceptable."
+      }
+    ]
+  },
+  "_default": {
+    "action_type": "resolve",
+    "options": [
+      {
+        "value": "ACCEPT",
+        "label": "Accept",
+        "tooltip": "Accepts the issue without further action. The issue is marked as resolved."
+      },
+      {
+        "value": "REJECT",
+        "label": "Reject",
+        "tooltip": "Rejects the flagged finding. The edge remains as-is but the rejection is logged for audit."
+      },
+      {
+        "value": "ESCALATE",
+        "label": "Escalate",
+        "tooltip": "Escalates to senior reviewer or domain expert. Issue remains open until resolved by escalation target."
+      }
+    ]
+  }
+};
+const RULE_DESCRIPTIONS = {
+  "ENTITY_BOUNDARY_DRIFT": {
+    "description": "Mixing entity scopes (bank vs group) breaks comparability",
+    "explanation": "When different observations mix entity scopes (e.g., bank-level vs consolidated group-level), the treatment and outcome variables become incomparable across units. Capital ratios at bank level differ systematically from group level due to intra-group transfers and double counting. Ignoring this produces biased panel estimates because the variation being exploited is partly definitional, not economic.\n",
+    "guidance": "Harmonize all observations to the same scope (preferably unconsolidated bank-level for Kazakhstan data). If harmonization is impossible, add a scope dummy and note the caveat in the report.\n"
+  },
+  "KPI_DEFINITION_MISMATCH_CROSS_BANK": {
+    "description": "NPL/CoR definitions differ across banks causing sign conflicts",
+    "explanation": "Banks may use different definitions for key performance indicators (e.g., NPL includes/excludes restructured loans, CoR uses different provisioning rules). Cross-bank panel estimation treats these as comparable, but definitional differences create measurement error correlated with bank characteristics. This can flip coefficient signs between runs and invalidate pooled estimates.\n",
+    "guidance": "Check if the definition mismatch is economically meaningful. If yes, harmonize definitions or estimate separately by definition group. Document any remaining heterogeneity as a limitation.\n"
+  },
+  "SHOCK_CONSTRUCT_AMBIGUOUS": {
+    "description": "EdgeCard must include shock_node_id, shock_unit, shock_scale",
+    "explanation": "Without explicit shock metadata (which node is shocked, in what units, at what scale), counterfactual scenarios become ambiguous. A &quot;10% depreciation&quot; could mean 10 percentage points or 10% of the current level, leading to order-of-magnitude errors in propagation. This metadata is required for reproducible counterfactuals.\n",
+    "guidance": "The system will auto-populate shock metadata from the DAG spec. Verify that the inferred shock_unit and shock_scale match your intended scenario.\n"
+  },
+  "FREQUENCY_ALIGNMENT_ERROR": {
+    "description": "Mixing frequencies without explicit aggregation rule",
+    "explanation": "Mixing monthly treatment with quarterly outcome (or vice versa) without a declared aggregation method (end-of-period, average, sum) introduces temporal misalignment. The estimator may silently interpolate or drop observations, changing the effective sample and potentially biasing results. This is auto-fixable but must be logged.\n",
+    "guidance": "The system will apply the aggregation rule from the DAG spec. If no rule is specified, it defaults to end-of-period for stocks and average for flows.\n"
+  },
+  "FREQUENCY_SCALING_MISMATCH": {
+    "description": "Annual vs quarterly estimates not normalized to common unit",
+    "explanation": "When comparing estimates across runs with different frequencies, a quarterly coefficient is not directly comparable to an annual one. Failing to normalize (e.g., annualize quarterly or quarterly-ize annual) leads to incorrect propagation multipliers and misleading cross-run convergence assessments.\n",
+    "guidance": "Normalize all estimates to a common time unit before comparison. The preferred convention is quarterly for macro variables and annual for structural parameters.\n"
+  },
+  "EXTRACTION_PROVENANCE_GAPS": {
+    "description": "Missing source document/page reference for extracted data",
+    "explanation": "Data extracted from PDFs, reports, or regulatory filings should carry provenance (source document, page, table number) so that results can be independently verified. Missing provenance makes reproduction impossible and raises audit risk, especially for regulatory submissions.\n",
+    "guidance": "Add the source reference to the data extraction metadata. For low-risk variables (e.g., public market data), this can be accepted with a note.\n"
+  },
+  "REACTION_FUNCTION_EDGE": {
+    "description": "Policy reaction edge cannot be used for shock propagation",
+    "explanation": "A policy reaction function (e.g., central bank raises rates in response to inflation) captures endogenous behavior, not a causal effect of an exogenous shock. Using it for shock propagation would double-count the policy response or create circular logic. The edge should be classified as diagnostic or informational only.\n",
+    "guidance": "Reclassify as diagnostic-only if this is purely a reaction function. If you believe there is an exogenous component, document the identification strategy and accept with a caveat.\n"
+  },
+  "TIME_FE_ABSORBS_SHOCK": {
+    "description": "Panel with time FE and common shock requires Exposure x Shock",
+    "explanation": "Time fixed effects absorb all common time-varying shocks (including the treatment of interest if it is a macro shock common to all units). To identify the effect, the design must exploit cross-sectional variation in exposure (Exposure x Shock interaction). Without this, the coefficient is mechanically zero or identified only from noise.\n",
+    "guidance": "The system will suggest adding an Exposure x Shock interaction term. This is the standard diff-in-diff approach for common shocks in panel data.\n"
+  },
+  "EXPOSURE_NOT_PREDETERMINED": {
+    "description": "Exposure variable must be measured strictly pre-treatment",
+    "explanation": "If the exposure variable (e.g., bank&#x27;s FX share) is measured contemporaneously with or after the shock, it may itself be affected by the shock, creating a &quot;bad controls&quot; problem. This violates the exclusion restriction in diff-in-diff designs and biases the estimated causal effect, typically attenuating it toward zero.\n",
+    "guidance": "Lag the exposure variable to a pre-treatment period. If pre-treatment measurement is unavailable, accept with a caveat noting potential attenuation bias.\n"
+  },
+  "MECHANICAL_EDGE_ESTIMATED": {
+    "description": "Accounting identity should be bridge, not regression",
+    "explanation": "Regressing an identity (e.g., CAR = Capital / RWA) produces tautological results with near-perfect fit, inflating credibility scores and wasting estimation budget. Mechanical edges should be treated as deterministic bridges that pass through shocks via calculus (partial derivatives), not statistical estimation.\n",
+    "guidance": "The system will convert this to a bridge edge with deterministic sensitivity. Accept as regression only if you need to test whether the identity holds empirically.\n"
+  },
+  "PATH_DOUBLE_COUNTING": {
+    "description": "Direct reduced-form + indirect chain both used for propagation",
+    "explanation": "If both a direct reduced-form edge (A -&gt; C) and a structural chain (A -&gt; B -&gt; C) are included in propagation, the total effect is double-counted. This inflates counterfactual predictions, potentially by 100% or more. The system detects overlapping paths and requires the analyst to choose one.\n",
+    "guidance": "Prefer the structural chain if all intermediate edges are IDENTIFIED_CAUSAL, as it provides more granular policy levers. Use reduced-form if intermediate edges are weak or if you only need the total effect.\n"
+  },
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED": {
+    "description": "Significant result but claim_level != IDENTIFIED_CAUSAL",
+    "explanation": "This edge shows a statistically significant result (low p-value), but the identification strategy has not been validated as causal. A significant correlation is not the same as a causal effect \u2014 without proper identification (e.g., IV, RDD, DiD), the estimate may reflect reverse causation, omitted variable bias, or spurious correlation. Accepting this as causal without acknowledgement constitutes overclaiming.\n",
+    "guidance": "If you have a credible identification strategy, upgrade to IDENTIFIED_CAUSAL and document it. Otherwise, accept as REDUCED_FORM \u2014 informative but not usable for counterfactual predictions without caveats.\n"
+  },
+  "SMALL_SAMPLE_INFERENCE": {
+    "description": "N &lt; 30 with HAC SEs; inference fragile",
+    "explanation": "With fewer than 30 observations, HAC (Newey-West) standard errors rely on asymptotic approximations that perform poorly in small samples. Confidence intervals may be too narrow, leading to false rejections of the null. The credibility rating is capped to reflect this uncertainty.\n",
+    "guidance": "Consider wild bootstrap for more reliable small-sample inference. The rating cap to B is automatic; override only if you have strong justification for asymptotic validity.\n"
+  },
+  "PANEL_TOO_FEW_UNITS": {
+    "description": "&lt; 5 units; cluster-robust unreliable",
+    "explanation": "Cluster-robust standard errors require a sufficient number of clusters (units) to be reliable. With fewer than 5 units, the cluster-robust variance estimator is severely biased downward, leading to over-rejection. This is a well-known problem in the panel econometrics literature (Cameron, Gelbach, Miller 2008).\n",
+    "guidance": "Use wild cluster bootstrap (Webb weights) for valid inference with few clusters. The rating cap to B is automatic. Accept with caveat if bootstrap is infeasible.\n"
+  },
+  "LOO_INSTABILITY": {
+    "description": "Leave-one-out shows sign flip or &gt;50% magnitude change",
+    "explanation": "Leave-one-out (LOO) analysis drops each unit in turn and re-estimates. If the coefficient flips sign or changes magnitude by more than 50%, the result is driven by a single influential unit rather than a systematic pattern. Such fragility undermines confidence in the estimate as a general causal effect.\n",
+    "guidance": "Identify the influential unit and investigate whether it is an outlier or represents a genuine subgroup effect. Consider winsorizing, trimming, or reporting results with and without the influential unit.\n"
+  },
+  "BREAKS_UNMODELED": {
+    "description": "Regime changes not accounted for in estimation",
+    "explanation": "Structural breaks (e.g., policy changes, crises) can cause coefficient instability. If breaks are present but not modeled, the estimated coefficient is a weighted average across regimes, which may not represent either regime accurately. This is especially problematic for counterfactual scenarios that project beyond a break date.\n",
+    "guidance": "Add a regime dummy or split the sample at the break date. If the break is recent and data post-break is insufficient, restrict counterfactual scope to the pre-break regime.\n"
+  },
+  "MULTIPLE_TESTING_DRIFT": {
+    "description": "Spec search exceeded pre-registered budget",
+    "explanation": "Running many specifications and reporting only the significant one inflates the false discovery rate. The pre-registered specification budget limits this. If the budget is exceeded, the analyst must either apply a multiple testing correction (e.g., Bonferroni) or justify the additional specifications as pre-planned robustness checks.\n",
+    "guidance": "Apply Bonferroni correction to the p-values if the budget was exceeded due to exploratory analysis. If the additional specs were planned robustness checks, document them and reset the budget.\n"
+  },
+  "NONSTATIONARY_LEVELS_RISK": {
+    "description": "Both variables in levels and trending; require transformation or ECM",
+    "explanation": "Regressing two trending (non-stationary) variables in levels produces spurious regression \u2014 high R-squared and significant t-statistics that reflect shared trends, not causal relationships. The solution is to first-difference, use an ECM if cointegrated, or apply appropriate transformations (log-differences for growth rates).\n",
+    "guidance": "The system will apply first-differencing by default. If you believe the variables are cointegrated, select ECM specification to preserve the long-run relationship.\n"
+  },
+  "RESIDUAL_AUTOCORR_DETECTED": {
+    "description": "Serial correlation in residuals; HAC SEs may be inadequate",
+    "explanation": "Serial correlation in residuals indicates that the model is missing dynamic structure. While HAC standard errors adjust for this, they may be inadequate if the autocorrelation is strong or persistent, leading to under-estimated standard errors and over-rejection.\n",
+    "guidance": "Consider increasing the HAC bandwidth or adding lagged dependent variables. If autocorrelation is mild (DW close to 2), accept with a caveat.\n"
+  },
+  "REGIME_BREAK_SUSPECTED": {
+    "description": "Coefficient instability across regime splits",
+    "explanation": "TSGuard detected statistically significant coefficient differences across time sub-samples, suggesting a structural break. Using a single coefficient for the full sample masks regime-specific effects and produces unreliable counterfactuals for periods after the break.\n",
+    "guidance": "Split the sample at the detected break date and estimate separately. If the break is too recent for reliable post-break estimation, restrict counterfactual scope to the pre-break regime.\n"
+  },
+  "LEADS_SIGNIFICANT_TIMING_FAIL": {
+    "description": "Effects appear before shock; reverse causation or omitted factor",
+    "explanation": "If the outcome responds significantly BEFORE the treatment shock, the causal interpretation fails. This indicates either reverse causation (outcome causes treatment), an omitted common factor driving both, or anticipation effects that violate the parallel trends assumption. The edge is blocked from propagation automatically.\n",
+    "guidance": "Investigate whether leads reflect anticipation (expected policy changes) or reverse causation. If anticipation, consider adjusting the shock timing. If reverse causation, reclassify the edge direction or remove from the DAG.\n"
+  },
+  "HAC_LAG_SENSITIVITY_HIGH": {
+    "description": "Estimate changes materially with HAC lag length",
+    "explanation": "If the point estimate or its significance changes substantially when varying the HAC bandwidth (number of lags in the Newey-West kernel), the inference is fragile to the choice of bandwidth. This suggests that the serial correlation structure is complex and the standard errors are not robust to bandwidth selection.\n",
+    "guidance": "Report results across multiple bandwidths. Use a data-driven bandwidth selector (e.g., Andrews 1991) rather than ad hoc choice. Accept with caveat if the sign is stable across bandwidths.\n"
+  },
+  "SELECTION_PUBLIC_BANK_ONLY": {
+    "description": "Panel uses only public banks; results may not generalize to full banking sector",
+    "explanation": "Public (listed) banks differ systematically from private banks in size, governance, risk appetite, and regulatory scrutiny. Estimates from public-only samples may not generalize to the full banking sector. Counterfactuals applied to the full sector using these estimates would be unreliable for the private bank segment.\n",
+    "guidance": "Add a disclaimer noting the sample restriction. Cap the counterfactual scope to public banks only, or accept with a clear caveat about external validity limitations.\n"
+  },
+  "SURVIVORSHIP_BIAS_RISK": {
+    "description": "Sample excludes failed/merged banks; survival conditioning biases estimates",
+    "explanation": "If banks that failed, merged, or exited the sample are excluded, the remaining sample is conditioned on survival. This creates survivorship bias \u2014 the estimated effects reflect only the experience of survivors, typically underestimating the negative effects of shocks (since the most affected banks disappeared).\n",
+    "guidance": "Run a sensitivity check including failed/merged banks up to their last observation. Add a disclaimer about survivorship bias. If data on exits is unavailable, accept with a clear caveat.\n"
+  },
+  "COVERAGE_GAP_EXTERNAL_VALIDITY": {
+    "description": "Sample covers &lt;50% of system assets or &lt;50% of institutions in target population",
+    "explanation": "When the sample covers less than half of the target population (by assets or count), the estimated effects may not represent the system as a whole. Small or mid-sized banks excluded from the sample may have different exposure patterns and response mechanisms than the included banks.\n",
+    "guidance": "Add a disclaimer noting the coverage gap. If the coverage gap is due to data availability, document which segments are missing and their likely direction of bias.\n"
+  },
+  "RATING_DIAGNOSTICS_CONFLICT": {
+    "description": "A-rating despite failed diagnostics or missing requirements",
+    "explanation": "An A-rating signals high credibility, but one or more diagnostics have failed or required checks are missing. This inconsistency undermines the rating system&#x27;s integrity. The system auto-downgrades to B to maintain consistency between the rating and the underlying evidence.\n",
+    "guidance": "The auto-downgrade to B is applied. Override to A only if you can document why the failed diagnostic does not affect the estimate&#x27;s credibility for your specific use case.\n"
+  },
+  "N_REPORTING_INCONSISTENT": {
+    "description": "Report N header != EdgeCard N_eff",
+    "explanation": "The sample size reported in the system report header differs from the effective observations in the EdgeCard. This inconsistency confuses reviewers and may indicate a data processing error (e.g., missing values were dropped but not reflected in the header count).\n",
+    "guidance": "The system will auto-fix by aligning the report N to the EdgeCard N_eff. Accept the auto-fix unless you have a specific reason for the discrepancy.\n"
+  },
+  "CROSS_EVIDENCE_CONFLICT": {
+    "description": "Two edges measuring same relationship have conflicting signs",
+    "explanation": "When two edges estimate the same causal relationship (e.g., one reduced-form and one structural) but produce opposite signs, at least one is biased or misspecified. Using both in propagation would produce contradictory counterfactuals. The analyst must adjudicate which estimate is more credible.\n",
+    "guidance": "Prefer the structural edge if its identification strategy is stronger. If both designs are equally credible, report the conflict as a limitation and consider averaging with appropriate uncertainty.\n"
+  },
+  "UNIT_MISSING_IN_EDGECARD": {
+    "description": "EdgeCard missing treatment_unit/outcome_unit",
+    "explanation": "Without explicit units (e.g., &quot;pp&quot;, &quot;%&quot;, &quot;log points&quot;), the coefficient is uninterpretable. A coefficient of 0.5 could mean 0.5 percentage points, 50%, or 0.5 log points \u2014 a potential 100x difference in the implied effect. Units are required for any meaningful propagation or reporting.\n",
+    "guidance": "The system will auto-populate units from the DAG spec. Verify that the inferred units match the actual estimation specification.\n"
+  }
+};
+const GENERATED_AT = "2026-02-08 16:36:45 UTC";
+const DAG_EDGES = {
+  "oil_supply_to_brent": {
+    "from": "oil_supply_shock",
+    "to": "brent_price",
+    "edge_type": "causal",
+    "expected_sign": "negative",
+    "magnitude_range": [
+      -0.5,
+      0.0
+    ],
+    "regime_split_date": "",
+    "interpretation": "Oil price response to supply shock",
+    "is_not": [
+      "Demand-driven price movements"
+    ],
+    "allowed_uses": [
+      "shock_counterfactual"
+    ],
+    "forbidden_uses": [
+      "policy_counterfactual"
+    ],
+    "notes": "Exogenous supply shock identification from Baumeister."
+  },
+  "oil_supply_to_fx": {
+    "from": "oil_supply_shock",
+    "to": "kzt_usd",
+    "edge_type": "causal",
+    "expected_sign": "positive",
+    "magnitude_range": [
+      0.0,
+      0.5
+    ],
+    "regime_split_date": "",
+    "interpretation": "KZT response to oil supply shock",
+    "is_not": [
+      "Response to domestic factors"
+    ],
+    "allowed_uses": [
+      "shock_counterfactual"
+    ],
+    "forbidden_uses": [
+      "policy_counterfactual"
+    ],
+    "notes": "Oil exporter commodity currency dynamics."
+  },
+  "oil_demand_to_fx": {
+    "from": "oil_demand_shock",
+    "to": "kzt_usd",
+    "edge_type": "causal",
+    "expected_sign": "negative",
+    "magnitude_range": [
+      -0.5,
+      0.0
+    ],
+    "regime_split_date": "",
+    "interpretation": "KZT response to oil demand shock",
+    "is_not": [
+      "Response to domestic factors"
+    ],
+    "allowed_uses": [
+      "shock_counterfactual"
+    ],
+    "forbidden_uses": [
+      "policy_counterfactual"
+    ],
+    "notes": "Commodity currency responds to global demand."
+  },
+  "vix_to_fx": {
+    "from": "vix_shock",
+    "to": "kzt_usd",
+    "edge_type": "causal",
+    "expected_sign": "positive",
+    "magnitude_range": [
+      0.0,
+      0.3
+    ],
+    "regime_split_date": "",
+    "interpretation": "KZT response to global risk aversion",
+    "is_not": [
+      "Response to Kazakhstan-specific risk"
+    ],
+    "allowed_uses": [
+      "shock_counterfactual"
+    ],
+    "forbidden_uses": [
+      "policy_counterfactual"
+    ],
+    "notes": "EM risk-off channel."
+  },
+  "fx_to_cpi_tradable": {
+    "from": "kzt_usd",
+    "to": "cpi_tradable",
+    "edge_type": "immutable",
+    "expected_sign": "positive",
+    "magnitude_range": [
+      0.05,
+      0.25
+    ],
+    "regime_split_date": "2015-08",
+    "interpretation": "Differential inflation response by import intensity",
+    "is_not": [
+      "Full pass-through including indirect effects",
+      "Policy counterfactual"
+    ],
+    "allowed_uses": [
+      "shock_counterfactual",
+      "scenario_only"
+    ],
+    "forbidden_uses": [
+      "policy_counterfactual"
+    ],
+    "notes": "Block A validated result: 11.3% FX pass-through to tradable CPI."
+  },
+  "fx_to_cpi_nontradable": {
+    "from": "kzt_usd",
+    "to": "cpi_nontradable",
+    "edge_type": "immutable",
+    "expected_sign": "any",
+    "magnitude_range": [
+      -0.05,
+      0.1
+    ],
+    "regime_split_date": "",
+    "interpretation": "Falsification test for FX pass-through",
+    "is_not": [
+      "Primary transmission channel"
+    ],
+    "allowed_uses": [
+      "falsification_evidence"
+    ],
+    "forbidden_uses": [
+      "shock_counterfactual",
+      "policy_counterfactual"
+    ],
+    "notes": "Block A falsification: Near-zero pass-through to non-tradable CPI."
+  },
+  "cpi_to_nbk_rate": {
+    "from": "cpi_headline",
+    "to": "nbk_policy_rate",
+    "edge_type": "reaction_function",
+    "expected_sign": "positive",
+    "magnitude_range": [
+      0.0,
+      2.0
+    ],
+    "regime_split_date": "",
+    "interpretation": "NBK reaction function to inflation",
+    "is_not": [
+      "Causal effect of policy on inflation",
+      "Taylor rule structural parameter"
+    ],
+    "allowed_uses": [
+      "scenario_only"
+    ],
+    "forbidden_uses": [
+      "policy_counterfactual"
+    ],
+    "notes": "NBK responds to inflation. Requires nbk_policy_rate connector."
+  },
+  "fx_to_nbk_rate": {
+    "from": "kzt_usd",
+    "to": "nbk_policy_rate",
+    "edge_type": "reaction_function",
+    "expected_sign": "positive",
+    "magnitude_range": [
+      0.0,
+      5.0
+    ],
+    "regime_split_date": "",
+    "interpretation": "NBK reaction function to FX depreciation",
+    "is_not": [
+      "Causal effect of policy on FX"
+    ],
+    "allowed_uses": [
+      "scenario_only"
+    ],
+    "forbidden_uses": [
+      "policy_counterfactual"
+    ],
+    "notes": "NBK responds to FX conditions. Requires nbk_policy_rate connector."
+  },
+  "nbk_rate_to_deposit_cost": {
+    "from": "nbk_policy_rate",
+    "to": "deposit_cost_kspi",
+    "edge_type": "causal",
+    "expected_sign": "positive",
+    "magnitude_range": [
+      0.0,
+      1.5
+    ],
+    "regime_split_date": "",
+    "interpretation": "Association between policy rate and KSPI funding cost",
+    "is_not": [
+      "Causal monetary policy effect",
+      "Structural transmission coefficient"
+    ],
+    "allowed_uses": [
+      "scenario_only"
+    ],
+    "forbidden_uses": [
+      "policy_counterfactual"
+    ],
+    "notes": "Funding cost channel. Requires both connectors."
+  },
+  "nbk_rate_to_cor": {
+    "from": "nbk_policy_rate",
+    "to": "cor_kspi",
+    "edge_type": "causal",
+    "expected_sign": "positive",
+    "magnitude_range": [
+      0.0,
+      0.5
+    ],
+    "regime_split_date": "",
+    "interpretation": "Association between policy rate and KSPI credit losses",
+    "is_not": [
+      "Causal monetary policy effect",
+      "Counterfactual policy simulation"
+    ],
+    "allowed_uses": [
+      "scenario_only"
+    ],
+    "forbidden_uses": [
+      "policy_counterfactual"
+    ],
+    "notes": "Borrower stress channel. Lagged 2Q for credit deterioration."
+  },
+  "cpi_to_nominal_income": {
+    "from": "cpi_headline",
+    "to": "nominal_income",
+    "edge_type": "immutable",
+    "expected_sign": "positive",
+    "magnitude_range": [
+      0.0,
+      1.5
+    ],
+    "regime_split_date": "2015-08",
+    "interpretation": "Nominal income response to external inflation (IV)",
+    "is_not": [
+      "Response to demand-driven inflation",
+      "Real wage elasticity"
+    ],
+    "allowed_uses": [
+      "shock_counterfactual"
+    ],
+    "forbidden_uses": [
+      "policy_counterfactual"
+    ],
+    "notes": "Block B validated: LP-IV estimate using imported inflation IV."
+  },
+  "fx_to_real_expenditure": {
+    "from": "kzt_usd",
+    "to": "real_expenditure",
+    "edge_type": "immutable",
+    "expected_sign": "negative",
+    "magnitude_range": [
+      -0.3,
+      0.0
+    ],
+    "regime_split_date": "2015-08",
+    "interpretation": "MPC-like ratio to FX shocks",
+    "is_not": [
+      "Universal MPC (channels conflated)",
+      "Demand-side consumption function"
+    ],
+    "allowed_uses": [
+      "shock_counterfactual",
+      "scenario_only"
+    ],
+    "forbidden_uses": [
+      "policy_counterfactual"
+    ],
+    "notes": "Block F validated: IRF(0) = -0.10 for real expenditure."
+  },
+  "shock_to_npl_kspi": {
+    "from": "imported_inflation_instrument",
+    "to": "npl_kspi",
+    "edge_type": "causal",
+    "expected_sign": "positive",
+    "magnitude_range": [
+      0.0,
+      0.5
+    ],
+    "regime_split_date": "",
+    "interpretation": "Aggregate NPL response to imported inflation shock",
+    "is_not": [
+      "Micro income-default elasticity",
+      "IFRS 9 overlay component"
+    ],
+    "allowed_uses": [
+      "shock_counterfactual",
+      "scenario_only"
+    ],
+    "forbidden_uses": [
+      "policy_counterfactual"
+    ],
+    "notes": "Reduced-form NPL response. Cannot decompose channels without loan-level data."
+  },
+  "shock_to_cor_kspi": {
+    "from": "imported_inflation_instrument",
+    "to": "cor_kspi",
+    "edge_type": "causal",
+    "expected_sign": "positive",
+    "magnitude_range": [
+      0.0,
+      0.5
+    ],
+    "regime_split_date": "",
+    "interpretation": "Total provisioning response to imported inflation shock",
+    "is_not": [
+      "IFRS 9 macro overlay component",
+      "Realized credit loss component"
+    ],
+    "allowed_uses": [
+      "shock_counterfactual",
+      "scenario_only"
+    ],
+    "forbidden_uses": [
+      "policy_counterfactual"
+    ],
+    "notes": "Reduced-form CoR response. IFRS 9 overlay is latent."
+  },
+  "expenditure_to_payments_revenue": {
+    "from": "real_expenditure",
+    "to": "payments_revenue_kspi",
+    "edge_type": "causal",
+    "expected_sign": "positive",
+    "magnitude_range": [
+      0.0,
+      2.0
+    ],
+    "regime_split_date": "",
+    "interpretation": "Association between spending and KSPI payments revenue",
+    "is_not": [
+      "Causal effect without confounding",
+      "KSPI market share dynamics"
+    ],
+    "allowed_uses": [
+      "scenario_only"
+    ],
+    "forbidden_uses": [
+      "shock_counterfactual",
+      "policy_counterfactual"
+    ],
+    "notes": "Spending -&gt; GMV -&gt; Interchange -&gt; Revenue. Requires KSPI connector."
+  },
+  "cor_to_capital": {
+    "from": "cor_kspi",
+    "to": "total_capital_kspi",
+    "edge_type": "mechanical",
+    "expected_sign": "negative",
+    "magnitude_range": [
+      -1.0,
+      0.0
+    ],
+    "regime_split_date": "",
+    "interpretation": "Capital impact from provisioning",
+    "is_not": [
+      "Net income effect (ignores PPOP)"
+    ],
+    "allowed_uses": [
+      "scenario_only"
+    ],
+    "forbidden_uses": [
+      "shock_counterfactual",
+      "policy_counterfactual"
+    ],
+    "notes": "Provisioning reduces capital. Control for PPOP."
+  },
+  "loan_portfolio_to_rwa": {
+    "from": "loan_portfolio_kspi",
+    "to": "rwa_kspi",
+    "edge_type": "mechanical",
+    "expected_sign": "positive",
+    "magnitude_range": [
+      0.5,
+      1.5
+    ],
+    "regime_split_date": "",
+    "interpretation": "Mechanical volume effect on RWA",
+    "is_not": [
+      "Risk-weight changes"
+    ],
+    "allowed_uses": [
+      "scenario_only"
+    ],
+    "forbidden_uses": [],
+    "notes": "Volume \u00d7 avg RW. Mechanical relationship."
+  },
+  "portfolio_mix_to_rwa": {
+    "from": "portfolio_mix_kspi",
+    "to": "rwa_kspi",
+    "edge_type": "causal",
+    "expected_sign": "any",
+    "magnitude_range": [
+      -0.5,
+      0.5
+    ],
+    "regime_split_date": "",
+    "interpretation": "RWA composition effect from product mix shifts",
+    "is_not": [
+      "Volume effect",
+      "Regulatory changes"
+    ],
+    "allowed_uses": [
+      "scenario_only"
+    ],
+    "forbidden_uses": [],
+    "notes": "Product mix shifts risk weights. NBK uses 150%+ for unsecured."
+  },
+  "capital_to_k2": {
+    "from": "total_capital_kspi",
+    "to": "k2_ratio_kspi",
+    "edge_type": "identity",
+    "expected_sign": "",
+    "magnitude_range": null,
+    "regime_split_date": "",
+    "interpretation": "K2 identity: Capital / RWA",
+    "is_not": [
+      "Causal relationship"
+    ],
+    "allowed_uses": [
+      "scenario_only"
+    ],
+    "forbidden_uses": [],
+    "notes": "K2 = Total Capital / RWA. Mechanical identity."
+  },
+  "rwa_to_k2": {
+    "from": "rwa_kspi",
+    "to": "k2_ratio_kspi",
+    "edge_type": "identity",
+    "expected_sign": "",
+    "magnitude_range": null,
+    "regime_split_date": "",
+    "interpretation": "K2 identity: Capital / RWA",
+    "is_not": [
+      "Causal relationship"
+    ],
+    "allowed_uses": [
+      "scenario_only"
+    ],
+    "forbidden_uses": [],
+    "notes": "K2 = Total Capital / RWA. Mechanical identity."
+  }
+};
+const DAG_NODES = {
+  "oil_supply_shock": {
+    "name": "Oil supply shock",
+    "unit": "sd",
+    "description": "Baumeister oil supply shock (exogenous to Kazakhstan)."
+  },
+  "oil_demand_shock": {
+    "name": "Oil demand shock",
+    "unit": "sd",
+    "description": "Baumeister oil demand shock (global demand-driven)."
+  },
+  "global_activity_shock": {
+    "name": "Global activity innovation",
+    "unit": "innovation",
+    "description": "Innovation in global activity index (IGREA)."
+  },
+  "vix_shock": {
+    "name": "VIX shock",
+    "unit": "innovation",
+    "description": "Innovation in VIX (risk aversion shock)."
+  },
+  "kzt_usd": {
+    "name": "KZT/USD exchange rate",
+    "unit": "log",
+    "description": "Kazakh tenge per US dollar, log level."
+  },
+  "brent_price": {
+    "name": "Brent crude oil price",
+    "unit": "log",
+    "description": "Brent spot price, USD per barrel, log level."
+  },
+  "nbk_policy_rate": {
+    "name": "NBK base rate",
+    "unit": "pct",
+    "description": "National Bank of Kazakhstan policy rate."
+  },
+  "cpi_headline": {
+    "name": "Headline CPI",
+    "unit": "log",
+    "description": "Kazakhstan headline CPI index, log level."
+  },
+  "cpi_tradable": {
+    "name": "Tradable CPI",
+    "unit": "log",
+    "description": "CPI for tradable goods (import-weighted). Block A validated."
+  },
+  "cpi_nontradable": {
+    "name": "Non-tradable CPI",
+    "unit": "log",
+    "description": "CPI for non-tradable goods (services). Block A falsification."
+  },
+  "imported_inflation_instrument": {
+    "name": "Imported inflation IV",
+    "unit": "pct",
+    "description": "Constructed instrument for imported inflation (FX change \u00d7 pre-period import share)."
+  },
+  "E_import_share": {
+    "name": "Pre-period import share",
+    "unit": "share",
+    "description": "Pre-period regional import intensity (static exposure)."
+  },
+  "nominal_income": {
+    "name": "Nominal monetary income",
+    "unit": "log",
+    "description": "Regional household nominal monetary income. Block B validated."
+  },
+  "real_income": {
+    "name": "Real monetary income",
+    "unit": "log",
+    "description": "Nominal income deflated by CPI. Identity node."
+  },
+  "wage_income": {
+    "name": "Wage income",
+    "unit": "log",
+    "description": "Household income from wages and salaries."
+  },
+  "transfer_income": {
+    "name": "Transfer income",
+    "unit": "log",
+    "description": "Household income from government transfers."
+  },
+  "nominal_expenditure": {
+    "name": "Nominal consumption expenditure",
+    "unit": "log",
+    "description": "Household nominal consumption expenditure. Block F validated."
+  },
+  "real_expenditure": {
+    "name": "Real consumption expenditure",
+    "unit": "log",
+    "description": "Nominal expenditure deflated by CPI. Block F validated."
+  },
+  "npl_aggregate": {
+    "name": "Aggregate NPL ratio",
+    "unit": "pct",
+    "description": "Banking sector NPL ratio from NBK."
+  },
+  "npl_kspi": {
+    "name": "KSPI NPL ratio",
+    "unit": "pct",
+    "description": "Kaspi.kz non-performing loan ratio."
+  },
+  "cor_kspi": {
+    "name": "KSPI cost of risk",
+    "unit": "pct",
+    "description": "Kaspi.kz cost of risk (annualized provisions / avg loans)."
+  },
+  "loan_portfolio_kspi": {
+    "name": "KSPI net loan portfolio",
+    "unit": "log",
+    "description": "Kaspi.kz net loan portfolio level (bn KZT)."
+  },
+  "portfolio_mix_kspi": {
+    "name": "KSPI portfolio mix",
+    "unit": "share",
+    "description": "Shares by product type (BNPL, car loans, merchant)."
+  },
+  "deposits_kspi": {
+    "name": "KSPI deposits",
+    "unit": "log",
+    "description": "Kaspi.kz total deposits (bn KZT)."
+  },
+  "deposit_cost_kspi": {
+    "name": "KSPI deposit cost",
+    "unit": "pct",
+    "description": "Kaspi.kz average deposit rate."
+  },
+  "rwa_kspi": {
+    "name": "KSPI risk-weighted assets",
+    "unit": "log",
+    "description": "Kaspi.kz risk-weighted assets for regulatory capital."
+  },
+  "ppop_kspi": {
+    "name": "KSPI pre-provision operating profit",
+    "unit": "log",
+    "description": "Kaspi.kz PPOP (revenue - opex, before provisions)."
+  },
+  "total_capital_kspi": {
+    "name": "KSPI total capital",
+    "unit": "log",
+    "description": "Kaspi.kz total regulatory capital (Tier 1 + Tier 2)."
+  },
+  "k2_ratio_kspi": {
+    "name": "KSPI K2 capital ratio",
+    "unit": "pct",
+    "description": "Kaspi.kz K2 capital adequacy ratio (Total Capital / RWA)."
+  },
+  "payments_revenue_kspi": {
+    "name": "KSPI Payments revenue",
+    "unit": "log",
+    "description": "Kaspi.kz payments segment revenue."
+  },
+  "marketplace_revenue_kspi": {
+    "name": "KSPI Marketplace revenue",
+    "unit": "log",
+    "description": "Kaspi.kz marketplace segment revenue."
+  },
+  "fintech_revenue_kspi": {
+    "name": "KSPI Fintech revenue",
+    "unit": "log",
+    "description": "Kaspi.kz fintech (lending) segment revenue."
+  }
+};
+const LLM_GUIDANCE = {};
+const LLM_EDGE_ANNOTATIONS = {};
+
+// Severity sort order
+const SEVERITY_ORDER = {CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3};
+
+// Known rule-specific column configs
+const RULE_COLUMNS = {
+    SIGNIFICANT_BUT_NOT_IDENTIFIED: {
+        headers: '<th>Edge</th><th>p-value</th><th>Point (SE)</th><th>Claim</th><th>Rating</th><th>Design</th><th>Diagnostics</th><th>Action</th>',
+        colspan: 8,
+        renderRow: function(item, edge, actCfg, isResolved, decVal) {
+            return `
+                <td>
+                    <span class="edge-name">${item.edge_id}</span>
+                    <span class="toggle-btn" data-toggle="${item.key}">[+]</span>
+                    ${edge.failure_flags && edge.failure_flags.length > 0 ?
+                        '<br><span class="flag-list">' + edge.failure_flags.map(f => '<span class="flag">'+f+'</span>').join('') + '</span>' : ''}
+                </td>
+                <td class="mono">${fmtP(edge.pvalue)}</td>
+                <td class="mono">${fmtNum(edge.point)} (${fmtNum(edge.se)})</td>
+                <td><span class="claim-tag">${edge.claim_level || '--'}</span></td>
+                <td><span class="rating-tag">${edge.rating || '--'}</span></td>
+                <td style="font-size:10px">${edge.design || '--'}</td>
+                <td style="font-size:10px">${edge.diagnostics ? diagSummary(edge.diagnostics) : '--'}</td>
+                <td>${renderAction(item.key, actCfg, isResolved, decVal)}</td>
+            `;
+        }
+    },
+    RATING_DIAGNOSTICS_CONFLICT: {
+        headers: '<th>Edge</th><th>Rating</th><th>Score</th><th>Failed diagnostics</th><th>N obs</th><th>Action</th>',
+        colspan: 6,
+        renderRow: function(item, edge, actCfg, isResolved, decVal) {
+            var failedDiags = (edge.diagnostics || []).filter(function(d){return !d.passed;});
+            return `
+                <td>
+                    <span class="edge-name">${item.edge_id}</span>
+                    <span class="toggle-btn" data-toggle="${item.key}">[+]</span>
+                </td>
+                <td><span class="rating-tag">${edge.rating || '--'}</span></td>
+                <td class="mono">${edge.score ? edge.score.toFixed(3) : '--'}</td>
+                <td style="font-size:10px">${failedDiags.map(function(d){return '<span class="diag-fail">\u2717 '+d.name+'</span>';}).join(', ') || 'none'}</td>
+                <td class="mono">${edge.n_obs || '--'}</td>
+                <td>${renderAction(item.key, actCfg, isResolved, decVal)}</td>
+            `;
+        }
+    },
+    LOO_INSTABILITY: {
+        headers: '<th>Edge</th><th>Message</th><th>N units</th><th>Rating</th><th>Score</th><th>Action</th>',
+        colspan: 6,
+        renderRow: function(item, edge, actCfg, isResolved, decVal) {
+            var nUnits = edge.panel ? edge.panel.n_units : (edge.n_obs || '--');
+            return `
+                <td>
+                    <span class="edge-name">${item.edge_id}</span>
+                    <span class="toggle-btn" data-toggle="${item.key}">[+]</span>
+                </td>
+                <td style="font-size:10px;max-width:200px">${item.message}</td>
+                <td class="mono">${nUnits}</td>
+                <td><span class="rating-tag">${edge.rating || '--'}</span></td>
+                <td class="mono">${edge.score ? edge.score.toFixed(3) : '--'}</td>
+                <td>${renderAction(item.key, actCfg, isResolved, decVal)}</td>
+            `;
+        }
+    }
+};
+
+// Default (generic) columns for unknown rules
+var DEFAULT_COLUMNS = {
+    headers: '<th>Edge</th><th>Message</th><th>Rating</th><th>Score</th><th>Action</th>',
+    colspan: 5,
+    renderRow: function(item, edge, actCfg, isResolved, decVal) {
+        return `
+            <td>
+                <span class="edge-name">${item.edge_id}</span>
+                <span class="toggle-btn" data-toggle="${item.key}">[+]</span>
+            </td>
+            <td style="font-size:10px;max-width:250px">${item.message}</td>
+            <td><span class="rating-tag">${edge.rating || '--'}</span></td>
+            <td class="mono">${edge.score ? edge.score.toFixed(3) : '--'}</td>
+            <td>${renderAction(item.key, actCfg, isResolved, decVal)}</td>
+        `;
+    }
+};
+
+// ── DAG helpers ───────────────────────────────────────────────────────
+function edgeLabel(edgeId) {
+    var de = DAG_EDGES[edgeId];
+    if (!de) return edgeId;
+    var fromName = (DAG_NODES[de.from] || {}).name || de.from;
+    var toName = (DAG_NODES[de.to] || {}).name || de.to;
+    return fromName + ' \u2192 ' + toName;
+}
+
+function edgeInterpretation(edgeId) {
+    var de = DAG_EDGES[edgeId];
+    return de ? (de.interpretation || '') : '';
+}
+
+function escHtml(s) {
+    if (!s) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function signLabel(val) {
+    if (val === null || val === undefined) return 'unknown';
+    return val > 0 ? 'positive' : val < 0 ? 'negative' : 'zero';
+}
+
+function checkSignConsistency(edge, dagEdge) {
+    if (!dagEdge || !dagEdge.expected_sign || edge.point === null || edge.point === undefined) return null;
+    var actual = edge.point > 0 ? 'positive' : edge.point < 0 ? 'negative' : 'zero';
+    var expected = dagEdge.expected_sign;
+    return actual === expected;
+}
+
+function renderRiskTags(risks) {
+    if (!risks || typeof risks !== 'object') return '';
+    var html = '';
+    for (var k in risks) {
+        var level = risks[k];
+        var cls = (level === 'high') ? ' high' : '';
+        html += '<span class="risk-tag' + cls + '">' + escHtml(k.replace(/_/g,' ')) + ' ' + escHtml(level) + '</span>';
+    }
+    return html;
+}
+
+// ── Decision Guides (per-rule template functions) ─────────────────────
+var DECISION_GUIDES = {
+    SIGNIFICANT_BUT_NOT_IDENTIFIED: function(item, edge, dagEdge) {
+        var label = edgeLabel(item.edge_id);
+        var interp = edgeInterpretation(item.edge_id);
+        var signOk = checkSignConsistency(edge, dagEdge);
+        var signHtml = '';
+        if (signOk !== null) {
+            var expected = dagEdge.expected_sign || '?';
+            var actual = signLabel(edge.point);
+            if (signOk) {
+                signHtml = '<div>Expected sign: <strong>' + escHtml(expected) + '</strong>. ' +
+                    'Estimated: <span class="sign-match"><strong>' + escHtml(actual) + '</strong> \u2713 consistent</span></div>';
+            } else {
+                signHtml = '<div>Expected sign: <strong>' + escHtml(expected) + '</strong>. ' +
+                    'Estimated: <span class="sign-mismatch"><strong>' + escHtml(actual) + '</strong> \u2717 inconsistent</span></div>';
+            }
+        }
+
+        var claimHtml = '';
+        var cl = edge.claim_level || '';
+        if (cl === 'REDUCED_FORM') {
+            claimHtml = '<div>Current claim: <strong>REDUCED_FORM</strong> \u2014 already acknowledged as reduced-form. Consider upgrading if you have IV/RDD/DiD evidence.</div>';
+        } else if (cl === 'BLOCKED_ID') {
+            claimHtml = '<div>Current claim: <strong>BLOCKED_ID</strong> \u2014 identification is currently blocked. Resolve identification concern before using in counterfactuals.</div>';
+        } else {
+            claimHtml = '<div>Current claim: <strong>' + escHtml(cl || 'none') + '</strong> \u2014 no claim level set. This is the most urgent: significant result with no acknowledgement.</div>';
+        }
+
+        var risksHtml = renderRiskTags(edge.id_risks);
+
+        var cfHtml = '';
+        if (edge.cf_reason_blocked) {
+            cfHtml = '<div class="implication"><strong>Counterfactual status:</strong> ' + escHtml(edge.cf_reason_blocked) + '</div>';
+        }
+
+        var implHtml = '<div class="implication"><strong>If you select IDENTIFIED_CAUSAL:</strong> This edge will be used in shock and policy counterfactuals. Requires documented identification strategy (IV, RDD, DiD).</div>' +
+            '<div class="implication"><strong>If you select REDUCED_FORM:</strong> Informative but excluded from causal counterfactuals. Reduced-form edges cannot support policy intervention claims.</div>' +
+            '<div class="implication"><strong>If you select BLOCKED_ID:</strong> Edge remains blocked. No counterfactual propagation until resolved.</div>';
+
+        return '<div class="decision-guide">' +
+            '<div class="decision-guide-title">Decision Guide: ' + escHtml(label) + '</div>' +
+            (interp ? '<div>' + escHtml(interp) + '</div>' : '') +
+            signHtml +
+            claimHtml +
+            (risksHtml ? '<div style="margin-top:4px">Identification risks: ' + risksHtml + '</div>' : '') +
+            cfHtml +
+            implHtml +
+            '</div>';
+    },
+
+    LOO_INSTABILITY: function(item, edge, dagEdge) {
+        var label = edgeLabel(item.edge_id);
+        var interp = edgeInterpretation(item.edge_id);
+
+        // Extract influential unit from message
+        var unitMatch = (item.message || '').match(/excluding[:\s]+(\S+)/i);
+        var unitName = unitMatch ? unitMatch[1] : 'unknown unit';
+
+        var panelHtml = '';
+        if (edge.panel) {
+            var nUnits = edge.panel.n_units || '?';
+            var nPeriods = edge.panel.n_periods || '?';
+            var fraction = edge.panel.n_units ? (1 / edge.panel.n_units * 100).toFixed(1) : '?';
+            panelHtml = '<div>Panel: <strong>' + nUnits + ' units \u00d7 ' + nPeriods + ' periods</strong>. ' +
+                'Dropping <strong>' + escHtml(unitName) + '</strong> removes ~' + fraction + '% of cross-sectional variation.</div>';
+        } else {
+            panelHtml = '<div>Influential unit: <strong>' + escHtml(unitName) + '</strong></div>';
+        }
+
+        var implHtml = '<div class="implication"><strong>Suggested actions:</strong> ' +
+            '(1) Winsorize extreme values from this unit. ' +
+            '(2) Trim/exclude and report both results. ' +
+            '(3) Accept with caveat noting sensitivity to this unit.</div>';
+
+        return '<div class="decision-guide">' +
+            '<div class="decision-guide-title">Decision Guide: ' + escHtml(label) + '</div>' +
+            (interp ? '<div>' + escHtml(interp) + '</div>' : '') +
+            '<div>' + escHtml(item.message) + '</div>' +
+            panelHtml +
+            implHtml +
+            '</div>';
+    },
+
+    RATING_DIAGNOSTICS_CONFLICT: function(item, edge, dagEdge) {
+        var label = edgeLabel(item.edge_id);
+        var interp = edgeInterpretation(item.edge_id);
+
+        var failedDiags = (edge.diagnostics || []).filter(function(d){return !d.passed;});
+        var diagNames = {
+            'effective_obs': 'Tests whether the sample has enough observations for reliable inference',
+            'ts_leads_test': 'Tests whether future values predict current treatment (anticipation/reverse causality)',
+            'sign_consistency': 'Tests whether the estimated sign matches the expected direction from theory',
+            'ts_residual_autocorr': 'Tests for autocorrelation in residuals that could bias standard errors',
+            'ts_hac_sensitivity': 'Tests whether HAC standard error corrections materially change inference',
+            'ts_lag_sensitivity': 'Tests whether results are robust to different lag specifications',
+            'ts_regime_stability': 'Tests for structural breaks in the estimated relationship',
+            'ts_shock_support': 'Tests whether the shock variable has sufficient variation',
+            'hac_bandwidth': 'Checks Newey-West bandwidth selection'
+        };
+
+        var failedHtml = '';
+        if (failedDiags.length > 0) {
+            failedHtml = '<div style="margin-top:4px"><strong>Failed diagnostics:</strong><ul style="margin:2px 0 0 16px;padding:0">';
+            failedDiags.forEach(function(d) {
+                var desc = diagNames[d.name] || 'Diagnostic test';
+                failedHtml += '<li><span class="diag-fail">\u2717 ' + escHtml(d.name) + '</span> \u2014 ' + escHtml(desc) + '</li>';
+            });
+            failedHtml += '</ul></div>';
+        }
+
+        var ratingHtml = '<div>Current rating: <strong>' + escHtml(edge.rating || '--') + '</strong> (score: ' +
+            (edge.score ? edge.score.toFixed(3) : '--') + ') but <strong>' + failedDiags.length +
+            '</strong> diagnostic(s) failed.</div>';
+
+        var implHtml = '<div class="implication"><strong>Options:</strong> ' +
+            '(1) Downgrade rating to match diagnostic evidence. ' +
+            '(2) Re-estimate with different specification to resolve failures. ' +
+            '(3) Accept with caveat, documenting why the rating override is justified.</div>';
+
+        return '<div class="decision-guide">' +
+            '<div class="decision-guide-title">Decision Guide: ' + escHtml(label) + '</div>' +
+            (interp ? '<div>' + escHtml(interp) + '</div>' : '') +
+            ratingHtml +
+            failedHtml +
+            implHtml +
+            '</div>';
+    },
+
+    REGIME_INSTABILITY: function(item, edge, dagEdge) {
+        var label = edgeLabel(item.edge_id);
+        var interp = edgeInterpretation(item.edge_id);
+
+        var splitDate = (dagEdge && dagEdge.regime_split_date) ? dagEdge.regime_split_date : '';
+        var splitHtml = splitDate ?
+            '<div>DAG regime split date: <strong>' + escHtml(splitDate) + '</strong></div>' : '';
+
+        var implHtml = '<div class="implication"><strong>Options:</strong> ' +
+            '(1) Split sample at the break date and estimate separately. ' +
+            '(2) Restrict counterfactual scope to post-break regime only. ' +
+            '(3) Use a regime-switching model that accounts for the structural change.</div>';
+
+        return '<div class="decision-guide">' +
+            '<div class="decision-guide-title">Decision Guide: ' + escHtml(label) + '</div>' +
+            (interp ? '<div>' + escHtml(interp) + '</div>' : '') +
+            '<div>' + escHtml(item.message) + '</div>' +
+            splitHtml +
+            implHtml +
+            '</div>';
+    }
+};
+
+function defaultDecisionGuide(item, edge, dagEdge) {
+    var label = edgeLabel(item.edge_id);
+    var interp = edgeInterpretation(item.edge_id);
+    var signOk = checkSignConsistency(edge, dagEdge);
+    var signHtml = '';
+    if (signOk !== null) {
+        var expected = dagEdge.expected_sign || '?';
+        var actual = signLabel(edge.point);
+        if (signOk) {
+            signHtml = '<div>Sign: <span class="sign-match">' + escHtml(actual) + ' (expected ' + escHtml(expected) + ') \u2713</span></div>';
+        } else {
+            signHtml = '<div>Sign: <span class="sign-mismatch">' + escHtml(actual) + ' (expected ' + escHtml(expected) + ') \u2717</span></div>';
+        }
+    }
+    var risksHtml = renderRiskTags(edge.id_risks);
+    return '<div class="decision-guide">' +
+        '<div class="decision-guide-title">Decision Guide: ' + escHtml(label) + '</div>' +
+        (interp ? '<div>' + escHtml(interp) + '</div>' : '') +
+        '<div>Estimate: <strong>' + fmtNum(edge.point) + '</strong> (SE ' + fmtNum(edge.se) + ', p=' + fmtP(edge.pvalue) + '). ' +
+        'Claim: <strong>' + escHtml(edge.claim_level || 'none') + '</strong>. Rating: <strong>' + escHtml(edge.rating || '--') + '</strong>.</div>' +
+        signHtml +
+        (risksHtml ? '<div style="margin-top:4px">Identification risks: ' + risksHtml + '</div>' : '') +
+        '<div style="margin-top:4px"><strong>Issue:</strong> ' + escHtml(item.message) + '</div>' +
+        '</div>';
+}
+
+// ── LLM Guidance rendering ──────────────────────────────────────────
+function renderLLMGuidance(issueKey) {
+    var text = LLM_GUIDANCE[issueKey];
+    if (!text) return '';
+    return '<div class="llm-guidance">' +
+        '<div class="llm-guidance-title">AI Analysis</div>' +
+        '<div class="llm-guidance-text">' + escHtml(text) + '</div>' +
+        '</div>';
+}
+
+function renderLLMEdgeAnnotation(edgeId) {
+    var text = LLM_EDGE_ANNOTATIONS[edgeId];
+    if (!text) return '';
+    return '<div class="llm-edge-annotation">' + escHtml(text) + '</div>';
+}
+
+// ── State ─────────────────────────────────────────────────────────────
+var decisions = {}; // key -> {value, rationale}
+
+// ── Helpers ───────────────────────────────────────────────────────────
+function extractEdgeId(issueKey) {
+    var parts = issueKey.split(':');
+    return parts.slice(1).join(':');
+}
+
+function fmtP(p) {
+    if (p === null || p === undefined) return '--';
+    if (p < 0.0001) return p.toExponential(2);
+    return p.toFixed(4);
+}
+
+function fmtNum(n, decimals) {
+    if (n === null || n === undefined) return '--';
+    if (Math.abs(n) > 1000) return n.toFixed(1);
+    if (Math.abs(n) < 0.01 && n !== 0) return n.toExponential(2);
+    return n.toFixed(decimals !== undefined ? decimals : 4);
+}
+
+function diagSummary(diags) {
+    var passed = diags.filter(function(d){return d.passed;}).length;
+    return passed + '/' + diags.length + ' pass';
+}
+
+function diagDetail(diags) {
+    return diags.map(function(d) {
+        return '<span class="' + (d.passed ? 'diag-pass' : 'diag-fail') + '">' +
+               (d.passed ? '\u2713' : '\u2717') + ' ' + d.name + '</span>';
+    }).join(', ');
+}
+
+function renderAction(key, actCfg, isResolved, decVal) {
+    var opts = '<option value="">-- select --</option>';
+    var tooltips = {};
+    if (actCfg && actCfg.options) {
+        actCfg.options.forEach(function(o) {
+            var sel = (isResolved && decVal === o.value) ? ' selected' : '';
+            var tip = o.tooltip ? ' title="' + o.tooltip.replace(/"/g, '&quot;') + '"' : '';
+            opts += '<option value="' + o.value + '"' + sel + tip + '>' + o.label + '</option>';
+            if (o.tooltip) tooltips[o.value] = o.tooltip;
+        });
+    }
+    var rat = (decisions[key] && decisions[key].rationale) || '';
+    var currentTip = (isResolved && tooltips[decVal]) ? tooltips[decVal] : '';
+    return '<select data-key="' + key + '" data-tooltips=\'' + JSON.stringify(tooltips).replace(/'/g, "&#39;") + '\'>' + opts + '</select>' +
+           '<div class="action-info" data-tip-for="' + key + '">' + currentTip + '</div>' +
+           '<input type="text" data-rationale="' + key + '" placeholder="Rationale..." value="' + rat.replace(/"/g, '&quot;') + '">';
+}
+
+function updateProgress() {
+    var openKeys = Object.keys(ISSUES);
+    var total = openKeys.length;
+    var resolved = openKeys.filter(function(k){return decisions[k] && decisions[k].value;}).length;
+    var pct = total > 0 ? (resolved / total * 100) : 0;
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressLabel').textContent = resolved + ' / ' + total + ' resolved';
+}
+
+function updateStats() {
+    var openKeys = Object.keys(ISSUES);
+    var total = openKeys.length + CLOSED_ISSUES_COUNT;
+    var sevCounts = {};
+    openKeys.forEach(function(k) {
+        var s = ISSUES[k].severity;
+        sevCounts[s] = (sevCounts[s] || 0) + 1;
+    });
+    var html = '<span class="stat"><strong>' + openKeys.length + '</strong> open</span>' +
+               '<span class="stat">&middot; <strong>' + CLOSED_ISSUES_COUNT + '</strong> closed</span>' +
+               '<span class="stat">&middot; <strong>' + total + '</strong> total</span>' +
+               '<span class="stat" style="margin-left:12px">';
+    var parts = [];
+    ['CRITICAL','HIGH','MEDIUM','LOW'].forEach(function(s) {
+        if (sevCounts[s]) parts.push('<span class="' + s.toLowerCase() + '">' + sevCounts[s] + ' ' + s + '</span>');
+    });
+    html += parts.join(' &middot; ') + '</span>';
+    document.getElementById('statsRow').innerHTML = html;
+}
+
+// ── Group issues by rule_id ───────────────────────────────────────────
+function groupByRule() {
+    var groups = {};
+    for (var key in ISSUES) {
+        var issue = ISSUES[key];
+        var rule = issue.rule_id;
+        if (!groups[rule]) groups[rule] = [];
+        groups[rule].push({key: key, severity: issue.severity, rule_id: rule,
+                          message: issue.message, edge_id: extractEdgeId(key)});
+    }
+    return groups;
+}
+
+// ── Render ────────────────────────────────────────────────────────────
+function render() {
+    var container = document.getElementById('sectionsContainer');
+    container.innerHTML = '';
+    var groups = groupByRule();
+
+    // Populate rule filter
+    var ruleFilter = document.getElementById('filterRule');
+    var existingRules = [];
+    for (var i = 0; i < ruleFilter.options.length; i++) existingRules.push(ruleFilter.options[i].value);
+    for (var rule in groups) {
+        if (existingRules.indexOf(rule) === -1) {
+            var opt = document.createElement('option');
+            opt.value = rule;
+            opt.textContent = rule;
+            ruleFilter.appendChild(opt);
+        }
+    }
+
+    var sevFilter = document.getElementById('filterSeverity').value;
+    var ruleFilterVal = document.getElementById('filterRule').value;
+    var statusFilter = document.getElementById('filterStatus').value;
+
+    // Sort rules: by severity of first item (CRITICAL first), then alphabetical
+    var ruleKeys = Object.keys(groups);
+    ruleKeys.sort(function(a, b) {
+        var sevA = SEVERITY_ORDER[groups[a][0].severity] || 99;
+        var sevB = SEVERITY_ORDER[groups[b][0].severity] || 99;
+        if (sevA !== sevB) return sevA - sevB;
+        return a.localeCompare(b);
+    });
+
+    ruleKeys.forEach(function(rule) {
+        if (ruleFilterVal !== 'all' && ruleFilterVal !== rule) return;
+
+        var items = groups[rule];
+
+        // Apply severity filter
+        if (sevFilter !== 'all') {
+            items = items.filter(function(i){return i.severity === sevFilter;});
+        }
+
+        // Apply status filter
+        if (statusFilter === 'pending') {
+            items = items.filter(function(i){return !decisions[i.key] || !decisions[i.key].value;});
+        } else if (statusFilter === 'resolved') {
+            items = items.filter(function(i){return decisions[i.key] && decisions[i.key].value;});
+        }
+
+        if (items.length === 0) return;
+
+        var severity = items[0].severity;
+        var actCfg = ACTIONS_BY_RULE[rule] || ACTIONS_BY_RULE['_default'];
+        var colCfg = RULE_COLUMNS[rule] || DEFAULT_COLUMNS;
+
+        var section = document.createElement('div');
+        section.className = 'section';
+        var ruleInfo = RULE_DESCRIPTIONS[rule] || {};
+        var desc = (typeof ruleInfo === 'string') ? ruleInfo : (ruleInfo.description || '');
+        var explanation = (typeof ruleInfo === 'object') ? (ruleInfo.explanation || '') : '';
+        var guidance = (typeof ruleInfo === 'object') ? (ruleInfo.guidance || '') : '';
+        var extraId = 'ruleextra-' + rule.replace(/[^a-zA-Z0-9]/g, '_');
+
+        section.innerHTML =
+            '<div class="section-header">' +
+                '<div>' +
+                    '<span class="section-title">' + rule + '</span>' +
+                    '<span class="severity-badge ' + severity.toLowerCase() + '">' + severity + '</span>' +
+                    '<span class="section-count">' + items.length + ' edge' + (items.length !== 1 ? 's' : '') + '</span>' +
+                '</div>' +
+            '</div>' +
+            '<div class="rule-info">' +
+                '<div class="rule-description">' + desc +
+                    (explanation ? '<span class="why-toggle" data-toggle-extra="' + extraId + '">[Why?]</span>' : '') +
+                '</div>' +
+                (explanation ? '<div class="rule-extra" id="' + extraId + '">' +
+                    '<div class="rule-explanation">' + explanation + '</div>' +
+                    (guidance ? '<div class="rule-guidance"><strong>Decision guidance:</strong> ' + guidance + '</div>' : '') +
+                '</div>' : '') +
+            '</div>';
+
+        // Bulk action (for sections with >3 items)
+        if (items.length > 3 && actCfg) {
+            var bulk = document.createElement('div');
+            bulk.className = 'bulk-action';
+            var optHtml = '<option value="">-- select --</option>';
+            actCfg.options.forEach(function(o) { optHtml += '<option value="' + o.value + '">' + o.label + '</option>'; });
+            bulk.innerHTML =
+                '<label>Bulk action:</label>' +
+                '<select id="bulk-' + rule + '">' + optHtml + '</select>' +
+                '<button class="btn-sm" data-rule="' + rule + '">Apply to all unresolved</button>';
+            (function(r, itms) {
+                bulk.querySelector('button').addEventListener('click', function() {
+                    var val = document.getElementById('bulk-' + r).value;
+                    if (!val) return;
+                    itms.forEach(function(item) {
+                        if (!decisions[item.key] || !decisions[item.key].value) {
+                            decisions[item.key] = {value: val, rationale: (decisions[item.key] && decisions[item.key].rationale) || ''};
+                            var sel = document.querySelector('select[data-key="' + item.key + '"]');
+                            if (sel) { sel.value = val; sel.classList.add('decided'); }
+                            var row = document.querySelector('tr[data-key="' + item.key + '"]');
+                            if (row) row.classList.add('resolved');
+                        }
+                    });
+                    updateProgress();
+                });
+            })(rule, items);
+            section.appendChild(bulk);
+        }
+
+        // Build table
+        var table = document.createElement('table');
+        table.innerHTML = '<thead><tr>' + colCfg.headers + '</tr></thead><tbody></tbody>';
+        var tbody = table.querySelector('tbody');
+
+        items.forEach(function(item) {
+            var edge = EDGES[item.edge_id] || {};
+            var isResolved = decisions[item.key] && decisions[item.key].value;
+            var decVal = isResolved ? decisions[item.key].value : '';
+            var tr = document.createElement('tr');
+            tr.setAttribute('data-key', item.key);
+            if (isResolved) tr.classList.add('resolved');
+
+            tr.innerHTML = colCfg.renderRow(item, edge, actCfg, isResolved, decVal);
+            tbody.appendChild(tr);
+
+            // Details row with decision guide + LLM guidance
+            var detailTr = document.createElement('tr');
+            detailTr.className = 'details-row';
+            var safeId = item.key.replace(/[^a-zA-Z0-9]/g, '_');
+            var dagEdge = DAG_EDGES[item.edge_id] || {};
+            var guideFn = DECISION_GUIDES[item.rule_id] || defaultDecisionGuide;
+            var guideHtml = guideFn(item, edge, dagEdge);
+            var llmGuidanceHtml = renderLLMGuidance(item.key);
+            var llmAnnotationHtml = renderLLMEdgeAnnotation(item.edge_id);
+            detailTr.innerHTML = '<td colspan="' + colCfg.colspan + '">' +
+                '<div class="details-content" id="detail-' + safeId + '">' +
+                    guideHtml +
+                    llmGuidanceHtml +
+                    '<div class="detail-row"><span class="detail-label">Edge ID</span><span class="detail-value">' + item.edge_id + '</span></div>' +
+                    '<div class="detail-row"><span class="detail-label">Design</span><span class="detail-value">' + (edge.design || '--') + '</span></div>' +
+                    '<div class="detail-row"><span class="detail-label">Point (SE)</span><span class="detail-value">' + fmtNum(edge.point) + ' (' + fmtNum(edge.se) + ')</span></div>' +
+                    '<div class="detail-row"><span class="detail-label">p-value</span><span class="detail-value">' + fmtP(edge.pvalue) + '</span></div>' +
+                    '<div class="detail-row"><span class="detail-label">Claim level</span><span class="detail-value">' + (edge.claim_level || '--') + '</span></div>' +
+                    '<div class="detail-row"><span class="detail-label">Rating / Score</span><span class="detail-value">' + (edge.rating || '--') + ' / ' + (edge.score ? edge.score.toFixed(3) : '--') + '</span></div>' +
+                    '<div class="detail-row"><span class="detail-label">N obs</span><span class="detail-value">' + (edge.n_obs || '--') + '</span></div>' +
+                    (edge.panel ? '<div class="detail-row"><span class="detail-label">Panel</span><span class="detail-value">' + edge.panel.n_units + ' units x ' + edge.panel.n_periods + ' periods (' + edge.panel.balance + ')</span></div>' : '') +
+                    '<div class="detail-row"><span class="detail-label">All diagnostics pass</span><span class="detail-value">' + (edge.all_pass ? 'Yes' : 'No') + '</span></div>' +
+                    '<div style="margin-top:4px">' + (edge.diagnostics ? diagDetail(edge.diagnostics) : '--') + '</div>' +
+                    (edge.failure_flags && edge.failure_flags.length > 0 ? '<div class="detail-row" style="margin-top:4px"><span class="detail-label">Flags</span><span class="detail-value">' + edge.failure_flags.join(', ') + '</span></div>' : '') +
+                    '<div class="detail-row" style="margin-top:4px"><span class="detail-label">Issue</span><span class="detail-value">' + item.message + '</span></div>' +
+                    llmAnnotationHtml +
+                '</div>' +
+            '</td>';
+            tbody.appendChild(detailTr);
+        });
+
+        section.appendChild(table);
+        container.appendChild(section);
+    });
+
+    // Attach event listeners
+    container.querySelectorAll('select[data-key]').forEach(function(sel) {
+        sel.addEventListener('change', function() {
+            var key = this.getAttribute('data-key');
+            if (!decisions[key]) decisions[key] = {value: '', rationale: ''};
+            decisions[key].value = this.value;
+            var row = document.querySelector('tr[data-key="' + key + '"]');
+            if (this.value) {
+                this.classList.add('decided');
+                if (row) row.classList.add('resolved');
+            } else {
+                this.classList.remove('decided');
+                if (row) row.classList.remove('resolved');
+            }
+            // Update tooltip display
+            try {
+                var tooltips = JSON.parse(this.getAttribute('data-tooltips') || '{}');
+                var tipEl = document.querySelector('[data-tip-for="' + key + '"]');
+                if (tipEl) tipEl.textContent = tooltips[this.value] || '';
+            } catch(e) {}
+            updateProgress();
+        });
+    });
+
+    container.querySelectorAll('input[data-rationale]').forEach(function(inp) {
+        inp.addEventListener('input', function() {
+            var key = this.getAttribute('data-rationale');
+            if (!decisions[key]) decisions[key] = {value: '', rationale: ''};
+            decisions[key].rationale = this.value;
+        });
+    });
+
+    container.querySelectorAll('.toggle-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var key = this.getAttribute('data-toggle');
+            var id = 'detail-' + key.replace(/[^a-zA-Z0-9]/g, '_');
+            var el = document.getElementById(id);
+            if (el) {
+                el.classList.toggle('open');
+                this.textContent = el.classList.contains('open') ? '[-]' : '[+]';
+            }
+        });
+    });
+
+    // Why? toggle for rule explanation
+    container.querySelectorAll('.why-toggle').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var id = this.getAttribute('data-toggle-extra');
+            var el = document.getElementById(id);
+            if (el) {
+                el.classList.toggle('open');
+                this.textContent = el.classList.contains('open') ? '[Hide]' : '[Why?]';
+            }
+        });
+    });
+
+    // Restore decided styles
+    for (var key in decisions) {
+        if (decisions[key].value) {
+            var sel = container.querySelector('select[data-key="' + key + '"]');
+            if (sel) { sel.value = decisions[key].value; sel.classList.add('decided'); }
+        }
+    }
+
+    updateProgress();
+}
+
+// ── Export ────────────────────────────────────────────────────────────
+document.getElementById('exportBtn').addEventListener('click', function() {
+    var analystId = document.getElementById('analystId').value.trim();
+    var now = new Date().toISOString();
+    var decisionList = [];
+
+    for (var key in decisions) {
+        var dec = decisions[key];
+        if (!dec.value) continue;
+        var issue = ISSUES[key];
+        var edgeId = extractEdgeId(key);
+        var actCfg = ACTIONS_BY_RULE[issue.rule_id] || ACTIONS_BY_RULE['_default'];
+        decisionList.push({
+            issue_key: key,
+            edge_id: edgeId,
+            rule_id: issue.rule_id,
+            action: actCfg ? actCfg.action_type : 'unknown',
+            value: dec.value,
+            rationale: dec.rationale || '',
+            status: 'CLOSED'
+        });
+    }
+
+    var output = {
+        generated_at: now,
+        analyst_id: analystId || 'anonymous',
+        panel_built_at: GENERATED_AT,
+        decisions: decisionList
+    };
+
+    var blob = new Blob([JSON.stringify(output, null, 2)], {type: 'application/json'});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    var dateStr = now.slice(0,10).replace(/-/g,'');
+    a.href = url;
+    a.download = 'hitl_decisions_' + dateStr + '.json';
+    a.click();
+    URL.revokeObjectURL(url);
+});
+
+// ── Filter listeners ──────────────────────────────────────────────────
+document.getElementById('filterSeverity').addEventListener('change', render);
+document.getElementById('filterRule').addEventListener('change', render);
+document.getElementById('filterStatus').addEventListener('change', render);
+
+// ── Init ──────────────────────────────────────────────────────────────
+updateStats();
+document.getElementById('genTimestamp').textContent = 'Generated: ' + GENERATED_AT;
+render();
+
+</script>
+</body>
+</html>

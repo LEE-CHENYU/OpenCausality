@@ -1,0 +1,289 @@
+[
+  {
+    "edge_id": "oil_supply_to_income",
+    "citations": [
+      {
+        "doi": "10.1093/qje/qjaa004",
+        "title": "The Fall of the Labor Share and the Rise of Superstar Firms*",
+        "authors": [
+          "David Autor",
+          "David Dorn",
+          "Lawrence F. Katz",
+          "Christina Patterson",
+          "John Van Reenen"
+        ],
+        "year": 2020,
+        "excerpt": "Abstract The fall of labor\u2019s share of GDP in the United States and many other countries in recent decades is well documented but its causes remain uncertain. Existing empirical assessments typically rely on industry or macro data, obscuring heterogeneity among firms. In this article, we analyze micr",
+        "relevance": "supporting",
+        "edge_id": "oil_supply_to_income",
+        "paper_id": "",
+        "citation_count": 1935,
+        "search_query": "Oil supply shock Log per-capita monetary income causal effect",
+        "source": "openalex",
+        "pdf_url": "https://academic.oup.com/qje/article-pdf/135/2/645/32994954/qjaa004.pdf"
+      },
+      {
+        "doi": "10.1257/jep.28.3.109",
+        "title": "Informality and Development",
+        "authors": [
+          "Rafael La Porta",
+          "Andrei Shleifer"
+        ],
+        "year": 2014,
+        "excerpt": "In developing countries, informal firms account for up to half of economic activity. They provide livelihood for billions of people. Yet their role in economic development remains controversial with some viewing informality as pent-up potential and others viewing informality as a parasitic organizat",
+        "relevance": "supporting",
+        "edge_id": "oil_supply_to_income",
+        "paper_id": "",
+        "citation_count": 1322,
+        "search_query": "Oil supply shock Log per-capita monetary income causal effect",
+        "source": "openalex",
+        "pdf_url": "https://www.aeaweb.org/articles/pdf/doi/10.1257/jep.28.3.109"
+      },
+      {
+        "doi": "10.1257/aer.96.4.1293",
+        "title": "Stock Prices, News, and Economic Fluctuations",
+        "authors": [
+          "Paul Beaudry",
+          "Franck Portier"
+        ],
+        "year": 2006,
+        "excerpt": "We show that the joint behavior of stock prices and TFP favors a view of business cycles driven largely by a shock that does not affect productivity in the short run \u2013 and therefore does not look like a standard technology shock \u2013 but affects productivity with substantial delay \u2013 and therefore does ",
+        "relevance": "supporting",
+        "edge_id": "oil_supply_to_income",
+        "paper_id": "",
+        "citation_count": 852,
+        "search_query": "Oil supply shock Log per-capita monetary income causal effect",
+        "source": "openalex",
+        "pdf_url": "https://www.aeaweb.org/articles/pdf/doi/10.1257/aer.96.4.1293"
+      },
+      {
+        "doi": "10.24940/theijbm/2020/v8/i4/bm2004-052",
+        "title": "Covid-19 Economic Turbulence and Governments Stimulus Package: A Quest for Survival as Global Recession Looms in the 1st Quarter of 2020",
+        "authors": [
+          "Abubakar Umar",
+          "Anene Nduka",
+          "Abba Mustapha Mohammad",
+          "Imran Ibrahim Alasan",
+          "Umar Adamu",
+          "M. Umar"
+        ],
+        "year": 2020,
+        "excerpt": "This paper demonstrates the essential role various governments are playing to stimulate their economy within the framework of COVID-19 in the 1st Quarter of 2020 with more than a million people in over 205 countries and 2 international conveyance infected as at April 2020. The paper centers around g",
+        "relevance": "supporting",
+        "edge_id": "oil_supply_to_income",
+        "paper_id": "8f9706916bdb19ec000d13e0e631c6fbffe53685",
+        "citation_count": 1,
+        "search_query": "Oil supply shock Log per-capita monetary income causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      },
+      {
+        "doi": "10.2307/j.ctt183p19n.9",
+        "title": "Business Cycles",
+        "authors": [
+          "Moses Abramovitz",
+          "Moses Abram Ovitz",
+          "John N. Jacobson"
+        ],
+        "year": 1970,
+        "excerpt": "",
+        "relevance": "supporting",
+        "edge_id": "oil_supply_to_income",
+        "paper_id": "585ca86325246573c8510a33b28e247abd320392",
+        "citation_count": 0,
+        "search_query": "Oil supply shock Log per-capita monetary income causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      }
+    ]
+  },
+  {
+    "edge_id": "oil_demand_to_income",
+    "citations": [
+      {
+        "doi": "10.1093/qje/qjaa004",
+        "title": "The Fall of the Labor Share and the Rise of Superstar Firms*",
+        "authors": [
+          "David Autor",
+          "David Dorn",
+          "Lawrence F. Katz",
+          "Christina Patterson",
+          "John Van Reenen"
+        ],
+        "year": 2020,
+        "excerpt": "Abstract The fall of labor\u2019s share of GDP in the United States and many other countries in recent decades is well documented but its causes remain uncertain. Existing empirical assessments typically rely on industry or macro data, obscuring heterogeneity among firms. In this article, we analyze micr",
+        "relevance": "supporting",
+        "edge_id": "oil_demand_to_income",
+        "paper_id": "",
+        "citation_count": 1935,
+        "search_query": "Oil demand shock Log per-capita monetary income causal effect",
+        "source": "openalex",
+        "pdf_url": "https://academic.oup.com/qje/article-pdf/135/2/645/32994954/qjaa004.pdf"
+      },
+      {
+        "doi": "10.3386/w9305",
+        "title": "Institutions Rule: The Primacy of Institutions over Geography and Integration in Economic Development",
+        "authors": [
+          "Dani Rodrik",
+          "Arvind Subramanian",
+          "Francesco Trebbi"
+        ],
+        "year": 2002,
+        "excerpt": "We estimate the respective contributions of institutions, geography, and trade in determining income levels around the world, using recently developed instruments for institutions and trade.Our results indicate that the quality of institutions \"trumps\" everything else.Once institutions are controlle",
+        "relevance": "challenging",
+        "edge_id": "oil_demand_to_income",
+        "paper_id": "",
+        "citation_count": 1711,
+        "search_query": "Oil demand shock Log per-capita monetary income causal effect",
+        "source": "openalex",
+        "pdf_url": "https://doi.org/10.3386/w9305"
+      },
+      {
+        "doi": "10.1257/jep.28.3.109",
+        "title": "Informality and Development",
+        "authors": [
+          "Rafael La Porta",
+          "Andrei Shleifer"
+        ],
+        "year": 2014,
+        "excerpt": "In developing countries, informal firms account for up to half of economic activity. They provide livelihood for billions of people. Yet their role in economic development remains controversial with some viewing informality as pent-up potential and others viewing informality as a parasitic organizat",
+        "relevance": "supporting",
+        "edge_id": "oil_demand_to_income",
+        "paper_id": "",
+        "citation_count": 1322,
+        "search_query": "Oil demand shock Log per-capita monetary income causal effect",
+        "source": "openalex",
+        "pdf_url": "https://www.aeaweb.org/articles/pdf/doi/10.1257/jep.28.3.109"
+      },
+      {
+        "doi": "",
+        "title": "Trade and Energy Consumption in the OPEC Countries",
+        "authors": [
+          "R. Najarzadeh",
+          "M. Reed",
+          "Azam Khoshkhoo",
+          "A. Gallavani"
+        ],
+        "year": 2015,
+        "excerpt": "",
+        "relevance": "supporting",
+        "edge_id": "oil_demand_to_income",
+        "paper_id": "06e286aab51dd37cd3aacb3969055786f203cb6b",
+        "citation_count": 15,
+        "search_query": "Oil demand shock Log per-capita monetary income causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      },
+      {
+        "doi": "10.2307/j.ctt183p19n.9",
+        "title": "Business Cycles",
+        "authors": [
+          "Moses Abramovitz",
+          "Moses Abram Ovitz",
+          "John N. Jacobson"
+        ],
+        "year": 1970,
+        "excerpt": "",
+        "relevance": "supporting",
+        "edge_id": "oil_demand_to_income",
+        "paper_id": "585ca86325246573c8510a33b28e247abd320392",
+        "citation_count": 0,
+        "search_query": "Oil demand shock Log per-capita monetary income causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      }
+    ]
+  },
+  {
+    "edge_id": "global_activity_to_income",
+    "citations": [
+      {
+        "doi": "10.3386/w9305",
+        "title": "Institutions Rule: The Primacy of Institutions over Geography and Integration in Economic Development",
+        "authors": [
+          "Dani Rodrik",
+          "Arvind Subramanian",
+          "Francesco Trebbi"
+        ],
+        "year": 2002,
+        "excerpt": "We estimate the respective contributions of institutions, geography, and trade in determining income levels around the world, using recently developed instruments for institutions and trade.Our results indicate that the quality of institutions \"trumps\" everything else.Once institutions are controlle",
+        "relevance": "challenging",
+        "edge_id": "global_activity_to_income",
+        "paper_id": "",
+        "citation_count": 1711,
+        "search_query": "Global activity innovation Log per-capita monetary income causal effect",
+        "source": "openalex",
+        "pdf_url": "https://doi.org/10.3386/w9305"
+      },
+      {
+        "doi": "10.1257/jep.28.3.109",
+        "title": "Informality and Development",
+        "authors": [
+          "Rafael La Porta",
+          "Andrei Shleifer"
+        ],
+        "year": 2014,
+        "excerpt": "In developing countries, informal firms account for up to half of economic activity. They provide livelihood for billions of people. Yet their role in economic development remains controversial with some viewing informality as pent-up potential and others viewing informality as a parasitic organizat",
+        "relevance": "supporting",
+        "edge_id": "global_activity_to_income",
+        "paper_id": "",
+        "citation_count": 1322,
+        "search_query": "Global activity innovation Log per-capita monetary income causal effect",
+        "source": "openalex",
+        "pdf_url": "https://www.aeaweb.org/articles/pdf/doi/10.1257/jep.28.3.109"
+      },
+      {
+        "doi": "10.1007/s10887-015-9115-2",
+        "title": "Too much finance?",
+        "authors": [
+          "Jean\u2010Louis Arcand",
+          "Enrico Berkes",
+          "Ugo Panizza"
+        ],
+        "year": 2015,
+        "excerpt": "",
+        "relevance": "supporting",
+        "edge_id": "global_activity_to_income",
+        "paper_id": "",
+        "citation_count": 1041,
+        "search_query": "Global activity innovation Log per-capita monetary income causal effect",
+        "source": "openalex",
+        "pdf_url": "https://link.springer.com/content/pdf/10.1007/s10887-015-9115-2.pdf"
+      },
+      {
+        "doi": "10.3390/su15107907",
+        "title": "Determinants of Green Innovation: The Role of Monetary Policy and Central Bank Characteristics",
+        "authors": [
+          "Eleftherios Spyromitros"
+        ],
+        "year": 2023,
+        "excerpt": "The current global energy crisis has prompted a comprehensive investigation into its influencing factors. It is hypothesised that a set of monetary, macro-environmental, and institutional variables causally affect the transition to green development in a holistic model. Monetary expansion and centra",
+        "relevance": "supporting",
+        "edge_id": "global_activity_to_income",
+        "paper_id": "0d633a46e05fe983051bcceaad015828518e015f",
+        "citation_count": 17,
+        "search_query": "Global activity innovation Log per-capita monetary income causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      },
+      {
+        "doi": "10.21033/wp-2022-15",
+        "title": "Global Innovation Spillovers and Productivity: Evidence from 100 Years of World Patent Data",
+        "authors": [
+          "Enrico G. Berkes",
+          "Kristina Manysheva",
+          "M. Mestieri"
+        ],
+        "year": 2022,
+        "excerpt": "We use a panel of historical patent data covering a large range of countries over the past century to study the evolution of innovation across time and space and its e\ufb00ect on productivity. We document a substantial rise of international knowledge spillovers as measured by patent citations since the ",
+        "relevance": "supporting",
+        "edge_id": "global_activity_to_income",
+        "paper_id": "dc45707fc60592ac517b40514263e0b459343e6a",
+        "citation_count": 9,
+        "search_query": "Global activity innovation Log per-capita monetary income causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      }
+    ]
+  }
+]

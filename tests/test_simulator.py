@@ -273,8 +273,13 @@ class TestSimulator:
 
     @pytest.fixture
     def simple_scenario(self):
-        builder = ShockSpaceScenarioBuilder(start_quarter="2024Q1")
-        return builder.oil_supply_disruption(magnitude=-1.0, duration=2)
+        """Create a scenario using the study's own types."""
+        from studies.household_welfare.src.simulator import (
+            create_oil_supply_disruption,
+        )
+        return create_oil_supply_disruption(
+            start_quarter="2024Q1", duration=2, shock_size=-1.0,
+        )
 
     def test_simulator_initialization(self, simulator):
         """Test simulator initializes with default exposures."""
@@ -283,7 +288,7 @@ class TestSimulator:
 
     def test_simulate_basic(self, simulator, simple_scenario):
         """Test basic simulation."""
-        result = simulator.simulate(simple_scenario)
+        result = simulator.simulate_scenario(simple_scenario)
 
         assert result.scenario_name == simple_scenario.name
         assert len(result.region_effects) > 0
@@ -291,7 +296,7 @@ class TestSimulator:
 
     def test_region_effects_vary_by_exposure(self, simulator, simple_scenario):
         """Test that high-exposure regions have larger effects."""
-        result = simulator.simulate(simple_scenario)
+        result = simulator.simulate_scenario(simple_scenario)
 
         # Atyrau (high oil exposure) should have larger effect than Jambyl (low)
         atyrau_effect = result.region_effects.get("Atyrau")
@@ -303,7 +308,7 @@ class TestSimulator:
 
     def test_result_to_dataframe(self, simulator, simple_scenario):
         """Test conversion to DataFrame."""
-        result = simulator.simulate(simple_scenario)
+        result = simulator.simulate_scenario(simple_scenario)
         df = result.to_dataframe()
 
         assert "region" in df.columns
