@@ -498,6 +498,9 @@ class EdgeSpec:
     # IMMUTABLE, ESTIMABLE_REDUCED_FORM, BLOCKED_DECOMPOSITION, NEEDS_CONNECTOR, IDENTITY
     edge_status: str = ""
 
+    # Unit specification (treatment/outcome units for validation)
+    unit_specification: dict[str, str] = field(default_factory=dict)
+
     # Query mode support
     edge_type: str = ""        # causal|reaction_function|mechanical|immutable|identity
     variant_of: str = ""       # parent edge_id if this is a robustness variant
@@ -532,6 +535,8 @@ class EdgeSpec:
             d["interpretation"] = self.interpretation.to_dict()
         if self.validated_evidence:
             d["validated_evidence"] = self.validated_evidence.to_dict()
+        if self.unit_specification:
+            d["unit_specification"] = self.unit_specification
         if self.edge_status:
             d["edge_status"] = self.edge_status
         if self.edge_type:
@@ -1033,6 +1038,7 @@ def _parse_edge(data: dict) -> EdgeSpec:
         acceptance_criteria=_parse_acceptance_criteria(data.get("acceptance_criteria")),
         interpretation=_parse_edge_interpretation(data.get("interpretation")),
         validated_evidence=_parse_validated_evidence(data.get("validated_evidence")),
+        unit_specification=data.get("unit_specification", {}),
         edge_status=data.get("edge_status", ""),
         edge_type=data.get("edge_type", ""),
         variant_of=data.get("variant_of", ""),

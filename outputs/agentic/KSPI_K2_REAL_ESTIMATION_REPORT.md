@@ -1,6 +1,6 @@
 # KSPI K2 DAG: Real Econometric Estimation Report
 
-**Generated:** 2026-02-08 10:22:52
+**Generated:** 2026-02-08 10:29:35
 **DAG Version Hash:** `a0d5c383631c52aa...`
 **Query Mode:** `REDUCED_FORM` — Shock/scenario responses for stress testing
 **Total Edge Cards:** 26

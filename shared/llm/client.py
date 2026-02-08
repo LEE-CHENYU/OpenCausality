@@ -226,6 +226,11 @@ def get_llm_client(settings: Any | None = None) -> LLMClient:
         return CodexCLIClient(provider=provider, model=codex_model)
 
     if provider == "litellm":
+        # Ensure API keys are available as env vars for litellm
+        import os
+        openai_key = getattr(settings, "openai_api_key", "")
+        if openai_key and not os.environ.get("OPENAI_API_KEY"):
+            os.environ["OPENAI_API_KEY"] = openai_key
         logger.info(f"Using LiteLLM client with model={model}")
         return LiteLLMClient(model=model)
 

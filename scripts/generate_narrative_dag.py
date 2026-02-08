@@ -166,6 +166,13 @@ def _build_dag(base_dag: Any, proposed_edges: list[Any], new_nodes: list[Any]) -
         if nid not in existing_node_map and nid in new_node_map:
             nodes.append(new_node_map[nid])
 
+    # Build node-unit lookup for auto-populating unit_specification
+    all_node_map = {**existing_node_map, **new_node_map}
+    def _get_unit_spec(from_id: str, to_id: str) -> dict[str, str]:
+        t_unit = getattr(all_node_map.get(from_id), "unit", "") or ""
+        o_unit = getattr(all_node_map.get(to_id), "unit", "") or ""
+        return {"treatment_unit": t_unit, "outcome_unit": o_unit}
+
     base_edge_map: dict[tuple[str, str], Any] = {
         (e.from_node, e.to_node): e for e in base_dag.edges
     }
@@ -174,8 +181,14 @@ def _build_dag(base_dag: Any, proposed_edges: list[Any], new_nodes: list[Any]) -
     for pe in proposed_edges:
         key = (pe.from_node, pe.to_node)
         if pe.is_existing and key in base_edge_map:
-            edges.append(base_edge_map[key])
-            seen_ids.add(base_edge_map[key].id)
+            existing_edge = base_edge_map[key]
+            # Backfill unit_specification if missing on existing edge
+            if not existing_edge.unit_specification:
+                existing_edge.unit_specification = _get_unit_spec(
+                    pe.from_node, pe.to_node
+                )
+            edges.append(existing_edge)
+            seen_ids.add(existing_edge.id)
         else:
             edge_id = pe.edge_id or f"{pe.from_node}_to_{pe.to_node}"
             if edge_id in seen_ids:
@@ -187,6 +200,7 @@ def _build_dag(base_dag: Any, proposed_edges: list[Any], new_nodes: list[Any]) -
             edges.append(EdgeSpec(
                 id=edge_id, from_node=pe.from_node, to_node=pe.to_node,
                 edge_type=pe.edge_type, notes=f"NL-extracted: {evidence_notes}",
+                unit_specification=_get_unit_spec(pe.from_node, pe.to_node),
             ))
 
     base_name = base_dag.metadata.name
