@@ -1,0 +1,82 @@
+[
+  {
+    "edge_id": "oil_supply_to_brent",
+    "citations": []
+  },
+  {
+    "edge_id": "oil_supply_to_fx",
+    "citations": []
+  },
+  {
+    "edge_id": "oil_demand_to_fx",
+    "citations": []
+  },
+  {
+    "edge_id": "vix_to_fx",
+    "citations": []
+  },
+  {
+    "edge_id": "fx_to_cpi_tradable",
+    "citations": []
+  },
+  {
+    "edge_id": "fx_to_cpi_nontradable",
+    "citations": []
+  },
+  {
+    "edge_id": "cpi_to_nbk_rate",
+    "citations": []
+  },
+  {
+    "edge_id": "fx_to_nbk_rate",
+    "citations": []
+  },
+  {
+    "edge_id": "nbk_rate_to_deposit_cost",
+    "citations": []
+  },
+  {
+    "edge_id": "nbk_rate_to_cor",
+    "citations": []
+  },
+  {
+    "edge_id": "cpi_to_nominal_income",
+    "citations": []
+  },
+  {
+    "edge_id": "fx_to_real_expenditure",
+    "citations": []
+  },
+  {
+    "edge_id": "shock_to_npl_kspi",
+    "citations": []
+  },
+  {
+    "edge_id": "shock_to_cor_kspi",
+    "citations": []
+  },
+  {
+    "edge_id": "expenditure_to_payments_revenue",
+    "citations": []
+  },
+  {
+    "edge_id": "cor_to_capital",
+    "citations": []
+  },
+  {
+    "edge_id": "loan_portfolio_to_rwa",
+    "citations": []
+  },
+  {
+    "edge_id": "portfolio_mix_to_rwa",
+    "citations": []
+  },
+  {
+    "edge_id": "capital_to_k2",
+    "citations": []
+  },
+  {
+    "edge_id": "rwa_to_k2",
+    "citations": []
+  }
+]

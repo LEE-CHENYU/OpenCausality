@@ -1,6 +1,6 @@
 edge_id: cpi_to_nominal_income
-dag_version_hash: a0d5c383631c52aa262f288704c6f7868d48b73d5034761245939de8eeea1d72
-created_at: '2026-02-06T13:22:06.417437'
+dag_version_hash: 49a9bf958299c86ba87b7e094af5fa005e11b36612c9b099e44e9baa01f22116
+created_at: '2026-02-07T19:53:29.762006'
 data_provenance:
   treatment_source: null
   outcome_source: null
@@ -37,22 +37,14 @@ diagnostics:
     threshold: null
     pvalue: null
     message: Validated from Block B LP-IV
-  effective_obs:
-    name: effective_obs
-    passed: true
-    value: 80.0
-    threshold: 20.0
-    pvalue: null
-    message: ''
 all_diagnostics_pass: true
 interpretation:
   estimand: Effect of CPI inflation on nominal income growth from LP-IV using imported
     inflation as instrument. Partial pass-through.
-  is_not: Re-estimated result; this is locked validated evidence
-  channels:
-  - as identified in source block
+  is_not: Re-estimated result; locked validated evidence
+  channels: []
   population: ''
-  conditions: 'Source: Block B LP-IV'
+  conditions: ''
   allowed_uses: []
   forbidden_uses: []
 failure_flags:
@@ -80,16 +72,32 @@ identification:
     measurement_error: low
     selection: low
   untestable_assumptions: []
-  testable_threats_passed: []
+  testable_threats_passed:
+  - validated_evidence
   testable_threats_failed: []
 counterfactual_block:
+  shock_scenario_allowed: true
+  policy_intervention_allowed: false
+  reason_shock_blocked: null
+  reason_policy_blocked: REDUCED_FORM mode does not allow policy interventions
   allowed: true
-  reason_blocked: null
-  supports_policy_intervention: false
+  reason_blocked: REDUCED_FORM mode does not allow policy interventions
 propagation_role:
-  role: reduced_form
+  role: structural
   overlapping_paths: []
-  selected_for_counterfactual: false
+  selected_for_counterfactual: true
+  mode_propagation_allowed:
+    STRUCTURAL: true
+    REDUCED_FORM: true
+    DESCRIPTIVE: true
+  mode_shock_cf_allowed:
+    STRUCTURAL: true
+    REDUCED_FORM: true
+    DESCRIPTIVE: false
+  mode_policy_cf_allowed:
+    STRUCTURAL: true
+    REDUCED_FORM: false
+    DESCRIPTIVE: false
 literature:
   supporting: []
   challenging: []
@@ -99,5 +107,6 @@ literature:
   search_query: ''
   total_results: 0
 companion_edge_id: null
+variant_of: null
 is_precisely_null: false
 null_equivalence_bound: null

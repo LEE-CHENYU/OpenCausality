@@ -1,6 +1,6 @@
 edge_id: rwa_to_k2
-dag_version_hash: a0d5c383631c52aa262f288704c6f7868d48b73d5034761245939de8eeea1d72
-created_at: '2026-02-06T13:22:12.886300'
+dag_version_hash: 49a9bf958299c86ba87b7e094af5fa005e11b36612c9b099e44e9baa01f22116
+created_at: '2026-02-07T19:53:29.849660'
 data_provenance:
   treatment_source: null
   outcome_source: null
@@ -41,10 +41,9 @@ all_diagnostics_pass: true
 interpretation:
   estimand: 'Sensitivity: dK2/dRWA = -100 * Capital / RWA^2'
   is_not: Causal effect; this is a mechanical identity
-  channels:
-  - mechanical/accounting
+  channels: []
   population: ''
-  conditions: 'Evaluated at: {''capital'': 259.2, ''rwa'': 1600.0}'
+  conditions: ''
   allowed_uses: []
   forbidden_uses: []
 failure_flags:
@@ -72,16 +71,32 @@ identification:
     measurement_error: low
     selection: low
   untestable_assumptions: []
-  testable_threats_passed: []
+  testable_threats_passed:
+  - identity_check
   testable_threats_failed: []
 counterfactual_block:
+  shock_scenario_allowed: true
+  policy_intervention_allowed: false
+  reason_shock_blocked: null
+  reason_policy_blocked: REDUCED_FORM mode does not allow policy interventions
   allowed: true
-  reason_blocked: null
-  supports_policy_intervention: true
+  reason_blocked: REDUCED_FORM mode does not allow policy interventions
 propagation_role:
-  role: reduced_form
+  role: identity
   overlapping_paths: []
-  selected_for_counterfactual: false
+  selected_for_counterfactual: true
+  mode_propagation_allowed:
+    STRUCTURAL: true
+    REDUCED_FORM: true
+    DESCRIPTIVE: true
+  mode_shock_cf_allowed:
+    STRUCTURAL: true
+    REDUCED_FORM: true
+    DESCRIPTIVE: false
+  mode_policy_cf_allowed:
+    STRUCTURAL: true
+    REDUCED_FORM: false
+    DESCRIPTIVE: false
 literature:
   supporting: []
   challenging: []
@@ -91,5 +106,6 @@ literature:
   search_query: ''
   total_results: 0
 companion_edge_id: null
+variant_of: null
 is_precisely_null: false
 null_equivalence_bound: null

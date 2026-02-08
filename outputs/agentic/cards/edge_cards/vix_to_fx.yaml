@@ -1,6 +1,6 @@
 edge_id: vix_to_fx
-dag_version_hash: a0d5c383631c52aa262f288704c6f7868d48b73d5034761245939de8eeea1d72
-created_at: '2026-02-06T13:22:06.268120'
+dag_version_hash: 49a9bf958299c86ba87b7e094af5fa005e11b36612c9b099e44e9baa01f22116
+created_at: '2026-02-07T19:53:29.754802'
 data_provenance:
   treatment_source:
     connector: parquet_file
@@ -60,49 +60,37 @@ spec_details:
   - 6
   bandwidth: null
 estimates:
-  point: -0.03242332765358874
-  se: 0.10994554441748369
+  point: -0.032423327653582856
+  se: 0.10994554441748393
   ci_95:
-  - -0.24791659471185679
-  - 0.1830699394046793
-  pvalue: 0.7680675857023566
+  - -0.24791659471185135
+  - 0.18306993940468563
+  pvalue: 0.768067585702398
   horizons: *id001
   irf:
-  - -0.03242332765358874
-  - 0.19834224814101672
+  - -0.032423327653582856
+  - 0.19834224814101634
   - 0.3622928443710425
-  - 0.37687765217747654
-  - 0.49403224452337846
-  - 0.4110267401382288
-  - 0.4353624929017348
+  - 0.37687765217747443
+  - 0.4940322445233804
+  - 0.4110267401382289
+  - 0.43536249290173257
   irf_ci_lower:
-  - -0.24791263497250557
-  - -0.1901646750429473
-  - -0.11160407445560078
-  - -0.07932276700941154
-  - -0.04887135028264833
-  - -0.22367323755591195
-  - -0.23047408428755123
+  - -0.24791263497250016
+  - -0.19016467504294735
+  - -0.1116040744556091
+  - -0.07932276700941193
+  - -0.04887135028264572
+  - -0.2236732375559159
+  - -0.23047408428755323
   irf_ci_upper:
-  - 0.1830659796653281
-  - 0.5868491713249807
-  - 0.8361897631976858
-  - 0.8330780713643646
-  - 1.0369358393294053
-  - 1.0457267178323697
-  - 1.1011990700910208
-  treatment_unit: 1 point VIX increase
-  outcome_unit: '% change in USD/KZT'
-  n_calendar_periods: 192
-  n_effective_obs_h0: 190
-  n_effective_obs_by_horizon:
-  - 190
-  - 189
-  - 188
-  - 187
-  - 186
-  - 185
-  - 184
+  - 0.18306597966533444
+  - 0.58684917132498
+  - 0.836189763197694
+  - 0.8330780713643609
+  - 1.0369358393294066
+  - 1.0457267178323737
+  - 1.1011990700910184
 diagnostics:
   hac_bandwidth:
     name: hac_bandwidth
@@ -117,21 +105,7 @@ diagnostics:
     value: 190.0
     threshold: 20.0
     pvalue: null
-    message: 190 observations
-  r_squared_h0:
-    name: r_squared_h0
-    passed: true
-    value: 0.9916890853634435
-    threshold: null
-    pvalue: null
-    message: 'R-squared at h=0: 0.9917'
-  residual_ac1:
-    name: residual_ac1
-    passed: true
-    value: -0.0037915798556745926
-    threshold: 0.5
-    pvalue: null
-    message: 'AR(1) residual autocorrelation: -0.004'
+    message: ''
   sign_consistency:
     name: sign_consistency
     passed: false
@@ -139,15 +113,57 @@ diagnostics:
     threshold: null
     pvalue: null
     message: 'Sign inconsistent: expected +, got -0.0324'
+  ts_leads_test:
+    name: ts_leads_test
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_residual_autocorr:
+    name: ts_residual_autocorr
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_hac_sensitivity:
+    name: ts_hac_sensitivity
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_lag_sensitivity:
+    name: ts_lag_sensitivity
+    passed: false
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: fail'
+  ts_regime_stability:
+    name: ts_regime_stability
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_shock_support:
+    name: ts_shock_support
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
 all_diagnostics_pass: false
 interpretation:
   estimand: IRF of kzt_usd to a unit shock in vix_shock
   is_not: Structural causal effect under all interventions
   channels:
   - direct
-  - indirect through unobserved channels
-  population: Kazakhstan aggregate time-series (Kaspi Bank)
-  conditions: Sample period, no regime changes
+  - indirect
+  population: ''
+  conditions: ''
   allowed_uses: []
   forbidden_uses: []
 failure_flags:
@@ -162,11 +178,10 @@ failure_flags:
 counterfactual:
   supports_shock_path: true
   supports_policy_intervention: false
-  intervention_note: Reduced-form LP estimate; valid for shock propagation, not policy
-    counterfactuals
+  intervention_note: Reduced-form LP estimate
   external_validity: ''
 credibility_rating: A
-credibility_score: 0.8900000000000001
+credibility_score: 0.8811111111111112
 identification:
   claim_level: REDUCED_FORM
   risks:
@@ -180,18 +195,37 @@ identification:
   testable_threats_passed:
   - hac_bandwidth
   - effective_obs
-  - r_squared_h0
-  - residual_ac1
+  - ts_leads_test
+  - ts_residual_autocorr
+  - ts_hac_sensitivity
+  - ts_regime_stability
+  - ts_shock_support
   testable_threats_failed:
   - sign_consistency
+  - ts_lag_sensitivity
 counterfactual_block:
+  shock_scenario_allowed: false
+  policy_intervention_allowed: false
+  reason_shock_blocked: Design LOCAL_PROJECTIONS provides REDUCED_FORM level only
+  reason_policy_blocked: REDUCED_FORM mode does not allow policy interventions
   allowed: false
   reason_blocked: Design LOCAL_PROJECTIONS provides REDUCED_FORM level only
-  supports_policy_intervention: false
 propagation_role:
   role: reduced_form
   overlapping_paths: []
-  selected_for_counterfactual: false
+  selected_for_counterfactual: true
+  mode_propagation_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: true
+    DESCRIPTIVE: true
+  mode_shock_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: true
+    DESCRIPTIVE: false
+  mode_policy_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: false
+    DESCRIPTIVE: false
 literature:
   supporting: []
   challenging: []
@@ -201,5 +235,6 @@ literature:
   search_query: ''
   total_results: 0
 companion_edge_id: null
+variant_of: null
 is_precisely_null: true
-null_equivalence_bound: 0.21989108883496739
+null_equivalence_bound: 0.21989108883496786
