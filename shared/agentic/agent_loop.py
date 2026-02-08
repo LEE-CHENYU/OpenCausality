@@ -252,6 +252,7 @@ class AgentLoop:
         self.system_report: SystemReport | None = None
         self.id_results: dict[str, Any] = {}  # edge_id -> IdentifiabilityResult
         self.ts_guard_results: dict[str, Any] = {}  # edge_id -> TSGuardResult
+        self._data_guidance: list[str] = []
 
         # Computed hashes
         self._dag_hash = dag.compute_hash()
@@ -286,7 +287,14 @@ class AgentLoop:
             mode=self.mode,
         )
 
-        # Phase 0: Validate DAG (with LLM auto-repair loop)
+        # Phase 0a: Auto-ingest any user-dropped files in data/raw/
+        try:
+            from shared.engine.ingest import auto_ingest
+            auto_ingest()
+        except Exception as e:
+            logger.warning(f"Auto-ingest failed (non-blocking): {e}")
+
+        # Phase 0b: Validate DAG (with LLM auto-repair loop)
         self._sanitize_edge_ids()
         self.validation_report = self.validator.validate()
         if not self.validation_report.is_valid:
@@ -625,8 +633,10 @@ class AgentLoop:
 
                 # Build a synthetic issue for PatchBot dispatch
                 issue = Issue(
-                    issue_key=f"validation_{error_type}_{attempt}",
+                    run_id=self.run_id if hasattr(self, "run_id") else "repair",
+                    timestamp="",
                     rule_id=error_type,
+                    scope="dag",
                     edge_id=getattr(error, "edge_id", "dag"),
                     severity="ERROR",
                     message=str(error),
@@ -677,6 +687,7 @@ class AgentLoop:
             self._catalog_data()  # Re-catalog with new loaders
 
         max_scout_passes = 2
+        scout_report = None
         for scout_pass in range(max_scout_passes):
             # Identify missing nodes
             missing_nodes = [
@@ -700,12 +711,13 @@ class AgentLoop:
 
             # Register loaders from successful downloads
             if scout_report.downloaded > 0:
-                for node_id, file_path in getattr(scout_report, "download_paths", {}).items():
-                    self.dynamic_loader.register_from_download(
-                        edge_id="",
-                        node_id=node_id,
-                        file_path=Path(file_path),
-                    )
+                for result in scout_report.results:
+                    if result.success and result.file_path:
+                        self.dynamic_loader.register_from_download(
+                            edge_id="",
+                            node_id=result.node_id,
+                            file_path=result.file_path,
+                        )
                 # Re-run auto-populate to pick up newly loadable edges
                 repop = self.dynamic_loader.auto_populate_from_dag(self.dag)
                 new_reg = sum(1 for v in repop.values() if v == "registered")
@@ -715,6 +727,14 @@ class AgentLoop:
             else:
                 # No new downloads — further passes won't help
                 break
+
+        # Generate user guidance for failed downloads
+        if scout_report is not None:
+            self._data_guidance = self.data_scout.generate_user_guidance(
+                scout_report, self.dag,
+            )
+            for msg in self._data_guidance:
+                logger.warning(msg)
 
         # Mark remaining missing nodes as BLOCKED (not UNKNOWN)
         from shared.engine.data_assembler import EDGE_NODE_MAP
@@ -1372,6 +1392,12 @@ class AgentLoop:
 
         report.total_iterations = self.iteration
         report.refinements_applied = self.audit_log.count_refinements()
+
+        # Attach data guidance for user remediation
+        if self._data_guidance:
+            if not hasattr(report, "metadata"):
+                report.metadata = {}
+            report.metadata["data_guidance"] = self._data_guidance
 
         return report
 

@@ -51,6 +51,7 @@ dev = [
 ]
 
 litellm = ["litellm>=1.0.0"]
+pdf = ["pymupdf>=1.23.0"]
 rdd = [
     # RDD estimation (optional, install separately if needed)
     # "rdrobust>=1.0.0",  # May require R installation

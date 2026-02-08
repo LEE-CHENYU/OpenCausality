@@ -271,9 +271,45 @@ class PaperScout:
             )
             papers = bundle.citations
 
+        # Try PDF extraction for papers with downloaded PDFs
+        pdf_claims: list[dict] = []
+        for paper in papers:
+            if paper.pdf_url:
+                # Check if we have a local PDF file matching this paper
+                pdf_dir = self.output_dir / "pdfs"
+                if pdf_dir.exists():
+                    for pdf_file in pdf_dir.glob("*.pdf"):
+                        if paper.doi and paper.doi.replace("/", "_") in pdf_file.stem:
+                            pdf_claims.extend(self.extract_from_pdf(pdf_file))
+                            break
+
         # Extract and propose
         extractor = PaperDAGExtractor(llm=llm, dag=dag)
         return extractor.propose_edges(papers)
+
+    def extract_from_pdf(self, pdf_path: Path) -> list[dict]:
+        """Extract causal claims from a downloaded PDF.
+
+        Uses LLM-based extraction for richer results than abstract-only.
+        Falls back gracefully if the LLM client or PDF reader is unavailable.
+
+        Args:
+            pdf_path: Path to a PDF file.
+
+        Returns:
+            List of causal claim dicts, or empty list on failure.
+        """
+        try:
+            from shared.llm.pdf_extractor import extract_claims_from_pdf
+            from shared.llm.client import get_llm_client
+
+            client = get_llm_client()
+            claims = extract_claims_from_pdf(pdf_path, client)
+            logger.info(f"PaperScout: extracted {len(claims)} claims from PDF {pdf_path.name}")
+            return claims
+        except Exception as e:
+            logger.warning(f"PaperScout: PDF extraction failed for {pdf_path}: {e}")
+            return []
 
     def search_all_edges(self, dag: Any) -> dict[str, CitationBundle]:
         """

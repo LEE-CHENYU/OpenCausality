@@ -192,6 +192,41 @@ class DataScout:
             results=results,
         )
 
+    def generate_user_guidance(
+        self,
+        report: DataScoutReport,
+        dag: Any,
+    ) -> list[str]:
+        """Generate actionable guidance for failed downloads.
+
+        For each node that failed to download, produce a message telling
+        the user how to manually provide the data.
+
+        Args:
+            report: The DataScoutReport from download_missing().
+            dag: The DAGSpec (for node name lookup).
+
+        Returns:
+            List of guidance strings, one per failed node.
+        """
+        node_map = {n.id: n for n in dag.nodes}
+        guidance: list[str] = []
+
+        for result in report.results:
+            if result.success or result.error == "static":
+                continue
+            node = node_map.get(result.node_id)
+            node_name = getattr(node, "name", result.node_id) if node else result.node_id
+            msg = (
+                f"Node '{result.node_id}': Auto-download failed ({result.error}).\n"
+                f"  -> Drop data file into data/raw/ and run: opencausality data ingest\n"
+                f"  -> Expected: time-series with date column and '{node_name}' values\n"
+                f"  -> Supported formats: CSV, Excel, Parquet, JSON"
+            )
+            guidance.append(msg)
+
+        return guidance
+
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------

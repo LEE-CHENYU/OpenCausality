@@ -160,7 +160,7 @@ designs:
   - id: "PANEL_FE_BACKDOOR"
     name: "Panel FE Backdoor"
     description: "Fixed effects panel regression using a backdoor adjustment set."
-    adapter_class: "shared.engine.adapters.lp_adapter.LPAdapter"
+    adapter_class: "shared.engine.adapters.panel_fe_adapter.PanelFEBackdoorAdapter"
     credibility_weight: 0.6
     requirements:
       data:
@@ -262,6 +262,36 @@ designs:
       edge_card_fields: ["sensitivity", "formula", "at_values"]
     notes: "Not a causal estimate. Mechanical sensitivity at current values. Near-zero uncertainty by construction."
 
+  # -------------------------------------------------------------------------
+  # REGRESSION_KINK: Regression Kink Design
+  # Credibility: 0.95 (Strong quasi-experimental design)
+  # -------------------------------------------------------------------------
+  - id: "REGRESSION_KINK"
+    name: "Regression Kink Design"
+    description: "Estimates change in slope at a known discontinuity in policy assignment."
+    adapter_class: "shared.engine.adapters.regression_kink_adapter.RegressionKinkAdapter"
+    credibility_weight: 0.95
+    requirements:
+      data:
+        running_variable: true
+        kink_point: true
+        min_obs: 200
+      variables:
+        treatment_type: ["continuous"]
+        outcome_type: ["continuous"]
+    template:
+      model: "y = a + b1*(x-c) + b2*(x-c)*1[x>c] + e"
+      standard_errors: "robust"
+    diagnostics:
+      required:
+        - "kink_specification"
+        - "bandwidth_sensitivity"
+      optional:
+        - "density_test"
+    outputs:
+      edge_card_fields: ["kink_estimate", "se", "bandwidth", "density_ratio"]
+    notes: "Identifies off slope change at kink; requires correctly specified kink point."
+
 # =============================================================================
 # CREDIBILITY RANKING
 # =============================================================================
@@ -295,6 +325,10 @@ credibility_ranking:
   - design: "PANEL_LP_EXPOSURE_FE"
     weight: 0.7
     reason: "Shift-share identification via predetermined cross-bank exposure variation"
+
+  - design: "REGRESSION_KINK"
+    weight: 0.95
+    reason: "Strong quasi-experimental design identifying off slope change"
 
 # =============================================================================
 # EDGE TYPE RULES (NEW v3)

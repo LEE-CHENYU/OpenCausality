@@ -14,6 +14,8 @@ from __future__ import annotations
 
 import json
 import logging
+import re
+import subprocess
 from abc import ABC, abstractmethod
 from typing import Any
 
@@ -135,11 +137,80 @@ class LiteLLMClient(LLMClient):
         return {}
 
 
+class CodexCLIClient(LLMClient):
+    """Shells out to ``codex exec`` or ``claude`` CLI for completions.
+
+    No API key required — uses locally installed CLI tools.
+    """
+
+    def __init__(self, provider: str = "codex", model: str = "gpt-5.3-codex"):
+        self._provider = provider
+        self._model = model
+
+    def complete(self, system: str, user: str, max_tokens: int = 1024) -> str:
+        prompt_text = f"System: {system}\n\nUser: {user}"
+
+        if self._provider == "codex":
+            cmd = ["codex", "exec", "--full-auto", "-m", self._model, prompt_text]
+        elif self._provider == "claude_cli":
+            cmd = ["claude", "-p", prompt_text, "--output-format", "text"]
+        else:
+            raise ValueError(f"Unknown CLI provider: {self._provider}")
+
+        result = subprocess.run(
+            cmd, capture_output=True, text=True, timeout=120,
+        )
+        if result.returncode != 0:
+            logger.warning(f"CLI command failed (rc={result.returncode}): {result.stderr[:200]}")
+        return result.stdout.strip()
+
+    def complete_structured(self, system: str, user: str, schema: dict) -> dict:
+        schema_str = json.dumps(schema, indent=2)
+        augmented_user = (
+            f"{user}\n\nReturn your answer as a JSON object matching this schema:\n{schema_str}"
+        )
+        raw = self.complete(system, augmented_user)
+        return self._extract_json(raw)
+
+    @staticmethod
+    def _extract_json(text: str) -> dict:
+        """Extract JSON from text, handling markdown fences."""
+        # Try direct parse first
+        try:
+            return json.loads(text)
+        except (json.JSONDecodeError, TypeError):
+            pass
+
+        # Try extracting from markdown code fences
+        match = re.search(r"```(?:json)?\s*\n?(.*?)\n?\s*```", text, re.DOTALL)
+        if match:
+            try:
+                return json.loads(match.group(1))
+            except json.JSONDecodeError:
+                pass
+
+        # Try finding first { ... } block
+        match = re.search(r"\{.*\}", text, re.DOTALL)
+        if match:
+            try:
+                return json.loads(match.group(0))
+            except json.JSONDecodeError:
+                pass
+
+        return {}
+
+
 def get_llm_client(settings: Any | None = None) -> LLMClient:
     """
     Factory: return LLM client based on settings.
 
-    Tries AnthropicClient first; falls back to LiteLLMClient if configured.
+    Provider priority:
+    - "anthropic": Anthropic SDK (requires ANTHROPIC_API_KEY)
+    - "litellm": LiteLLM multi-provider (works with OPENAI_API_KEY etc.)
+    - "codex": Codex CLI (no API key needed)
+    - "claude_cli": Claude CLI (no API key needed)
+
+    If provider is "anthropic" but no API key is set, auto-falls back to codex.
     """
     if settings is None:
         from config.settings import get_settings
@@ -149,14 +220,22 @@ def get_llm_client(settings: Any | None = None) -> LLMClient:
     model = getattr(settings, "llm_model", "claude-sonnet-4-5-20250929")
     api_key = getattr(settings, "anthropic_api_key", "")
 
+    if provider in ("codex", "claude_cli"):
+        codex_model = getattr(settings, "codex_model", model)
+        logger.info(f"Using {provider} CLI client with model={codex_model}")
+        return CodexCLIClient(provider=provider, model=codex_model)
+
     if provider == "litellm":
         logger.info(f"Using LiteLLM client with model={model}")
         return LiteLLMClient(model=model)
 
+    # Default: anthropic
     if not api_key:
-        raise ValueError(
-            "ANTHROPIC_API_KEY not set. Set it in .env or use LLM_PROVIDER=litellm."
+        logger.warning(
+            "ANTHROPIC_API_KEY not set. Falling back to codex CLI provider."
         )
+        codex_model = getattr(settings, "codex_model", "gpt-5.3-codex")
+        return CodexCLIClient(provider="codex", model=codex_model)
 
     logger.info(f"Using Anthropic client with model={model}")
     return AnthropicClient(api_key=api_key, model=model)

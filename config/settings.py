@@ -20,10 +20,18 @@ class Settings(BaseSettings):
 
     # LLM
     anthropic_api_key: str = Field(default="", description="Anthropic API key")
-    llm_provider: str = Field(default="anthropic", description="LLM provider: anthropic | litellm")
+    openai_api_key: str = Field(default="", description="OpenAI API key (for litellm provider)")
+    llm_provider: str = Field(
+        default="codex",
+        description="LLM provider: anthropic | litellm | codex | claude_cli",
+    )
     llm_model: str = Field(
         default="claude-sonnet-4-5-20250929",
         description="Model ID for chosen LLM provider",
+    )
+    codex_model: str = Field(
+        default="gpt-5.3-codex",
+        description="Model for codex CLI provider",
     )
 
     # API Keys

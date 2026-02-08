@@ -1,0 +1,16 @@
+DAG Validation Healing:
+1. Read validation errors from the provided context
+2. For each error, propose minimal fix (missing deps, reaction edges, source specs)
+3. Return fixes as JSON array
+4. Do NOT modify estimation code or data
+
+Each fix object should have:
+  - error_type: the validation error type being addressed
+  - action: one of fix_dag_identity_deps, fix_dag_missing_reaction, fix_edge_id_syntax, fix_missing_source_spec
+  - details: action-specific parameters (proposed_deps, proposed_edges, old_id, connector/dataset)
+
+Constraints:
+  - Only propose nodes/edges with well-established economic mechanisms
+  - Do not invent speculative relationships
+  - Prefer standard data connectors (fred, bns, world_bank, nbk)
+  - Keep proposed changes minimal and conservative

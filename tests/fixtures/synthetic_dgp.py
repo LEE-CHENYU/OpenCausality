@@ -315,6 +315,89 @@ def make_fuzzy_rdd_dgp(
     }
 
 
+def make_panel_fe_dgp(
+    n_units: int = 20,
+    n_periods: int = 30,
+    beta: float = 2.0,
+    seed: int = 42,
+) -> tuple[pd.DataFrame, dict]:
+    """Panel FE DGP: entity + time fixed effects with treatment effect.
+
+    Structure:
+        Y_it = alpha_i + delta_t + beta * X_it + epsilon_it
+
+    Args:
+        n_units: Number of units (entities)
+        n_periods: Number of time periods
+        beta: True treatment effect
+        seed: Random seed
+
+    Returns:
+        (df, truth) where df has columns: unit, time, Y, X
+    """
+    rng = np.random.default_rng(seed)
+
+    unit_ids = np.repeat(np.arange(n_units), n_periods)
+    time_ids = np.tile(np.arange(n_periods), n_units)
+
+    # Entity fixed effects
+    alpha = rng.standard_normal(n_units) * 2
+    alpha_expanded = alpha[unit_ids]
+
+    # Time fixed effects
+    delta = np.cumsum(rng.normal(0.1, 0.05, n_periods))
+    delta_expanded = delta[time_ids]
+
+    # Treatment (continuous, varying by unit and time)
+    X = rng.standard_normal(len(unit_ids))
+
+    # Outcome
+    epsilon = rng.normal(0, 0.5, len(unit_ids))
+    Y = alpha_expanded + delta_expanded + beta * X + epsilon
+
+    df = pd.DataFrame({
+        "unit": unit_ids,
+        "time": time_ids,
+        "Y": Y,
+        "X": X,
+    })
+    return df, {"beta": beta, "n_units": n_units, "n_periods": n_periods}
+
+
+def make_regression_kink_dgp(
+    n: int = 1000,
+    kink_point: float = 0.0,
+    slope_change: float = 1.5,
+    seed: int = 42,
+) -> tuple[pd.DataFrame, dict]:
+    """Regression Kink DGP: slope changes at kink point.
+
+    Structure:
+        X ~ Uniform(-2, 2)     (running variable)
+        Y = 0.5*X + slope_change * max(X - kink_point, 0) + eps
+
+    The change in slope at kink_point equals slope_change.
+
+    Args:
+        n: Sample size
+        kink_point: Location of the kink
+        slope_change: True change in slope at kink
+        seed: Random seed
+
+    Returns:
+        (df, truth) where truth = {"slope_change": slope_change, "kink_point": kink_point}
+    """
+    rng = np.random.default_rng(seed)
+    X = rng.uniform(-2, 2, n)
+    eps = rng.normal(0, 0.3, n)
+
+    # Piecewise linear: slope = 0.5 below kink, slope = 0.5 + slope_change above kink
+    Y = 0.5 * X + slope_change * np.maximum(X - kink_point, 0) + eps
+
+    df = pd.DataFrame({"Y": Y, "X": X})
+    return df, {"slope_change": slope_change, "kink_point": kink_point}
+
+
 def make_minimal_dag_yaml(
     edges: list[dict[str, str]],
     nodes: list[dict[str, str]],

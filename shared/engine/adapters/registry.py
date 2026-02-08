@@ -25,6 +25,8 @@ _BUILTIN_ADAPTERS: dict[str, str] = {
     "DID_EVENT_STUDY": "shared.engine.adapters.did_adapter.DIDEventStudyAdapter",
     "RDD": "shared.engine.adapters.rdd_adapter.RDDAdapter",
     "SYNTHETIC_CONTROL": "shared.engine.adapters.synth_control_adapter.SynthControlAdapter",
+    "PANEL_FE_BACKDOOR": "shared.engine.adapters.panel_fe_adapter.PanelFEBackdoorAdapter",
+    "REGRESSION_KINK": "shared.engine.adapters.regression_kink_adapter.RegressionKinkAdapter",
 }
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
