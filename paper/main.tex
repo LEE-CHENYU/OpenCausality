@@ -16,7 +16,9 @@
 with DAG-Based Reasoning and LLM-Assisted Discovery}
 
 \author{
-    % Authors anonymized for submission
+    Chenyu Li \\
+    Columbia University \\
+    \href{mailto:cl4183@columbia.edu}{cl4183@columbia.edu}
 }
 
 \begin{document}
@@ -27,7 +29,7 @@ with DAG-Based Reasoning and LLM-Assisted Discovery}
 %% ABSTRACT
 %% ============================================================
 \begin{abstract}
-We introduce \oc{}, an open-source platform that resolves the automation--transparency tradeoff in applied causal inference. \oc{} combines DAG-based causal reasoning with agentic estimation pipelines, where every modeling decision---from identification strategy selection to effect propagation---is logged in a hash-chained audit trail. The platform enforces 29 issue-detection rules that catch overclaiming, control shopping, and specification drift; a 7-guardrail propagation engine that performs unit-aware dimensional analysis across multi-edge causal paths; and a 3-stage identifiability screen that downgrades claims based on diagnostic evidence rather than statistical significance alone. An LLM-assisted pipeline extracts causal claims from the literature and proposes DAG edges, achieving 100\% estimate precision on matched edges in our Kazakhstan bank stress-testing case study while discovering 3 edges absent from the expert-built DAG. All governance decisions---including human-in-the-loop gates and automated patch policies that explicitly prohibit p-hacking---are recorded with cryptographic integrity. \oc{} ships with 11 estimation adapters, a natural-language query interface, and 165 passing tests across 20{,}855 lines of code.
+We introduce \oc{}, an open-source platform that resolves the automation--transparency tradeoff in applied causal inference. \oc{} combines DAG-based causal reasoning with agentic estimation pipelines, where every modeling decision---from identification strategy selection to effect propagation---is logged in a hash-chained audit trail. The platform enforces 29 issue-detection rules that catch overclaiming, control shopping, and specification drift; a 7-guardrail propagation engine that performs unit-aware dimensional analysis across multi-edge causal paths; and a 3-stage identifiability screen that downgrades claims based on diagnostic evidence rather than statistical significance alone. An LLM-assisted pipeline extracts causal claims from the literature and proposes DAG edges, achieving 100\% estimate precision on matched edges in our Kazakhstan bank stress-testing case study while discovering 3 edges absent from the expert-built DAG. All governance decisions---including human-in-the-loop gates and automated patch policies that explicitly prohibit p-hacking---are recorded with cryptographic integrity. \oc{} ships with 18 estimation adapters spanning econometric and ML-based methods, a data-driven causal discovery agent (PC, GES, FCI, NOTEARS), a DoWhy refutation engine for post-estimation robustness, a natural-language query interface, and 204 passing tests across 40{,}969 lines of code.
 \end{abstract}
 
 %% ============================================================
@@ -45,18 +47,18 @@ We introduce \oc{}, an open-source platform that makes the entire causal inferen
 \paragraph{Contributions.} We make the following contributions:
 
 \begin{enumerate}[leftmargin=*, itemsep=2pt]
-    \item A \textbf{DAG-based causal inference platform} with mode-aware effect propagation, unit-dimensional analysis across 9 unit types, and 7 guardrails that gate edge usage based on identification strength, time-series diagnostics, and issue severity (Section~\ref{sec:propagation}).
+    \item A \textbf{DAG-based causal inference platform} with 18 estimation adapters (econometric and ML-based), mode-aware effect propagation, unit-dimensional analysis across 9 unit types, and 7 guardrails that gate edge usage based on identification strength, time-series diagnostics, and issue severity (Section~\ref{sec:propagation}).
 
     \item A \textbf{29-rule issue detection engine} with a PatchPolicy whitelist that explicitly prohibits control shopping, sample trimming, lag searching, and outcome switching---preventing automated p-hacking while permitting safe auto-fixes (Section~\ref{sec:issues}).
 
-    \item A \textbf{3-stage identifiability screen} (pre-design, post-design, post-estimation) backed by TSGuard, a 7-diagnostic time-series validator that caps claim levels based on evidence rather than significance (Section~\ref{sec:identification}).
+    \item A \textbf{3-stage identifiability screen} (pre-design, post-design, post-estimation) backed by TSGuard, a 7-diagnostic time-series validator that caps claim levels based on evidence rather than significance, and a DoWhy refutation engine that stress-tests estimates via 4 robustness checks (Section~\ref{sec:identification}).
 
-    \item An \textbf{LLM-assisted NL-to-DAG pipeline} that extracts causal claims from academic text and maps them to DAG edges, achieving 100\% estimate precision on matched edges while discovering novel edges absent from expert specifications (Section~\ref{sec:llm}).
+    \item An \textbf{LLM-assisted NL-to-DAG pipeline} that extracts causal claims from academic text, and a \textbf{data-driven causal discovery agent} (PC, GES, FCI, NOTEARS) with graph-format interoperability (NetworkX, DoWhy GML, pywhy-graphs ADMG), achieving 100\% estimate precision on matched edges while discovering novel edges absent from expert specifications (Sections~\ref{sec:llm}--\ref{sec:discovery}).
 
     \item A \textbf{hash-chained governance framework} with human-in-the-loop gates, structured checklists, and cryptographic audit integrity---all without database dependencies (Section~\ref{sec:governance}).
 \end{enumerate}
 
-We evaluate \oc{} on a Kazakhstan bank stress-testing case study involving 32 nodes and 20 causal edges, comparing expert-built DAGs against LLM-extracted DAGs and verifying pipeline reproducibility across 165 tests (Section~\ref{sec:experiments}).
+We evaluate \oc{} on a Kazakhstan bank stress-testing case study involving 32 nodes and 20 causal edges, comparing expert-built DAGs against both LLM-extracted and data-driven discovery DAGs, and verifying pipeline reproducibility across 204 tests (Section~\ref{sec:experiments}).
 
 %% ============================================================
 %% 2  RELATED WORK
@@ -68,7 +70,7 @@ We evaluate \oc{} on a Kazakhstan bank stress-testing case study involving 32 no
 One line of work provides programmatic interfaces for causal estimation. DoWhy~\citep{sharma2020dowhy} implements an identify-estimate-refute loop using graphical criteria, while EconML~\citep{battocchi2022econml} extends this with double/debiased ML and heterogeneous treatment-effect estimators. DoubleML~\citep{bach2022doubleml} focuses on Neyman-orthogonal score functions. CausalML~\citep{chen2020causalml} targets uplift modeling for business applications. These frameworks automate estimation but do not enforce claim-level restrictions, detect specification searching, or maintain hash-chained audit trails. \oc{} builds on their estimator building blocks while adding governance, propagation, and auditability layers.
 
 \paragraph{Causal discovery.}
-Classical algorithms---PC~\citep{spirtes2000causation}, GES~\citep{chickering2002optimal}, and NOTEARS~\citep{zheng2018dags}---learn DAG structure from observational data. causal-learn~\citep{zheng2024causallearn} and gCastle~\citep{zhang2021gcastle} provide implementations. These approaches complement \oc{}: they discover structure from data, while \oc{} focuses on what happens \emph{after} the DAG is specified---estimation, propagation, and governance. Our LLM-assisted pipeline (Section~\ref{sec:llm}) offers an alternative discovery path via literature extraction.
+Classical algorithms---PC~\citep{spirtes2000causation}, GES~\citep{chickering2002optimal}, and NOTEARS~\citep{zheng2018dags}---learn DAG structure from observational data. causal-learn~\citep{zheng2024causallearn} and gCastle~\citep{zhang2021gcastle} provide implementations. \oc{} integrates these algorithms directly via a \texttt{DiscoveryAgent} that wraps PC, GES, FCI, and NOTEARS with lazy imports, compares discovered structures against existing DAGs, and routes proposed edges through HITL governance (Section~\ref{sec:discovery}). Our LLM-assisted pipeline (Section~\ref{sec:llm}) offers an alternative discovery path via literature extraction.
 
 \paragraph{LLMs for causal reasoning.}
 Recent work explores whether LLMs can perform causal reasoning from text. \citet{kiciman2023causal} evaluate LLMs on pairwise causal discovery benchmarks. \citet{long2023can} use LLMs to generate causal graphs from domain knowledge. Our approach differs in two ways: we extract causal claims with explicit identification strategies (not just pairwise directions), and we integrate extracted edges into a governed estimation pipeline rather than treating them as final outputs.
@@ -87,9 +89,9 @@ The replication crisis~\citep{ioannidis2005why} has motivated pre-registration~\
 \begin{enumerate}[leftmargin=*, itemsep=1pt]
     \item \textbf{DAG Layer}: Parses YAML-specified DAGs with typed nodes (observed, latent, policy) and typed edges (causal, reaction function, bridge, identity). Validates acyclicity, unit presence, and node-source bindings.
 
-    \item \textbf{Estimation Layer}: Dispatches edges to one of 11 adapters via a unified \texttt{EstimationRequest} $\to$ \texttt{Adapter.estimate()} $\to$ \texttt{EstimationResult} interface. Adapters include local projections, panel fixed effects, IV-2SLS, difference-in-differences, regression discontinuity, regression kink, and synthetic control.
+    \item \textbf{Estimation Layer}: Dispatches edges to one of 18 adapters via a unified \texttt{EstimationRequest} $\to$ \texttt{Adapter.estimate()} $\to$ \texttt{EstimationResult} interface. Adapters span econometric methods (local projections, panel FE, IV-2SLS, DiD, RDD, regression kink, synthetic control) and ML-based methods (DoWhy backdoor/IV/frontdoor, DoubleML PLR/IRM/PLIV, EconML CATE, CausalML uplift). A config-driven registry dynamically loads adapters from YAML.
 
-    \item \textbf{Inference Layer}: Runs 3-stage identifiability screening, TSGuard diagnostics, 29-rule issue detection, and 7-guardrail effect propagation. Produces EdgeCards (YAML artifacts combining estimates, diagnostics, identification results, and literature references).
+    \item \textbf{Inference Layer}: Runs 3-stage identifiability screening, TSGuard diagnostics, DoWhy refutation tests (4 robustness checks), 29-rule issue detection, and 7-guardrail effect propagation. Produces EdgeCards (YAML artifacts combining estimates, diagnostics, identification results, and literature references).
 
     \item \textbf{Governance Layer}: Hash-chained audit log, HITL gate with structured checklists, PatchPolicy enforcement, and notification system. No database dependency---the entire audit trail lives in append-only JSONL files that can be committed to Git.
 \end{enumerate}
@@ -102,30 +104,32 @@ The replication crisis~\citep{ioannidis2005why} has motivated pre-registration~\
         arr/.style={-{Stealth[length=5pt]}, thick, gray!70},
         layerlabel/.style={font=\small\bfseries, anchor=west},
     ]
-    % Layer 1: DAG
+    % Layer 1: DAG + Discovery
     \node[layer, fill=blue!8] (dag) at (0, 4.5) {};
     \node[layerlabel] at (-6.4, 4.5) {DAG Layer};
-    \node[component] at (-2.8, 4.5) {YAML Parser};
-    \node[component] at (-0.5, 4.5) {Node/Edge Types};
-    \node[component] at (2.0, 4.5) {Acyclicity Check};
-    \node[component] at (4.5, 4.5) {Unit Validation};
+    \node[component] at (-3.5, 4.5) {YAML Parser};
+    \node[component] at (-1.5, 4.5) {Node/Edge Types};
+    \node[component] at (0.8, 4.5) {Acyclicity Check};
+    \node[component] at (3.0, 4.5) {Graph Convert};
+    \node[component] at (5.2, 4.5) {Discovery Agent};
 
     % Layer 2: Estimation
     \node[layer, fill=green!8] (est) at (0, 3.0) {};
     \node[layerlabel] at (-6.4, 3.0) {Estimation};
-    \node[component] at (-3.8, 3.0) {Adapter Registry};
-    \node[component] at (-1.5, 3.0) {LP / Panel FE};
-    \node[component] at (0.9, 3.0) {IV / DiD / RDD};
-    \node[component] at (3.2, 3.0) {Synth Control};
-    \node[component] at (5.2, 3.0) {Identity};
+    \node[component] at (-4.0, 3.0) {Adapter Registry};
+    \node[component] at (-1.8, 3.0) {LP / Panel FE};
+    \node[component] at (0.4, 3.0) {IV / DiD / RDD};
+    \node[component] at (2.5, 3.0) {DoWhy / DML};
+    \node[component] at (4.6, 3.0) {EconML / CausalML};
 
     % Layer 3: Inference
     \node[layer, fill=orange!8] (inf) at (0, 1.5) {};
     \node[layerlabel] at (-6.4, 1.5) {Inference};
-    \node[component] at (-3.5, 1.5) {3-Stage ID Screen};
-    \node[component] at (-1.0, 1.5) {TSGuard (7 diag.)};
-    \node[component] at (1.8, 1.5) {29-Rule Issues};
-    \node[component] at (4.3, 1.5) {7-Guardrail Propagation};
+    \node[component] at (-3.8, 1.5) {3-Stage ID Screen};
+    \node[component] at (-1.5, 1.5) {TSGuard (7 diag.)};
+    \node[component] at (0.8, 1.5) {Refutation (4)};
+    \node[component] at (2.8, 1.5) {29-Rule Issues};
+    \node[component] at (5.0, 1.5) {Propagation (7)};
 
     % Layer 4: Governance
     \node[layer, fill=red!8] (gov) at (0, 0) {};
@@ -148,7 +152,7 @@ The replication crisis~\citep{ioannidis2005why} has motivated pre-registration~\
     \node[font=\tiny, rotate=90, gray] at (6.6, 0.75) {feedback};
 
     \end{tikzpicture}
-    \caption{Architecture of \oc{}. The DAG layer specifies causal structure. The estimation layer dispatches to 11 adapters. The inference layer screens identifiability, detects issues, and propagates effects with 7 guardrails. The governance layer logs all decisions in a hash-chained audit trail with HITL gates. Dashed arrow indicates governance feedback (e.g., issue-triggered re-estimation).}
+    \caption{Architecture of \oc{}. The DAG layer specifies causal structure and supports data-driven discovery (PC/GES/FCI/NOTEARS). The estimation layer dispatches to 18 adapters spanning econometric and ML-based methods. The inference layer screens identifiability, runs refutation tests, detects issues, and propagates effects with 7 guardrails. The governance layer logs all decisions in a hash-chained audit trail with HITL gates. Dashed arrow indicates governance feedback.}
     \label{fig:architecture}
 \end{figure}
 
@@ -169,28 +173,39 @@ class EstimatorAdapter(ABC):
     def estimate(self, request: EstimationRequest) -> EstimationResult: ...
 \end{lstlisting}
 
-Table~\ref{tab:adapters} lists the 11 adapters. The registry supports both built-in mappings and YAML-configurable dispatch, enabling new estimators to be added without modifying core code.
+Table~\ref{tab:adapters} lists all 18 adapters. The registry supports both built-in mappings and YAML-configurable dispatch (\texttt{design\_registry.yaml}), enabling new estimators to be added without modifying core code. All ML-based adapters use lazy imports---\texttt{dowhy}, \texttt{doubleml}, \texttt{econml}, and \texttt{causalml} are only loaded when the corresponding design is dispatched.
 
 \begin{table}[t]
 \centering
-\caption{Estimation adapters in \oc{}. Each adapter maps a design to a specific estimator with associated diagnostics.}
+\caption{Estimation adapters in \oc{}. The registry supports 18 adapters spanning econometric and ML-based methods. All share a unified \texttt{EstimationRequest}~$\to$~\texttt{EstimationResult} interface.}
 \label{tab:adapters}
-\small
-\begin{tabular}{@{}lll@{}}
+\scriptsize
+\begin{tabular}{@{}llll@{}}
 \toprule
-\textbf{Design} & \textbf{Backend} & \textbf{Key Diagnostics} \\
+\textbf{Design} & \textbf{Backend} & \textbf{Key Diagnostics} & \textbf{Type} \\
 \midrule
-Local Projections & Newey-West LP & HAC SE, IRF $h=0\ldots6$ \\
-Panel LP (Exposure FE) & Panel LP & Entity/time FE, clustered SE \\
-Panel FE (Backdoor) & \texttt{linearmodels.PanelOLS} & Within-$R^2$, clustered SE \\
-IV-2SLS & \texttt{linearmodels.IV2SLS} & First-stage $F$, Sargan test \\
-DiD Event Study & \texttt{linearmodels.PanelOLS} & Pre-trend test, TWFE \\
-RDD & Local-linear WLS & McCrary density, bandwidth \\
-Regression Kink & Local-linear WLS & Density test at kink \\
-Synthetic Control & Weighted donor pool & Pre-treatment RMSPE \\
-Immutable Evidence & Validated evidence & Source-block provenance \\
-Accounting Bridge & Deterministic & Sensitivity at current values \\
-Identity & Partial derivatives & Mechanical formula \\
+\multicolumn{4}{l}{\textit{Econometric Adapters}} \\
+Local Projections & Newey-West LP & HAC SE, IRF $h=0\ldots6$ & TS \\
+Panel LP (Exposure FE) & Panel LP & Entity/time FE, clustered SE & Panel \\
+Panel FE (Backdoor) & \texttt{linearmodels} & Within-$R^2$, clustered SE & Panel \\
+IV-2SLS & \texttt{linearmodels} & First-stage $F$, Sargan test & IV \\
+DiD Event Study & \texttt{linearmodels} & Pre-trend test, TWFE & DiD \\
+RDD & Local-linear WLS & McCrary density, bandwidth & RDD \\
+Regression Kink & Local-linear WLS & Density test at kink & RKD \\
+Synthetic Control & Weighted donor pool & Pre-treatment RMSPE & SC \\
+\midrule
+\multicolumn{4}{l}{\textit{ML-Based Adapters}} \\
+DoWhy Backdoor & \texttt{dowhy} & Refutation tests (4) & ATE \\
+DoWhy IV & \texttt{dowhy} & Wald estimate, refutation & IV \\
+DoWhy Frontdoor & \texttt{dowhy} & Frontdoor criterion & ATE \\
+DoubleML (PLR/IRM/PLIV) & \texttt{doubleml} & Cross-fitting SE, $K$-fold & ATE/CATE \\
+EconML CATE & \texttt{econml} & CATE heterogeneity, $p_{10}$/$p_{90}$ & CATE \\
+CausalML Uplift & \texttt{causalml} & S/T/X-learner, uplift curve & Uplift \\
+\midrule
+\multicolumn{4}{l}{\textit{Deterministic Adapters}} \\
+Immutable Evidence & Validated evidence & Source-block provenance & Lit. \\
+Accounting Bridge & Deterministic & Sensitivity at current values & Acct. \\
+Identity & Partial derivatives & Mechanical formula & Math \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -293,6 +308,20 @@ For time-series edges estimated via local projections, TSGuard runs 7 mandatory 
 
 TSGuard results feed directly into the post-estimation identifiability screen and the propagation engine's guardrail~3.
 
+\subsection{Refutation Engine}
+\label{sec:refutation}
+
+For edges estimated via DoWhy-backed adapters, \oc{} runs a post-estimation \texttt{RefutationEngine} that applies 4 robustness checks:
+
+\begin{enumerate}[leftmargin=*, itemsep=1pt]
+    \item \textbf{Random common cause}: Adds a random confounder; the estimate should not change by more than 15\%.
+    \item \textbf{Placebo treatment}: Permutes the treatment variable; the estimate should drop to near zero.
+    \item \textbf{Data subset}: Re-estimates on a random 80\% subset; the estimate should be stable (${<}30\%$ change).
+    \item \textbf{Unobserved common cause}: Simulates an unobserved confounder; the estimate should preserve its sign.
+\end{enumerate}
+
+Refutation results are converted to \texttt{DiagnosticResult} objects and stored in the EdgeCard alongside TSGuard diagnostics. Failures feed into the post-estimation identifiability screen: a sign flip under unobserved confounding downgrades the claim to \texttt{REDUCED\_FORM}; a large placebo effect triggers a \texttt{BLOCKED\_ID} cap.
+
 %% ============================================================
 %% 6  ISSUE DETECTION AND PATCH POLICY
 %% ============================================================
@@ -362,7 +391,43 @@ The pipeline proceeds in three stages:
 \oc{} provides a multi-backend LLM client supporting Anthropic (direct API), LiteLLM (multi-provider), and CLI fallbacks (\texttt{claude} or \texttt{codex}) that require no API key. Structured extraction uses tool-use (Anthropic) or function-calling (LiteLLM) to produce typed outputs without parsing.
 
 %% ============================================================
-%% 8  GOVERNANCE
+%% 8  DATA-DRIVEN CAUSAL DISCOVERY
+%% ============================================================
+\section{Data-Driven Causal Discovery}
+\label{sec:discovery}
+
+While Section~\ref{sec:llm} extracts causal structure from \emph{text}, \oc{} also supports data-driven structure learning via the \texttt{DiscoveryAgent}.
+
+\subsection{Algorithms}
+
+The agent wraps four causal discovery algorithms, all via lazy imports to keep dependencies optional:
+
+\begin{enumerate}[leftmargin=*, itemsep=1pt]
+    \item \textbf{PC}~\citep{spirtes2000causation}: Constraint-based discovery using conditional independence tests (\texttt{causal-learn}).
+    \item \textbf{GES}~\citep{chickering2002optimal}: Score-based greedy equivalence search with BIC scoring (\texttt{causal-learn}).
+    \item \textbf{FCI}: Extension of PC that handles latent confounders, producing PAGs with bidirected edges (\texttt{causal-learn}).
+    \item \textbf{NOTEARS}~\citep{zheng2018dags}: Continuous optimization for structure learning via acyclicity constraints (\texttt{gCastle}).
+\end{enumerate}
+
+Each algorithm returns a \texttt{DiscoveryResult} containing discovered edges (directed, undirected, or bidirected), an adjacency matrix, and algorithm metadata. Critically, \emph{discovery outputs are proposals only}---they are never auto-merged into the DAG but must pass through HITL review via \texttt{ProposedEdge} objects.
+
+\subsection{DAG Comparison}
+
+The \texttt{compare\_with\_dag()} method categorizes discovered edges against an existing DAGSpec into four groups: \emph{confirmed} (present in both), \emph{contradicted} (reverse direction), \emph{novel} (discovery-only), and \emph{missing} (DAG-only). This enables researchers to validate expert-specified DAGs against data-driven evidence and identify potential structural gaps.
+
+\subsection{Graph Format Interoperability}
+
+A conversion layer (\texttt{graph\_convert.py}) enables interoperability with external causal inference libraries:
+
+\begin{itemize}[leftmargin=*, itemsep=1pt]
+    \item \textbf{NetworkX}: Bidirectional \texttt{dagspec\_to\_networkx()} / \texttt{networkx\_to\_dagspec()} with full attribute preservation.
+    \item \textbf{DoWhy GML}: \texttt{dagspec\_to\_dowhy\_graph()} generates GML strings for DoWhy's \texttt{CausalModel(graph=...)} constructor.
+    \item \textbf{pywhy-graphs ADMG}: \texttt{dagspec\_to\_pywhy()} / \texttt{pywhy\_to\_dagspec()} converts latent confounders to/from bidirected edges.
+    \item \textbf{causal-learn bridge}: \texttt{causallearn\_to\_networkx()} converts discovery output to NetworkX for downstream integration.
+\end{itemize}
+
+%% ============================================================
+%% 9  GOVERNANCE
 %% ============================================================
 \section{Governance Framework}
 \label{sec:governance}
@@ -506,7 +571,7 @@ The dominant open issue type is \texttt{SIGNIFICANT\_BUT\_NOT\_IDENTIFIED} (492 
     \draw[arr] (open) -- (auto);
 
     % Top issues
-    \node[font=\tiny, text width=3cm, align=left, gray] at (5.2, -1.5) {Top: SIG\_NOT\_ID (492)\\LOO\_INSTAB (87)\\RATING\_CONFLICT (59)};
+    \node[font=\tiny, text width=3cm, align=left, gray, anchor=north west] at (5.0, -0.4) {Top: SIG\_NOT\_ID (492)\\LOO\_INSTAB (87)\\RATING\_CONFLICT (59)};
     \end{tikzpicture}
     \caption{Issue triage across 13 pipeline runs. PatchBot auto-fixes 54.9\% of issues (primarily missing units). Only 1.3\% require human-in-the-loop review, demonstrating effective automation of the governance burden.}
     \label{fig:issues}
@@ -539,7 +604,7 @@ The delta-method SE formula (Equation~\ref{eq:delta}) assumes independence acros
 \section{Conclusion}
 \label{sec:conclusion}
 
-\oc{} demonstrates that automation and transparency in causal inference are not mutually exclusive. By treating every modeling decision as an auditable event---logged in a hash-chained ledger, gated by identifiability screens, and protected by anti-p-hacking policies---the platform enables researchers to move faster while maintaining the evidentiary standards that credible causal claims demand. The LLM-assisted discovery pipeline shows promise as a complement to expert DAG construction, finding novel edges while achieving perfect estimate precision on matched paths. We release \oc{} as open-source software to support reproducible causal inference research.
+\oc{} demonstrates that automation and transparency in causal inference are not mutually exclusive. By treating every modeling decision as an auditable event---logged in a hash-chained ledger, gated by identifiability screens and refutation tests, and protected by anti-p-hacking policies---the platform enables researchers to move faster while maintaining the evidentiary standards that credible causal claims demand. With 18 estimation adapters spanning econometric and ML-based methods, data-driven causal discovery (PC, GES, FCI, NOTEARS), and LLM-assisted literature extraction, \oc{} bridges expert-specified and data-driven structure learning within a unified governance framework. We release \oc{} as open-source software to support reproducible causal inference research.
 
 %% ============================================================
 %% REFERENCES
