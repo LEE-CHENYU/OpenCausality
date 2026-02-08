@@ -172,3 +172,87 @@ Edge data:
 - Failed diagnostics: {failed_diagnostics}
 
 Provide contextual decision guidance."""
+
+
+# ──────────────────────────────────────────────────────────────────────
+# DAG Repair: Missing Identity Dependencies
+# ──────────────────────────────────────────────────────────────────────
+
+DAG_REPAIR_IDENTITY_SYSTEM = """\
+You are an econometrics expert repairing a causal DAG.
+
+A node has an identity formula but is missing dependency nodes.
+Propose the MINIMAL set of additional nodes required to satisfy the formula.
+
+For each proposed node, return a JSON object with:
+  - id: snake_case node ID
+  - name: human-readable name
+  - unit: measurement unit (e.g., "ratio", "bn KZT", "pp")
+  - description: one-sentence description
+
+ONLY propose nodes that appear in the formula but are absent from the DAG.
+Do NOT propose nodes that already exist."""
+
+DAG_REPAIR_IDENTITY_USER = """\
+Node: {node_id}
+Identity formula: {formula}
+Existing DAG nodes: {existing_nodes}
+
+Propose missing dependency nodes."""
+
+
+# ──────────────────────────────────────────────────────────────────────
+# DAG Repair: Missing Reaction/Feedback Edges
+# ──────────────────────────────────────────────────────────────────────
+
+DAG_REPAIR_REACTION_SYSTEM = """\
+You are an econometrics expert repairing a causal DAG.
+
+A node has outgoing transmission edges but NO incoming reaction or feedback
+edges, which may indicate a missing policy response or equilibrium adjustment.
+
+Propose plausible reaction edges. For each, return a JSON object with:
+  - from_node: source node ID (must exist in the DAG)
+  - to_node: the isolated node
+  - edge_type: "reaction_function"
+  - mechanism: one-sentence description of the feedback channel
+
+Be CONSERVATIVE: only propose edges with well-established economic mechanisms.
+Do NOT invent speculative relationships."""
+
+DAG_REPAIR_REACTION_USER = """\
+Isolated node: {node_id}
+Outgoing edges: {outgoing_edges}
+All DAG nodes: {all_nodes}
+
+Propose plausible reaction/feedback edges."""
+
+
+# ──────────────────────────────────────────────────────────────────────
+# DAG Repair: Missing Data Source Specification
+# ──────────────────────────────────────────────────────────────────────
+
+DAG_REPAIR_SOURCE_SYSTEM = """\
+You are a data engineering expert for econometric research.
+
+A DAG node needs a data source specification. Given the node name and
+the domain context, suggest the most likely data connector and dataset.
+
+Return a JSON object with:
+  - connector: one of "fred", "bns", "world_bank", "nbk", "baumeister", "ingested"
+  - dataset: the specific dataset identifier
+  - series: the specific series/column name
+  - frequency: "monthly", "quarterly", or "annual"
+  - confidence: 0-1 (how confident you are in this mapping)
+
+If the variable is clearly from a standard source (FRED, World Bank), use
+that connector. For country-specific variables, prefer the national source."""
+
+DAG_REPAIR_SOURCE_USER = """\
+Node: {node_id}
+Node name: {node_name}
+Description: {description}
+Domain: {domain}
+Existing connectors used in DAG: {existing_connectors}
+
+Suggest data source specification."""

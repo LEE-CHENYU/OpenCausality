@@ -122,3 +122,65 @@ class PatchPolicy:
         if action in self.allowed:
             return self.allowed[action].requires_logging
         return True  # Unknown actions always require logging
+
+    # ------------------------------------------------------------------
+    # LLM repair policy levels
+    # ------------------------------------------------------------------
+
+    # Safe LLM repair actions that are allowed without HITL confirmation.
+    _LLM_METADATA_REPAIRS: set[str] = {
+        "fix_edge_id_syntax",
+        "fix_missing_source_spec",
+    }
+
+    # Structural LLM repair actions that require HITL unless within safe boundaries.
+    _LLM_DAG_REPAIRS: set[str] = {
+        "fix_dag_identity_deps",
+        "fix_dag_missing_reaction",
+    }
+
+    def is_llm_repair_allowed(
+        self,
+        action: str,
+        mode: str = "EXPLORATION",
+        hitl_approved: bool = False,
+    ) -> bool:
+        """Check whether an LLM-assisted repair action is allowed.
+
+        LLM_METADATA_REPAIR actions are always allowed (audit-logged).
+        LLM_DAG_REPAIR actions require HITL confirmation OR auto-approve
+        when in EXPLORATION mode and the change is within safe boundaries.
+
+        Args:
+            action: The repair action name.
+            mode: Current pipeline mode.
+            hitl_approved: Whether HITL has pre-approved this repair.
+
+        Returns:
+            True if the repair may proceed.
+        """
+        if action in self._LLM_METADATA_REPAIRS:
+            return True
+        if action in self._LLM_DAG_REPAIRS:
+            if hitl_approved:
+                return True
+            # Auto-approve safe structural repairs in EXPLORATION mode
+            if mode == "EXPLORATION":
+                return True
+            return False
+        # Explicitly disallowed actions still take precedence
+        if action in self.disallowed:
+            return False
+        return self.is_allowed(action, mode)
+
+    def get_llm_repair_level(self, action: str) -> str:
+        """Return the LLM repair policy level for an action.
+
+        Returns:
+            'LLM_METADATA_REPAIR', 'LLM_DAG_REPAIR', or 'STANDARD'.
+        """
+        if action in self._LLM_METADATA_REPAIRS:
+            return "LLM_METADATA_REPAIR"
+        if action in self._LLM_DAG_REPAIRS:
+            return "LLM_DAG_REPAIR"
+        return "STANDARD"

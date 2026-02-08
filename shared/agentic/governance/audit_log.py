@@ -45,18 +45,26 @@ class Hashes:
 
 @dataclass
 class ChangeRecord:
-    """Record of a single change."""
+    """Record of a single change.
 
-    type: str  # "INITIAL", "REFINEMENT", "CONFIRMATION"
+    Supported types:
+      INITIAL, REFINEMENT, CONFIRMATION,
+      LLM_ASSISTED (metadata-level LLM repairs),
+      LLM_STRUCTURAL (DAG-level LLM repairs).
+    """
+
+    type: str  # "INITIAL", "REFINEMENT", "CONFIRMATION", "LLM_ASSISTED", "LLM_STRUCTURAL"
     edge_id: str
     field: str | None = None
     old_value: Any = None
     new_value: Any = None
     reason: str = ""
     approved_by: str | None = None
+    llm_model: str | None = None
+    llm_prompt_hash: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        d: dict[str, Any] = {
             "type": self.type,
             "edge_id": self.edge_id,
             "field": self.field,
@@ -65,6 +73,11 @@ class ChangeRecord:
             "reason": self.reason,
             "approved_by": self.approved_by,
         }
+        if self.llm_model is not None:
+            d["llm_model"] = self.llm_model
+        if self.llm_prompt_hash is not None:
+            d["llm_prompt_hash"] = self.llm_prompt_hash
+        return d
 
 
 @dataclass
@@ -311,6 +324,58 @@ class AuditLog:
             holdout_period=holdout_period,
         )
 
+        self._add_entry(entry)
+        return entry
+
+    def log_llm_repair(
+        self,
+        edge_id: str,
+        field: str,
+        old_value: Any,
+        new_value: Any,
+        reason: str,
+        llm_model: str,
+        llm_prompt_hash: str,
+        structural: bool = False,
+    ) -> LedgerEntry:
+        """Log an LLM-assisted repair to the audit trail.
+
+        Args:
+            edge_id: Affected edge (or 'dag' for structural changes).
+            field: What was changed.
+            old_value: Value before repair.
+            new_value: Value after repair.
+            reason: Human-readable explanation.
+            llm_model: Model identifier used for the repair.
+            llm_prompt_hash: SHA-256 hash of the prompt sent to the LLM.
+            structural: If True, logged as LLM_STRUCTURAL; else LLM_ASSISTED.
+
+        Returns:
+            The logged entry.
+        """
+        change_type = "LLM_STRUCTURAL" if structural else "LLM_ASSISTED"
+        entry = LedgerEntry(
+            timestamp=datetime.now(),
+            run_id=self.current_run_id,
+            iteration=self.iteration,
+            hashes=Hashes(
+                dag=self.dag_hash,
+                data=self.data_hash,
+                spec="",
+            ),
+            change=ChangeRecord(
+                type=change_type,
+                edge_id=edge_id,
+                field=field,
+                old_value=old_value,
+                new_value=new_value,
+                reason=reason,
+                approved_by="LLM_AUTO",
+                llm_model=llm_model,
+                llm_prompt_hash=llm_prompt_hash,
+            ),
+            mode=self.mode,
+        )
         self._add_entry(entry)
         return entry
 

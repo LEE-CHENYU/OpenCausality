@@ -486,6 +486,48 @@ class DynamicLoaderFactory:
         )
         return True
 
+    def register_from_download(
+        self,
+        edge_id: str,
+        node_id: str,
+        file_path: Path,
+        transform: list[str] | None = None,
+    ) -> bool:
+        """Register a loader from a DataScout-downloaded file.
+
+        Creates a loader closure that reads the downloaded parquet file
+        and registers it in NODE_LOADERS.  Also updates EDGE_NODE_MAP
+        when called with an edge context.
+
+        Args:
+            edge_id: Edge that needs this node (used for EDGE_NODE_MAP).
+            node_id: Node identifier.
+            file_path: Path to the downloaded parquet/csv file.
+            transform: Optional list of transform names to apply.
+
+        Returns:
+            True if registration succeeded.
+        """
+        from shared.engine.data_assembler import NODE_LOADERS
+
+        if not Path(file_path).exists():
+            logger.warning(f"Downloaded file not found: {file_path}")
+            return False
+
+        transforms = list(transform or [])
+
+        def _loader(
+            _path=Path(file_path),
+            _node_id=node_id,
+            _transforms=transforms,
+        ) -> pd.Series:
+            s = _load_series_from_file(_path, _node_id, _node_id)
+            return _apply_transforms(s, _transforms)
+
+        NODE_LOADERS[node_id] = _loader
+        logger.info(f"DynamicLoader: registered download-based loader for '{node_id}' from {file_path}")
+        return True
+
     def auto_populate_from_dag(
         self,
         dag: DAGSpec,

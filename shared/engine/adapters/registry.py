@@ -23,6 +23,8 @@ _BUILTIN_ADAPTERS: dict[str, str] = {
     "ACCOUNTING_BRIDGE": "shared.engine.adapters.accounting_bridge_adapter.AccountingBridgeAdapter",
     "IV_2SLS": "shared.engine.adapters.iv_adapter.IV2SLSAdapter",
     "DID_EVENT_STUDY": "shared.engine.adapters.did_adapter.DIDEventStudyAdapter",
+    "RDD": "shared.engine.adapters.rdd_adapter.RDDAdapter",
+    "SYNTHETIC_CONTROL": "shared.engine.adapters.synth_control_adapter.SynthControlAdapter",
 }
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent

@@ -35,6 +35,7 @@ designs:
   - id: "RDD"
     name: "Regression Discontinuity"
     description: "Local linear RD with density and bandwidth checks."
+    adapter_class: "shared.engine.adapters.rdd_adapter.RDDAdapter"
     credibility_weight: 1.0
     requirements:
       data:

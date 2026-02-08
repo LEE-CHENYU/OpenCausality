@@ -58,6 +58,7 @@ class CriticalPathSummary:
     path_complete: bool
     min_credibility: float
     blocking_edges: list[str]
+    mean_credibility: float = 0.0
 
 
 @dataclass
@@ -157,6 +158,7 @@ class SystemReport:
                 "path_edges": self.critical_path.path_edges,
                 "path_complete": self.critical_path.path_complete,
                 "min_credibility": self.critical_path.min_credibility,
+                "mean_credibility": self.critical_path.mean_credibility,
                 "blocking_edges": self.critical_path.blocking_edges,
             } if self.critical_path else None,
             "all_edges_complete": self.all_edges_complete,

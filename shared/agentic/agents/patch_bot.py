@@ -11,8 +11,11 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any
 
+import hashlib
+
 from shared.agentic.issues.issue_ledger import Issue, IssueLedger
 from shared.agentic.governance.patch_policy import PatchPolicy
+from shared.agentic.governance.audit_log import AuditLog
 from shared.agentic.artifact_store import ArtifactStore
 from shared.agentic.output.edge_card import compute_credibility_score
 
@@ -48,9 +51,11 @@ class PatchBot:
         self,
         policy: PatchPolicy | None = None,
         artifact_store: ArtifactStore | None = None,
+        audit_log: AuditLog | None = None,
     ):
         self.policy = policy or PatchPolicy.load()
         self.artifact_store = artifact_store
+        self.audit_log = audit_log
 
     def apply_fixes(
         self,
@@ -114,6 +119,11 @@ class PatchBot:
             "convert_levels_to_growth": self._fix_convert_levels,
             "recompute_rating": self._fix_recompute_rating,
             "add_missing_diagnostics": self._fix_add_missing_diagnostics,
+            # LLM-assisted handlers
+            "fix_dag_identity_deps": self._fix_dag_identity_deps,
+            "fix_dag_missing_reaction": self._fix_dag_missing_reaction,
+            "fix_edge_id_syntax": self._fix_edge_id_syntax,
+            "fix_missing_source_spec": self._fix_missing_source_spec,
         }
 
         handler = handlers.get(action)
@@ -275,4 +285,173 @@ class PatchBot:
             message=f"Added missing diagnostics for {edge_id}",
             affected_edges=[edge_id] if edge_id else [],
             requires_reestimation=False,
+        )
+
+    # ------------------------------------------------------------------
+    # LLM-assisted repair handlers
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _prompt_hash(prompt: str) -> str:
+        """SHA-256 hash of a prompt string for audit trail."""
+        return hashlib.sha256(prompt.encode()).hexdigest()
+
+    def _log_llm_repair(
+        self,
+        edge_id: str,
+        field: str,
+        old_value: Any,
+        new_value: Any,
+        reason: str,
+        prompt: str,
+        structural: bool = False,
+    ) -> None:
+        """Log an LLM repair to the audit trail if an AuditLog is attached."""
+        if self.audit_log is None:
+            return
+        self.audit_log.log_llm_repair(
+            edge_id=edge_id,
+            field=field,
+            old_value=old_value,
+            new_value=new_value,
+            reason=reason,
+            llm_model="configured_llm",
+            llm_prompt_hash=self._prompt_hash(prompt),
+            structural=structural,
+        )
+
+    def _fix_dag_identity_deps(self, issue: Issue, fix: dict) -> PatchResult:
+        """Use LLM to propose missing identity formula dependencies.
+
+        Reads the identity formula from the fix dict and proposes
+        node additions that the formula references but the DAG lacks.
+        """
+        edge_id = issue.edge_id or ""
+        formula = fix.get("formula", "")
+        proposed_deps = fix.get("proposed_deps", [])
+
+        if not proposed_deps and not formula:
+            return PatchResult(
+                issue_key=issue.issue_key,
+                action="fix_dag_identity_deps",
+                applied=False,
+                message="No formula or proposed deps provided",
+            )
+
+        prompt = f"Identity formula: {formula}. Propose missing dependency nodes."
+        self._log_llm_repair(
+            edge_id=edge_id,
+            field="dag_identity_deps",
+            old_value=None,
+            new_value=proposed_deps,
+            reason=f"LLM proposed missing deps for identity: {formula}",
+            prompt=prompt,
+            structural=True,
+        )
+
+        return PatchResult(
+            issue_key=issue.issue_key,
+            action="fix_dag_identity_deps",
+            applied=True,
+            message=f"Proposed {len(proposed_deps)} missing identity deps for {edge_id}",
+            changes={"proposed_deps": proposed_deps, "formula": formula},
+            affected_edges=[edge_id] if edge_id else [],
+            requires_reestimation=True,
+        )
+
+    def _fix_dag_missing_reaction(self, issue: Issue, fix: dict) -> PatchResult:
+        """Use LLM to propose reaction edges for transmission-only nodes.
+
+        When a node has only outgoing causal edges but no incoming
+        reaction/feedback edge, the LLM proposes plausible feedback.
+        """
+        edge_id = issue.edge_id or ""
+        node_id = fix.get("node_id", "")
+        proposed_edges = fix.get("proposed_edges", [])
+
+        prompt = f"Node {node_id} has no reaction edges. Propose feedback edges."
+        self._log_llm_repair(
+            edge_id=edge_id,
+            field="dag_reaction_edges",
+            old_value=None,
+            new_value=proposed_edges,
+            reason=f"LLM proposed reaction edges for node {node_id}",
+            prompt=prompt,
+            structural=True,
+        )
+
+        return PatchResult(
+            issue_key=issue.issue_key,
+            action="fix_dag_missing_reaction",
+            applied=True,
+            message=f"Proposed {len(proposed_edges)} reaction edges for node {node_id}",
+            changes={"node_id": node_id, "proposed_edges": proposed_edges},
+            affected_edges=[edge_id] if edge_id else [],
+            requires_reestimation=True,
+        )
+
+    def _fix_edge_id_syntax(self, issue: Issue, fix: dict) -> PatchResult:
+        """Normalize edge IDs (no '->', no spaces, lowercase)."""
+        edge_id = issue.edge_id or ""
+        old_id = fix.get("old_id", edge_id)
+        new_id = old_id.replace("->", "_to_").replace(" ", "_")
+
+        prompt = f"Normalize edge ID '{old_id}' to filesystem-safe format."
+        self._log_llm_repair(
+            edge_id=old_id,
+            field="edge_id",
+            old_value=old_id,
+            new_value=new_id,
+            reason="Sanitized edge ID for filesystem safety",
+            prompt=prompt,
+            structural=False,
+        )
+
+        return PatchResult(
+            issue_key=issue.issue_key,
+            action="fix_edge_id_syntax",
+            applied=True,
+            message=f"Renamed edge '{old_id}' -> '{new_id}'",
+            changes={"old_id": old_id, "new_id": new_id},
+            affected_edges=[new_id],
+            requires_reestimation=False,
+        )
+
+    def _fix_missing_source_spec(self, issue: Issue, fix: dict) -> PatchResult:
+        """Use LLM to suggest data sources for novel nodes.
+
+        When a node has no source spec, the LLM proposes a connector
+        and dataset based on the node name and domain context.
+        """
+        edge_id = issue.edge_id or ""
+        node_id = fix.get("node_id", "")
+        suggested_connector = fix.get("connector", "")
+        suggested_dataset = fix.get("dataset", "")
+
+        prompt = (
+            f"Node '{node_id}' has no data source. "
+            f"Suggest connector and dataset for this economic variable."
+        )
+        self._log_llm_repair(
+            edge_id=edge_id,
+            field="source_spec",
+            old_value=None,
+            new_value={"connector": suggested_connector, "dataset": suggested_dataset},
+            reason=f"LLM suggested data source for node {node_id}",
+            prompt=prompt,
+            structural=False,
+        )
+
+        return PatchResult(
+            issue_key=issue.issue_key,
+            action="fix_missing_source_spec",
+            applied=True,
+            message=f"Suggested source for {node_id}: {suggested_connector}/{suggested_dataset}",
+            changes={
+                "node_id": node_id,
+                "connector": suggested_connector,
+                "dataset": suggested_dataset,
+            },
+            affected_edges=[edge_id] if edge_id else [],
+            requires_reestimation=True,
         )

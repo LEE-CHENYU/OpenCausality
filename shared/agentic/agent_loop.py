@@ -207,7 +207,11 @@ class AgentLoop:
 
         # PatchPolicy and PatchBot
         self.patch_policy = PatchPolicy.load()
-        self.patch_bot = PatchBot(self.patch_policy, artifact_store=self.artifact_store)
+        self.patch_bot = PatchBot(
+            self.patch_policy,
+            artifact_store=self.artifact_store,
+            audit_log=self.audit_log,
+        )
 
         # Dynamic loader factory
         self.dynamic_loader = DynamicLoaderFactory()
@@ -282,12 +286,15 @@ class AgentLoop:
             mode=self.mode,
         )
 
-        # Phase 0: Validate DAG
+        # Phase 0: Validate DAG (with LLM auto-repair loop)
+        self._sanitize_edge_ids()
         self.validation_report = self.validator.validate()
         if not self.validation_report.is_valid:
-            logger.error("DAG validation failed")
-            logger.error(self.validation_report.summary())
-            return self._create_error_report("DAG validation failed")
+            self.validation_report = self._attempt_dag_auto_repair(self.validation_report)
+            if not self.validation_report.is_valid:
+                logger.error("DAG validation failed (after auto-repair attempts)")
+                logger.error(self.validation_report.summary())
+                return self._create_error_report("DAG validation failed")
 
         # Phase 1: DataScout
         self._run_data_scout()
@@ -306,6 +313,13 @@ class AgentLoop:
             if result.should_stop:
                 logger.info(f"Stopping: {result.stop_reason}")
                 break
+
+        # Flush issues and update cross-run state BEFORE HITL panel build
+        # so that state.json exists when build_hitl_panel reads it.
+        self.issue_ledger.flush()
+        self.cross_run_reducer.reduce_incremental(
+            self.run_id, self.issue_ledger.issues,
+        )
 
         # Post-loop: HITL gate (produce checklist if needed)
         edge_cards = self.artifact_store.get_all_edge_cards()
@@ -343,12 +357,6 @@ class AgentLoop:
                 panel_path=panel_path,
                 run_id=self.run_id,
             )
-
-        # Flush issues and update cross-run state
-        self.issue_ledger.flush()
-        self.cross_run_reducer.reduce_incremental(
-            self.run_id, self.issue_ledger.issues,
-        )
 
         # Create system report
         self.system_report = self._create_system_report()
@@ -549,8 +557,112 @@ class AgentLoop:
 
         return self.run()
 
+    @staticmethod
+    def _sanitize_edge_id(raw_id: str) -> str:
+        """Normalize an edge ID to be filesystem-safe.
+
+        Replaces '->' with '_to_', strips spaces, and lowercases.
+        """
+        eid = raw_id.replace("->", "_to_").replace(" ", "_")
+        return eid
+
+    def _sanitize_edge_ids(self) -> None:
+        """Sanitize all edge IDs in the DAG (e.g. NL-generated '->')."""
+        changed = 0
+        for edge in self.dag.edges:
+            clean = self._sanitize_edge_id(edge.id)
+            if clean != edge.id:
+                logger.info(f"Sanitized edge ID: '{edge.id}' -> '{clean}'")
+                edge.id = clean
+                changed += 1
+        if changed:
+            # Rebuild queue with sanitized edge IDs
+            self.queue = create_queue_from_dag(self.dag)
+            logger.info(f"Sanitized {changed} edge IDs")
+
+    # ------------------------------------------------------------------
+    # LLM-repair error → handler mapping
+    # ------------------------------------------------------------------
+    _VALIDATION_ERROR_HANDLERS: dict[str, str] = {
+        "missing_identity_dep": "fix_dag_identity_deps",
+        "missing_reaction_edge": "fix_dag_missing_reaction",
+        "invalid_edge_id": "fix_edge_id_syntax",
+        "missing_source_spec": "fix_missing_source_spec",
+    }
+
+    def _attempt_dag_auto_repair(
+        self,
+        report: 'ValidationReport',
+        max_attempts: int = 3,
+    ) -> 'ValidationReport':
+        """Attempt LLM-assisted auto-repair of DAG validation errors.
+
+        For each validation error that has a matching PatchBot handler,
+        the repair is applied and the DAG is re-validated.  Capped at
+        ``max_attempts`` iterations to prevent infinite loops.
+
+        Returns the final ValidationReport (may still be invalid).
+        """
+        from shared.agentic.issues.issue_ledger import Issue
+
+        for attempt in range(max_attempts):
+            if report.is_valid:
+                return report
+
+            applied_any = False
+            for error in report.errors:
+                error_type = getattr(error, "error_type", "") or ""
+                handler_action = self._VALIDATION_ERROR_HANDLERS.get(error_type)
+                if handler_action is None:
+                    continue
+
+                # Check policy
+                if not self.patch_policy.is_llm_repair_allowed(handler_action, self.mode):
+                    logger.info(
+                        f"LLM repair '{handler_action}' not allowed in {self.mode} mode"
+                    )
+                    continue
+
+                # Build a synthetic issue for PatchBot dispatch
+                issue = Issue(
+                    issue_key=f"validation_{error_type}_{attempt}",
+                    rule_id=error_type,
+                    edge_id=getattr(error, "edge_id", "dag"),
+                    severity="ERROR",
+                    message=str(error),
+                    auto_fixable=True,
+                    suggested_fix={
+                        "action": handler_action,
+                        **getattr(error, "context", {}),
+                    },
+                )
+
+                result = self.patch_bot._apply_single_fix(
+                    issue, handler_action, issue.suggested_fix,
+                )
+                if result.applied:
+                    applied_any = True
+                    logger.info(
+                        f"DAG auto-repair (attempt {attempt + 1}): "
+                        f"{handler_action} -> {result.message}"
+                    )
+
+            if not applied_any:
+                # No handlers matched or none applied — stop
+                break
+
+            # Re-validate after repairs
+            report = self.validator.validate()
+
+        return report
+
     def _run_data_scout(self) -> None:
-        """Run DataScout phase: catalog and fetch data."""
+        """Run DataScout phase: catalog and fetch data.
+
+        Includes a retry loop (max 2 passes) that registers loaders
+        from DataScout downloads so previously-missing edges can be
+        resolved without manual intervention.
+        """
         logger.info("Phase 1: DataScout")
 
         # Pass 1: Catalog only (check availability without downloading)
@@ -564,22 +676,64 @@ class AgentLoop:
             logger.info(f"DynamicLoader: auto-registered {registered_count} edges")
             self._catalog_data()  # Re-catalog with new loaders
 
-        # DataScout: download missing node data
-        missing_nodes = [
-            node.id for node in self.dag.nodes
-            if not self.catalog.is_available(node.id)
-            and getattr(node, "observed", True)
-            and not getattr(node, "latent", False)
-        ]
-        if missing_nodes:
-            logger.info(f"DataScout: {len(missing_nodes)} nodes need data")
+        max_scout_passes = 2
+        for scout_pass in range(max_scout_passes):
+            # Identify missing nodes
+            missing_nodes = [
+                node.id for node in self.dag.nodes
+                if not self.catalog.is_available(node.id)
+                and getattr(node, "observed", True)
+                and not getattr(node, "latent", False)
+            ]
+            if not missing_nodes:
+                break
+
+            logger.info(
+                f"DataScout pass {scout_pass + 1}/{max_scout_passes}: "
+                f"{len(missing_nodes)} nodes need data"
+            )
             scout_report = self.data_scout.download_missing(self.dag, missing_nodes)
             logger.info(
                 f"DataScout: downloaded {scout_report.downloaded}, "
                 f"skipped {scout_report.skipped}, failed {scout_report.failed}"
             )
+
+            # Register loaders from successful downloads
             if scout_report.downloaded > 0:
-                self._catalog_data()  # Re-catalog with newly downloaded data
+                for node_id, file_path in getattr(scout_report, "download_paths", {}).items():
+                    self.dynamic_loader.register_from_download(
+                        edge_id="",
+                        node_id=node_id,
+                        file_path=Path(file_path),
+                    )
+                # Re-run auto-populate to pick up newly loadable edges
+                repop = self.dynamic_loader.auto_populate_from_dag(self.dag)
+                new_reg = sum(1 for v in repop.values() if v == "registered")
+                if new_reg > 0:
+                    logger.info(f"DataScout retry: auto-registered {new_reg} additional edges")
+                self._catalog_data()
+            else:
+                # No new downloads — further passes won't help
+                break
+
+        # Mark remaining missing nodes as BLOCKED (not UNKNOWN)
+        from shared.engine.data_assembler import EDGE_NODE_MAP
+        for edge in self.dag.edges:
+            from_node = self.dag.get_node(edge.from_node)
+            to_node = self.dag.get_node(edge.to_node)
+            for node in (from_node, to_node):
+                if node and not self.catalog.is_available(node.id):
+                    if (getattr(node, "observed", True)
+                            and not getattr(node, "latent", False)):
+                        self.queue.mark_failed(
+                            edge.id,
+                            f"DataScout exhausted: no data found for node '{node.id}' "
+                            f"after {max_scout_passes} passes",
+                        )
+                        logger.warning(
+                            f"Edge {edge.id}: BLOCKED — node '{node.id}' data unavailable"
+                        )
+                        break
 
         # Mark data available in queue
         for node in self.dag.nodes:
@@ -1212,6 +1366,7 @@ class AgentLoop:
             path_edges=critical_ids,
             path_complete=all(t.is_done() for t in critical_tasks),
             min_credibility=min(critical_scores) if critical_scores else 0.0,
+            mean_credibility=(sum(critical_scores) / len(critical_scores)) if critical_scores else 0.0,
             blocking_edges=[t.edge_id for t in critical_tasks if t.is_blocked()],
         )
 

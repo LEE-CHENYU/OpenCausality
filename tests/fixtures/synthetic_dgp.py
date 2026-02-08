@@ -238,6 +238,83 @@ def make_did_dgp(
     return df, truth
 
 
+def make_sharp_rdd_dgp(
+    n: int = 1000,
+    tau: float = 3.0,
+    cutoff: float = 0.0,
+    seed: int = 42,
+) -> tuple[pd.DataFrame, dict]:
+    """Sharp RDD DGP: treatment assigned at running variable cutoff.
+
+    Structure:
+        X ~ Uniform(-1, 1)     (running variable)
+        D = 1[X >= cutoff]     (sharp treatment)
+        Y = 0.5*X + tau*D + eps, eps ~ N(0, 0.5)
+
+    Args:
+        n: Sample size
+        tau: True treatment effect at cutoff
+        cutoff: Cutoff value
+        seed: Random seed
+
+    Returns:
+        (df, truth) where truth = {"tau": tau, "cutoff": cutoff}
+    """
+    rng = np.random.default_rng(seed)
+    X = rng.uniform(-1, 1, n)
+    D = (X >= cutoff).astype(float)
+    eps = rng.normal(0, 0.5, n)
+    Y = 0.5 * X + tau * D + eps
+    df = pd.DataFrame({"Y": Y, "X": X, "D": D})
+    return df, {"tau": tau, "cutoff": cutoff}
+
+
+def make_fuzzy_rdd_dgp(
+    n: int = 1000,
+    late: float = 2.5,
+    cutoff: float = 0.0,
+    compliance_rate: float = 0.7,
+    seed: int = 42,
+) -> tuple[pd.DataFrame, dict]:
+    """Fuzzy RDD DGP: imperfect compliance at cutoff.
+
+    Structure:
+        X ~ Uniform(-1, 1)            (running variable)
+        Z = 1[X >= cutoff]            (instrument / eligibility)
+        D = Z * Bernoulli(compliance_rate) + (1-Z) * Bernoulli(0.1)
+        Y = 0.5*X + late*D + eps, eps ~ N(0, 0.5)
+
+    The LATE at the cutoff equals ``late``.
+
+    Args:
+        n: Sample size
+        late: Local Average Treatment Effect
+        cutoff: Cutoff value
+        compliance_rate: Pr(D=1 | Z=1)
+        seed: Random seed
+
+    Returns:
+        (df, truth) where truth = {"late": late, "cutoff": cutoff, ...}
+    """
+    rng = np.random.default_rng(seed)
+    X = rng.uniform(-1, 1, n)
+    Z = (X >= cutoff).astype(float)
+    # Fuzzy compliance
+    D = np.where(
+        Z == 1,
+        rng.binomial(1, compliance_rate, n),
+        rng.binomial(1, 0.1, n),
+    ).astype(float)
+    eps = rng.normal(0, 0.5, n)
+    Y = 0.5 * X + late * D + eps
+    df = pd.DataFrame({"Y": Y, "X": X, "D": D, "Z": Z})
+    return df, {
+        "late": late,
+        "cutoff": cutoff,
+        "compliance_rate": compliance_rate,
+    }
+
+
 def make_minimal_dag_yaml(
     edges: list[dict[str, str]],
     nodes: list[dict[str, str]],

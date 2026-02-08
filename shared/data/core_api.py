@@ -87,7 +87,7 @@ class COREClient:
 
         try:
             self._last_request_time = time.monotonic()
-            resp = httpx.get(url, params=params, headers=headers, timeout=30.0)
+            resp = httpx.get(url, params=params, headers=headers, timeout=30.0, follow_redirects=True)
 
             if resp.status_code == 429:
                 logger.warning("CORE rate limit hit; backing off 10s")
