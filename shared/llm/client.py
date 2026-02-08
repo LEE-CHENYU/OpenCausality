@@ -107,7 +107,7 @@ class LiteLLMClient(LLMClient):
 
         response = litellm.completion(
             model=self._model,
-            max_tokens=1024,
+            max_tokens=4096,
             messages=[
                 {"role": "system", "content": system},
                 {"role": "user", "content": user},

@@ -41,6 +41,8 @@ class HITLChecklistItem:
     suggested_resolution: str | None = None
     resolved: bool = False
     resolution: str | None = None
+    explanation: str = ""   # Why this matters for causal inference
+    guidance: str = ""      # Decision guidance for the analyst
 
 
 @dataclass
@@ -64,6 +66,11 @@ class HITLChecklist:
             "# Human-in-the-Loop Checklist",
             f"Run ID: {self.run_id}",
             "",
+            "> This checklist contains issues that require your expert judgment before",
+            "> the pipeline can proceed. For each item, review the context, understand",
+            "> why the issue matters, and record your decision. Your choices are logged",
+            "> in the audit trail for reproducibility.",
+            "",
             "## Pending Decisions",
             "",
         ]
@@ -75,9 +82,13 @@ class HITLChecklist:
             section_num += 1
             lines.append(f"### {section_num}. {item.description}")
             if item.edge_id:
-                lines.append(f"- Edge: `{item.edge_id}`")
+                lines.append(f"- **Edge:** `{item.edge_id}`")
+            if item.explanation:
+                lines.append(f"- **Why this matters:** {item.explanation}")
+            if item.guidance:
+                lines.append(f"- **Decision guidance:** {item.guidance}")
             if item.suggested_resolution:
-                lines.append(f"- Suggested: {item.suggested_resolution}")
+                lines.append(f"- **Suggested:** {item.suggested_resolution}")
             if item.context:
                 for k, v in item.context.items():
                     lines.append(f"- {k}: {v}")
@@ -110,6 +121,27 @@ class HITLGate:
         self.triggers = self._load_triggers(
             config_path or Path("config/agentic/hitl_triggers.yaml")
         )
+        self._rule_info = self._load_rule_info()
+
+    def _load_rule_info(self) -> dict[str, dict]:
+        """Load explanation/guidance from issue_registry.yaml."""
+        registry_path = Path("config/agentic/issue_registry.yaml")
+        if not registry_path.exists():
+            return {}
+        try:
+            with open(registry_path) as f:
+                data = yaml.safe_load(f)
+            info = {}
+            for rule in data.get("rules", []):
+                rid = rule.get("rule_id")
+                if rid:
+                    info[rid] = {
+                        "explanation": rule.get("explanation", ""),
+                        "guidance": rule.get("guidance", ""),
+                    }
+            return info
+        except Exception:
+            return {}
 
     def _load_triggers(self, config_path: Path) -> list[HITLTrigger]:
         """Load HITL triggers from YAML config."""
@@ -189,11 +221,14 @@ class HITLGate:
         # Check issues requiring human from ledger
         if ledger:
             for issue in ledger.get_issues_requiring_human():
+                rule_info = self._rule_info.get(issue.rule_id, {})
                 checklist.items.append(HITLChecklistItem(
                     trigger_id=f"issue:{issue.rule_id}",
                     description=issue.message,
                     edge_id=issue.edge_id,
                     context=issue.evidence,
+                    explanation=rule_info.get("explanation", ""),
+                    guidance=rule_info.get("guidance", ""),
                 ))
 
         return checklist

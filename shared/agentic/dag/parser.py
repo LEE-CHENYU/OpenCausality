@@ -685,6 +685,69 @@ class DAGSpec:
 
         return descendants
 
+    def resolve_edge(
+        self,
+        edge_id: str | None,
+        from_node: str,
+        to_node: str,
+        edge_type: str | None = None,
+    ) -> tuple[EdgeSpec | None, str | None]:
+        """Resolve an edge reference to canonical (EdgeSpec, canonical_id).
+
+        Lookup order:
+          1. Exact edge_id match
+          2. Structural match by (from_node, to_node)
+             - If edge_type provided, prefer match on edge_type
+             - If multiple matches, warn and pick deterministically (sorted by id)
+          3. Normalized node IDs (strip, lowercase) if above fail
+
+        Returns (None, None) if no match found.
+        """
+        import logging as _logging
+        _log = _logging.getLogger(__name__)
+
+        # Normalize inputs
+        from_node = from_node.strip().lower() if from_node else ""
+        to_node = to_node.strip().lower() if to_node else ""
+
+        # 1. Exact edge_id
+        if edge_id:
+            exact = self.get_edge(edge_id.strip())
+            if exact:
+                return exact, exact.id
+
+        # 2. Structural match by (from_node, to_node)
+        candidates = [
+            e for e in self.get_edges_from(from_node)
+            if e.to_node == to_node
+        ]
+
+        if len(candidates) == 1:
+            return candidates[0], candidates[0].id
+
+        if len(candidates) > 1:
+            # Disambiguate by edge_type if available
+            if edge_type:
+                typed = [e for e in candidates if e.get_edge_type() == edge_type]
+                if len(typed) == 1:
+                    return typed[0], typed[0].id
+            # Deterministic fallback: sorted by id
+            _log.warning(
+                f"Multiple edges between {from_node} -> {to_node}: "
+                f"{[c.id for c in candidates]}. Picking first by ID."
+            )
+            pick = sorted(candidates, key=lambda e: e.id)[0]
+            return pick, pick.id
+
+        # 3. Normalized fallback: scan ALL edges
+        # Catches case where node IDs in DAG have different casing/whitespace
+        for edge in self.edges:
+            if (edge.from_node.strip().lower() == from_node and
+                    edge.to_node.strip().lower() == to_node):
+                return edge, edge.id
+
+        return None, None
+
     def get_ancestors(self, node_id: str) -> set[str]:
         """Get all ancestors of a node."""
         ancestors = set()

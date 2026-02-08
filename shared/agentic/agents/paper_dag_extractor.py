@@ -57,6 +57,7 @@ class ProposedEdge:
     evidence: list[CausalClaim] = field(default_factory=list)
     requires_new_nodes: list[str] = field(default_factory=list)
     match_confidence: float = 0.0
+    is_existing: bool = False  # True if matched to existing DAG edge
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -67,6 +68,7 @@ class ProposedEdge:
             "evidence_count": len(self.evidence),
             "requires_new_nodes": self.requires_new_nodes,
             "match_confidence": self.match_confidence,
+            "is_existing": self.is_existing,
         }
 
 
@@ -239,14 +241,23 @@ class PaperDAGExtractor:
                 new_nodes = result.get("requires_new_nodes", [])
                 edge_id = result.get("edge_id_suggestion", "")
 
+                # Normalize node IDs from LLM
+                from_node = from_node.strip().lower() if from_node else ""
+                to_node = to_node.strip().lower() if to_node else ""
+
                 if not edge_id and from_node and to_node:
                     edge_id = f"{from_node}_to_{to_node}"
 
-                # Check if edge already exists
-                existing = self.dag.get_edge(edge_id)
-                if existing:
-                    logger.info(f"Edge {edge_id} already exists in DAG, skipping")
-                    continue
+                # Resolve edge using structural matching
+                existing_edge, canonical_id = self.dag.resolve_edge(
+                    edge_id, from_node, to_node,
+                    edge_type=claim.edge_type_suggestion,
+                )
+
+                is_existing = existing_edge is not None
+                if existing_edge:
+                    edge_id = canonical_id  # Use canonical edge_id
+                    logger.info(f"Matched to existing edge: {edge_id}")
 
                 edge = ProposedEdge(
                     from_node=from_node,
@@ -256,6 +267,7 @@ class PaperDAGExtractor:
                     evidence=[claim],
                     requires_new_nodes=new_nodes,
                     match_confidence=confidence,
+                    is_existing=is_existing,
                 )
                 proposed.append(edge)
 
@@ -296,6 +308,18 @@ class PaperDAGExtractor:
                 existing.requires_new_nodes = list(set(
                     existing.requires_new_nodes + edge.requires_new_nodes
                 ))
+                existing.is_existing = existing.is_existing or edge.is_existing
             else:
                 by_pair[key] = edge
-        return list(by_pair.values())
+
+        merged = list(by_pair.values())
+
+        # Log recovery metrics
+        existing_count = sum(1 for e in merged if e.is_existing)
+        new_count = len(merged) - existing_count
+        logger.info(
+            f"Matched {existing_count}/{len(self.dag.edges)} existing edges, "
+            f"{new_count} new proposed"
+        )
+
+        return merged

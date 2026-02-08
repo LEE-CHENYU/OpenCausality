@@ -98,6 +98,9 @@ class AgentLoopConfig:
     # Frozen spec (for confirmation mode)
     frozen_spec_path: Path | None = None
 
+    # Notifications
+    auto_open_browser: bool = False
+
 
 @dataclass
 class DataCatalog:
@@ -227,6 +230,13 @@ class AgentLoop:
         )
         self.citation_bundles: dict[str, Any] = {}
 
+        # Notifier
+        from shared.agentic.governance.notifier import Notifier
+        self.notifier = Notifier(
+            output_dir=self.config.output_dir,
+            auto_open=self.config.auto_open_browser,
+        )
+
         # Cross-run state
         self.cross_run_reducer = CrossRunReducer(
             issues_dir=self.config.output_dir / "issues",
@@ -314,6 +324,26 @@ class AgentLoop:
                 f.write(hitl_checklist.to_markdown())
             logger.info(f"HITL checklist written to {checklist_path}")
 
+            # Build HITL panel and notify
+            panel_path = None
+            try:
+                from scripts.build_hitl_panel import build
+                panel_path = build(
+                    state_path=self.config.output_dir / "issues" / "state.json",
+                    cards_dir=self.config.output_dir / "cards" / "edge_cards",
+                    actions_path=Path("config/agentic/hitl_actions.yaml"),
+                    registry_path=Path("config/agentic/issue_registry.yaml"),
+                    output_dir=self.config.output_dir,
+                )
+            except Exception as e:
+                logger.warning(f"HITL panel build failed (non-blocking): {e}")
+
+            self.notifier.notify_hitl_required(
+                hitl_checklist,
+                panel_path=panel_path,
+                run_id=self.run_id,
+            )
+
         # Flush issues and update cross-run state
         self.issue_ledger.flush()
         self.cross_run_reducer.reduce_incremental(
@@ -322,6 +352,9 @@ class AgentLoop:
 
         # Create system report
         self.system_report = self._create_system_report()
+
+        # Notify run completion
+        self.notifier.notify_run_complete(self.system_report, run_id=self.run_id)
 
         logger.info("=" * 60)
         logger.info("AGENT LOOP COMPLETE")

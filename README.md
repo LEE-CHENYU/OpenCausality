@@ -1,0 +1,580 @@
+# OpenCausality
+
+Open-source platform for transparent, auditable causal inference. Combines DAG-based causal reasoning with agentic estimation, human-in-the-loop governance, and LLM-assisted literature extraction.
+
+Causal inference in applied economics is fragile. Automated pipelines scale but hide
+methodological choices; manual analysis is transparent but slow. OpenCausality resolves
+this by treating every estimation decision as an auditable event. You specify a causal
+DAG in YAML, the system runs Local Projections with HAC standard errors, and a 29-rule
+issue detection engine flags problems -- overclaiming, control shopping, null dropping,
+specification drift, timing failures -- before results reach your paper. A
+human-in-the-loop panel ensures no statistical claim passes without explicit analyst
+approval. The platform also ships with an NL-to-DAG pipeline that extracts causal
+structures from academic papers via LLM, letting you bootstrap DAGs from existing
+literature and compare them against expert-built specifications.
+
+---
+
+## Quick Start
+
+```bash
+# Install
+pip install -e .
+
+# Setup (creates .env with API keys)
+opencausality init
+
+# Drop data into data/raw/ and ingest
+opencausality data ingest
+
+# List available DAGs
+opencausality dag list
+
+# Run estimation
+opencausality dag run config/agentic/dags/kspi_k2_full.yaml --verbose
+
+# Interactive causal query
+opencausality query --dag config/agentic/dags/kspi_k2_full.yaml
+
+# Monitor for HITL notifications
+opencausality monitor
+```
+
+### Prerequisites
+
+- Python 3.10+
+- An Anthropic API key (for LLM features) or any LiteLLM-compatible provider
+- Panel data in CSV or Parquet format
+
+Running `opencausality init` generates a `.env` file. At minimum set
+`ANTHROPIC_API_KEY=sk-ant-...`. Optional: `SEMANTIC_SCHOLAR_API_KEY`,
+`LLM_PROVIDER=litellm`, `LLM_MODEL=claude-sonnet-4-20250514`.
+
+---
+
+## How It Works
+
+OpenCausality operates on a simple premise: every causal claim should be backed by a
+DAG, estimated with appropriate methods, and subjected to automated checks before human
+review.
+
+The starting point is a YAML DAG specification. Each node represents an observable
+variable and each directed edge represents a hypothesized causal relationship, carrying
+metadata -- expected sign, lag structure, identification strategy, unit specs -- that
+constrain the estimation engine. The causal model is an explicit, version-controlled
+artifact, not something implicit in the code.
+
+The estimation engine processes each edge independently using Local Projections
+(Jorda, 2005) with Newey-West HAC standard errors. It assembles data slices, constructs
+control sets from the DAG's conditional independence structure, and produces impulse
+response functions at multiple horizons. Every estimation call is logged with its full
+specification so that no result is an orphan.
+
+After estimation, 29 issue detection rules scan for common methodological failures:
+significant results without valid identification, p-hacking through control selection,
+silent dropping of null results, and temporal ordering violations. Issues requiring
+human judgment are routed to the HITL panel rather than silently resolved.
+
+The final output: EdgeCards (YAML, one per edge), an HTML HITL panel, a markdown system
+report with credibility ratings, and a hash-chained JSONL audit log.
+
+### The Pipeline
+
+1. **DAG Specification** -- Define nodes (variables) and edges (causal links) in YAML.
+   Each edge carries metadata: expected sign, identification strategy, lag structure,
+   and unit specification (percentage points, percent change, basis points, etc.).
+
+2. **Data Scout** -- Automatically catalog available datasets, match variables to DAG
+   nodes, and assemble estimation-ready panels. Supports CSV and Parquet ingestion
+   with automatic frequency detection.
+
+3. **Paper Scout** -- Search Semantic Scholar and other academic databases for
+   literature supporting or challenging each edge. Results are attached to EdgeCards
+   as structured citations with relevance scores.
+
+4. **Design Selection** -- Choose an identification strategy for each edge based on
+   the DAG structure. The system checks whether back-door or front-door criteria are
+   satisfied and flags edges where identification is absent.
+
+5. **Estimation** -- Run Local Projections with HAC standard errors for each edge at
+   multiple impulse-response horizons. Control sets are derived from the DAG to block
+   confounding paths.
+
+6. **Issue Detection** -- 29 rules check for methodological problems including
+   overclaiming, control shopping, null dropping, specification drift, and timing
+   failures. Each rule produces a typed issue with severity and suggested resolution.
+
+7. **HITL Review** -- Issues requiring human judgment are surfaced in an interactive
+   HTML panel. The analyst reviews each flagged issue, selects an action (accept,
+   reject, revise, escalate), and provides justification.
+
+8. **System Report** -- Aggregated results across all edges with per-edge credibility
+   ratings, overall DAG assessment, and links to supporting literature. Output as
+   markdown with embedded tables and diagnostic summaries.
+
+---
+
+## Example: Kazakhstan Bank Stress Testing
+
+### The Research Question
+
+Kazakhstan's banking sector experienced significant stress during the 2015-2016
+commodity price collapse. The tenge lost roughly half its value against the dollar in
+a managed float adjustment, and inflation surged past 17 percent. The central question
+is whether -- and through which channels -- this exchange rate shock propagated to bank
+capital adequacy ratios, and whether the transmission mechanism operated through credit
+risk (loan defaults), market risk (FX-denominated liabilities), or the real economy
+channel (GDP contraction reducing borrower repayment capacity).
+
+This is not a simple bivariate question. The causal chain from FX shock to bank capital
+runs through at least four intermediate variables: inflation, interest rates, GDP
+growth, and non-performing loan ratios. Each link in the chain requires separate
+identification, and the timing matters -- if inflation leads the exchange rate rather
+than lagging it, the proposed mechanism is invalidated. OpenCausality handles this by
+estimating each edge independently while enforcing consistency across the full DAG.
+
+### Approach 1: Manual DAG Construction
+
+The expert-built DAG for the Kazakhstan stress testing case contains 32 nodes and 20
+directed edges. Nodes include macroeconomic variables (exchange rate, CPI, GDP, policy
+rate), banking sector variables (capital adequacy ratio, non-performing loans, loan
+growth, deposit dollarization), and external variables (oil price, global risk appetite).
+Edges encode hypothesized causal links with expected signs and lag structures derived
+from domain knowledge and prior empirical work.
+
+Building this DAG required approximately 40 hours of literature review, consultation
+with Kazakhstan banking specialists, and iterative refinement. The resulting
+specification is stored in `config/agentic/dags/kspi_k2_full.yaml` and serves as the
+benchmark for comparison with automated extraction.
+
+### Approach 2: Natural Language to DAG
+
+```bash
+python scripts/generate_narrative_dag.py \
+    --narrative examples/kaspi_narrative.txt \
+    --base-dag config/agentic/dags/kspi_k2_full.yaml \
+    --out config/agentic/dags/kspi_k2_narrative.yaml
+```
+
+The NL-to-DAG pipeline uses PaperDAGExtractor to process academic papers and research
+narratives. The LLM reads text describing causal relationships, extracts variable names
+and directed edges, maps them to standardized node identifiers, and produces a YAML DAG.
+Structured prompts require the LLM to distinguish between claimed causal relationships
+and mere correlational statements.
+
+The pipeline operates in two stages: raw extraction produces candidate nodes and edges
+with confidence scores, then a matching step aligns extracted variables against a base
+DAG or variable catalog. This means the system can both extend an existing DAG and
+build one from scratch.
+
+### Comparison
+
+| Metric                         | Expert DAG | NL-Extracted DAG |
+|--------------------------------|------------|------------------|
+| Nodes                          | 32         | 28               |
+| Edges                          | 20         | 17               |
+| Structural matches             | --         | 14 / 20 (70%)    |
+| Novel edges (not in expert)    | --         | 3                |
+| Missing edges (expert only)    | --         | 6                |
+| Sign agreement (matched edges) | --         | 13 / 14 (93%)    |
+
+### What NL Found That Experts Missed
+
+The NL extraction pipeline identified three edges absent from the expert-built DAG:
+a direct link from oil price volatility to deposit dollarization (supported by
+Kose et al., 2019), a feedback edge from bank lending standards to GDP growth
+(consistent with the bank lending channel literature), and a link from global risk
+appetite to domestic interbank rates. These edges are plausible and supported by
+citations in the source literature. They represent the kind of cross-domain connections
+that domain specialists may overlook when focused on a specific transmission channel.
+
+### What Experts Built That NL Missed
+
+Six edges in the expert DAG were absent from the NL extraction. These predominantly
+involved institutional and regulatory mechanisms: the central bank's FX intervention
+rule, the deposit insurance threshold effect on bank runs, the loan classification
+policy change in 2016, and several edges encoding Kazakhstan-specific regulatory
+responses. These omissions reflect a fundamental limitation of literature-based
+extraction -- institutional details and country-specific policy rules are rarely
+stated as explicit causal claims in academic papers. They require the kind of tacit
+knowledge that comes from direct engagement with the regulatory environment.
+
+---
+
+## Human-in-the-Loop Governance
+
+### Why It Matters
+
+Automated estimation pipelines are efficient but dangerous. A system that runs
+regressions, selects specifications, and reports results without human oversight can
+produce statistically significant findings that are methodologically indefensible.
+The history of empirical economics is littered with examples: researchers who search
+over control sets until significance emerges, who drop null results from robustness
+tables, who claim causal identification from designs that do not satisfy the relevant
+conditions.
+
+OpenCausality addresses this by making human oversight a first-class component of the
+pipeline rather than an afterthought. The system does not silently resolve ambiguous
+cases. When an edge shows statistical significance but lacks a valid identification
+strategy, the system flags the issue and halts until an analyst makes an explicit
+decision. This design ensures that every published result carries an auditable record
+of the human judgment calls that produced it. The goal is not to slow down research
+but to make the inevitable judgment calls visible and traceable.
+
+### How OpenCausality Catches Loopholes
+
+#### Overclaiming (SIGNIFICANT_BUT_NOT_IDENTIFIED)
+
+When an edge produces a statistically significant coefficient but the DAG structure
+does not satisfy the back-door or front-door criterion for that edge, the system
+raises a SIGNIFICANT_BUT_NOT_IDENTIFIED issue. This prevents the most common form of
+overclaiming: reporting a significant estimate as causal when identification fails.
+
+#### Control Shopping (RefinementWhitelist)
+
+The RefinementWhitelist gate restricts which control variables can be added or removed
+during specification refinement. If the system or analyst attempts to modify the control
+set outside the pre-approved whitelist, the change is blocked and logged. This prevents
+post-hoc searching over control sets to manufacture significance.
+
+#### Null Dropping (Null Acceptance)
+
+When an edge produces a null result (insignificant coefficient), the system requires
+explicit acknowledgment before the edge can be excluded from the final report. The
+Null Acceptance rule ensures that null findings are documented rather than silently
+discarded, countering the file-drawer problem at the pipeline level.
+
+#### Specification Drift (AuditLog)
+
+Every specification change -- added controls, modified lag structure, sample period
+adjustment -- is recorded in a hash-chained JSONL audit log. The AuditLog rule detects
+when cumulative specification changes exceed a threshold relative to the original DAG
+specification, flagging potential drift from the pre-registered research design.
+
+#### Timing Failure (LEADS_SIGNIFICANT_TIMING_FAIL)
+
+When a Local Projection shows the "effect" variable leading the "cause" variable in
+time, the system raises a LEADS_SIGNIFICANT_TIMING_FAIL issue. This catches cases
+where the proposed causal direction is contradicted by temporal ordering, a necessary
+(though not sufficient) condition for causality in time-series settings.
+
+### The HITL Panel
+
+The HITL panel is an interactive HTML document generated by `scripts/build_hitl_panel.py`.
+It presents each flagged issue as a card with the following elements:
+
+- **Issue type and severity** -- color-coded header (red for blocking, amber for warning)
+- **Edge context** -- which edge triggered the issue, with coefficient estimate and
+  standard error
+- **Rule description** -- what the detection rule checks and why it matters
+- **Action dropdown** -- accept (with justification), reject (suppress the edge),
+  revise (modify specification), or escalate (flag for senior review)
+- **Justification field** -- free-text input for the analyst's reasoning
+- **Tooltip references** -- links to relevant methodological literature for each rule
+
+The panel supports bulk actions (accept all warnings, escalate all blocking issues)
+and exports decisions as a structured JSON file that feeds back into the pipeline.
+
+### The Review and Approval Process
+
+The workflow: (1) estimation runs and issues are flagged, (2) HITL panel is built from
+the issue ledger, (3) analyst reviews each issue and records decisions with
+justifications, (4) decisions are exported as JSON and ingested by the pipeline,
+(5) the audit log records each decision with a hash-chain link, creating an immutable
+record.
+
+Decisions affect pipeline behavior: "accept" downgrades credibility but allows the edge
+into the report with a caveat; "reject" suppresses the edge; "revise" triggers
+re-estimation with modified specs; "escalate" halts until a senior reviewer intervenes.
+
+---
+
+## Reproducibility and Audit
+
+### Where Outputs Are Written
+
+```
+outputs/agentic/
+├── cards/edge_cards/     # EdgeCard YAMLs (one per edge)
+├── issues/state.json     # Issue ledger state
+├── ledger/               # Audit log (JSONL with hash chains)
+├── citations/            # Literature search results
+├── hitl_panel.html       # HITL resolution panel
+├── hitl_checklist.md     # Markdown checklist
+└── .notification.json    # Monitor sentinel file
+```
+
+**EdgeCards** are the primary output artifact. Each YAML file contains the edge
+identifier, estimates, IRF at multiple horizons, controls, identification status, issue
+flags, literature references, and credibility rating -- both human-readable and
+machine-parseable.
+
+**The issue ledger** (`state.json`) records the current state of all detected issues.
+**The audit log** is a directory of JSONL files with hash-chained entries (timestamp,
+event type, payload, SHA-256 of previous entry), making retroactive modification
+detectable.
+
+### How HITL Decisions Are Logged
+
+Each exported decision is a JSON object (issue ID, action, justification, analyst,
+timestamp) appended to the audit log as a hash-chained entry. Each entry includes a
+`prev_hash` field -- the SHA-256 of the previous entry's serialized JSON. The first
+entry uses a null hash. Any modification to an earlier entry invalidates all subsequent
+hashes. The design is intentionally simple: no blockchain, no distributed consensus,
+just a cryptographic chain verifiable with a single script.
+
+### How to Re-run With Same Config
+
+```bash
+# Re-run with identical DAG and frozen spec
+opencausality dag run config/agentic/dags/kspi_k2_full.yaml --mode CONFIRMATION
+
+# Validate DAG structure without running estimation
+opencausality dag validate config/agentic/dags/kspi_k2_full.yaml
+
+# Re-run a specific edge only
+opencausality dag run config/agentic/dags/kspi_k2_full.yaml \
+    --edge fx_shock__cpi_inflation --verbose
+```
+
+The `--mode CONFIRMATION` flag locks the specification to match the original run,
+raising an error if any parameter differs. This supports pre-registration workflows
+where the analysis plan is fixed before data are examined.
+
+---
+
+## Limitations
+
+### NL-to-DAG Is Lossy
+
+The NL extraction pipeline converts unstructured text into structured causal graphs,
+and information is inevitably lost. Qualifying language is collapsed into binary
+edge/no-edge decisions, effect magnitudes are not reliably extracted, and the pipeline
+cannot distinguish between a causal claim made by the authors and one attributed to
+prior literature that the paper is critiquing.
+
+### Claims Are Not Identification
+
+A DAG extracted from literature represents claimed causal relationships, not identified
+ones. The presence of an edge in the DAG means someone published a paper asserting that
+relationship; it does not mean the relationship has been credibly identified with a
+valid research design. Users should treat NL-extracted DAGs as hypotheses to be tested,
+not as established facts.
+
+### Single-Country Example
+
+The primary example in this repository is Kazakhstan bank stress testing. While the
+platform is designed for general causal inference with panel data, the data clients,
+variable catalogs, and example DAGs are specific to this use case. Applying
+OpenCausality to other settings requires building new data clients and variable
+mappings.
+
+### LLM Hallucination Risk
+
+LLMs can fabricate plausible-sounding edges that do not appear in the source material,
+particularly when variable names are similar to common causal relationships in training
+data. All LLM-extracted edges should be verified against the source text before
+inclusion in a production DAG.
+
+---
+
+## Architecture
+
+```
+shared/
+├── agentic/
+│   ├── dag/              # DAG parser, schema, validator
+│   ├── agents/           # DAGScout, PaperScout, ModelSmithCritic, PatchBot,
+│   │                     #   PaperDAGExtractor
+│   ├── governance/       # HITL gate, audit log, patch policy, notifier
+│   ├── issues/           # Issue ledger, registry (29 rules), gates
+│   ├── identification/   # Identifiability screen (back-door, front-door)
+│   ├── output/           # EdgeCard writer, system report generator
+│   ├── validation.py     # Unit spec validation, regex matching
+│   ├── propagation.py    # PropagationEngine with 7 guardrails
+│   ├── ts_guard.py       # Time-series validator (stationarity, cointegration)
+│   └── agent_loop.py     # Main orchestrator
+├── engine/               # Estimation engine (Local Projections, data assembly)
+├── llm/                  # LLM abstraction layer
+│   ├── client.py         #   LLMClient ABC, AnthropicClient, LiteLLMClient
+│   └── prompts.py        #   Prompt templates for extraction and matching
+└── data/                 # Data clients (kz_bank_panel, etc.)
+
+config/
+├── agentic/
+│   ├── dags/             # DAG YAML specifications
+│   │   ├── kspi_k2_full.yaml
+│   │   └── ...
+│   ├── issue_registry.yaml   # 29 issue type definitions
+│   └── hitl_actions.yaml     # Action definitions for HITL panel
+└── settings.py           # Global settings (API keys, paths, defaults)
+
+scripts/
+├── cli.py                    # Typer CLI entry point
+├── build_hitl_panel.py       # Generate HITL HTML panel from issue ledger
+├── generate_narrative_dag.py # NL-to-DAG generation script
+├── enrich_hitl_text.py       # Enrich HITL panel with LLM-generated explanations
+└── query_repl.py             # Natural language causal query REPL
+
+outputs/agentic/              # All output artifacts (gitignored)
+examples/                     # Example narratives and tutorial data
+```
+
+### Key Design Decisions
+
+**Dataclasses over Pydantic.** Internal data structures use Python dataclasses rather
+than Pydantic models. This avoids a heavy dependency and keeps serialization explicit.
+YAML and JSON I/O is handled through dedicated reader/writer functions.
+
+**YAML for DAGs, JSONL for logs.** DAG specifications are YAML because they are
+human-authored and human-read. Audit logs are JSONL because they are append-only and
+machine-processed. EdgeCards are YAML because they serve both roles.
+
+**Hash chains over databases.** The audit log uses file-based hash chains rather than
+a database. This is a deliberate choice for portability -- the entire audit trail is a
+set of text files that can be committed to git, emailed, or archived without any
+infrastructure dependency.
+
+**LLM abstraction layer.** The `shared/llm/client.py` module defines an abstract base
+class `LLMClient` with concrete implementations for Anthropic (default) and LiteLLM
+(which supports OpenAI, Cohere, and dozens of other providers). Switching backends
+requires changing one environment variable.
+
+---
+
+## CLI Reference
+
+| Command | Description |
+|---------|-------------|
+| `opencausality init` | Setup wizard: creates `.env` from template, validates API keys |
+| `opencausality dag run <path>` | Run full estimation pipeline for a DAG specification |
+| `opencausality dag validate <path>` | Validate DAG structure and schema without estimation |
+| `opencausality dag list` | List all available DAG files in the config directory |
+| `opencausality query` | Launch interactive causal query REPL with LLM + regex fallback |
+| `opencausality monitor` | Watch for HITL notification sentinel and alert on new issues |
+| `opencausality data ingest` | Ingest raw data files from `data/raw/` into the data store |
+| `opencausality data list` | List all ingested datasets with metadata |
+| `opencausality data watch` | Watch `data/raw/` for new files and auto-ingest on change |
+| `opencausality config show` | Display current configuration (redacts API keys) |
+| `opencausality config set <key> <value>` | Set a configuration value in `.env` |
+| `opencausality config doctor` | Diagnose configuration: check keys, paths, dependencies |
+
+### Common Flags
+
+| Flag | Applies To | Description |
+|------|-----------|-------------|
+| `--verbose` / `-v` | `dag run` | Print detailed estimation output to stdout |
+| `--mode` | `dag run` | Estimation mode: `EXPLORATION` (default) or `CONFIRMATION` |
+| `--edge` | `dag run` | Run estimation for a single edge only |
+| `--dag` | `query` | Path to DAG file for query context |
+| `--format` | `data list` | Output format: `table` (default) or `json` |
+
+---
+
+## DAG Specification Format
+
+DAG files are YAML documents with the following top-level structure:
+
+```yaml
+dag:
+  name: "kspi_k2_full"
+  version: "2.0"
+  description: "Kazakhstan bank stress testing - full specification"
+
+nodes:
+  - id: fx_shock
+    label: "Exchange Rate Shock"
+    variable: "usdkzt_pct_change"
+    frequency: monthly
+    unit: "%"
+
+  - id: cpi_inflation
+    label: "CPI Inflation"
+    variable: "cpi_yoy"
+    frequency: monthly
+    unit: "%"
+
+edges:
+  - source: fx_shock
+    target: cpi_inflation
+    expected_sign: positive
+    identification: back_door
+    lags: [1, 2, 3, 6, 12]
+    controls:
+      - oil_price
+      - policy_rate
+    unit_spec: "1pp FX depreciation -> X pp inflation"
+```
+
+Each edge defines a testable causal hypothesis. The `identification` field declares
+which criterion the researcher claims is satisfied. The `controls` field specifies the
+conditioning set. The `unit_spec` field describes the expected magnitude in natural
+language, which is validated against estimation output using regex-based unit matching.
+
+---
+
+## Query REPL
+
+The interactive query REPL (`opencausality query`) allows natural language questions
+about the causal structure:
+
+```
+> What happens to bank capital if the exchange rate depreciates by 10%?
+
+Tracing path: fx_shock -> cpi_inflation -> policy_rate -> bank_capital_ratio
+
+Propagated effect at horizon 12:
+  fx_shock -> cpi_inflation:       +2.3pp  (p=0.003)
+  cpi_inflation -> policy_rate:    +1.8pp  (p=0.011)
+  policy_rate -> bank_capital_ratio: -0.4pp  (p=0.087)
+
+  Total (product of path): -1.66pp
+  Confidence: LOW (one link marginally significant, timing untested)
+
+> Is this effect identified?
+
+Edge fx_shock -> cpi_inflation: IDENTIFIED (back-door via oil_price, policy_rate)
+Edge cpi_inflation -> policy_rate: IDENTIFIED (back-door via fx_shock, gdp_growth)
+Edge policy_rate -> bank_capital_ratio: NOT IDENTIFIED (no valid conditioning set)
+
+Overall path: NOT FULLY IDENTIFIED
+```
+
+The REPL uses the LLM to parse natural language queries into DAG operations, with a
+regex fallback for common patterns. Results are rendered with Rich formatting.
+
+The PropagationEngine applies seven guardrails: cycle detection, temporal ordering
+validation, maximum path length cap, minimum per-link significance, mixed
+identification flagging, collider conditioning warnings, and delta-method confidence
+intervals for propagated effects.
+
+---
+
+## Contributing
+
+Contributions are welcome. Please follow these guidelines:
+
+1. **Fork the repository** and create a feature branch from `main`.
+2. **Write tests** for new functionality. The test suite uses pytest and is located
+   in `tests/`.
+3. **Follow existing patterns.** The codebase uses dataclasses, YAML configuration,
+   and JSONL logging. New modules should be consistent with these conventions.
+4. **Do not introduce new dependencies** without discussion. The project deliberately
+   minimizes its dependency footprint.
+5. **Run the linter** before submitting: `ruff check shared/ scripts/`.
+6. **Open a pull request** with a clear description of the change and its motivation.
+
+For bug reports, please include: the DAG specification (or a minimal reproducer), the
+full traceback, and the output of `opencausality config doctor`.
+
+For feature requests, please describe the use case and how it relates to the existing
+pipeline. Proposals that extend the issue detection rules or add new identification
+strategies are especially welcome.
+
+---
+
+## License
+
+MIT License. See [LICENSE](LICENSE) for the full text.
+
+Copyright (c) 2025 OpenCausality Contributors.

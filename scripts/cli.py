@@ -846,6 +846,94 @@ def data_watch():
 # Query REPL Command
 # ============================================================================
 
+@app.command("monitor")
+def monitor(
+    output_dir: Path = typer.Option(
+        Path("outputs/agentic"),
+        "--output-dir", "-o",
+        help="Output directory to watch for notifications",
+    ),
+    auto_open: bool = typer.Option(
+        False,
+        "--auto-open",
+        help="Auto-open HITL panel in browser on notification",
+    ),
+    poll_interval: float = typer.Option(
+        2.0,
+        "--interval",
+        help="Polling interval in seconds",
+    ),
+):
+    """Watch for HITL notifications and display events in real-time."""
+    import json
+    import time
+    import webbrowser
+
+    sentinel_path = output_dir / ".notification.json"
+    last_mtime: float = 0.0
+
+    console.print(f"[bold cyan]Monitoring {output_dir} for notifications...[/bold cyan]")
+    console.print("[dim]Press Ctrl+C to stop.[/dim]\n")
+
+    try:
+        while True:
+            try:
+                if sentinel_path.exists():
+                    current_mtime = sentinel_path.stat().st_mtime
+                    if current_mtime > last_mtime:
+                        last_mtime = current_mtime
+                        try:
+                            with open(sentinel_path) as f:
+                                data = json.load(f)
+                        except (json.JSONDecodeError, OSError):
+                            time.sleep(poll_interval)
+                            continue
+
+                        event = data.get("event", "unknown")
+                        message = data.get("message", "")
+                        ts = data.get("timestamp", "")[:19]
+                        run_id = data.get("run_id", "")
+
+                        if event == "hitl_required":
+                            pending = data.get("pending_count", 0)
+                            panel_path = data.get("panel_path")
+                            console.print(
+                                f"\n[bold yellow]HITL REQUIRED[/bold yellow] "
+                                f"[dim]{ts}[/dim] run={run_id}"
+                            )
+                            console.print(f"  {message}")
+                            if panel_path:
+                                console.print(f"  Panel: [cyan]{panel_path}[/cyan]")
+                                if auto_open:
+                                    try:
+                                        webbrowser.open(Path(panel_path).resolve().as_uri())
+                                    except Exception:
+                                        pass
+
+                        elif event == "run_complete":
+                            console.print(
+                                f"\n[bold green]RUN COMPLETE[/bold green] "
+                                f"[dim]{ts}[/dim] run={run_id}"
+                            )
+                            console.print(f"  {message}")
+
+                        else:
+                            console.print(
+                                f"\n[bold]{event}[/bold] [dim]{ts}[/dim]"
+                            )
+                            console.print(f"  {message}")
+                else:
+                    pass  # Sentinel doesn't exist yet, keep waiting
+
+            except OSError:
+                pass  # File access race condition
+
+            time.sleep(poll_interval)
+
+    except KeyboardInterrupt:
+        console.print("\n[dim]Stopped monitoring.[/dim]")
+
+
 @app.command("query")
 def query_repl(
     dag_path: Optional[Path] = typer.Option(None, "--dag", "-d", help="Path to DAG YAML"),

@@ -7,208 +7,374 @@ actions:
   SIGNIFICANT_BUT_NOT_IDENTIFIED:
     action_type: set_claim_level
     options:
-      - {value: IDENTIFIED_CAUSAL, label: "IDENTIFIED_CAUSAL"}
-      - {value: REDUCED_FORM, label: "REDUCED_FORM"}
-      - {value: DESCRIPTIVE, label: "DESCRIPTIVE"}
-      - {value: BLOCKED_ID, label: "BLOCKED_ID"}
+      - value: IDENTIFIED_CAUSAL
+        label: "IDENTIFIED_CAUSAL"
+        tooltip: "Asserts credible identification strategy (IV, RDD, DiD). Requires documentation. Unlocks counterfactual propagation at full weight."
+      - value: REDUCED_FORM
+        label: "REDUCED_FORM"
+        tooltip: "Informative but not causally identified. Flagged in reports, excluded from causal counterfactuals. Useful for suggestive evidence."
+      - value: DESCRIPTIVE
+        label: "DESCRIPTIVE"
+        tooltip: "Descriptive association only. No causal weight in propagation or counterfactuals. Kept for reporting and context."
+      - value: BLOCKED_ID
+        label: "BLOCKED_ID"
+        tooltip: "Blocks identification claim entirely. Edge remains in DAG but cannot be used for propagation until resolved."
 
   REACTION_FUNCTION_EDGE:
     action_type: set_propagation
     options:
-      - {value: RECLASSIFY_DIAGNOSTIC, label: "Reclassify as diagnostic"}
-      - {value: ACCEPT_WITH_CAVEAT, label: "Accept with caveat"}
-      - {value: BLOCK_PROPAGATION, label: "Block from propagation"}
+      - value: RECLASSIFY_DIAGNOSTIC
+        label: "Reclassify as diagnostic"
+        tooltip: "Moves edge to diagnostic-only role. It will appear in reports but not participate in shock propagation or counterfactuals."
+      - value: ACCEPT_WITH_CAVEAT
+        label: "Accept with caveat"
+        tooltip: "Keeps edge in propagation but adds an explicit caveat about endogeneity to all downstream counterfactuals."
+      - value: BLOCK_PROPAGATION
+        label: "Block from propagation"
+        tooltip: "Removes edge from all propagation paths. It remains visible in the DAG for documentation but has zero causal weight."
 
   TIME_FE_ABSORBS_SHOCK:
     action_type: set_design_fix
     options:
-      - {value: ADD_INTERACTION, label: "Add Exposure x Shock"}
-      - {value: DROP_TIME_FE, label: "Drop time FE"}
-      - {value: ACCEPT, label: "Accept (document)"}
+      - value: ADD_INTERACTION
+        label: "Add Exposure x Shock"
+        tooltip: "Adds cross-sectional exposure interaction to identify effects absorbed by time FE. Standard DiD approach for common macro shocks."
+      - value: DROP_TIME_FE
+        label: "Drop time FE"
+        tooltip: "Removes time fixed effects to allow common shock identification. Risks confounding from other time-varying factors."
+      - value: ACCEPT
+        label: "Accept (document)"
+        tooltip: "Keeps current specification. Documents that the common shock effect is absorbed and the estimate captures only cross-sectional variation."
 
   EXPOSURE_NOT_PREDETERMINED:
     action_type: set_exposure_action
     options:
-      - {value: LAG_EXPOSURE, label: "Lag exposure variable"}
-      - {value: ACCEPT_CAVEAT, label: "Accept with caveat"}
-      - {value: BLOCK_ID, label: "Block identification claim"}
+      - value: LAG_EXPOSURE
+        label: "Lag exposure variable"
+        tooltip: "Uses pre-treatment period exposure measurement to avoid bad controls bias. Recommended if pre-treatment data is available."
+      - value: ACCEPT_CAVEAT
+        label: "Accept with caveat"
+        tooltip: "Keeps contemporaneous exposure with a documented caveat about potential attenuation bias from endogenous exposure."
+      - value: BLOCK_ID
+        label: "Block identification claim"
+        tooltip: "Downgrades identification to REDUCED_FORM. The edge cannot claim causal identification without predetermined exposure."
 
   MECHANICAL_EDGE_ESTIMATED:
     action_type: set_edge_type
     options:
-      - {value: CONVERT_BRIDGE, label: "Convert to bridge edge"}
-      - {value: ACCEPT, label: "Accept as regression"}
+      - value: CONVERT_BRIDGE
+        label: "Convert to bridge edge"
+        tooltip: "Replaces regression with deterministic sensitivity (partial derivative). Eliminates wasted estimation budget on tautological relationships."
+      - value: ACCEPT
+        label: "Accept as regression"
+        tooltip: "Keeps the regression estimate. Useful if you want to empirically test whether the identity holds (e.g., detecting measurement error)."
 
   PATH_DOUBLE_COUNTING:
     action_type: set_path_choice
     options:
-      - {value: USE_STRUCTURAL, label: "Use structural chain"}
-      - {value: USE_REDUCED_FORM, label: "Use reduced-form shortcut"}
-      - {value: ACCEPT_BOTH, label: "Accept both (document)"}
+      - value: USE_STRUCTURAL
+        label: "Use structural chain"
+        tooltip: "Uses the full structural decomposition (A->B->C). Provides more granular policy levers but requires all intermediate edges to be credible."
+      - value: USE_REDUCED_FORM
+        label: "Use reduced-form shortcut"
+        tooltip: "Uses the direct reduced-form edge (A->C). Simpler and more robust if intermediate edges are weak, but loses structural detail."
+      - value: ACCEPT_BOTH
+        label: "Accept both (document)"
+        tooltip: "Keeps both paths with documentation. Only valid if paths measure different aspects (e.g., short-run vs long-run effects)."
 
   # ── Data + Definition ─────────────────────────────────────────────────
   ENTITY_BOUNDARY_DRIFT:
     action_type: set_boundary_action
     options:
-      - {value: HARMONIZE, label: "Harmonize to common scope"}
-      - {value: ACCEPT_CAVEAT, label: "Accept with caveat"}
-      - {value: EXCLUDE_EDGE, label: "Exclude edge"}
+      - value: HARMONIZE
+        label: "Harmonize to common scope"
+        tooltip: "Converts all observations to the same entity scope (bank-level or group-level). May require data adjustments."
+      - value: ACCEPT_CAVEAT
+        label: "Accept with caveat"
+        tooltip: "Keeps mixed scopes with a documented caveat. Appropriate when scope differences are small or unavoidable."
+      - value: EXCLUDE_EDGE
+        label: "Exclude edge"
+        tooltip: "Removes the edge from estimation entirely. Use when scope mixing makes the estimate unreliable."
 
   KPI_DEFINITION_MISMATCH_CROSS_BANK:
     action_type: set_kpi_action
     options:
-      - {value: HARMONIZE, label: "Harmonize definitions"}
-      - {value: ACCEPT_CAVEAT, label: "Accept with caveat"}
-      - {value: EXCLUDE_EDGE, label: "Exclude edge"}
+      - value: HARMONIZE
+        label: "Harmonize definitions"
+        tooltip: "Adjusts data to use consistent definitions across banks. May require recalculation from raw components."
+      - value: ACCEPT_CAVEAT
+        label: "Accept with caveat"
+        tooltip: "Keeps heterogeneous definitions with documentation. Appropriate if differences are minor or well-understood."
+      - value: EXCLUDE_EDGE
+        label: "Exclude edge"
+        tooltip: "Removes the edge. Use when definition differences are fundamental and cannot be reconciled."
 
   SHOCK_CONSTRUCT_AMBIGUOUS:
     action_type: set_shock_action
     options:
-      - {value: ADD_METADATA, label: "Add shock metadata"}
-      - {value: ACCEPT, label: "Accept as-is"}
+      - value: ADD_METADATA
+        label: "Add shock metadata"
+        tooltip: "Populates missing shock_node_id, shock_unit, and shock_scale from DAG spec. Required for counterfactual scenarios."
+      - value: ACCEPT
+        label: "Accept as-is"
+        tooltip: "Keeps edge without shock metadata. Edge will not be usable in counterfactual scenarios."
 
   FREQUENCY_ALIGNMENT_ERROR:
     action_type: set_freq_action
     options:
-      - {value: AGGREGATE_Q, label: "Aggregate to quarterly"}
-      - {value: AGGREGATE_A, label: "Aggregate to annual"}
-      - {value: ACCEPT, label: "Accept (document)"}
+      - value: AGGREGATE_Q
+        label: "Aggregate to quarterly"
+        tooltip: "Aggregates higher-frequency data to quarterly using the DAG-specified method (average for flows, end-of-period for stocks)."
+      - value: AGGREGATE_A
+        label: "Aggregate to annual"
+        tooltip: "Aggregates to annual frequency. Loses short-run dynamics but may be necessary for data availability reasons."
+      - value: ACCEPT
+        label: "Accept (document)"
+        tooltip: "Keeps mixed frequencies with documentation. Only appropriate if the estimator handles mixed frequencies natively."
 
   FREQUENCY_SCALING_MISMATCH:
     action_type: set_scaling_action
     options:
-      - {value: NORMALIZE, label: "Normalize to common unit"}
-      - {value: ACCEPT_CAVEAT, label: "Accept with caveat"}
+      - value: NORMALIZE
+        label: "Normalize to common unit"
+        tooltip: "Rescales coefficients to a common time unit (quarterly convention). Ensures cross-run comparability."
+      - value: ACCEPT_CAVEAT
+        label: "Accept with caveat"
+        tooltip: "Keeps different time units with documentation. Cross-run comparisons will include unit conversion caveats."
 
   EXTRACTION_PROVENANCE_GAPS:
     action_type: set_provenance_action
     options:
-      - {value: ADD_SOURCE, label: "Add source reference"}
-      - {value: ACCEPT, label: "Accept (low risk)"}
+      - value: ADD_SOURCE
+        label: "Add source reference"
+        tooltip: "Adds source document, page, and table reference to the data extraction metadata for audit trail."
+      - value: ACCEPT
+        label: "Accept (low risk)"
+        tooltip: "Accepts without provenance. Appropriate for public market data or well-known statistical series."
 
   # ── Statistical Inference ─────────────────────────────────────────────
   SMALL_SAMPLE_INFERENCE:
     action_type: set_sample_action
     options:
-      - {value: CAP_B, label: "Cap rating to B"}
-      - {value: ACCEPT_CAVEAT, label: "Accept with caveat"}
-      - {value: RE_ESTIMATE, label: "Flag for re-estimation"}
+      - value: CAP_B
+        label: "Cap rating to B"
+        tooltip: "Limits credibility rating to B, reflecting asymptotic approximation risk with N < 30. Automatic default action."
+      - value: ACCEPT_CAVEAT
+        label: "Accept with caveat"
+        tooltip: "Keeps current rating with documented small-sample caveat. Only if you have justification for asymptotic validity."
+      - value: RE_ESTIMATE
+        label: "Flag for re-estimation"
+        tooltip: "Queues re-estimation with wild bootstrap standard errors for more reliable small-sample inference."
 
   PANEL_TOO_FEW_UNITS:
     action_type: set_panel_action
     options:
-      - {value: CAP_B, label: "Cap rating to B"}
-      - {value: WILD_BOOTSTRAP, label: "Use wild cluster bootstrap"}
-      - {value: ACCEPT_CAVEAT, label: "Accept with caveat"}
+      - value: CAP_B
+        label: "Cap rating to B"
+        tooltip: "Limits rating to B due to cluster-robust SE unreliability with < 5 units. Automatic default action."
+      - value: WILD_BOOTSTRAP
+        label: "Use wild cluster bootstrap"
+        tooltip: "Re-estimates with wild cluster bootstrap (Webb weights) for valid few-cluster inference. May widen confidence intervals."
+      - value: ACCEPT_CAVEAT
+        label: "Accept with caveat"
+        tooltip: "Keeps current estimate with documented caveat about few-cluster inference fragility."
 
   LOO_INSTABILITY:
     action_type: set_loo_action
     options:
-      - {value: CAP_C, label: "Cap rating to C"}
-      - {value: ACCEPT_CAVEAT, label: "Accept with caveat"}
-      - {value: RE_ESTIMATE, label: "Flag for re-estimation"}
+      - value: CAP_C
+        label: "Cap rating to C"
+        tooltip: "Limits rating to C reflecting result fragility to single-unit exclusion. Signals low confidence in generalizability."
+      - value: ACCEPT_CAVEAT
+        label: "Accept with caveat"
+        tooltip: "Keeps current rating with documented LOO instability caveat. Identify the influential unit in the rationale."
+      - value: RE_ESTIMATE
+        label: "Flag for re-estimation"
+        tooltip: "Queues re-estimation with the influential unit excluded or winsorized. Produces a robustness comparison."
 
   BREAKS_UNMODELED:
     action_type: set_breaks_action
     options:
-      - {value: ADD_REGIME, label: "Add regime dummy"}
-      - {value: SPLIT_SAMPLE, label: "Split sample estimation"}
-      - {value: ACCEPT_CAVEAT, label: "Accept with caveat"}
+      - value: ADD_REGIME
+        label: "Add regime dummy"
+        tooltip: "Adds a structural break dummy at the detected break date. Allows coefficient to differ across regimes."
+      - value: SPLIT_SAMPLE
+        label: "Split sample estimation"
+        tooltip: "Estimates separately for each regime. Provides regime-specific coefficients for targeted counterfactuals."
+      - value: ACCEPT_CAVEAT
+        label: "Accept with caveat"
+        tooltip: "Keeps pooled estimate with caveat about coefficient averaging across regimes."
 
   MULTIPLE_TESTING_DRIFT:
     action_type: set_testing_action
     options:
-      - {value: BONFERRONI, label: "Apply Bonferroni correction"}
-      - {value: ACCEPT_CAVEAT, label: "Accept with caveat"}
-      - {value: RESET_BUDGET, label: "Reset spec budget"}
+      - value: BONFERRONI
+        label: "Apply Bonferroni correction"
+        tooltip: "Adjusts p-values for the number of specifications tested. Conservative but protects against false discoveries."
+      - value: ACCEPT_CAVEAT
+        label: "Accept with caveat"
+        tooltip: "Keeps unadjusted p-values with documentation of the specification search. Appropriate for pre-planned robustness."
+      - value: RESET_BUDGET
+        label: "Reset spec budget"
+        tooltip: "Resets the specification budget counter. Use only if the additional specs were pre-planned and documented."
 
   # ── Time-Series (TSGuard) ─────────────────────────────────────────────
   NONSTATIONARY_LEVELS_RISK:
     action_type: set_stationarity_action
     options:
-      - {value: DIFFERENCE, label: "First-difference"}
-      - {value: ECM, label: "Use ECM specification"}
-      - {value: ACCEPT, label: "Accept (document)"}
+      - value: DIFFERENCE
+        label: "First-difference"
+        tooltip: "Applies first-differencing to both variables. Removes trends but loses long-run level information."
+      - value: ECM
+        label: "Use ECM specification"
+        tooltip: "Uses Error Correction Model to preserve long-run relationship while modeling short-run dynamics. Requires cointegration."
+      - value: ACCEPT
+        label: "Accept (document)"
+        tooltip: "Keeps levels specification with documentation. Only valid if you have theoretical reasons for level relationships."
 
   RESIDUAL_AUTOCORR_DETECTED:
     action_type: set_autocorr_action
     options:
-      - {value: INCREASE_HAC, label: "Increase HAC bandwidth"}
-      - {value: ACCEPT_CAVEAT, label: "Accept with caveat"}
+      - value: INCREASE_HAC
+        label: "Increase HAC bandwidth"
+        tooltip: "Increases Newey-West kernel bandwidth to better capture serial correlation. May widen standard errors."
+      - value: ACCEPT_CAVEAT
+        label: "Accept with caveat"
+        tooltip: "Keeps current HAC bandwidth with documented autocorrelation caveat. Appropriate for mild autocorrelation."
 
   REGIME_BREAK_SUSPECTED:
     action_type: set_regime_action
     options:
-      - {value: ADD_BREAK, label: "Add structural break"}
-      - {value: SPLIT_SAMPLE, label: "Split sample"}
-      - {value: ACCEPT_CAVEAT, label: "Accept with caveat"}
+      - value: ADD_BREAK
+        label: "Add structural break"
+        tooltip: "Adds break dummy and interaction terms at the detected break date. Allows before/after comparison."
+      - value: SPLIT_SAMPLE
+        label: "Split sample"
+        tooltip: "Estimates separately for pre-break and post-break periods. Provides regime-specific coefficients."
+      - value: ACCEPT_CAVEAT
+        label: "Accept with caveat"
+        tooltip: "Keeps pooled estimate with documented regime instability caveat."
 
   LEADS_SIGNIFICANT_TIMING_FAIL:
     action_type: set_timing_action
     options:
-      - {value: BLOCK_PROPAGATION, label: "Block from propagation"}
-      - {value: ACCEPT_CAVEAT, label: "Accept with caveat (document)"}
-      - {value: RE_ESTIMATE, label: "Flag for re-estimation"}
+      - value: BLOCK_PROPAGATION
+        label: "Block from propagation"
+        tooltip: "Removes edge from all propagation paths. Automatic action for timing failures. Edge kept for diagnostic purposes."
+      - value: ACCEPT_CAVEAT
+        label: "Accept with caveat (document)"
+        tooltip: "Keeps edge with documented timing failure. Only valid if leads reflect anticipated policy changes, not reverse causation."
+      - value: RE_ESTIMATE
+        label: "Flag for re-estimation"
+        tooltip: "Queues re-estimation with adjusted shock timing or additional lead/lag structure to investigate timing failure."
 
   HAC_LAG_SENSITIVITY_HIGH:
     action_type: set_hac_action
     options:
-      - {value: USE_FIXED_BW, label: "Fix HAC bandwidth"}
-      - {value: ACCEPT_CAVEAT, label: "Accept with caveat"}
+      - value: USE_FIXED_BW
+        label: "Fix HAC bandwidth"
+        tooltip: "Uses a fixed, data-driven bandwidth (Andrews 1991). Removes sensitivity to ad hoc bandwidth choice."
+      - value: ACCEPT_CAVEAT
+        label: "Accept with caveat"
+        tooltip: "Keeps current estimate with documented bandwidth sensitivity caveat. Report results across multiple bandwidths."
 
   # ── Selection / External Validity ─────────────────────────────────────
   SELECTION_PUBLIC_BANK_ONLY:
     action_type: set_selection_action
     options:
-      - {value: ADD_DISCLAIMER, label: "Add report disclaimer"}
-      - {value: CAP_SCOPE, label: "Cap counterfactual scope"}
-      - {value: ACCEPT, label: "Accept as-is"}
+      - value: ADD_DISCLAIMER
+        label: "Add report disclaimer"
+        tooltip: "Adds explicit sample restriction disclaimer to the system report. Results clearly labeled as public-bank-only."
+      - value: CAP_SCOPE
+        label: "Cap counterfactual scope"
+        tooltip: "Restricts counterfactual predictions to public banks only. Prevents extrapolation to non-sampled bank types."
+      - value: ACCEPT
+        label: "Accept as-is"
+        tooltip: "No action taken. Use only if the target population is specifically public banks."
 
   SURVIVORSHIP_BIAS_RISK:
     action_type: set_survivorship_action
     options:
-      - {value: ADD_DISCLAIMER, label: "Add report disclaimer"}
-      - {value: SENSITIVITY_CHECK, label: "Run sensitivity check"}
-      - {value: ACCEPT_CAVEAT, label: "Accept with caveat"}
+      - value: ADD_DISCLAIMER
+        label: "Add report disclaimer"
+        tooltip: "Adds survivorship bias disclaimer. Notes that estimates may understate negative effects due to exit selection."
+      - value: SENSITIVITY_CHECK
+        label: "Run sensitivity check"
+        tooltip: "Re-estimates including failed/merged banks up to their last observation. Compares with survivor-only estimates."
+      - value: ACCEPT_CAVEAT
+        label: "Accept with caveat"
+        tooltip: "Keeps survivor-only estimate with documented caveat about potential downward bias in negative effect estimates."
 
   COVERAGE_GAP_EXTERNAL_VALIDITY:
     action_type: set_coverage_action
     options:
-      - {value: ADD_DISCLAIMER, label: "Add report disclaimer"}
-      - {value: ACCEPT_CAVEAT, label: "Accept with caveat"}
+      - value: ADD_DISCLAIMER
+        label: "Add report disclaimer"
+        tooltip: "Adds coverage gap disclaimer. Documents which segments of the target population are missing from the sample."
+      - value: ACCEPT_CAVEAT
+        label: "Accept with caveat"
+        tooltip: "Accepts with documented coverage limitation. Notes direction of likely bias from missing segments."
 
   # ── Scoring / Reporting ───────────────────────────────────────────────
   RATING_DIAGNOSTICS_CONFLICT:
     action_type: set_rating
     options:
-      - {value: DOWNGRADE_B, label: "Downgrade to B"}
-      - {value: DOWNGRADE_C, label: "Downgrade to C"}
-      - {value: ACCEPT, label: "Accept (document)"}
+      - value: DOWNGRADE_B
+        label: "Downgrade to B"
+        tooltip: "Downgrades from A to B due to failed diagnostics. Standard action to maintain rating-evidence consistency."
+      - value: DOWNGRADE_C
+        label: "Downgrade to C"
+        tooltip: "Downgrades to C for severe diagnostic failures (multiple failed checks or critical timing failure)."
+      - value: ACCEPT
+        label: "Accept (document)"
+        tooltip: "Keeps A rating despite diagnostic issues. Requires strong justification documented in rationale."
 
   N_REPORTING_INCONSISTENT:
     action_type: set_n_action
     options:
-      - {value: FIX_REPORT, label: "Fix report N"}
-      - {value: FIX_EDGECARD, label: "Fix EdgeCard N_eff"}
-      - {value: ACCEPT, label: "Accept (document)"}
+      - value: FIX_REPORT
+        label: "Fix report N"
+        tooltip: "Updates the system report header to match EdgeCard N_eff. Standard fix for reporting inconsistencies."
+      - value: FIX_EDGECARD
+        label: "Fix EdgeCard N_eff"
+        tooltip: "Updates EdgeCard N_eff to match report header. Use only if the report header is the authoritative source."
+      - value: ACCEPT
+        label: "Accept (document)"
+        tooltip: "Keeps inconsistency with documentation. Only if the discrepancy reflects a deliberate methodological choice."
 
   CROSS_EVIDENCE_CONFLICT:
     action_type: set_conflict_action
     options:
-      - {value: PREFER_STRUCTURAL, label: "Prefer structural edge"}
-      - {value: PREFER_REDUCED, label: "Prefer reduced-form edge"}
-      - {value: ACCEPT_BOTH, label: "Accept both (document)"}
+      - value: PREFER_STRUCTURAL
+        label: "Prefer structural edge"
+        tooltip: "Uses the structural (better-identified) edge estimate. The conflicting reduced-form edge is demoted to diagnostic-only."
+      - value: PREFER_REDUCED
+        label: "Prefer reduced-form edge"
+        tooltip: "Uses the reduced-form edge estimate. The structural edge is demoted. Appropriate if structural identification is suspect."
+      - value: ACCEPT_BOTH
+        label: "Accept both (document)"
+        tooltip: "Keeps both estimates with documented conflict. Reports will show both with an explicit conflict warning."
 
   UNIT_MISSING_IN_EDGECARD:
     action_type: set_unit_action
     options:
-      - {value: ADD_UNITS, label: "Add units from spec"}
-      - {value: ACCEPT, label: "Accept (not critical)"}
+      - value: ADD_UNITS
+        label: "Add units from spec"
+        tooltip: "Auto-populates treatment_unit and outcome_unit from the DAG node specifications. Standard auto-fix."
+      - value: ACCEPT
+        label: "Accept (not critical)"
+        tooltip: "Keeps edge without explicit units. Only for edges not used in propagation where unit ambiguity is acceptable."
 
   # ── Fallback for unknown rules ────────────────────────────────────────
   _default:
     action_type: resolve
     options:
-      - {value: ACCEPT, label: "Accept"}
-      - {value: REJECT, label: "Reject"}
-      - {value: ESCALATE, label: "Escalate"}
+      - value: ACCEPT
+        label: "Accept"
+        tooltip: "Accepts the issue without further action. The issue is marked as resolved."
+      - value: REJECT
+        label: "Reject"
+        tooltip: "Rejects the flagged finding. The edge remains as-is but the rejection is logged for audit."
+      - value: ESCALATE
+        label: "Escalate"
+        tooltip: "Escalates to senior reviewer or domain expert. Issue remains open until resolved by escalation target."

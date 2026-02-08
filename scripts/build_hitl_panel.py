@@ -120,21 +120,35 @@ def load_edge_summary(card_path: Path) -> dict | None:
 
 
 def load_actions(actions_path: Path) -> dict:
-    """Load hitl_actions.yaml → actions dict."""
+    """Load hitl_actions.yaml → actions dict with HTML-escaped tooltips."""
+    import html as _html
+
     with open(actions_path) as f:
         data = yaml.safe_load(f)
-    return data.get("actions", {})
+    actions = data.get("actions", {})
+    # HTML-escape tooltip content for safe injection
+    for rule_id, action_cfg in actions.items():
+        for opt in action_cfg.get("options", []):
+            if "tooltip" in opt:
+                opt["tooltip"] = _html.escape(opt["tooltip"])
+    return actions
 
 
-def load_rule_descriptions(registry_path: Path) -> dict:
-    """Load issue_registry.yaml → {rule_id: description}."""
+def load_rule_info(registry_path: Path) -> dict:
+    """Load issue_registry.yaml → {rule_id: {description, explanation, guidance}}."""
+    import html as _html
+
     with open(registry_path) as f:
         data = yaml.safe_load(f)
     rules = {}
     for rule in data.get("rules", []):
         rid = rule.get("rule_id")
         if rid:
-            rules[rid] = rule.get("description", "")
+            rules[rid] = {
+                "description": _html.escape(rule.get("description", "")),
+                "explanation": _html.escape(rule.get("explanation", "")),
+                "guidance": _html.escape(rule.get("guidance", "")),
+            }
     return rules
 
 
@@ -467,6 +481,49 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
             margin-left: auto;
         }
 
+        /* Welcome banner */
+        .welcome-banner {
+            padding: 16px 32px;
+            background: #f8f8f8;
+            border-bottom: 1px solid #ddd;
+            font-size: 11px;
+            line-height: 1.7;
+            color: #333;
+        }
+        .welcome-banner h2 { font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+        .welcome-banner p { margin-bottom: 6px; }
+
+        /* Rule info box */
+        .rule-info {
+            margin-bottom: 12px;
+            padding: 10px 14px;
+            background: #f8f8f8;
+            border-left: 3px solid #000;
+        }
+        .rule-description { font-size: 11px; font-weight: 500; margin-bottom: 4px; }
+        .rule-extra { display: none; }
+        .rule-extra.open { display: block; }
+        .rule-explanation {
+            font-size: 11px; color: #444; line-height: 1.6; margin-bottom: 6px; margin-top: 6px;
+        }
+        .rule-guidance {
+            font-size: 11px; color: #222; padding: 6px 10px;
+            background: #fff; border: 1px solid #ddd;
+        }
+        .rule-guidance strong { font-weight: 600; }
+        .why-toggle {
+            cursor: pointer; color: #666; font-size: 10px;
+            text-decoration: underline; margin-left: 8px;
+        }
+        .why-toggle:hover { color: #000; }
+
+        /* Action tooltip info box */
+        .action-info {
+            font-size: 10px; color: #555; margin-top: 4px;
+            padding: 4px 6px; background: #f8f8f8; border: 1px solid #eee;
+            min-height: 16px;
+        }
+
         /* Hidden */
         .hidden { display: none !important; }
     </style>
@@ -477,6 +534,19 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
     <h1>HITL Resolution Panel</h1>
     <div class="subtitle">Human-in-the-Loop Issue Resolution &mdash; KSPI K2 Agentic Pipeline</div>
     <div class="stats-row" id="statsRow"></div>
+</div>
+
+<div class="welcome-banner">
+    <h2>How to Use This Panel</h2>
+    <p>This panel presents issues detected by the OpenCausality governance system that require
+    your expert judgment. Each section groups issues by rule type and severity. Your role is to
+    review each flagged issue, understand its implications for causal inference, and select an
+    appropriate resolution action.</p>
+    <p>For each issue, click <strong>[Why?]</strong> to see why it matters and how to decide.
+    Select an action from the dropdown and optionally add a rationale. Your decisions will be
+    logged in the audit trail for reproducibility.</p>
+    <p>When all issues are resolved, click <strong>Export Decisions</strong> to save your
+    decisions as a JSON file that can be fed back into the pipeline.</p>
 </div>
 
 <div class="controls-bar">
@@ -640,14 +710,19 @@ function diagDetail(diags) {
 
 function renderAction(key, actCfg, isResolved, decVal) {
     var opts = '<option value="">-- select --</option>';
+    var tooltips = {};
     if (actCfg && actCfg.options) {
         actCfg.options.forEach(function(o) {
             var sel = (isResolved && decVal === o.value) ? ' selected' : '';
-            opts += '<option value="' + o.value + '"' + sel + '>' + o.label + '</option>';
+            var tip = o.tooltip ? ' title="' + o.tooltip.replace(/"/g, '&quot;') + '"' : '';
+            opts += '<option value="' + o.value + '"' + sel + tip + '>' + o.label + '</option>';
+            if (o.tooltip) tooltips[o.value] = o.tooltip;
         });
     }
     var rat = (decisions[key] && decisions[key].rationale) || '';
-    return '<select data-key="' + key + '">' + opts + '</select>' +
+    var currentTip = (isResolved && tooltips[decVal]) ? tooltips[decVal] : '';
+    return '<select data-key="' + key + '" data-tooltips=\'' + JSON.stringify(tooltips).replace(/'/g, "&#39;") + '\'>' + opts + '</select>' +
+           '<div class="action-info" data-tip-for="' + key + '">' + currentTip + '</div>' +
            '<input type="text" data-rationale="' + key + '" placeholder="Rationale..." value="' + rat.replace(/"/g, '&quot;') + '">';
 }
 
@@ -750,6 +825,12 @@ function render() {
 
         var section = document.createElement('div');
         section.className = 'section';
+        var ruleInfo = RULE_DESCRIPTIONS[rule] || {};
+        var desc = (typeof ruleInfo === 'string') ? ruleInfo : (ruleInfo.description || '');
+        var explanation = (typeof ruleInfo === 'object') ? (ruleInfo.explanation || '') : '';
+        var guidance = (typeof ruleInfo === 'object') ? (ruleInfo.guidance || '') : '';
+        var extraId = 'ruleextra-' + rule.replace(/[^a-zA-Z0-9]/g, '_');
+
         section.innerHTML =
             '<div class="section-header">' +
                 '<div>' +
@@ -758,7 +839,15 @@ function render() {
                     '<span class="section-count">' + items.length + ' edge' + (items.length !== 1 ? 's' : '') + '</span>' +
                 '</div>' +
             '</div>' +
-            '<div style="font-size:10px;color:#666;margin-bottom:12px">' + (RULE_DESCRIPTIONS[rule] || '') + '</div>';
+            '<div class="rule-info">' +
+                '<div class="rule-description">' + desc +
+                    (explanation ? '<span class="why-toggle" data-toggle-extra="' + extraId + '">[Why?]</span>' : '') +
+                '</div>' +
+                (explanation ? '<div class="rule-extra" id="' + extraId + '">' +
+                    '<div class="rule-explanation">' + explanation + '</div>' +
+                    (guidance ? '<div class="rule-guidance"><strong>Decision guidance:</strong> ' + guidance + '</div>' : '') +
+                '</div>' : '') +
+            '</div>';
 
         // Bulk action (for sections with >3 items)
         if (items.length > 3 && actCfg) {
@@ -846,6 +935,12 @@ function render() {
                 this.classList.remove('decided');
                 if (row) row.classList.remove('resolved');
             }
+            // Update tooltip display
+            try {
+                var tooltips = JSON.parse(this.getAttribute('data-tooltips') || '{}');
+                var tipEl = document.querySelector('[data-tip-for="' + key + '"]');
+                if (tipEl) tipEl.textContent = tooltips[this.value] || '';
+            } catch(e) {}
             updateProgress();
         });
     });
@@ -866,6 +961,18 @@ function render() {
             if (el) {
                 el.classList.toggle('open');
                 this.textContent = el.classList.contains('open') ? '[-]' : '[+]';
+            }
+        });
+    });
+
+    // Why? toggle for rule explanation
+    container.querySelectorAll('.why-toggle').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var id = this.getAttribute('data-toggle-extra');
+            var el = document.getElementById(id);
+            if (el) {
+                el.classList.toggle('open');
+                this.textContent = el.classList.contains('open') ? '[Hide]' : '[Why?]';
             }
         });
     });
@@ -977,8 +1084,8 @@ def build(
     actions = load_actions(actions_path)
     print(f"  {len(actions)} action rules loaded")
 
-    # 5. Load rule descriptions
-    rules = load_rule_descriptions(registry_path)
+    # 5. Load rule info (description + explanation + guidance)
+    rules = load_rule_info(registry_path)
     print(f"  {len(rules)} rule descriptions loaded")
 
     # 6. Build HTML via placeholder replacement

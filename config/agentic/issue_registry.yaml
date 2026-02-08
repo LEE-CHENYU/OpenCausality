@@ -8,6 +8,8 @@
 #
 # Severity levels: CRITICAL > HIGH > MEDIUM > LOW
 
+registry_schema_version: 2
+
 rules:
   # =========================================================================
   # Data + Definition Problems
@@ -18,6 +20,16 @@ rules:
     auto_fixable: false
     requires_human: true
     description: "Mixing entity scopes (bank vs group) breaks comparability"
+    explanation: >
+      When different observations mix entity scopes (e.g., bank-level vs consolidated
+      group-level), the treatment and outcome variables become incomparable across units.
+      Capital ratios at bank level differ systematically from group level due to intra-group
+      transfers and double counting. Ignoring this produces biased panel estimates because
+      the variation being exploited is partly definitional, not economic.
+    guidance: >
+      Harmonize all observations to the same scope (preferably unconsolidated bank-level
+      for Kazakhstan data). If harmonization is impossible, add a scope dummy and note
+      the caveat in the report.
 
   - rule_id: KPI_DEFINITION_MISMATCH_CROSS_BANK
     severity: HIGH
@@ -25,6 +37,16 @@ rules:
     auto_fixable: false
     requires_human: true
     description: "NPL/CoR definitions differ across banks causing sign conflicts"
+    explanation: >
+      Banks may use different definitions for key performance indicators (e.g., NPL
+      includes/excludes restructured loans, CoR uses different provisioning rules).
+      Cross-bank panel estimation treats these as comparable, but definitional differences
+      create measurement error correlated with bank characteristics. This can flip
+      coefficient signs between runs and invalidate pooled estimates.
+    guidance: >
+      Check if the definition mismatch is economically meaningful. If yes, harmonize
+      definitions or estimate separately by definition group. Document any remaining
+      heterogeneity as a limitation.
 
   - rule_id: SHOCK_CONSTRUCT_AMBIGUOUS
     severity: MEDIUM
@@ -32,6 +54,14 @@ rules:
     auto_fixable: true
     requires_human: false
     description: "EdgeCard must include shock_node_id, shock_unit, shock_scale"
+    explanation: >
+      Without explicit shock metadata (which node is shocked, in what units, at what
+      scale), counterfactual scenarios become ambiguous. A "10% depreciation" could mean
+      10 percentage points or 10% of the current level, leading to order-of-magnitude
+      errors in propagation. This metadata is required for reproducible counterfactuals.
+    guidance: >
+      The system will auto-populate shock metadata from the DAG spec. Verify that the
+      inferred shock_unit and shock_scale match your intended scenario.
 
   - rule_id: FREQUENCY_ALIGNMENT_ERROR
     severity: CRITICAL
@@ -39,6 +69,14 @@ rules:
     auto_fixable: true
     requires_human: false
     description: "Mixing frequencies without explicit aggregation rule"
+    explanation: >
+      Mixing monthly treatment with quarterly outcome (or vice versa) without a declared
+      aggregation method (end-of-period, average, sum) introduces temporal misalignment.
+      The estimator may silently interpolate or drop observations, changing the effective
+      sample and potentially biasing results. This is auto-fixable but must be logged.
+    guidance: >
+      The system will apply the aggregation rule from the DAG spec. If no rule is
+      specified, it defaults to end-of-period for stocks and average for flows.
 
   - rule_id: FREQUENCY_SCALING_MISMATCH
     severity: HIGH
@@ -46,6 +84,14 @@ rules:
     auto_fixable: false
     requires_human: true
     description: "Annual vs quarterly estimates not normalized to common unit"
+    explanation: >
+      When comparing estimates across runs with different frequencies, a quarterly
+      coefficient is not directly comparable to an annual one. Failing to normalize
+      (e.g., annualize quarterly or quarterly-ize annual) leads to incorrect propagation
+      multipliers and misleading cross-run convergence assessments.
+    guidance: >
+      Normalize all estimates to a common time unit before comparison. The preferred
+      convention is quarterly for macro variables and annual for structural parameters.
 
   - rule_id: EXTRACTION_PROVENANCE_GAPS
     severity: MEDIUM
@@ -53,6 +99,14 @@ rules:
     auto_fixable: false
     requires_human: false
     description: "Missing source document/page reference for extracted data"
+    explanation: >
+      Data extracted from PDFs, reports, or regulatory filings should carry provenance
+      (source document, page, table number) so that results can be independently verified.
+      Missing provenance makes reproduction impossible and raises audit risk, especially
+      for regulatory submissions.
+    guidance: >
+      Add the source reference to the data extraction metadata. For low-risk variables
+      (e.g., public market data), this can be accepted with a note.
 
   # =========================================================================
   # Identification / Design Problems
@@ -63,6 +117,15 @@ rules:
     auto_fixable: false
     requires_human: true
     description: "Policy reaction edge cannot be used for shock propagation"
+    explanation: >
+      A policy reaction function (e.g., central bank raises rates in response to
+      inflation) captures endogenous behavior, not a causal effect of an exogenous shock.
+      Using it for shock propagation would double-count the policy response or create
+      circular logic. The edge should be classified as diagnostic or informational only.
+    guidance: >
+      Reclassify as diagnostic-only if this is purely a reaction function. If you believe
+      there is an exogenous component, document the identification strategy and accept
+      with a caveat.
 
   - rule_id: TIME_FE_ABSORBS_SHOCK
     severity: CRITICAL
@@ -70,6 +133,15 @@ rules:
     auto_fixable: true
     requires_human: false
     description: "Panel with time FE and common shock requires Exposure x Shock"
+    explanation: >
+      Time fixed effects absorb all common time-varying shocks (including the treatment
+      of interest if it is a macro shock common to all units). To identify the effect,
+      the design must exploit cross-sectional variation in exposure (Exposure x Shock
+      interaction). Without this, the coefficient is mechanically zero or identified only
+      from noise.
+    guidance: >
+      The system will suggest adding an Exposure x Shock interaction term. This is the
+      standard diff-in-diff approach for common shocks in panel data.
 
   - rule_id: EXPOSURE_NOT_PREDETERMINED
     severity: CRITICAL
@@ -77,6 +149,14 @@ rules:
     auto_fixable: false
     requires_human: true
     description: "Exposure variable must be measured strictly pre-treatment"
+    explanation: >
+      If the exposure variable (e.g., bank's FX share) is measured contemporaneously with
+      or after the shock, it may itself be affected by the shock, creating a "bad controls"
+      problem. This violates the exclusion restriction in diff-in-diff designs and biases
+      the estimated causal effect, typically attenuating it toward zero.
+    guidance: >
+      Lag the exposure variable to a pre-treatment period. If pre-treatment measurement
+      is unavailable, accept with a caveat noting potential attenuation bias.
 
   - rule_id: MECHANICAL_EDGE_ESTIMATED
     severity: HIGH
@@ -84,6 +164,14 @@ rules:
     auto_fixable: true
     requires_human: false
     description: "Accounting identity should be bridge, not regression"
+    explanation: >
+      Regressing an identity (e.g., CAR = Capital / RWA) produces tautological results
+      with near-perfect fit, inflating credibility scores and wasting estimation budget.
+      Mechanical edges should be treated as deterministic bridges that pass through shocks
+      via calculus (partial derivatives), not statistical estimation.
+    guidance: >
+      The system will convert this to a bridge edge with deterministic sensitivity.
+      Accept as regression only if you need to test whether the identity holds empirically.
 
   - rule_id: PATH_DOUBLE_COUNTING
     severity: HIGH
@@ -98,14 +186,33 @@ rules:
       If both exist, HITL must choose which to use (or config flag selects default).
       Default: prefer structural chain if all intermediate edges are IDENTIFIED_CAUSAL;
       fall back to reduced_form otherwise.
+    explanation: >
+      If both a direct reduced-form edge (A -> C) and a structural chain (A -> B -> C)
+      are included in propagation, the total effect is double-counted. This inflates
+      counterfactual predictions, potentially by 100% or more. The system detects overlapping
+      paths and requires the analyst to choose one.
+    guidance: >
+      Prefer the structural chain if all intermediate edges are IDENTIFIED_CAUSAL, as it
+      provides more granular policy levers. Use reduced-form if intermediate edges are
+      weak or if you only need the total effect.
 
   - rule_id: SIGNIFICANT_BUT_NOT_IDENTIFIED
     severity: CRITICAL
     trigger: post_run
     auto_fixable: false
-    requires_human: false
+    requires_human: true
     action: "cap_rating_C, block_counterfactual"
     description: "Significant result but claim_level != IDENTIFIED_CAUSAL"
+    explanation: >
+      This edge shows a statistically significant result (low p-value), but the
+      identification strategy has not been validated as causal. A significant correlation
+      is not the same as a causal effect — without proper identification (e.g., IV, RDD,
+      DiD), the estimate may reflect reverse causation, omitted variable bias, or spurious
+      correlation. Accepting this as causal without acknowledgement constitutes overclaiming.
+    guidance: >
+      If you have a credible identification strategy, upgrade to IDENTIFIED_CAUSAL and
+      document it. Otherwise, accept as REDUCED_FORM — informative but not usable for
+      counterfactual predictions without caveats.
 
   # =========================================================================
   # Statistical Inference Problems
@@ -117,6 +224,15 @@ rules:
     requires_human: false
     action: "cap_rating_B"
     description: "N < 30 with HAC SEs; inference fragile"
+    explanation: >
+      With fewer than 30 observations, HAC (Newey-West) standard errors rely on
+      asymptotic approximations that perform poorly in small samples. Confidence intervals
+      may be too narrow, leading to false rejections of the null. The credibility rating
+      is capped to reflect this uncertainty.
+    guidance: >
+      Consider wild bootstrap for more reliable small-sample inference. The rating cap
+      to B is automatic; override only if you have strong justification for asymptotic
+      validity.
 
   - rule_id: PANEL_TOO_FEW_UNITS
     severity: HIGH
@@ -125,14 +241,31 @@ rules:
     requires_human: false
     action: "cap_rating_B"
     description: "< 5 units; cluster-robust unreliable"
+    explanation: >
+      Cluster-robust standard errors require a sufficient number of clusters (units) to
+      be reliable. With fewer than 5 units, the cluster-robust variance estimator is
+      severely biased downward, leading to over-rejection. This is a well-known problem
+      in the panel econometrics literature (Cameron, Gelbach, Miller 2008).
+    guidance: >
+      Use wild cluster bootstrap (Webb weights) for valid inference with few clusters.
+      The rating cap to B is automatic. Accept with caveat if bootstrap is infeasible.
 
   - rule_id: LOO_INSTABILITY
     severity: HIGH
     trigger: post_run
     auto_fixable: false
-    requires_human: false
+    requires_human: true
     action: "cap_rating_C"
     description: "Leave-one-out shows sign flip or >50% magnitude change"
+    explanation: >
+      Leave-one-out (LOO) analysis drops each unit in turn and re-estimates. If the
+      coefficient flips sign or changes magnitude by more than 50%, the result is driven
+      by a single influential unit rather than a systematic pattern. Such fragility
+      undermines confidence in the estimate as a general causal effect.
+    guidance: >
+      Identify the influential unit and investigate whether it is an outlier or represents
+      a genuine subgroup effect. Consider winsorizing, trimming, or reporting results
+      with and without the influential unit.
 
   - rule_id: BREAKS_UNMODELED
     severity: MEDIUM
@@ -140,6 +273,15 @@ rules:
     auto_fixable: false
     requires_human: true
     description: "Regime changes not accounted for in estimation"
+    explanation: >
+      Structural breaks (e.g., policy changes, crises) can cause coefficient instability.
+      If breaks are present but not modeled, the estimated coefficient is a weighted average
+      across regimes, which may not represent either regime accurately. This is especially
+      problematic for counterfactual scenarios that project beyond a break date.
+    guidance: >
+      Add a regime dummy or split the sample at the break date. If the break is recent
+      and data post-break is insufficient, restrict counterfactual scope to the
+      pre-break regime.
 
   - rule_id: MULTIPLE_TESTING_DRIFT
     severity: MEDIUM
@@ -147,6 +289,16 @@ rules:
     auto_fixable: false
     requires_human: true
     description: "Spec search exceeded pre-registered budget"
+    explanation: >
+      Running many specifications and reporting only the significant one inflates the
+      false discovery rate. The pre-registered specification budget limits this. If the
+      budget is exceeded, the analyst must either apply a multiple testing correction
+      (e.g., Bonferroni) or justify the additional specifications as pre-planned robustness
+      checks.
+    guidance: >
+      Apply Bonferroni correction to the p-values if the budget was exceeded due to
+      exploratory analysis. If the additional specs were planned robustness checks,
+      document them and reset the budget.
 
   # =========================================================================
   # Time-Series Specific (TSGuard)
@@ -157,6 +309,14 @@ rules:
     auto_fixable: true
     requires_human: false
     description: "Both variables in levels and trending; require transformation or ECM"
+    explanation: >
+      Regressing two trending (non-stationary) variables in levels produces spurious
+      regression — high R-squared and significant t-statistics that reflect shared trends,
+      not causal relationships. The solution is to first-difference, use an ECM if
+      cointegrated, or apply appropriate transformations (log-differences for growth rates).
+    guidance: >
+      The system will apply first-differencing by default. If you believe the variables
+      are cointegrated, select ECM specification to preserve the long-run relationship.
 
   - rule_id: RESIDUAL_AUTOCORR_DETECTED
     severity: MEDIUM
@@ -164,6 +324,13 @@ rules:
     auto_fixable: false
     requires_human: false
     description: "Serial correlation in residuals; HAC SEs may be inadequate"
+    explanation: >
+      Serial correlation in residuals indicates that the model is missing dynamic structure.
+      While HAC standard errors adjust for this, they may be inadequate if the autocorrelation
+      is strong or persistent, leading to under-estimated standard errors and over-rejection.
+    guidance: >
+      Consider increasing the HAC bandwidth or adding lagged dependent variables. If
+      autocorrelation is mild (DW close to 2), accept with a caveat.
 
   - rule_id: REGIME_BREAK_SUSPECTED
     severity: HIGH
@@ -171,6 +338,15 @@ rules:
     auto_fixable: false
     requires_human: true
     description: "Coefficient instability across regime splits"
+    explanation: >
+      TSGuard detected statistically significant coefficient differences across time
+      sub-samples, suggesting a structural break. Using a single coefficient for the full
+      sample masks regime-specific effects and produces unreliable counterfactuals for
+      periods after the break.
+    guidance: >
+      Split the sample at the detected break date and estimate separately. If the break
+      is too recent for reliable post-break estimation, restrict counterfactual scope
+      to the pre-break regime.
 
   - rule_id: LEADS_SIGNIFICANT_TIMING_FAIL
     severity: CRITICAL
@@ -179,6 +355,16 @@ rules:
     requires_human: false
     action: "block_propagation"
     description: "Effects appear before shock; reverse causation or omitted factor"
+    explanation: >
+      If the outcome responds significantly BEFORE the treatment shock, the causal
+      interpretation fails. This indicates either reverse causation (outcome causes
+      treatment), an omitted common factor driving both, or anticipation effects that
+      violate the parallel trends assumption. The edge is blocked from propagation
+      automatically.
+    guidance: >
+      Investigate whether leads reflect anticipation (expected policy changes) or reverse
+      causation. If anticipation, consider adjusting the shock timing. If reverse
+      causation, reclassify the edge direction or remove from the DAG.
 
   - rule_id: HAC_LAG_SENSITIVITY_HIGH
     severity: MEDIUM
@@ -186,6 +372,15 @@ rules:
     auto_fixable: false
     requires_human: false
     description: "Estimate changes materially with HAC lag length"
+    explanation: >
+      If the point estimate or its significance changes substantially when varying the HAC
+      bandwidth (number of lags in the Newey-West kernel), the inference is fragile to the
+      choice of bandwidth. This suggests that the serial correlation structure is complex
+      and the standard errors are not robust to bandwidth selection.
+    guidance: >
+      Report results across multiple bandwidths. Use a data-driven bandwidth selector
+      (e.g., Andrews 1991) rather than ad hoc choice. Accept with caveat if the sign is
+      stable across bandwidths.
 
   # =========================================================================
   # Selection / External Validity Problems
@@ -197,6 +392,14 @@ rules:
     requires_human: true
     action: "add_report_disclaimer, cap_counterfactual_scope"
     description: "Panel uses only public banks; results may not generalize to full banking sector"
+    explanation: >
+      Public (listed) banks differ systematically from private banks in size, governance,
+      risk appetite, and regulatory scrutiny. Estimates from public-only samples may not
+      generalize to the full banking sector. Counterfactuals applied to the full sector
+      using these estimates would be unreliable for the private bank segment.
+    guidance: >
+      Add a disclaimer noting the sample restriction. Cap the counterfactual scope to
+      public banks only, or accept with a clear caveat about external validity limitations.
 
   - rule_id: SURVIVORSHIP_BIAS_RISK
     severity: HIGH
@@ -204,6 +407,15 @@ rules:
     auto_fixable: false
     requires_human: true
     description: "Sample excludes failed/merged banks; survival conditioning biases estimates"
+    explanation: >
+      If banks that failed, merged, or exited the sample are excluded, the remaining
+      sample is conditioned on survival. This creates survivorship bias — the estimated
+      effects reflect only the experience of survivors, typically underestimating the
+      negative effects of shocks (since the most affected banks disappeared).
+    guidance: >
+      Run a sensitivity check including failed/merged banks up to their last observation.
+      Add a disclaimer about survivorship bias. If data on exits is unavailable, accept
+      with a clear caveat.
 
   - rule_id: COVERAGE_GAP_EXTERNAL_VALIDITY
     severity: MEDIUM
@@ -212,6 +424,14 @@ rules:
     requires_human: true
     action: "add_report_disclaimer"
     description: "Sample covers <50% of system assets or <50% of institutions in target population"
+    explanation: >
+      When the sample covers less than half of the target population (by assets or count),
+      the estimated effects may not represent the system as a whole. Small or mid-sized
+      banks excluded from the sample may have different exposure patterns and response
+      mechanisms than the included banks.
+    guidance: >
+      Add a disclaimer noting the coverage gap. If the coverage gap is due to data
+      availability, document which segments are missing and their likely direction of bias.
 
   # =========================================================================
   # Scoring / Reporting Problems
@@ -222,6 +442,14 @@ rules:
     auto_fixable: true
     requires_human: false
     description: "A-rating despite failed diagnostics or missing requirements"
+    explanation: >
+      An A-rating signals high credibility, but one or more diagnostics have failed or
+      required checks are missing. This inconsistency undermines the rating system's
+      integrity. The system auto-downgrades to B to maintain consistency between the
+      rating and the underlying evidence.
+    guidance: >
+      The auto-downgrade to B is applied. Override to A only if you can document why the
+      failed diagnostic does not affect the estimate's credibility for your specific use case.
 
   - rule_id: N_REPORTING_INCONSISTENT
     severity: MEDIUM
@@ -229,6 +457,14 @@ rules:
     auto_fixable: true
     requires_human: false
     description: "Report N header != EdgeCard N_eff"
+    explanation: >
+      The sample size reported in the system report header differs from the effective
+      observations in the EdgeCard. This inconsistency confuses reviewers and may indicate
+      a data processing error (e.g., missing values were dropped but not reflected in the
+      header count).
+    guidance: >
+      The system will auto-fix by aligning the report N to the EdgeCard N_eff. Accept the
+      auto-fix unless you have a specific reason for the discrepancy.
 
   - rule_id: CROSS_EVIDENCE_CONFLICT
     severity: HIGH
@@ -236,6 +472,15 @@ rules:
     auto_fixable: false
     requires_human: true
     description: "Two edges measuring same relationship have conflicting signs"
+    explanation: >
+      When two edges estimate the same causal relationship (e.g., one reduced-form and
+      one structural) but produce opposite signs, at least one is biased or misspecified.
+      Using both in propagation would produce contradictory counterfactuals. The analyst
+      must adjudicate which estimate is more credible.
+    guidance: >
+      Prefer the structural edge if its identification strategy is stronger. If both
+      designs are equally credible, report the conflict as a limitation and consider
+      averaging with appropriate uncertainty.
 
   - rule_id: UNIT_MISSING_IN_EDGECARD
     severity: CRITICAL
@@ -243,3 +488,11 @@ rules:
     auto_fixable: true
     requires_human: false
     description: "EdgeCard missing treatment_unit/outcome_unit"
+    explanation: >
+      Without explicit units (e.g., "pp", "%", "log points"), the coefficient is
+      uninterpretable. A coefficient of 0.5 could mean 0.5 percentage points, 50%, or
+      0.5 log points — a potential 100x difference in the implied effect. Units are
+      required for any meaningful propagation or reporting.
+    guidance: >
+      The system will auto-populate units from the DAG spec. Verify that the inferred
+      units match the actual estimation specification.
