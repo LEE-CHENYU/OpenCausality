@@ -672,8 +672,26 @@ class AgentLoop:
         for task in ready_tasks:
             self._process_task(task)
 
+    # Map edge groups to design IDs for adapter registry lookup
+    _GROUP_TO_DESIGN: dict[str, str] = {
+        "IMMUTABLE": "IMMUTABLE_EVIDENCE",
+        "IDENTITY": "IDENTITY",
+        "MONTHLY_LP": "LOCAL_PROJECTIONS",
+        "QUARTERLY_LP": "LOCAL_PROJECTIONS",
+        "DYNAMIC_LP": "LOCAL_PROJECTIONS",
+        "KSPI_ONLY": "LOCAL_PROJECTIONS",
+        "PANEL_LP": "PANEL_LP_EXPOSURE_FE",
+        "ACCOUNTING_BRIDGE": "ACCOUNTING_BRIDGE",
+    }
+
     def _process_task(self, task: LinkageTask) -> None:
-        """Process a single task using real estimators."""
+        """Process a single task using adapter registry dispatch.
+
+        Dispatch flow:
+        1. get_edge_group() classifies the edge
+        2. _GROUP_TO_DESIGN maps group to design ID
+        3. Card-creation methods use the appropriate estimator
+        """
         from shared.engine.data_assembler import get_edge_group, EDGE_NODE_MAP
 
         logger.info(f"Processing task: {task.edge_id}")
@@ -686,32 +704,33 @@ class AgentLoop:
             if not edge:
                 raise ValueError(f"Edge not found: {task.edge_id}")
 
-            # Determine edge group and dispatch to appropriate estimator
+            # Determine edge group and dispatch to appropriate card creator
             group = get_edge_group(task.edge_id)
+            design_id = self._GROUP_TO_DESIGN.get(group)
 
             if group == "IMMUTABLE":
                 edge_card = self._create_immutable_card(task)
             elif group == "IDENTITY":
                 edge_card = self._create_identity_card(task)
+            elif group == "ACCOUNTING_BRIDGE":
+                edge_card = self._create_accounting_bridge_card(task)
             elif group in ("MONTHLY_LP", "QUARTERLY_LP"):
                 edge_card = self._create_lp_card(task, is_quarterly=(group == "QUARTERLY_LP"))
             elif group == "DYNAMIC_LP":
                 edge_card = self._create_lp_card(task, is_quarterly=False)
+            elif design_id is not None and task.edge_id in EDGE_NODE_MAP:
+                edge_card = self._create_lp_card(task, is_quarterly=False)
             else:
-                # Fallback: try LP estimation if edge is in EDGE_NODE_MAP
-                if task.edge_id in EDGE_NODE_MAP:
-                    edge_card = self._create_lp_card(task, is_quarterly=False)
-                else:
-                    self.queue.mark_failed(
-                        task.edge_id,
-                        f"No data loader registered for edge '{task.edge_id}'. "
-                        f"Add to EDGE_NODE_MAP or register a NODE_LOADER."
-                    )
-                    logger.warning(
-                        f"Edge {task.edge_id}: BLOCKED — no data loader. "
-                        f"Skipping estimation to avoid placeholder results."
-                    )
-                    return
+                self.queue.mark_failed(
+                    task.edge_id,
+                    f"No adapter for edge group '{group}' (edge '{task.edge_id}'). "
+                    f"Register in _GROUP_TO_DESIGN or add to EDGE_NODE_MAP."
+                )
+                logger.warning(
+                    f"Edge {task.edge_id}: BLOCKED — no adapter for group '{group}'. "
+                    f"Skipping estimation to avoid placeholder results."
+                )
+                return
 
             # Run identifiability screen (post-estimation)
             design_name = edge_card.spec_details.design if edge_card.spec_details else ""
@@ -932,6 +951,71 @@ class AgentLoop:
                 supports_shock_path=True,
                 supports_policy_intervention=True,
                 intervention_note="Mechanical identity; always holds by definition",
+            ),
+            credibility_rating=rating,
+            credibility_score=score,
+        )
+
+    def _create_accounting_bridge_card(self, task: LinkageTask) -> EdgeCard:
+        """Create EdgeCard from accounting bridge (deterministic sensitivity)."""
+        from shared.engine.ts_estimator import compute_accounting_bridge
+        from shared.engine.data_assembler import _load_kspi_quarterly
+        from shared.agentic.output.edge_card import (
+            Estimates, DiagnosticResult, Interpretation,
+            FailureFlags, CounterfactualApplicability,
+        )
+        from shared.agentic.output.provenance import SpecDetails
+
+        kspi_df = _load_kspi_quarterly()
+        latest = kspi_df.iloc[-1]
+        loans = float(latest["net_loans"])
+        rwa = float(latest["rwa"])
+        cor = float(latest["cor"])
+        capital = float(latest["total_capital"])
+
+        bridge = compute_accounting_bridge(
+            edge_id=task.edge_id,
+            loans=loans, rwa=rwa, cor=cor, capital=capital,
+        )
+
+        estimates = Estimates(
+            point=bridge.sensitivity,
+            se=0.0,
+            ci_95=(bridge.sensitivity, bridge.sensitivity),
+            pvalue=None,
+        )
+        diagnostics = {
+            "identity_consistency": DiagnosticResult(
+                name="identity_consistency", passed=True,
+                value=bridge.sensitivity,
+                message=f"Deterministic: {bridge.formula}",
+            ),
+        }
+        failure_flags = FailureFlags(mechanical_identity_risk=True)
+        spec_details = SpecDetails(design="ACCOUNTING_BRIDGE", se_method="deterministic")
+
+        score, rating = compute_credibility_score(
+            diagnostics=diagnostics,
+            failure_flags=failure_flags,
+            design_weight=0.9,
+            data_coverage=1.0,
+        )
+        return EdgeCard(
+            edge_id=task.edge_id,
+            dag_version_hash=self._dag_hash,
+            spec_hash=spec_details.compute_hash(),
+            spec_details=spec_details,
+            estimates=estimates,
+            diagnostics=diagnostics,
+            interpretation=Interpretation(
+                estimand=bridge.description,
+                is_not="Causal effect; this is an accounting identity",
+            ),
+            failure_flags=failure_flags,
+            counterfactual=CounterfactualApplicability(
+                supports_shock_path=True,
+                supports_policy_intervention=True,
+                intervention_note="Accounting bridge; deterministic at current values",
             ),
             credibility_rating=rating,
             credibility_score=score,

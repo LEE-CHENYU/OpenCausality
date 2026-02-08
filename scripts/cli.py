@@ -46,11 +46,16 @@ loop_app = typer.Typer(
     name="loop",
     help="Estimation loop control (start/stop/status/once/log)",
 )
+benchmark_app = typer.Typer(
+    name="benchmark",
+    help="Benchmarking and evaluation commands",
+)
 app.add_typer(dag_app, name="dag")
 app.add_typer(config_app, name="config")
 app.add_typer(data_app, name="data")
 app.add_typer(agent_app, name="agent")
 app.add_typer(loop_app, name="loop")
+app.add_typer(benchmark_app, name="benchmark")
 
 
 @app.callback()
@@ -1338,6 +1343,113 @@ def hitl_build(
     except Exception as e:
         console.print(f"[bold red]Error: {e}[/bold red]")
         raise typer.Exit(1)
+
+
+# =============================================================================
+# Benchmark Commands
+# =============================================================================
+
+@benchmark_app.command("run")
+def benchmark_run(
+    suite: str = typer.Option("dgp", help="Benchmark suite: dgp, acic, or all"),
+    adapter: Optional[str] = typer.Option(None, help="Specific adapter name to benchmark"),
+    format: str = typer.Option("table", help="Output format: table, json, or markdown"),
+):
+    """Run benchmark suite against adapters."""
+    console = Console()
+    console.print(f"[bold cyan]Running benchmark suite: {suite}[/bold cyan]")
+
+    summaries = []
+
+    if suite in ("dgp", "all"):
+        from benchmarks.dgp_benchmarks import run_all_dgp_benchmarks
+        dgp_results = run_all_dgp_benchmarks()
+        for name, summary in dgp_results.items():
+            if adapter and name != adapter:
+                continue
+            summaries.append(summary)
+
+    if suite in ("acic", "all"):
+        from benchmarks.acic_loader import load_acic_data
+        from benchmarks.harness import run_benchmark, summarize_benchmark
+        from shared.engine.adapters.registry import get_adapter as get_adapter_fn
+
+        datasets = load_acic_data()
+        # ACIC only supports LP (OLS-like) adapter for now
+        for adapter_name in ["LOCAL_PROJECTIONS"]:
+            if adapter and adapter_name != adapter:
+                continue
+            try:
+                adapter_obj = get_adapter_fn(adapter_name)
+                results = run_benchmark(adapter_obj, datasets, target_effect="att")
+                summaries.append(summarize_benchmark(results))
+            except Exception as e:
+                console.print(f"[yellow]Skipping {adapter_name}: {e}[/yellow]")
+
+    if not summaries:
+        console.print("[yellow]No benchmark results generated.[/yellow]")
+        raise typer.Exit(1)
+
+    if format == "json":
+        import json
+        console.print(json.dumps([s.to_dict() for s in summaries], indent=2))
+    elif format == "markdown":
+        import pandas as pd
+        df = pd.DataFrame([s.to_dict() for s in summaries])
+        console.print(df.to_markdown(index=False))
+    else:
+        table = Table(title="Benchmark Results")
+        table.add_column("Adapter", style="cyan")
+        table.add_column("Datasets", justify="right")
+        table.add_column("Mean Bias", justify="right")
+        table.add_column("RMSE", justify="right")
+        table.add_column("Coverage", justify="right")
+        table.add_column("Avg Runtime", justify="right")
+        for s in summaries:
+            table.add_row(
+                s.adapter_name,
+                str(s.n_datasets),
+                f"{s.mean_bias:.4f}",
+                f"{s.rmse:.4f}",
+                f"{s.coverage_90:.1%}",
+                f"{s.mean_runtime:.3f}s",
+            )
+        console.print(table)
+
+
+@benchmark_app.command("report")
+def benchmark_report(
+    format: str = typer.Option("table", help="Output format: table, json, or markdown"),
+):
+    """Generate a report from the most recent benchmark run."""
+    console = Console()
+    console.print("[bold cyan]Running full DGP benchmark report...[/bold cyan]")
+
+    from benchmarks.dgp_benchmarks import run_all_dgp_benchmarks
+
+    summaries = run_all_dgp_benchmarks()
+
+    if format == "json":
+        import json
+        console.print(json.dumps(
+            {name: s.to_dict() for name, s in summaries.items()}, indent=2,
+        ))
+    else:
+        table = Table(title="DGP Benchmark Report")
+        table.add_column("Adapter", style="cyan")
+        table.add_column("Datasets", justify="right")
+        table.add_column("Mean Bias", justify="right")
+        table.add_column("RMSE", justify="right")
+        table.add_column("Coverage", justify="right")
+        for name, s in summaries.items():
+            table.add_row(
+                name,
+                str(s.n_datasets),
+                f"{s.mean_bias:.4f}",
+                f"{s.rmse:.4f}",
+                f"{s.coverage_90:.1%}",
+            )
+        console.print(table)
 
 
 if __name__ == "__main__":

@@ -18,6 +18,11 @@ from shared.engine.adapters.base import EstimatorAdapter
 _BUILTIN_ADAPTERS: dict[str, str] = {
     "LOCAL_PROJECTIONS": "shared.engine.adapters.lp_adapter.LPAdapter",
     "PANEL_LP_EXPOSURE_FE": "shared.engine.adapters.panel_lp_adapter.PanelLPAdapter",
+    "IMMUTABLE_EVIDENCE": "shared.engine.adapters.immutable_adapter.ImmutableAdapter",
+    "IDENTITY": "shared.engine.adapters.identity_adapter.IdentityAdapter",
+    "ACCOUNTING_BRIDGE": "shared.engine.adapters.accounting_bridge_adapter.AccountingBridgeAdapter",
+    "IV_2SLS": "shared.engine.adapters.iv_adapter.IV2SLSAdapter",
+    "DID_EVENT_STUDY": "shared.engine.adapters.did_adapter.DIDEventStudyAdapter",
 }
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent

@@ -116,6 +116,128 @@ def make_small_sample_ts(n: int = 20, beta: float = 0.5, seed: int = 42) -> pd.D
     return make_clean_ts(n=n, beta=beta, seed=seed)
 
 
+def make_iv_dgp(
+    n: int = 1000,
+    beta: float = 0.5,
+    gamma: float = 0.8,
+    pi: float = 0.6,
+    seed: int = 42,
+) -> tuple[pd.DataFrame, dict]:
+    """Instrumental Variables DGP: Z → X → Y with confounding.
+
+    Structure:
+        U ~ N(0, 1)           (unobserved confounder)
+        Z ~ N(0, 1)           (instrument, Z ⊥ U)
+        X = pi * Z + gamma * U + v   (first stage, v ~ N(0, 0.3))
+        Y = beta * X + gamma * U + e  (structural, e ~ N(0, 0.5))
+
+    OLS of Y on X is biased (omitted U). IV using Z recovers beta.
+
+    Args:
+        n: Sample size
+        beta: True causal effect of X on Y
+        gamma: Confounding strength
+        pi: First-stage coefficient (instrument relevance)
+        seed: Random seed
+
+    Returns:
+        (df, truth) where truth = {"beta": beta, "first_stage_pi": pi, ...}
+    """
+    rng = np.random.default_rng(seed)
+
+    U = rng.standard_normal(n)
+    Z = rng.standard_normal(n)
+    v = rng.normal(0, 0.3, n)
+    e = rng.normal(0, 0.5, n)
+
+    X = pi * Z + gamma * U + v
+    Y = beta * X + gamma * U + e
+
+    df = pd.DataFrame({"Y": Y, "X": X, "Z": Z})
+
+    # Compute theoretical first-stage F statistic
+    # F ≈ n * pi^2 * Var(Z) / Var(v + gamma*U)
+    var_z = 1.0
+    var_noise = 0.3**2 + gamma**2  # Var(v) + gamma^2*Var(U)
+    approx_first_stage_f = n * (pi**2 * var_z) / var_noise
+
+    truth = {
+        "beta": beta,
+        "first_stage_pi": pi,
+        "confounding_gamma": gamma,
+        "approx_first_stage_F": approx_first_stage_f,
+    }
+    return df, truth
+
+
+def make_did_dgp(
+    n_units: int = 100,
+    n_periods: int = 20,
+    treat_period: int = 10,
+    att: float = 2.0,
+    seed: int = 42,
+) -> tuple[pd.DataFrame, dict]:
+    """Canonical 2x2 Difference-in-Differences DGP.
+
+    Structure:
+        Y_it = alpha_i + delta_t + att * (treated_i × post_t) + epsilon_it
+
+    Half the units are treated (first n_units/2). Treatment turns on at treat_period.
+    Parallel trends hold by construction.
+
+    Args:
+        n_units: Number of units
+        n_periods: Number of time periods
+        treat_period: Period when treatment starts (0-indexed)
+        att: Average Treatment effect on the Treated
+        seed: Random seed
+
+    Returns:
+        (df, truth) where truth = {"att": att, ...}
+    """
+    rng = np.random.default_rng(seed)
+
+    n_treated = n_units // 2
+    unit_ids = np.repeat(np.arange(n_units), n_periods)
+    time_ids = np.tile(np.arange(n_periods), n_units)
+
+    # Unit fixed effects
+    alpha = rng.standard_normal(n_units)
+    alpha_expanded = alpha[unit_ids]
+
+    # Time fixed effects (common trend)
+    delta = np.cumsum(rng.normal(0.1, 0.05, n_periods))
+    delta_expanded = delta[time_ids]
+
+    # Treatment assignment
+    treated = (unit_ids < n_treated).astype(float)
+    post = (time_ids >= treat_period).astype(float)
+    treatment = treated * post
+
+    # Outcome with parallel trends by construction
+    epsilon = rng.normal(0, 0.5, len(unit_ids))
+    Y = alpha_expanded + delta_expanded + att * treatment + epsilon
+
+    df = pd.DataFrame({
+        "unit": unit_ids,
+        "time": time_ids,
+        "Y": Y,
+        "treated": treated,
+        "post": post,
+        "treatment": treatment,
+    })
+
+    truth = {
+        "att": att,
+        "n_treated": n_treated,
+        "n_control": n_units - n_treated,
+        "treat_period": treat_period,
+        "n_pre_periods": treat_period,
+        "n_post_periods": n_periods - treat_period,
+    }
+    return df, truth
+
+
 def make_minimal_dag_yaml(
     edges: list[dict[str, str]],
     nodes: list[dict[str, str]],

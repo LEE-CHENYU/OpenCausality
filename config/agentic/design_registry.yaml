@@ -64,6 +64,7 @@ designs:
   - id: "IV_2SLS"
     name: "Instrumental Variables 2SLS"
     description: "Two-stage least squares with explicit exclusion restriction notes."
+    adapter_class: "shared.engine.adapters.iv_adapter.IV2SLSAdapter"
     credibility_weight: 0.9
     requirements:
       data:
@@ -94,6 +95,7 @@ designs:
   - id: "DID_EVENT_STUDY"
     name: "Difference-in-Differences Event Study"
     description: "TWFE event study with pre-trend checks."
+    adapter_class: "shared.engine.adapters.did_adapter.DIDEventStudyAdapter"
     credibility_weight: 0.8
     requirements:
       data:
@@ -157,6 +159,7 @@ designs:
   - id: "PANEL_FE_BACKDOOR"
     name: "Panel FE Backdoor"
     description: "Fixed effects panel regression using a backdoor adjustment set."
+    adapter_class: "shared.engine.adapters.lp_adapter.LPAdapter"
     credibility_weight: 0.6
     requirements:
       data:
@@ -239,6 +242,7 @@ designs:
   - id: "ACCOUNTING_BRIDGE"
     name: "Accounting Bridge / Mechanical Identity"
     description: "Deterministic or near-mechanical accounting relationship."
+    adapter_class: "shared.engine.adapters.accounting_bridge_adapter.AccountingBridgeAdapter"
     credibility_weight: 0.90
     requirements:
       data:
