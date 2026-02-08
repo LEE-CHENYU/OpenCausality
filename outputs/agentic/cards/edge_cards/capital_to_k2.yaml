@@ -1,6 +1,6 @@
 edge_id: capital_to_k2
-dag_version_hash: 49a9bf958299c86ba87b7e094af5fa005e11b36612c9b099e44e9baa01f22116
-created_at: '2026-02-07T19:53:30.006434'
+dag_version_hash: a0d5c383631c52aa262f288704c6f7868d48b73d5034761245939de8eeea1d72
+created_at: '2026-02-08T10:22:52.572495'
 data_provenance:
   treatment_source: null
   outcome_source: null
@@ -41,9 +41,10 @@ all_diagnostics_pass: true
 interpretation:
   estimand: 'Sensitivity: dK2/dCapital = 100 / RWA'
   is_not: Causal effect; this is a mechanical identity
-  channels: []
+  channels:
+  - mechanical/accounting
   population: ''
-  conditions: ''
+  conditions: 'Evaluated at: {''capital'': 259.2, ''rwa'': 1600.0}'
   allowed_uses: []
   forbidden_uses: []
 failure_flags:
@@ -71,8 +72,7 @@ identification:
     measurement_error: low
     selection: low
   untestable_assumptions: []
-  testable_threats_passed:
-  - identity_check
+  testable_threats_passed: []
   testable_threats_failed: []
 counterfactual_block:
   shock_scenario_allowed: true

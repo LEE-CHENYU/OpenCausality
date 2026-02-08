@@ -1,6 +1,6 @@
 edge_id: shock_to_npl_kspi
-dag_version_hash: 49a9bf958299c86ba87b7e094af5fa005e11b36612c9b099e44e9baa01f22116
-created_at: '2026-02-07T19:53:29.841545'
+dag_version_hash: a0d5c383631c52aa262f288704c6f7868d48b73d5034761245939de8eeea1d72
+created_at: '2026-02-08T10:22:49.973689'
 data_provenance:
   treatment_source:
     connector: parquet_file
@@ -36,14 +36,16 @@ data_provenance:
   - '2024-07-01'
   missing_rate: null
   panel_dimensions: null
-  entity_boundary_note: null
+  entity_boundary_note: kaspi_bank subsidiary level
   kpi_definitions: null
-spec_hash: 2d952de6a9f225a46b956987d0a55069a9bb3d2c55a9600c2c18f16a7473ef2b
+spec_hash: c3c5071ebab1b83d9c2359a2c1302f42ef68b238b6d340b4b6d51b5ad93bd75f
 spec_details:
   design: LOCAL_PROJECTIONS
   controls:
   - y_lag1
+  - y_lag2
   - x_lag1
+  - x_lag2
   instruments: []
   fixed_effects: []
   se_method: HAC_newey_west
@@ -73,6 +75,14 @@ estimates:
   - 92.97964031766894
   - 52.261696852066265
   - 19.88698284983171
+  treatment_unit: 1pp tradable CPI shock (quarterly)
+  outcome_unit: bps NPL ratio change
+  n_calendar_periods: 27
+  n_effective_obs_h0: 26
+  n_effective_obs_by_horizon:
+  - 26
+  - 25
+  - 24
 diagnostics:
   hac_bandwidth:
     name: hac_bandwidth
@@ -87,7 +97,21 @@ diagnostics:
     value: 26.0
     threshold: 20.0
     pvalue: null
-    message: ''
+    message: 26 observations
+  r_squared_h0:
+    name: r_squared_h0
+    passed: true
+    value: 0.9637255364255717
+    threshold: null
+    pvalue: null
+    message: 'R-squared at h=0: 0.9637'
+  residual_ac1:
+    name: residual_ac1
+    passed: true
+    value: 0.11565002917066193
+    threshold: 0.5
+    pvalue: null
+    message: 'AR(1) residual autocorrelation: 0.116'
   sign_consistency:
     name: sign_consistency
     passed: true
@@ -95,57 +119,15 @@ diagnostics:
     threshold: null
     pvalue: null
     message: No expected sign specified
-  ts_leads_test:
-    name: ts_leads_test
-    passed: true
-    value: null
-    threshold: null
-    pvalue: null
-    message: 'TSGuard: pass'
-  ts_residual_autocorr:
-    name: ts_residual_autocorr
-    passed: true
-    value: null
-    threshold: null
-    pvalue: null
-    message: 'TSGuard: pass'
-  ts_hac_sensitivity:
-    name: ts_hac_sensitivity
-    passed: true
-    value: null
-    threshold: null
-    pvalue: null
-    message: 'TSGuard: pass'
-  ts_lag_sensitivity:
-    name: ts_lag_sensitivity
-    passed: true
-    value: null
-    threshold: null
-    pvalue: null
-    message: 'TSGuard: pass'
-  ts_regime_stability:
-    name: ts_regime_stability
-    passed: true
-    value: null
-    threshold: null
-    pvalue: null
-    message: 'TSGuard: pass'
-  ts_shock_support:
-    name: ts_shock_support
-    passed: true
-    value: null
-    threshold: null
-    pvalue: null
-    message: 'TSGuard: pass'
 all_diagnostics_pass: true
 interpretation:
   estimand: IRF of npl_kspi to a unit shock in cpi_tradable
   is_not: Structural causal effect under all interventions
   channels:
   - direct
-  - indirect
-  population: ''
-  conditions: ''
+  - indirect through unobserved channels
+  population: Kazakhstan aggregate time-series (Kaspi Bank)
+  conditions: Sample period, no regime changes
   allowed_uses: []
   forbidden_uses: []
 failure_flags:
@@ -160,7 +142,8 @@ failure_flags:
 counterfactual:
   supports_shock_path: true
   supports_policy_intervention: false
-  intervention_note: Reduced-form LP estimate
+  intervention_note: Reduced-form LP estimate; valid for shock propagation, not policy
+    counterfactuals
   external_validity: ''
 credibility_rating: B
 credibility_score: 0.79
@@ -177,19 +160,15 @@ identification:
   testable_threats_passed:
   - hac_bandwidth
   - effective_obs
+  - r_squared_h0
+  - residual_ac1
   - sign_consistency
-  - ts_leads_test
-  - ts_residual_autocorr
-  - ts_hac_sensitivity
-  - ts_lag_sensitivity
-  - ts_regime_stability
-  - ts_shock_support
   testable_threats_failed: []
 counterfactual_block:
   shock_scenario_allowed: false
   policy_intervention_allowed: false
   reason_shock_blocked: Design LOCAL_PROJECTIONS provides REDUCED_FORM level only
-  reason_policy_blocked: REDUCED_FORM mode does not allow policy interventions
+  reason_policy_blocked: Design LOCAL_PROJECTIONS provides REDUCED_FORM level only
   allowed: false
   reason_blocked: Design LOCAL_PROJECTIONS provides REDUCED_FORM level only
 propagation_role:
@@ -216,7 +195,7 @@ literature:
   search_timestamp: null
   search_query: ''
   total_results: 0
-companion_edge_id: null
+companion_edge_id: shock_to_npl_sector
 variant_of: null
 is_precisely_null: false
 null_equivalence_bound: null

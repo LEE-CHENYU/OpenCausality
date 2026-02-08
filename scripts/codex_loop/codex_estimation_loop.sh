@@ -31,8 +31,8 @@ REPORT_PATH="$ROOT/outputs/agentic/KSPI_K2_REAL_ESTIMATION_REPORT.md"
 
 # Provider and model settings
 PROVIDER="${PROVIDER:-codex}"  # codex | claude
-SANDBOX_MODE="${SANDBOX_MODE:-full-auto}"
-MODEL="${MODEL:-gpt-5.2-codex}"
+SANDBOX_MODE="${SANDBOX_MODE:-danger-full-access}"
+MODEL="${MODEL:-gpt-5.3-codex}"
 
 # =============================================================================
 # DEFAULT OBJECTIVE
@@ -106,7 +106,7 @@ Be thorough but focused. Prefer fixing validation errors over adding features."
     claude -p "$PROMPT_TEXT" \
       --allowedTools "Bash(git:*),Bash(python:*),Read,Write,Edit,Glob,Grep"
   else
-    codex exec --full-auto -m "$MODEL" "$PROMPT_TEXT"
+    codex exec -s "$SANDBOX_MODE" -m "$MODEL" "$PROMPT_TEXT"
   fi
 
   exit 0
@@ -216,7 +216,7 @@ OUTPUT: Brief summary of what was done and validation status."
       --allowedTools "Bash(git:*),Bash(python:*),Read,Write,Edit,Glob,Grep" \
       >> "$LOG" 2>&1 || log "Claude execution had non-zero exit"
   else
-    codex exec --full-auto -m "$MODEL" "$ITER_PROMPT" \
+    codex exec -s "$SANDBOX_MODE" -m "$MODEL" "$ITER_PROMPT" \
       >> "$LOG" 2>&1 || log "Codex execution had non-zero exit"
   fi
 

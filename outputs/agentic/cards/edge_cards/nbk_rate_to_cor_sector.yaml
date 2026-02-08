@@ -1,6 +1,6 @@
 edge_id: nbk_rate_to_cor_sector
 dag_version_hash: a0d5c383631c52aa262f288704c6f7868d48b73d5034761245939de8eeea1d72
-created_at: '2026-02-06T13:22:12.648734'
+created_at: '2026-02-08T10:22:52.506258'
 data_provenance:
   treatment_source: null
   outcome_source: null
@@ -33,24 +33,24 @@ spec_details:
   - 2
   bandwidth: null
 estimates:
-  point: 0.13488220323461572
-  se: 1.3888893767706443
+  point: 0.13488220323461544
+  se: 1.3888893767706447
   ci_95:
-  - -2.5873409752358474
-  - 2.8571053817050784
+  - -2.5873409752358483
+  - 2.8571053817050793
   pvalue: 0.9257977355121394
   horizons: *id001
   irf:
-  - 0.13488220323461572
-  - 0.06717778896084597
+  - 0.13488220323461544
+  - 0.0671777889608459
   - .nan
   irf_ci_lower:
-  - -3.263607672714824
-  - -7.507832507075638
+  - -3.2636076694463676
+  - -7.507832507075642
   - .nan
   irf_ci_upper:
-  - 3.5333720791840553
-  - 7.64218808499733
+  - 3.5333720759155987
+  - 7.6421880849973345
   - .nan
 diagnostics:
   effective_obs:
@@ -84,7 +84,7 @@ diagnostics:
   r_squared_within:
     name: r_squared_within
     passed: true
-    value: -3.8915980278349576
+    value: -3.8915980278349585
     threshold: null
     pvalue: null
     message: 'R-squared within at h=0: -3.8916'
@@ -135,13 +135,28 @@ identification:
   testable_threats_failed:
   - leave_one_bank_out
 counterfactual_block:
+  shock_scenario_allowed: true
+  policy_intervention_allowed: false
+  reason_shock_blocked: null
+  reason_policy_blocked: Policy CF requires IDENTIFIED_CAUSAL, edge has REDUCED_FORM
   allowed: true
-  reason_blocked: null
-  supports_policy_intervention: false
+  reason_blocked: Policy CF requires IDENTIFIED_CAUSAL, edge has REDUCED_FORM
 propagation_role:
   role: reduced_form
   overlapping_paths: []
-  selected_for_counterfactual: false
+  selected_for_counterfactual: true
+  mode_propagation_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: true
+    DESCRIPTIVE: true
+  mode_shock_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: true
+    DESCRIPTIVE: false
+  mode_policy_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: false
+    DESCRIPTIVE: false
 literature:
   supporting: []
   challenging: []
@@ -151,5 +166,6 @@ literature:
   search_query: ''
   total_results: 0
 companion_edge_id: nbk_rate_to_cor
+variant_of: nbk_rate_to_cor
 is_precisely_null: true
-null_equivalence_bound: 2.7777787535412886
+null_equivalence_bound: 2.7777787535412894

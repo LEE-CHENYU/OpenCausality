@@ -875,6 +875,9 @@ edges:
     from: "oil_supply_shock"
     to: "brent_price"
     edge_type: "causal"
+    unit_specification:
+      treatment_unit: "sd"
+      outcome_unit: "log"
     timing:
       lag: 0
       lag_unit: "month"
@@ -914,6 +917,9 @@ edges:
     from: "oil_supply_shock"
     to: "kzt_usd"
     edge_type: "causal"
+    unit_specification:
+      treatment_unit: "sd"
+      outcome_unit: "log"
     timing:
       lag: 0
       lag_unit: "month"
@@ -954,6 +960,9 @@ edges:
     from: "oil_demand_shock"
     to: "kzt_usd"
     edge_type: "causal"
+    unit_specification:
+      treatment_unit: "sd"
+      outcome_unit: "log"
     timing:
       lag: 0
       lag_unit: "month"
@@ -994,6 +1003,9 @@ edges:
     from: "vix_shock"
     to: "kzt_usd"
     edge_type: "causal"
+    unit_specification:
+      treatment_unit: "innovation"
+      outcome_unit: "log"
     timing:
       lag: 0
       lag_unit: "month"
@@ -1037,6 +1049,9 @@ edges:
     from: "kzt_usd"
     to: "cpi_tradable"
     edge_type: "immutable"
+    unit_specification:
+      treatment_unit: "log"
+      outcome_unit: "log"
     timing:
       lag: 1
       lag_unit: "month"
@@ -1087,6 +1102,9 @@ edges:
     from: "kzt_usd"
     to: "cpi_nontradable"
     edge_type: "immutable"
+    unit_specification:
+      treatment_unit: "log"
+      outcome_unit: "log"
     timing:
       lag: 1
       lag_unit: "month"
@@ -1137,6 +1155,9 @@ edges:
     from: "cpi_headline"
     to: "nbk_policy_rate"
     edge_type: "reaction_function"
+    unit_specification:
+      treatment_unit: "log"
+      outcome_unit: "pct"
     timing:
       lag: 1
       lag_unit: "month"
@@ -1178,6 +1199,9 @@ edges:
     from: "kzt_usd"
     to: "nbk_policy_rate"
     edge_type: "reaction_function"
+    unit_specification:
+      treatment_unit: "log"
+      outcome_unit: "pct"
     timing:
       lag: 1
       lag_unit: "month"
@@ -1219,6 +1243,9 @@ edges:
     from: "nbk_policy_rate"
     to: "deposit_cost_kspi"
     edge_type: "causal"
+    unit_specification:
+      treatment_unit: "pct"
+      outcome_unit: "pct"
     timing:
       lag: 1
       lag_unit: "quarter"
@@ -1260,6 +1287,9 @@ edges:
     from: "nbk_policy_rate"
     to: "cor_kspi"
     edge_type: "causal"
+    unit_specification:
+      treatment_unit: "pct"
+      outcome_unit: "pct"
     timing:
       lag: 2
       lag_unit: "quarter"
@@ -1304,6 +1334,9 @@ edges:
     from: "cpi_headline"
     to: "nominal_income"
     edge_type: "immutable"
+    unit_specification:
+      treatment_unit: "log"
+      outcome_unit: "log"
     timing:
       lag: 1
       lag_unit: "quarter"
@@ -1354,6 +1387,9 @@ edges:
     from: "kzt_usd"
     to: "real_expenditure"
     edge_type: "immutable"
+    unit_specification:
+      treatment_unit: "log"
+      outcome_unit: "log"
     timing:
       lag: 1
       lag_unit: "quarter"
@@ -1407,6 +1443,9 @@ edges:
     from: "imported_inflation_instrument"
     to: "npl_kspi"
     edge_type: "causal"
+    unit_specification:
+      treatment_unit: "pct"
+      outcome_unit: "pct"
     timing:
       lag: 2
       lag_unit: "quarter"
@@ -1448,6 +1487,9 @@ edges:
     from: "imported_inflation_instrument"
     to: "cor_kspi"
     edge_type: "causal"
+    unit_specification:
+      treatment_unit: "pct"
+      outcome_unit: "pct"
     timing:
       lag: 1
       lag_unit: "quarter"
@@ -1492,6 +1534,9 @@ edges:
     from: "real_expenditure"
     to: "payments_revenue_kspi"
     edge_type: "causal"
+    unit_specification:
+      treatment_unit: "log"
+      outcome_unit: "log"
     timing:
       lag: 0
       lag_unit: "quarter"
@@ -1536,6 +1581,9 @@ edges:
     from: "cor_kspi"
     to: "total_capital_kspi"
     edge_type: "mechanical"
+    unit_specification:
+      treatment_unit: "pct"
+      outcome_unit: "log"
     timing:
       lag: 0
       lag_unit: "quarter"
@@ -1579,6 +1627,9 @@ edges:
     from: "loan_portfolio_kspi"
     to: "rwa_kspi"
     edge_type: "mechanical"
+    unit_specification:
+      treatment_unit: "log"
+      outcome_unit: "log"
     timing:
       lag: 0
       lag_unit: "quarter"
@@ -1615,6 +1666,9 @@ edges:
     from: "portfolio_mix_kspi"
     to: "rwa_kspi"
     edge_type: "causal"
+    unit_specification:
+      treatment_unit: "share"
+      outcome_unit: "log"
     timing:
       lag: 0
       lag_unit: "quarter"
@@ -1656,6 +1710,9 @@ edges:
     from: "total_capital_kspi"
     to: "k2_ratio_kspi"
     edge_type: "identity"
+    unit_specification:
+      treatment_unit: "log"
+      outcome_unit: "pct"
     timing:
       lag: 0
       lag_unit: "quarter"
@@ -1679,6 +1736,9 @@ edges:
     from: "rwa_kspi"
     to: "k2_ratio_kspi"
     edge_type: "identity"
+    unit_specification:
+      treatment_unit: "log"
+      outcome_unit: "pct"
     timing:
       lag: 0
       lag_unit: "quarter"

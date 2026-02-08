@@ -85,6 +85,6 @@ case "${1:-help}" in
     echo "Configuration (environment variables):"
     echo "  DURATION_HOURS=8    How long to run (default: 8)"
     echo "  SLEEP_SECONDS=300   Seconds between iterations (default: 300)"
-    echo "  MODEL=gpt-5.2-codex Which model to use"
+    echo "  MODEL=gpt-5.3-codex Which model to use"
     ;;
 esac

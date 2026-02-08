@@ -1,7 +1,8 @@
 # KSPI K2 DAG: Real Econometric Estimation Report
 
-**Generated:** 2026-02-06 13:22:13
+**Generated:** 2026-02-08 10:22:52
 **DAG Version Hash:** `a0d5c383631c52aa...`
+**Query Mode:** `REDUCED_FORM` — Shock/scenario responses for stress testing
 **Total Edge Cards:** 26
 
 ---
@@ -208,6 +209,39 @@ Deterministic partial derivatives of K2 = 100 * Capital / RWA.
 | `shock_to_cor_sector` | 1pp CPI shock × E_consumer exposure | bps CoR differential per unit exposure |
 | `nbk_rate_to_deposit_cost_sector` | 1pp rate × E_demand_dep exposure | pp deposit cost differential per unit exposure |
 | `nbk_rate_to_cor_sector` | 1pp rate × E_shortterm exposure | pp CoR differential per unit exposure |
+
+---
+
+## Query Mode Permissions (`REDUCED_FORM`)
+
+| Edge | Role | Propagation | Shock CF | Policy CF | Variant Of |
+|------|------|-------------|----------|-----------|------------|
+| `oil_supply_to_brent` | reduced_form | Yes | Yes | NO |  |
+| `oil_supply_to_fx` | reduced_form | Yes | Yes | NO |  |
+| `oil_demand_to_fx` | reduced_form | Yes | Yes | NO |  |
+| `vix_to_fx` | reduced_form | Yes | Yes | NO |  |
+| `cpi_to_nbk_rate` | diagnostic_only | NO | NO | NO |  |
+| `fx_to_nbk_rate` | diagnostic_only | NO | Yes | NO |  |
+| `fx_to_cpi_tradable` | structural | Yes | Yes | NO |  |
+| `fx_to_cpi_nontradable` | structural | Yes | Yes | NO |  |
+| `cpi_to_nominal_income` | structural | Yes | Yes | NO |  |
+| `fx_to_real_expenditure` | structural | Yes | Yes | NO |  |
+| `shock_to_npl_kspi` | reduced_form | Yes | Yes | NO |  |
+| `shock_to_cor_kspi` | reduced_form | Yes | Yes | NO |  |
+| `nbk_rate_to_deposit_cost` | diagnostic_only | NO | NO | NO |  |
+| `nbk_rate_to_cor` | diagnostic_only | NO | NO | NO |  |
+| `expenditure_to_payments_revenue` | reduced_form | Yes | Yes | NO |  |
+| `portfolio_mix_to_rwa` | diagnostic_only | NO | NO | NO |  |
+| `loan_portfolio_to_rwa` | bridge | Yes | Yes | NO |  |
+| `cor_to_capital` | bridge | Yes | Yes | NO |  |
+| `capital_to_k2` | identity | Yes | Yes | NO |  |
+| `rwa_to_k2` | identity | Yes | Yes | NO |  |
+| `shock_to_npl_sector` | reduced_form | Yes | Yes | NO | shock_to_npl_kspi |
+| `shock_to_cor_sector` | reduced_form | Yes | Yes | NO | shock_to_cor_kspi |
+| `nbk_rate_to_deposit_cost_sector` | structural | Yes | Yes | NO | nbk_rate_to_deposit_cost |
+| `nbk_rate_to_cor_sector` | reduced_form | Yes | Yes | NO | nbk_rate_to_cor |
+| `shock_to_npl_kspi_annual` | reduced_form | Yes | Yes | NO | shock_to_npl_kspi |
+| `shock_to_cor_kspi_annual` | reduced_form | Yes | Yes | NO | shock_to_cor_kspi |
 
 ---
 

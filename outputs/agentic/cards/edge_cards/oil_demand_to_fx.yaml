@@ -1,6 +1,6 @@
 edge_id: oil_demand_to_fx
-dag_version_hash: 49a9bf958299c86ba87b7e094af5fa005e11b36612c9b099e44e9baa01f22116
-created_at: '2026-02-07T19:53:29.692855'
+dag_version_hash: a0d5c383631c52aa262f288704c6f7868d48b73d5034761245939de8eeea1d72
+created_at: '2026-02-08T10:22:49.813444'
 data_provenance:
   treatment_source:
     connector: parquet_file
@@ -91,6 +91,18 @@ estimates:
   - 0.3301643281516395
   - 0.2967537201154383
   - 0.18050742359348818
+  treatment_unit: 1 SD Baumeister demand shock
+  outcome_unit: '% change in USD/KZT'
+  n_calendar_periods: 189
+  n_effective_obs_h0: 187
+  n_effective_obs_by_horizon:
+  - 187
+  - 186
+  - 185
+  - 184
+  - 183
+  - 182
+  - 181
 diagnostics:
   hac_bandwidth:
     name: hac_bandwidth
@@ -105,7 +117,21 @@ diagnostics:
     value: 187.0
     threshold: 20.0
     pvalue: null
-    message: ''
+    message: 187 observations
+  r_squared_h0:
+    name: r_squared_h0
+    passed: true
+    value: 0.9917230293833517
+    threshold: null
+    pvalue: null
+    message: 'R-squared at h=0: 0.9917'
+  residual_ac1:
+    name: residual_ac1
+    passed: true
+    value: 0.0035314687169491705
+    threshold: 0.5
+    pvalue: null
+    message: 'AR(1) residual autocorrelation: 0.004'
   sign_consistency:
     name: sign_consistency
     passed: true
@@ -113,64 +139,22 @@ diagnostics:
     threshold: null
     pvalue: null
     message: 'Sign consistent: expected -, got -0.2983'
-  ts_leads_test:
-    name: ts_leads_test
-    passed: true
-    value: null
-    threshold: null
-    pvalue: null
-    message: 'TSGuard: pass'
-  ts_residual_autocorr:
-    name: ts_residual_autocorr
-    passed: true
-    value: null
-    threshold: null
-    pvalue: null
-    message: 'TSGuard: pass'
-  ts_hac_sensitivity:
-    name: ts_hac_sensitivity
-    passed: true
-    value: null
-    threshold: null
-    pvalue: null
-    message: 'TSGuard: pass'
-  ts_lag_sensitivity:
-    name: ts_lag_sensitivity
-    passed: true
-    value: null
-    threshold: null
-    pvalue: null
-    message: 'TSGuard: pass'
-  ts_regime_stability:
-    name: ts_regime_stability
-    passed: false
-    value: null
-    threshold: null
-    pvalue: null
-    message: 'TSGuard: fail'
-  ts_shock_support:
-    name: ts_shock_support
-    passed: true
-    value: null
-    threshold: null
-    pvalue: null
-    message: 'TSGuard: pass'
-all_diagnostics_pass: false
+all_diagnostics_pass: true
 interpretation:
   estimand: IRF of kzt_usd to a unit shock in oil_demand_shock
   is_not: Structural causal effect under all interventions
   channels:
   - direct
-  - indirect
-  population: ''
-  conditions: ''
+  - indirect through unobserved channels
+  population: Kazakhstan aggregate time-series (Kaspi Bank)
+  conditions: Sample period, no regime changes
   allowed_uses: []
   forbidden_uses: []
 failure_flags:
   weak_identification: false
   potential_bad_control: false
   mechanical_identity_risk: false
-  regime_break_detected: true
+  regime_break_detected: false
   small_sample: false
   high_missing_rate: false
   entity_boundary_change: false
@@ -178,10 +162,11 @@ failure_flags:
 counterfactual:
   supports_shock_path: true
   supports_policy_intervention: false
-  intervention_note: Reduced-form LP estimate
+  intervention_note: Reduced-form LP estimate; valid for shock propagation, not policy
+    counterfactuals
   external_validity: ''
 credibility_rating: A
-credibility_score: 0.8655555555555556
+credibility_score: 0.97
 identification:
   claim_level: REDUCED_FORM
   risks:
@@ -195,14 +180,10 @@ identification:
   testable_threats_passed:
   - hac_bandwidth
   - effective_obs
+  - r_squared_h0
+  - residual_ac1
   - sign_consistency
-  - ts_leads_test
-  - ts_residual_autocorr
-  - ts_hac_sensitivity
-  - ts_lag_sensitivity
-  - ts_shock_support
-  testable_threats_failed:
-  - ts_regime_stability
+  testable_threats_failed: []
 counterfactual_block:
   shock_scenario_allowed: false
   policy_intervention_allowed: false
@@ -212,7 +193,12 @@ counterfactual_block:
 
 
     Even if p<0.05, this does not establish a causal effect.'
-  reason_policy_blocked: REDUCED_FORM mode does not allow policy interventions
+  reason_policy_blocked: 'Counterfactual Use: BLOCKED
+
+    Reason: regime break risk
+
+
+    Even if p<0.05, this does not establish a causal effect.'
   allowed: false
   reason_blocked: 'Counterfactual Use: BLOCKED
 

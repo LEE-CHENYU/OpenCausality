@@ -1,6 +1,6 @@
 edge_id: shock_to_cor_sector
 dag_version_hash: a0d5c383631c52aa262f288704c6f7868d48b73d5034761245939de8eeea1d72
-created_at: '2026-02-06T13:22:10.721924'
+created_at: '2026-02-08T10:22:51.627755'
 data_provenance:
   treatment_source: null
   outcome_source: null
@@ -34,24 +34,24 @@ spec_details:
   bandwidth: null
 estimates:
   point: 36.1781124278706
-  se: 6.694567535398896
+  se: 6.6945675353989
   ci_95:
-  - 23.056760058488766
+  - 23.05676005848876
   - 49.29946479725244
   pvalue: 4.747533899274181e-05
   horizons: *id001
   irf:
   - 36.1781124278706
-  - -43.64831326655267
-  - -68.04847593924436
+  - -43.64831326655268
+  - -68.04847593924434
   irf_ci_lower:
-  - 22.053809554829726
-  - -87.6355514573607
-  - -82.38334112153677
+  - 22.05380955482972
+  - -87.63555145736069
+  - -82.3833411215368
   irf_ci_upper:
-  - 50.30241530091148
-  - 0.338924924255366
-  - -53.71361075695194
+  - 50.302415300911484
+  - 0.3389249242553447
+  - -53.71361075695188
 diagnostics:
   effective_obs:
     name: effective_obs
@@ -135,13 +135,28 @@ identification:
   testable_threats_failed:
   - leave_one_bank_out
 counterfactual_block:
+  shock_scenario_allowed: true
+  policy_intervention_allowed: false
+  reason_shock_blocked: null
+  reason_policy_blocked: Policy CF requires IDENTIFIED_CAUSAL, edge has REDUCED_FORM
   allowed: true
-  reason_blocked: null
-  supports_policy_intervention: false
+  reason_blocked: Policy CF requires IDENTIFIED_CAUSAL, edge has REDUCED_FORM
 propagation_role:
   role: reduced_form
   overlapping_paths: []
-  selected_for_counterfactual: false
+  selected_for_counterfactual: true
+  mode_propagation_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: true
+    DESCRIPTIVE: true
+  mode_shock_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: true
+    DESCRIPTIVE: false
+  mode_policy_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: false
+    DESCRIPTIVE: false
 literature:
   supporting: []
   challenging: []
@@ -151,5 +166,6 @@ literature:
   search_query: ''
   total_results: 0
 companion_edge_id: shock_to_cor_kspi
+variant_of: shock_to_cor_kspi
 is_precisely_null: false
 null_equivalence_bound: null

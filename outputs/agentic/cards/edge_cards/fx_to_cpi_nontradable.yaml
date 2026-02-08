@@ -1,6 +1,6 @@
 edge_id: fx_to_cpi_nontradable
-dag_version_hash: 49a9bf958299c86ba87b7e094af5fa005e11b36612c9b099e44e9baa01f22116
-created_at: '2026-02-07T19:53:29.898260'
+dag_version_hash: a0d5c383631c52aa262f288704c6f7868d48b73d5034761245939de8eeea1d72
+created_at: '2026-02-08T10:22:49.948872'
 data_provenance:
   treatment_source: null
   outcome_source: null
@@ -37,14 +37,22 @@ diagnostics:
     threshold: null
     pvalue: null
     message: Validated from Block A DiD (falsification)
+  effective_obs:
+    name: effective_obs
+    passed: true
+    value: 1200.0
+    threshold: 20.0
+    pvalue: null
+    message: ''
 all_diagnostics_pass: true
 interpretation:
   estimand: FX pass-through to non-tradable CPI. Precisely null result from falsification
     test confirming identification validity.
-  is_not: Re-estimated result; locked validated evidence
-  channels: []
+  is_not: Re-estimated result; this is locked validated evidence
+  channels:
+  - as identified in source block
   population: ''
-  conditions: ''
+  conditions: 'Source: Block A DiD (falsification)'
   allowed_uses: []
   forbidden_uses: []
 failure_flags:
@@ -72,8 +80,7 @@ identification:
     measurement_error: low
     selection: low
   untestable_assumptions: []
-  testable_threats_passed:
-  - validated_evidence
+  testable_threats_passed: []
   testable_threats_failed: []
 counterfactual_block:
   shock_scenario_allowed: true

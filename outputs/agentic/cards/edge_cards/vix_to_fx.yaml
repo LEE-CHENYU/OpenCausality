@@ -1,6 +1,6 @@
 edge_id: vix_to_fx
-dag_version_hash: 49a9bf958299c86ba87b7e094af5fa005e11b36612c9b099e44e9baa01f22116
-created_at: '2026-02-07T19:53:29.754802'
+dag_version_hash: a0d5c383631c52aa262f288704c6f7868d48b73d5034761245939de8eeea1d72
+created_at: '2026-02-08T10:22:49.858705'
 data_provenance:
   treatment_source:
     connector: parquet_file
@@ -91,6 +91,18 @@ estimates:
   - 1.0369358393294066
   - 1.0457267178323737
   - 1.1011990700910184
+  treatment_unit: 1 point VIX increase
+  outcome_unit: '% change in USD/KZT'
+  n_calendar_periods: 192
+  n_effective_obs_h0: 190
+  n_effective_obs_by_horizon:
+  - 190
+  - 189
+  - 188
+  - 187
+  - 186
+  - 185
+  - 184
 diagnostics:
   hac_bandwidth:
     name: hac_bandwidth
@@ -105,7 +117,21 @@ diagnostics:
     value: 190.0
     threshold: 20.0
     pvalue: null
-    message: ''
+    message: 190 observations
+  r_squared_h0:
+    name: r_squared_h0
+    passed: true
+    value: 0.9916890853634435
+    threshold: null
+    pvalue: null
+    message: 'R-squared at h=0: 0.9917'
+  residual_ac1:
+    name: residual_ac1
+    passed: true
+    value: -0.0037915798556732118
+    threshold: 0.5
+    pvalue: null
+    message: 'AR(1) residual autocorrelation: -0.004'
   sign_consistency:
     name: sign_consistency
     passed: false
@@ -113,57 +139,15 @@ diagnostics:
     threshold: null
     pvalue: null
     message: 'Sign inconsistent: expected +, got -0.0324'
-  ts_leads_test:
-    name: ts_leads_test
-    passed: true
-    value: null
-    threshold: null
-    pvalue: null
-    message: 'TSGuard: pass'
-  ts_residual_autocorr:
-    name: ts_residual_autocorr
-    passed: true
-    value: null
-    threshold: null
-    pvalue: null
-    message: 'TSGuard: pass'
-  ts_hac_sensitivity:
-    name: ts_hac_sensitivity
-    passed: true
-    value: null
-    threshold: null
-    pvalue: null
-    message: 'TSGuard: pass'
-  ts_lag_sensitivity:
-    name: ts_lag_sensitivity
-    passed: false
-    value: null
-    threshold: null
-    pvalue: null
-    message: 'TSGuard: fail'
-  ts_regime_stability:
-    name: ts_regime_stability
-    passed: true
-    value: null
-    threshold: null
-    pvalue: null
-    message: 'TSGuard: pass'
-  ts_shock_support:
-    name: ts_shock_support
-    passed: true
-    value: null
-    threshold: null
-    pvalue: null
-    message: 'TSGuard: pass'
 all_diagnostics_pass: false
 interpretation:
   estimand: IRF of kzt_usd to a unit shock in vix_shock
   is_not: Structural causal effect under all interventions
   channels:
   - direct
-  - indirect
-  population: ''
-  conditions: ''
+  - indirect through unobserved channels
+  population: Kazakhstan aggregate time-series (Kaspi Bank)
+  conditions: Sample period, no regime changes
   allowed_uses: []
   forbidden_uses: []
 failure_flags:
@@ -178,10 +162,11 @@ failure_flags:
 counterfactual:
   supports_shock_path: true
   supports_policy_intervention: false
-  intervention_note: Reduced-form LP estimate
+  intervention_note: Reduced-form LP estimate; valid for shock propagation, not policy
+    counterfactuals
   external_validity: ''
 credibility_rating: A
-credibility_score: 0.8811111111111112
+credibility_score: 0.8900000000000001
 identification:
   claim_level: REDUCED_FORM
   risks:
@@ -195,19 +180,15 @@ identification:
   testable_threats_passed:
   - hac_bandwidth
   - effective_obs
-  - ts_leads_test
-  - ts_residual_autocorr
-  - ts_hac_sensitivity
-  - ts_regime_stability
-  - ts_shock_support
+  - r_squared_h0
+  - residual_ac1
   testable_threats_failed:
   - sign_consistency
-  - ts_lag_sensitivity
 counterfactual_block:
   shock_scenario_allowed: false
   policy_intervention_allowed: false
   reason_shock_blocked: Design LOCAL_PROJECTIONS provides REDUCED_FORM level only
-  reason_policy_blocked: REDUCED_FORM mode does not allow policy interventions
+  reason_policy_blocked: Design LOCAL_PROJECTIONS provides REDUCED_FORM level only
   allowed: false
   reason_blocked: Design LOCAL_PROJECTIONS provides REDUCED_FORM level only
 propagation_role:

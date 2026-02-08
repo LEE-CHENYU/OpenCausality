@@ -1,6 +1,6 @@
 edge_id: shock_to_npl_sector
 dag_version_hash: a0d5c383631c52aa262f288704c6f7868d48b73d5034761245939de8eeea1d72
-created_at: '2026-02-06T13:22:09.368127'
+created_at: '2026-02-08T10:22:51.017912'
 data_provenance:
   treatment_source: null
   outcome_source: null
@@ -33,24 +33,24 @@ spec_details:
   - 2
   bandwidth: null
 estimates:
-  point: -46.548475059120626
-  se: 13.416397639038799
+  point: -46.54847505912064
+  se: 13.416397639038792
   ci_95:
   - -72.84461443163667
-  - -20.25233568660458
+  - -20.25233568660461
   pvalue: 0.0029314539629232694
   horizons: *id001
   irf:
-  - -46.548475059120626
-  - -12.610408604529738
-  - -2.575374997519121
+  - -46.54847505912064
+  - -12.610408604529765
+  - -2.5753749975191176
   irf_ci_lower:
   - -74.85459979636899
   - -107.01677496713384
-  - -29.432642741678563
+  - -29.432642741678556
   irf_ci_upper:
-  - -18.242350321872262
-  - 81.79595775807437
+  - -18.24235032187229
+  - 81.79595775807431
   - 24.281892746640324
 diagnostics:
   effective_obs:
@@ -135,13 +135,28 @@ identification:
   - leave_one_bank_out
   - regime_break
 counterfactual_block:
+  shock_scenario_allowed: true
+  policy_intervention_allowed: false
+  reason_shock_blocked: null
+  reason_policy_blocked: Policy CF requires IDENTIFIED_CAUSAL, edge has REDUCED_FORM
   allowed: true
-  reason_blocked: null
-  supports_policy_intervention: false
+  reason_blocked: Policy CF requires IDENTIFIED_CAUSAL, edge has REDUCED_FORM
 propagation_role:
   role: reduced_form
   overlapping_paths: []
-  selected_for_counterfactual: false
+  selected_for_counterfactual: true
+  mode_propagation_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: true
+    DESCRIPTIVE: true
+  mode_shock_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: true
+    DESCRIPTIVE: false
+  mode_policy_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: false
+    DESCRIPTIVE: false
 literature:
   supporting: []
   challenging: []
@@ -151,5 +166,6 @@ literature:
   search_query: ''
   total_results: 0
 companion_edge_id: shock_to_npl_kspi
+variant_of: shock_to_npl_kspi
 is_precisely_null: false
 null_equivalence_bound: null
