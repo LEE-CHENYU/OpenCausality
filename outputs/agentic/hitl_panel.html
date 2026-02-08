@@ -399,6 +399,37 @@
             background: #fff; border: 1px solid #e8e0c0;
         }
 
+        /* LLM guidance */
+        .llm-guidance {
+            margin-bottom: 10px;
+            padding: 10px 14px;
+            background: #f0f4ff;
+            border-left: 3px solid #2563eb;
+            font-size: 11px;
+            line-height: 1.7;
+        }
+        .llm-guidance-title {
+            font-weight: 600;
+            font-size: 11px;
+            margin-bottom: 6px;
+            color: #1e40af;
+        }
+        .llm-guidance-text {
+            color: #333;
+        }
+
+        /* LLM edge annotation */
+        .llm-edge-annotation {
+            margin-top: 6px;
+            padding: 6px 10px;
+            background: #f8f9ff;
+            border: 1px solid #dde3ff;
+            font-size: 10px;
+            line-height: 1.6;
+            color: #444;
+            font-style: italic;
+        }
+
         /* Hidden */
         .hidden { display: none !important; }
     </style>
@@ -3011,7 +3042,7 @@ const RULE_DESCRIPTIONS = {
     "guidance": "The system will auto-populate units from the DAG spec. Verify that the inferred units match the actual estimation specification.\n"
   }
 };
-const GENERATED_AT = "2026-02-08 04:13:59 UTC";
+const GENERATED_AT = "2026-02-08 06:12:08 UTC";
 const DAG_EDGES = {
   "oil_supply_to_brent": {
     "from": "oil_supply_shock",
@@ -3619,6 +3650,8 @@ const DAG_NODES = {
     "description": "Kaspi.kz fintech (lending) segment revenue."
   }
 };
+const LLM_GUIDANCE = {};
+const LLM_EDGE_ANNOTATIONS = {};
 
 // Severity sort order
 const SEVERITY_ORDER = {CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3};
@@ -3922,6 +3955,22 @@ function defaultDecisionGuide(item, edge, dagEdge) {
         '</div>';
 }
 
+// ── LLM Guidance rendering ──────────────────────────────────────────
+function renderLLMGuidance(issueKey) {
+    var text = LLM_GUIDANCE[issueKey];
+    if (!text) return '';
+    return '<div class="llm-guidance">' +
+        '<div class="llm-guidance-title">AI Analysis</div>' +
+        '<div class="llm-guidance-text">' + escHtml(text) + '</div>' +
+        '</div>';
+}
+
+function renderLLMEdgeAnnotation(edgeId) {
+    var text = LLM_EDGE_ANNOTATIONS[edgeId];
+    if (!text) return '';
+    return '<div class="llm-edge-annotation">' + escHtml(text) + '</div>';
+}
+
 // ── State ─────────────────────────────────────────────────────────────
 var decisions = {}; // key -> {value, rationale}
 
@@ -4142,16 +4191,19 @@ function render() {
             tr.innerHTML = colCfg.renderRow(item, edge, actCfg, isResolved, decVal);
             tbody.appendChild(tr);
 
-            // Details row with decision guide
+            // Details row with decision guide + LLM guidance
             var detailTr = document.createElement('tr');
             detailTr.className = 'details-row';
             var safeId = item.key.replace(/[^a-zA-Z0-9]/g, '_');
             var dagEdge = DAG_EDGES[item.edge_id] || {};
             var guideFn = DECISION_GUIDES[item.rule_id] || defaultDecisionGuide;
             var guideHtml = guideFn(item, edge, dagEdge);
+            var llmGuidanceHtml = renderLLMGuidance(item.key);
+            var llmAnnotationHtml = renderLLMEdgeAnnotation(item.edge_id);
             detailTr.innerHTML = '<td colspan="' + colCfg.colspan + '">' +
                 '<div class="details-content" id="detail-' + safeId + '">' +
                     guideHtml +
+                    llmGuidanceHtml +
                     '<div class="detail-row"><span class="detail-label">Edge ID</span><span class="detail-value">' + item.edge_id + '</span></div>' +
                     '<div class="detail-row"><span class="detail-label">Design</span><span class="detail-value">' + (edge.design || '--') + '</span></div>' +
                     '<div class="detail-row"><span class="detail-label">Point (SE)</span><span class="detail-value">' + fmtNum(edge.point) + ' (' + fmtNum(edge.se) + ')</span></div>' +
@@ -4164,6 +4216,7 @@ function render() {
                     '<div style="margin-top:4px">' + (edge.diagnostics ? diagDetail(edge.diagnostics) : '--') + '</div>' +
                     (edge.failure_flags && edge.failure_flags.length > 0 ? '<div class="detail-row" style="margin-top:4px"><span class="detail-label">Flags</span><span class="detail-value">' + edge.failure_flags.join(', ') + '</span></div>' : '') +
                     '<div class="detail-row" style="margin-top:4px"><span class="detail-label">Issue</span><span class="detail-value">' + item.message + '</span></div>' +
+                    llmAnnotationHtml +
                 '</div>' +
             '</td>';
             tbody.appendChild(detailTr);

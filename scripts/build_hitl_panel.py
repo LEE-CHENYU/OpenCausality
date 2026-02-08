@@ -635,6 +635,37 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
             background: #fff; border: 1px solid #e8e0c0;
         }
 
+        /* LLM guidance */
+        .llm-guidance {
+            margin-bottom: 10px;
+            padding: 10px 14px;
+            background: #f0f4ff;
+            border-left: 3px solid #2563eb;
+            font-size: 11px;
+            line-height: 1.7;
+        }
+        .llm-guidance-title {
+            font-weight: 600;
+            font-size: 11px;
+            margin-bottom: 6px;
+            color: #1e40af;
+        }
+        .llm-guidance-text {
+            color: #333;
+        }
+
+        /* LLM edge annotation */
+        .llm-edge-annotation {
+            margin-top: 6px;
+            padding: 6px 10px;
+            background: #f8f9ff;
+            border: 1px solid #dde3ff;
+            font-size: 10px;
+            line-height: 1.6;
+            color: #444;
+            font-style: italic;
+        }
+
         /* Hidden */
         .hidden { display: none !important; }
     </style>
@@ -704,6 +735,8 @@ const RULE_DESCRIPTIONS = __RULES_JSON__;
 const GENERATED_AT = "__GENERATED_AT__";
 const DAG_EDGES = __DAG_EDGES_JSON__;
 const DAG_NODES = __DAG_NODES_JSON__;
+const LLM_GUIDANCE = __LLM_GUIDANCE_JSON__;
+const LLM_EDGE_ANNOTATIONS = __LLM_EDGE_ANNOTATIONS_JSON__;
 
 // Severity sort order
 const SEVERITY_ORDER = {CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3};
@@ -1007,6 +1040,22 @@ function defaultDecisionGuide(item, edge, dagEdge) {
         '</div>';
 }
 
+// ── LLM Guidance rendering ──────────────────────────────────────────
+function renderLLMGuidance(issueKey) {
+    var text = LLM_GUIDANCE[issueKey];
+    if (!text) return '';
+    return '<div class="llm-guidance">' +
+        '<div class="llm-guidance-title">AI Analysis</div>' +
+        '<div class="llm-guidance-text">' + escHtml(text) + '</div>' +
+        '</div>';
+}
+
+function renderLLMEdgeAnnotation(edgeId) {
+    var text = LLM_EDGE_ANNOTATIONS[edgeId];
+    if (!text) return '';
+    return '<div class="llm-edge-annotation">' + escHtml(text) + '</div>';
+}
+
 // ── State ─────────────────────────────────────────────────────────────
 var decisions = {}; // key -> {value, rationale}
 
@@ -1227,16 +1276,19 @@ function render() {
             tr.innerHTML = colCfg.renderRow(item, edge, actCfg, isResolved, decVal);
             tbody.appendChild(tr);
 
-            // Details row with decision guide
+            // Details row with decision guide + LLM guidance
             var detailTr = document.createElement('tr');
             detailTr.className = 'details-row';
             var safeId = item.key.replace(/[^a-zA-Z0-9]/g, '_');
             var dagEdge = DAG_EDGES[item.edge_id] || {};
             var guideFn = DECISION_GUIDES[item.rule_id] || defaultDecisionGuide;
             var guideHtml = guideFn(item, edge, dagEdge);
+            var llmGuidanceHtml = renderLLMGuidance(item.key);
+            var llmAnnotationHtml = renderLLMEdgeAnnotation(item.edge_id);
             detailTr.innerHTML = '<td colspan="' + colCfg.colspan + '">' +
                 '<div class="details-content" id="detail-' + safeId + '">' +
                     guideHtml +
+                    llmGuidanceHtml +
                     '<div class="detail-row"><span class="detail-label">Edge ID</span><span class="detail-value">' + item.edge_id + '</span></div>' +
                     '<div class="detail-row"><span class="detail-label">Design</span><span class="detail-value">' + (edge.design || '--') + '</span></div>' +
                     '<div class="detail-row"><span class="detail-label">Point (SE)</span><span class="detail-value">' + fmtNum(edge.point) + ' (' + fmtNum(edge.se) + ')</span></div>' +
@@ -1249,6 +1301,7 @@ function render() {
                     '<div style="margin-top:4px">' + (edge.diagnostics ? diagDetail(edge.diagnostics) : '--') + '</div>' +
                     (edge.failure_flags && edge.failure_flags.length > 0 ? '<div class="detail-row" style="margin-top:4px"><span class="detail-label">Flags</span><span class="detail-value">' + edge.failure_flags.join(', ') + '</span></div>' : '') +
                     '<div class="detail-row" style="margin-top:4px"><span class="detail-label">Issue</span><span class="detail-value">' + item.message + '</span></div>' +
+                    llmAnnotationHtml +
                 '</div>' +
             '</td>';
             tbody.appendChild(detailTr);
@@ -1386,7 +1439,10 @@ render();
 def generate_llm_decision_guidance(
     open_issues: dict, edges: dict,
 ) -> dict[str, str]:
-    """Generate LLM-powered decision guidance for each open issue."""
+    """Generate LLM-powered decision guidance for each open issue.
+
+    Returns dict keyed by issue_key (e.g. "RULE_ID:edge_id") -> guidance text.
+    """
     try:
         from shared.llm.client import get_llm_client
         from shared.llm.prompts import DECISION_GUIDANCE_SYSTEM, DECISION_GUIDANCE_USER
@@ -1432,6 +1488,60 @@ def generate_llm_decision_guidance(
             print(f"  Warning: LLM guidance failed for {key}: {e}")
 
     return guidance
+
+
+def generate_llm_edge_annotations(
+    edge_ids: set[str],
+    edges: dict,
+    dag_edges: dict,
+) -> dict[str, str]:
+    """Generate LLM-powered substantive annotations for each edge.
+
+    Returns dict keyed by edge_id -> annotation text.
+    """
+    try:
+        from shared.llm.client import get_llm_client
+        from shared.llm.prompts import EDGE_ANNOTATION_SYSTEM
+    except ImportError:
+        print("  Warning: LLM client not available, skipping edge annotations")
+        return {}
+
+    client = get_llm_client()
+    annotations: dict[str, str] = {}
+
+    for edge_id in sorted(edge_ids):
+        edge = edges.get(edge_id, {})
+        dag_edge = dag_edges.get(edge_id, {})
+
+        card_context = ""
+        if edge.get("point") is not None:
+            card_context = (
+                f"Estimate: {edge.get('point')}, SE: {edge.get('se')}, "
+                f"p-value: {edge.get('pvalue')}, "
+                f"Claim level: {edge.get('claim_level')}, "
+                f"Rating: {edge.get('rating')}"
+            )
+
+        user_msg = (
+            f"Edge: {dag_edge.get('from', '?')} -> {dag_edge.get('to', '?')} (id: {edge_id})\n"
+            f"Type: {dag_edge.get('edge_type', 'causal')}\n"
+            f"Interpretation: {dag_edge.get('interpretation', '')}\n"
+            f"Notes: {dag_edge.get('notes', '')}\n"
+            f"{card_context}"
+        )
+
+        try:
+            result = client.complete(
+                system=EDGE_ANNOTATION_SYSTEM,
+                user=user_msg,
+                max_tokens=200,
+            )
+            annotations[edge_id] = result.strip()
+            print(f"  Edge annotation: {edge_id}")
+        except Exception as e:
+            print(f"  Warning: Edge annotation failed for {edge_id}: {e}")
+
+    return annotations
 
 
 def build(
@@ -1492,17 +1602,17 @@ def build(
     dag_nodes = load_dag_nodes(dag_path)
     print(f"  {len(dag_edges)} DAG edges, {len(dag_nodes)} DAG nodes loaded")
 
-    # 6b. Optional LLM guidance
+    # 6b. Optional LLM annotations
     llm_guidance: dict[str, str] = {}
+    llm_edge_annotations: dict[str, str] = {}
     if llm_annotate:
-        print("  Generating LLM decision guidance...")
+        print("  Generating LLM decision guidance (per-issue)...")
         llm_guidance = generate_llm_decision_guidance(open_issues, edges)
         print(f"  {len(llm_guidance)} LLM guidance entries generated")
-        # Inject into edges for client-side rendering
-        for key, text in llm_guidance.items():
-            edge_id = extract_edge_id(key)
-            if edge_id in edges:
-                edges[edge_id]["llm_guidance"] = text
+
+        print("  Generating LLM edge annotations...")
+        llm_edge_annotations = generate_llm_edge_annotations(edge_ids, edges, dag_edges)
+        print(f"  {len(llm_edge_annotations)} LLM edge annotations generated")
 
     # 7. Build HTML via placeholder replacement
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
@@ -1514,6 +1624,8 @@ def build(
     html = html.replace("__RULES_JSON__", json.dumps(rules, indent=2))
     html = html.replace("__DAG_EDGES_JSON__", json.dumps(dag_edges, indent=2))
     html = html.replace("__DAG_NODES_JSON__", json.dumps(dag_nodes, indent=2))
+    html = html.replace("__LLM_GUIDANCE_JSON__", json.dumps(llm_guidance, indent=2))
+    html = html.replace("__LLM_EDGE_ANNOTATIONS_JSON__", json.dumps(llm_edge_annotations, indent=2))
     html = html.replace("__CLOSED_COUNT__", str(closed_count))
     html = html.replace("__GENERATED_AT__", generated_at)
 
