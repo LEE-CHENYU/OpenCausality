@@ -1,6 +1,6 @@
 # OpenCausality
 
-Open-source platform for transparent, auditable causal inference. Combines DAG-based causal reasoning with agentic estimation, human-in-the-loop governance, and LLM-assisted literature extraction.
+Open-source platform for transparent, auditable causal inference. Combines DAG-based causal reasoning with agentic estimation, human-in-the-loop governance, LLM-assisted literature extraction, and an always-on sentinel loop that continuously validates, heals, and surfaces results.
 
 Causal inference in applied economics is fragile. Automated pipelines scale but hide
 methodological choices; manual analysis is transparent but slow. OpenCausality resolves
@@ -9,9 +9,13 @@ DAG in YAML, the system runs Local Projections with HAC standard errors, and a 2
 issue detection engine flags problems -- overclaiming, control shopping, null dropping,
 specification drift, timing failures -- before results reach your paper. A
 human-in-the-loop panel ensures no statistical claim passes without explicit analyst
-approval. The platform also ships with an NL-to-DAG pipeline that extracts causal
-structures from academic papers via LLM, letting you bootstrap DAGs from existing
-literature and compare them against expert-built specifications.
+approval. A **sentinel loop** runs continuously in the background, re-validating the
+DAG after every change, auto-fixing schema issues (missing unit specs, malformed edge
+IDs), and popping up interactive panels -- the DAG visualization and HITL review board
+-- so analysts never have to hunt for results. The platform also ships with an
+NL-to-DAG pipeline that extracts causal structures from academic papers via LLM,
+letting you bootstrap DAGs from existing literature and compare them against
+expert-built specifications.
 
 ---
 
@@ -92,35 +96,40 @@ report with credibility ratings, and a hash-chained JSONL audit log.
 
 ### The Pipeline
 
-1. **DAG Specification** -- Define nodes and edges in YAML with expected signs,
+1. **Sentinel Auto-Start** -- The estimation pipeline auto-starts the sentinel loop
+   in the background on first run. The loop validates, monitors, and heals
+   continuously while estimation proceeds.
+2. **DAG Specification** -- Define nodes and edges in YAML with expected signs,
    identification strategies, lag structures, and unit specs.
-2. **Auto-Ingest** -- Any files dropped in `data/raw/` are automatically profiled,
+3. **Auto-Ingest** -- Any files dropped in `data/raw/` are automatically profiled,
    standardized to Parquet, and registered as node loaders before estimation begins.
-3. **Data Scout** -- Catalog datasets, match variables to DAG nodes, assemble
+4. **Data Scout** -- Catalog datasets, match variables to DAG nodes, assemble
    estimation-ready panels (CSV/Parquet, automatic frequency detection). When
    auto-download fails, actionable guidance is logged telling users which files to
    drop and in what format.
-4. **Paper Scout** -- Search Semantic Scholar, OpenAlex, CORE, and arXiv for
+5. **Paper Scout** -- Search Semantic Scholar, OpenAlex, CORE, and arXiv for
    literature supporting or challenging each edge. When a local PDF is available,
    full-text extraction via pymupdf/pypdf feeds richer causal claims to the LLM.
    Citations attached to EdgeCards with relevance scores.
-5. **Design Selection** -- Check back-door/front-door criteria for each edge; flag
+6. **Design Selection** -- Check back-door/front-door criteria for each edge; flag
    edges where identification is absent.
-6. **Estimation** -- Adapter registry dispatches to the appropriate estimator
+7. **Estimation** -- Adapter registry dispatches to the appropriate estimator
    (LP, Panel LP, Panel FE Backdoor, IV 2SLS, DID, RDD, Regression Kink,
    Synthetic Control, Immutable, Accounting Bridge, Identity).
    Controls derived from DAG structure. HAC standard errors at multiple horizons.
-7. **DAG Auto-Repair** -- LLM-assisted validation loop that detects and fixes DAG
+8. **DAG Auto-Repair** -- LLM-assisted validation loop that detects and fixes DAG
    errors (invalid edge IDs, missing dependencies) up to 3 attempts before
    falling back to human review. Governed by PatchPolicy.
-8. **Issue Detection** -- 29 rules flag overclaiming, control shopping, null dropping,
+9. **Issue Detection** -- 29 rules flag overclaiming, control shopping, null dropping,
    specification drift, timing failures. Each produces a typed issue with severity.
-9. **PatchBot Auto-Fix** -- Auto-fixable issues (e.g., missing edge units) are
-   repaired by PatchBot within policy constraints. Fixes are logged in the audit trail.
-10. **HITL Review** -- Flagged issues surfaced in an interactive HTML panel. Analyst
+10. **PatchBot Auto-Fix** -- Auto-fixable issues (e.g., missing edge units) are
+    repaired by PatchBot within policy constraints. Fixes are logged in the audit trail.
+11. **HITL Review** -- Flagged issues surfaced in an interactive HTML panel. Analyst
     selects action (accept, reject, revise, escalate) with justification.
-11. **System Report** -- Aggregated results with per-edge credibility ratings, DAG
+12. **System Report** -- Aggregated results with per-edge credibility ratings, DAG
     assessment, and literature links. Output as markdown.
+13. **Panel Auto-Open** -- On completion, the DAG visualization and HITL panel are
+    rebuilt and automatically opened in the browser.
 
 ---
 
@@ -208,6 +217,71 @@ causal claims in papers.
 
 ---
 
+## Sentinel Loop
+
+The sentinel loop is OpenCausality's always-on background monitor. It runs continuously
+alongside estimation, catching schema regressions, auto-fixing trivial issues, and
+surfacing interactive panels to analysts without manual intervention.
+
+### What It Does
+
+1. **Continuous DAG Validation** -- After every pipeline step, the sentinel re-runs
+   the full 40-rule validation suite against the active DAG. If a code change or manual
+   edit introduces a schema error (missing `unit_specification`, malformed edge IDs,
+   orphan nodes), the sentinel catches it within one polling cycle.
+
+2. **Auto-Healing** -- Fixable issues (missing unit specs, edge ID typos) are repaired
+   in-place by PatchBot under PatchPolicy constraints. Repairs are logged in the audit
+   trail so analysts can review what changed and why.
+
+3. **Panel Auto-Build & Open** -- When estimation completes, the sentinel builds both
+   the DAG visualization (`dag_visualization.html`) and HITL review panel
+   (`hitl_panel.html`), then opens them in the default browser. No manual step needed.
+
+4. **Pipeline Auto-Start** -- The sentinel loop starts automatically when you run the
+   estimation pipeline (`opencausality dag run` or `python scripts/run_real_estimation.py`).
+   If it's already running, the pipeline detects the existing PID and skips re-launch.
+
+### How to Control It
+
+```bash
+# Auto-starts with the pipeline, or manually:
+./scripts/codex_loop/control.sh start
+
+# Check status
+./scripts/codex_loop/control.sh status
+
+# Run a single validation iteration
+./scripts/codex_loop/control.sh once
+
+# View live logs
+./scripts/codex_loop/control.sh tail
+
+# Stop
+./scripts/codex_loop/control.sh stop
+```
+
+The sentinel uses the codex CLI (`gpt-5.3-codex` by default) in `danger-full-access`
+sandbox mode. It polls every 5 minutes, running DAG validation and applying fixes.
+Configuration is in `scripts/codex_loop/codex_estimation_loop.sh`.
+
+### VS Code Integration
+
+VS Code tasks are pre-configured for sentinel operations (`.vscode/tasks.json`):
+
+| Task | Description |
+|------|-------------|
+| Sentinel: Validate DAG | Run pre-estimation validation only |
+| Sentinel: Run Full Pipeline | Validate + estimate (sequential) |
+| Sentinel: Generate Narrative DAG | NL-to-DAG from narrative text |
+| Sentinel: Open Reports | Open estimation reports and HITL panel |
+| Sentinel: Full Run + Show Results | End-to-end: validate, estimate, open results |
+| Codex Loop: Start/Stop/Status/Tail | Control the background sentinel loop |
+
+The default build task (`Ctrl+Shift+B`) runs the full pipeline with sentinel.
+
+---
+
 ## Human-in-the-Loop Governance
 
 ### Why It Matters
@@ -292,7 +366,8 @@ outputs/agentic/
 ├── issues/state.json     # Issue ledger state
 ├── ledger/               # Audit log (JSONL with hash chains)
 ├── citations/            # Literature search results
-├── hitl_panel.html       # HITL resolution panel
+├── dag_visualization.html # Interactive D3.js DAG graph (auto-opened by sentinel)
+├── hitl_panel.html       # HITL resolution panel (auto-opened by sentinel)
 ├── hitl_checklist.md     # Markdown checklist
 └── .notification.json    # Monitor sentinel file
 ```
@@ -412,10 +487,17 @@ config/
 
 scripts/
 ├── cli.py                    # Typer CLI entry point
+├── run_real_estimation.py    # Full pipeline (auto-starts sentinel, auto-opens panels)
 ├── build_hitl_panel.py       # Generate HITL HTML panel from issue ledger
+├── build_dag_viz.py          # Generate interactive D3.js DAG visualization
 ├── generate_narrative_dag.py # NL-to-DAG generation script
 ├── enrich_hitl_text.py       # Enrich HITL panel with LLM-generated explanations
-└── query_repl.py             # Natural language causal query REPL
+├── query_repl.py             # Natural language causal query REPL
+└── codex_loop/               # Sentinel loop infrastructure
+    ├── control.sh            #   Start/stop/status/once/tail controller
+    ├── codex_estimation_loop.sh  #   Main loop: validate, heal, iterate
+    ├── codex_objective.txt   #   Codex prompt objective
+    └── healing_objective.txt #   Healing-mode prompt objective
 
 benchmarks/
 ├── __init__.py
@@ -453,7 +535,7 @@ is selected but no API key is found, the factory auto-falls back to the codex CL
 
 ## Agent Pipeline
 
-OpenCausality includes a 4-agent agentic loop that uses LLM reasoning (via CodeX or Claude Code) to iterate on causal estimation:
+OpenCausality includes a 4-agent agentic loop that uses LLM reasoning (via CodeX or Claude Code) to iterate on causal estimation. The sentinel loop runs alongside agents, continuously validating the DAG and auto-fixing schema issues between agent rounds:
 
 | Agent | Role | Prompt |
 |-------|------|--------|
@@ -466,12 +548,13 @@ OpenCausality includes a 4-agent agentic loop that uses LLM reasoning (via CodeX
 
 ```bash
 # Run one full round (all 4 agents sequentially)
+# The sentinel loop auto-starts in the background on first run
 opencausality agent round --provider claude
 
 # Run a single agent
 opencausality agent run estimator --provider claude
 
-# Start continuous loop (runs in background)
+# Start continuous loop (runs in background, sentinel included)
 opencausality loop start --provider claude
 
 # Check status and stop
@@ -725,6 +808,11 @@ source code.
 7. **Time-series diagnostics.** TSGuard runs seven checks (leads test, regime
    stability, HAC sensitivity, Granger pre-test, stationarity, seasonal residuals,
    structural breaks) and automatically caps claim levels when diagnostics fail.
+
+8. **Always-on sentinel loop.** A background process continuously validates the DAG,
+   auto-fixes schema regressions (missing unit specs, malformed IDs), and pops up
+   interactive panels (DAG visualization + HITL review) the moment estimation
+   completes. The sentinel starts automatically with the pipeline — no manual setup.
 
 ### Roadmap
 
