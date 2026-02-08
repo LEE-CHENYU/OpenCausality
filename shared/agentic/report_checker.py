@@ -33,9 +33,6 @@ class MatchResult:
     found: Any | None
     tolerance: float = 0.01
 
-    def __bool__(self) -> bool:
-        return self.matched
-
 
 @dataclass
 class EdgeCheckResult:
@@ -112,11 +109,33 @@ class ReportCheckResult:
         lines.append("|------|-------|----|----|----|----|-------|------------|")
 
         for edge_id, result in sorted(self.edge_results.items()):
-            point = "✓" if result.point_estimate and result.point_estimate.matched else "✗"
-            se = "✓" if result.standard_error and result.standard_error.matched else "✗"
-            n = "✓" if result.sample_size and result.sample_size.matched else ("—" if result.sample_size is None else "✗")
-            ci = "✓" if (result.ci_lower and result.ci_lower.matched and result.ci_upper and result.ci_upper.matched) else "✗"
-            rating = "✓" if result.credibility_rating and result.credibility_rating.matched else "✗"
+            point = (
+                "—" if result.point_estimate is None
+                else ("✓" if result.point_estimate.matched else "✗")
+            )
+            se = (
+                "—" if result.standard_error is None
+                else ("✓" if result.standard_error.matched else "✗")
+            )
+            n = (
+                "—" if result.sample_size is None
+                else ("✓" if result.sample_size.matched else "✗")
+            )
+            if result.ci_lower is None and result.ci_upper is None:
+                ci = "—"
+            else:
+                ci = (
+                    "✓"
+                    if (
+                        result.ci_lower is not None and result.ci_lower.matched
+                        and result.ci_upper is not None and result.ci_upper.matched
+                    )
+                    else "✗"
+                )
+            rating = (
+                "—" if result.credibility_rating is None
+                else ("✓" if result.credibility_rating.matched else "✗")
+            )
             units = "✓" if result.unit_documented else "✗"
             rf = "—"
             if result.reaction_warning_present is not None:
@@ -179,7 +198,7 @@ class ReportConsistencyChecker:
                 result.edge_results[edge_id] = edge_result
 
                 # Report mismatches
-                if edge_result.point_estimate and not edge_result.point_estimate.matched:
+                if edge_result.point_estimate is not None and not edge_result.point_estimate.matched:
                     result.errors.append(
                         f"`{edge_id}`: Point estimate mismatch. "
                         f"Card={edge_result.point_estimate.expected}, "
@@ -187,7 +206,7 @@ class ReportConsistencyChecker:
                     )
                     result.passed = False
 
-                if edge_result.standard_error and not edge_result.standard_error.matched:
+                if edge_result.standard_error is not None and not edge_result.standard_error.matched:
                     result.errors.append(
                         f"`{edge_id}`: SE mismatch. "
                         f"Card={edge_result.standard_error.expected}, "
@@ -195,7 +214,7 @@ class ReportConsistencyChecker:
                     )
                     result.passed = False
 
-                if edge_result.credibility_rating and not edge_result.credibility_rating.matched:
+                if edge_result.credibility_rating is not None and not edge_result.credibility_rating.matched:
                     result.errors.append(
                         f"`{edge_id}`: Rating mismatch. "
                         f"Card={edge_result.credibility_rating.expected}, "
@@ -322,12 +341,32 @@ class ReportConsistencyChecker:
                 return 0.0
             return None
 
-        # Find all numbers in context
-        numbers = re.findall(r"-?[\d,]+\.?\d*", context)
+        # Find all numbers in context (supports optional decimals and scientific notation)
+        numbers = re.findall(
+            r"-?[\d,]+(?:\.\d+)?(?:e[-+]?\d+)?",
+            context,
+            flags=re.IGNORECASE,
+        )
 
         for num_str in numbers:
+            s = num_str.replace(",", "")
             try:
-                num = float(num_str.replace(",", ""))
+                num = float(s)
+                # First try an exact match under the precision shown in the report
+                # (rounding-aware, avoids false negatives when the report truncates decimals).
+                if "e" not in s.lower():
+                    if "." in s:
+                        decimals = len(s.split(".", 1)[1])
+                    else:
+                        decimals = 0
+                    expected = f"{target:.{decimals}f}"
+                    if expected == s:
+                        return num
+                    # Treat -0.00 and 0.00 as equivalent when rounding tiny values.
+                    if expected.startswith("-0") and expected[1:] == s:
+                        return num
+                    if s.startswith("-0") and s[1:] == expected:
+                        return num
                 # Check if within tolerance
                 if abs(target) > 0.0001:
                     rel_diff = abs(num - target) / abs(target)

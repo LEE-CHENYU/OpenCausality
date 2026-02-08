@@ -90,6 +90,11 @@ def load_edge_card(card_path: Path) -> dict | None:
 
     failure_flags = [k for k, v in failure_flags_raw.items() if v]
 
+    n_obs = None
+    eff_obs = diagnostics_raw.get("effective_obs", {})
+    if isinstance(eff_obs, dict) and eff_obs.get("value") is not None:
+        n_obs = int(eff_obs["value"])
+
     return {
         "point": estimates.get("point"),
         "se": estimates.get("se"),
@@ -105,6 +110,7 @@ def load_edge_card(card_path: Path) -> dict | None:
         "cf_shock_allowed": cf.get("shock_scenario_allowed"),
         "cf_policy_allowed": cf.get("policy_intervention_allowed"),
         "cf_reason_blocked": cf.get("reason_blocked", ""),
+        "n_obs": n_obs,
     }
 
 
@@ -303,6 +309,64 @@ def generate_llm_annotations(
             print(f"  Warning: LLM annotation failed for {eid}: {e}")
 
     return annotations
+
+
+def generate_issue_guidance(
+    issues: dict[str, list[dict]],
+    edges: list[dict],
+) -> dict[str, str]:
+    """Generate LLM-powered per-issue decision guidance.
+
+    Returns dict keyed by issue_key -> guidance text (HTML-escaped).
+    """
+    try:
+        from shared.llm.client import get_llm_client
+        from shared.llm.prompts import DECISION_GUIDANCE_SYSTEM, DECISION_GUIDANCE_USER
+    except ImportError:
+        print("  Warning: LLM client not available, skipping issue guidance")
+        return {}
+
+    client = get_llm_client()
+    guidance: dict[str, str] = {}
+
+    # Build edge lookup
+    edge_lookup: dict[str, dict] = {e["id"]: e for e in edges}
+
+    for edge_id, edge_issues in issues.items():
+        edge = edge_lookup.get(edge_id, {})
+        failed_diags = [
+            d["name"] for d in edge.get("diagnostics", []) if not d.get("passed", True)
+        ]
+
+        for issue in edge_issues:
+            issue_key = issue.get("issue_key", "")
+            user_msg = DECISION_GUIDANCE_USER.format(
+                rule_id=issue.get("rule_id", ""),
+                edge_id=edge_id,
+                message=issue.get("message", ""),
+                severity=issue.get("severity", ""),
+                point=edge.get("point", "N/A"),
+                se=edge.get("se", "N/A"),
+                pvalue=edge.get("pvalue", "N/A"),
+                n_obs=edge.get("n_obs", "N/A"),
+                design=edge.get("design", "N/A"),
+                claim_level=edge.get("claim_level", "N/A"),
+                rating=edge.get("rating", "N/A"),
+                failed_diagnostics=", ".join(failed_diags) if failed_diags else "none",
+            )
+
+            try:
+                result = client.complete(
+                    system=DECISION_GUIDANCE_SYSTEM,
+                    user=user_msg,
+                    max_tokens=300,
+                )
+                guidance[issue_key] = _html.escape(result.strip())
+                print(f"    {issue_key}")
+            except Exception as e:
+                print(f"  Warning: LLM guidance failed for {issue_key}: {e}")
+
+    return guidance
 
 
 # ── HTML template ────────────────────────────────────────────────────────────
@@ -572,6 +636,20 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
             border-color: #000;
             outline: none;
         }
+        .pitfall-decision .pd-llm-guidance {
+            background: #f0f4ff;
+            border-left: 3px solid #2563eb;
+            padding: 6px 10px;
+            margin-bottom: 6px;
+            font-size: 10px;
+            line-height: 1.6;
+            color: #333;
+        }
+        .pitfall-decision .pd-llm-guidance-title {
+            font-weight: 600;
+            color: #1e40af;
+            margin-bottom: 2px;
+        }
         .pitfall-decision .pd-buttons {
             display: flex;
             gap: 6px;
@@ -710,6 +788,7 @@ const EDGE_TYPE_LABELS = __EDGE_TYPE_LABELS__;
 const RULE_DESCRIPTIONS = __RULES_JSON__;
 const ACTIONS_BY_RULE = __ACTIONS_JSON__;
 const GENERATED_AT = "__GENERATED_AT__";
+const ISSUE_GUIDANCE = __ISSUE_GUIDANCE_JSON__;
 
 // ── Helpers ──────────────────────────────────────────────────────────────
 function escHtml(s) {
@@ -863,6 +942,11 @@ if (allIssues.length === 0) {
             optHtml += '<option value="' + escHtml(o.value) + '" data-tooltip="' + escHtml(o.tooltip || '') + '">' + escHtml(o.label) + '</option>';
         });
 
+        var llmText = ISSUE_GUIDANCE[issue.issue_key] || '';
+        var llmHtml = llmText ?
+            '<div class="pd-llm-guidance"><div class="pd-llm-guidance-title">AI Analysis</div>' +
+            escHtml(llmText) + '</div>' : '';
+
         div.innerHTML =
             '<div class="pitfall-item-header" data-header="1">' +
                 '<span class="pitfall-edge">' + escHtml(issue.edge_id) + '</span>' +
@@ -871,6 +955,7 @@ if (allIssues.length === 0) {
             '</div>' +
             '<div class="pitfall-msg">' + escHtml(issue.message) + '</div>' +
             '<div class="pitfall-decision" data-decision-key="' + escHtml(issue.issue_key) + '">' +
+                llmHtml +
                 (ruleInfo.explanation ?
                     '<div class="pd-label">Why it matters:</div>' +
                     '<div class="pd-text">' + (ruleInfo.explanation || '') + '</div>' : '') +
@@ -1341,6 +1426,13 @@ def build(
     issue_count = sum(len(issues.get(e["id"], [])) for e in edges)
     print(f"  {issue_count} open issues across edges")
 
+    # Per-issue LLM decision guidance
+    issue_guidance: dict[str, str] = {}
+    if llm_annotate:
+        print("  Generating per-issue decision guidance...")
+        issue_guidance = generate_issue_guidance(issues, edges)
+        print(f"  {len(issue_guidance)} issue guidance entries generated")
+
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
 
     # Build HTML
@@ -1355,6 +1447,7 @@ def build(
     html = html.replace("__RULES_JSON__", json.dumps(rules, indent=2))
     html = html.replace("__ACTIONS_JSON__", json.dumps(actions, indent=2))
     html = html.replace("__GENERATED_AT__", generated_at)
+    html = html.replace("__ISSUE_GUIDANCE_JSON__", json.dumps(issue_guidance, indent=2))
 
     # Write output
     if output_path is None:

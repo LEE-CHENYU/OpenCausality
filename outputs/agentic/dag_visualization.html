@@ -263,6 +263,20 @@
             border-color: #000;
             outline: none;
         }
+        .pitfall-decision .pd-llm-guidance {
+            background: #f0f4ff;
+            border-left: 3px solid #2563eb;
+            padding: 6px 10px;
+            margin-bottom: 6px;
+            font-size: 10px;
+            line-height: 1.6;
+            color: #333;
+        }
+        .pitfall-decision .pd-llm-guidance-title {
+            font-weight: 600;
+            color: #1e40af;
+            margin-bottom: 2px;
+        }
         .pitfall-decision .pd-buttons {
             display: flex;
             gap: 6px;
@@ -732,6 +746,7 @@ const EDGES = [
     "cf_shock_allowed": false,
     "cf_policy_allowed": false,
     "cf_reason_blocked": "Design LOCAL_PROJECTIONS provides REDUCED_FORM level only",
+    "n_obs": 306,
     "issues": [
       {
         "issue_key": "SIGNIFICANT_BUT_NOT_IDENTIFIED:oil_supply_to_brent",
@@ -791,6 +806,7 @@ const EDGES = [
     "cf_shock_allowed": false,
     "cf_policy_allowed": false,
     "cf_reason_blocked": "Counterfactual Use: BLOCKED\nReason: regime break risk\n\nEven if p<0.05, this does not establish a causal effect.",
+    "n_obs": 187,
     "issues": [
       {
         "issue_key": "RATING_DIAGNOSTICS_CONFLICT:oil_supply_to_fx",
@@ -850,6 +866,7 @@ const EDGES = [
     "cf_shock_allowed": false,
     "cf_policy_allowed": false,
     "cf_reason_blocked": "Counterfactual Use: BLOCKED\nReason: regime break risk\n\nEven if p<0.05, this does not establish a causal effect.",
+    "n_obs": 187,
     "issues": [
       {
         "issue_key": "RATING_DIAGNOSTICS_CONFLICT:oil_demand_to_fx",
@@ -909,6 +926,7 @@ const EDGES = [
     "cf_shock_allowed": false,
     "cf_policy_allowed": false,
     "cf_reason_blocked": "Design LOCAL_PROJECTIONS provides REDUCED_FORM level only",
+    "n_obs": 190,
     "issues": [
       {
         "issue_key": "RATING_DIAGNOSTICS_CONFLICT:vix_to_fx",
@@ -956,6 +974,7 @@ const EDGES = [
     "cf_shock_allowed": true,
     "cf_policy_allowed": false,
     "cf_reason_blocked": "REDUCED_FORM mode does not allow policy interventions",
+    "n_obs": 1200,
     "issues": [
       {
         "issue_key": "SIGNIFICANT_BUT_NOT_IDENTIFIED:fx_to_cpi_tradable",
@@ -1003,6 +1022,7 @@ const EDGES = [
     "cf_shock_allowed": true,
     "cf_policy_allowed": false,
     "cf_reason_blocked": "REDUCED_FORM mode does not allow policy interventions",
+    "n_obs": 1200,
     "issues": [],
     "has_critical_issue": false
   },
@@ -1055,6 +1075,7 @@ const EDGES = [
     "cf_shock_allowed": false,
     "cf_policy_allowed": false,
     "cf_reason_blocked": "Claim level capped to BLOCKED_ID",
+    "n_obs": 67,
     "issues": [
       {
         "issue_key": "RATING_DIAGNOSTICS_CONFLICT:cpi_to_nbk_rate",
@@ -1114,6 +1135,7 @@ const EDGES = [
     "cf_shock_allowed": false,
     "cf_policy_allowed": false,
     "cf_reason_blocked": "Counterfactual Use: BLOCKED\nReason: regime break risk\n\nEven if p<0.05, this does not establish a causal effect.",
+    "n_obs": 67,
     "issues": [],
     "has_critical_issue": false
   },
@@ -1168,6 +1190,7 @@ const EDGES = [
     "cf_shock_allowed": false,
     "cf_policy_allowed": false,
     "cf_reason_blocked": "Claim level capped to BLOCKED_ID",
+    "n_obs": 18,
     "issues": [
       {
         "issue_key": "SIGNIFICANT_BUT_NOT_IDENTIFIED:nbk_rate_to_deposit_cost",
@@ -1229,6 +1252,7 @@ const EDGES = [
     "cf_shock_allowed": false,
     "cf_policy_allowed": false,
     "cf_reason_blocked": "Claim level capped to BLOCKED_ID",
+    "n_obs": 18,
     "issues": [
       {
         "issue_key": "SIGNIFICANT_BUT_NOT_IDENTIFIED:nbk_rate_to_cor",
@@ -1276,6 +1300,7 @@ const EDGES = [
     "cf_shock_allowed": true,
     "cf_policy_allowed": false,
     "cf_reason_blocked": "REDUCED_FORM mode does not allow policy interventions",
+    "n_obs": 80,
     "issues": [
       {
         "issue_key": "SIGNIFICANT_BUT_NOT_IDENTIFIED:cpi_to_nominal_income",
@@ -1323,6 +1348,7 @@ const EDGES = [
     "cf_shock_allowed": true,
     "cf_policy_allowed": false,
     "cf_reason_blocked": "REDUCED_FORM mode does not allow policy interventions",
+    "n_obs": 60,
     "issues": [
       {
         "issue_key": "SIGNIFICANT_BUT_NOT_IDENTIFIED:fx_to_real_expenditure",
@@ -1384,6 +1410,7 @@ const EDGES = [
     "cf_shock_allowed": false,
     "cf_policy_allowed": false,
     "cf_reason_blocked": "Design LOCAL_PROJECTIONS provides REDUCED_FORM level only",
+    "n_obs": 26,
     "issues": [
       {
         "issue_key": "SIGNIFICANT_BUT_NOT_IDENTIFIED:shock_to_npl_kspi",
@@ -1445,6 +1472,7 @@ const EDGES = [
     "cf_shock_allowed": false,
     "cf_policy_allowed": false,
     "cf_reason_blocked": "Design LOCAL_PROJECTIONS provides REDUCED_FORM level only",
+    "n_obs": 26,
     "issues": [
       {
         "issue_key": "SIGNIFICANT_BUT_NOT_IDENTIFIED:shock_to_cor_kspi",
@@ -1506,6 +1534,7 @@ const EDGES = [
     "cf_shock_allowed": false,
     "cf_policy_allowed": false,
     "cf_reason_blocked": "Counterfactual Use: BLOCKED\nReason: insufficient shock episodes\n\nEven if p<0.05, this does not establish a causal effect.",
+    "n_obs": 7,
     "issues": [
       {
         "issue_key": "SIGNIFICANT_BUT_NOT_IDENTIFIED:expenditure_to_payments_revenue",
@@ -1551,6 +1580,7 @@ const EDGES = [
     "cf_shock_allowed": true,
     "cf_policy_allowed": false,
     "cf_reason_blocked": "REDUCED_FORM mode does not allow policy interventions",
+    "n_obs": null,
     "issues": [
       {
         "issue_key": "SIGNIFICANT_BUT_NOT_IDENTIFIED:cor_to_capital",
@@ -1596,6 +1626,7 @@ const EDGES = [
     "cf_shock_allowed": true,
     "cf_policy_allowed": false,
     "cf_reason_blocked": "REDUCED_FORM mode does not allow policy interventions",
+    "n_obs": null,
     "issues": [
       {
         "issue_key": "SIGNIFICANT_BUT_NOT_IDENTIFIED:loan_portfolio_to_rwa",
@@ -1657,6 +1688,7 @@ const EDGES = [
     "cf_shock_allowed": false,
     "cf_policy_allowed": false,
     "cf_reason_blocked": "Claim level capped to BLOCKED_ID",
+    "n_obs": 16,
     "issues": [
       {
         "issue_key": "SIGNIFICANT_BUT_NOT_IDENTIFIED:portfolio_mix_to_rwa",
@@ -1702,6 +1734,7 @@ const EDGES = [
     "cf_shock_allowed": true,
     "cf_policy_allowed": false,
     "cf_reason_blocked": "REDUCED_FORM mode does not allow policy interventions",
+    "n_obs": null,
     "issues": [],
     "has_critical_issue": false
   },
@@ -1740,6 +1773,7 @@ const EDGES = [
     "cf_shock_allowed": true,
     "cf_policy_allowed": false,
     "cf_reason_blocked": "REDUCED_FORM mode does not allow policy interventions",
+    "n_obs": null,
     "issues": [],
     "has_critical_issue": false
   }
@@ -2514,7 +2548,8 @@ const ACTIONS_BY_RULE = {
     ]
   }
 };
-const GENERATED_AT = "2026-02-08 18:59:43 UTC";
+const GENERATED_AT = "2026-02-08 19:08:27 UTC";
+const ISSUE_GUIDANCE = {};
 
 // ── Helpers ──────────────────────────────────────────────────────────────
 function escHtml(s) {
@@ -2668,6 +2703,11 @@ if (allIssues.length === 0) {
             optHtml += '<option value="' + escHtml(o.value) + '" data-tooltip="' + escHtml(o.tooltip || '') + '">' + escHtml(o.label) + '</option>';
         });
 
+        var llmText = ISSUE_GUIDANCE[issue.issue_key] || '';
+        var llmHtml = llmText ?
+            '<div class="pd-llm-guidance"><div class="pd-llm-guidance-title">AI Analysis</div>' +
+            escHtml(llmText) + '</div>' : '';
+
         div.innerHTML =
             '<div class="pitfall-item-header" data-header="1">' +
                 '<span class="pitfall-edge">' + escHtml(issue.edge_id) + '</span>' +
@@ -2676,6 +2716,7 @@ if (allIssues.length === 0) {
             '</div>' +
             '<div class="pitfall-msg">' + escHtml(issue.message) + '</div>' +
             '<div class="pitfall-decision" data-decision-key="' + escHtml(issue.issue_key) + '">' +
+                llmHtml +
                 (ruleInfo.explanation ?
                     '<div class="pd-label">Why it matters:</div>' +
                     '<div class="pd-text">' + (ruleInfo.explanation || '') + '</div>' : '') +

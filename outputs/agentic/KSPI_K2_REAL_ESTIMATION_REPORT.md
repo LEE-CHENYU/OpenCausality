@@ -86,8 +86,8 @@ Sign/magnitude consistency check against quarterly estimates.
 
 | Edge | Impact (A) | SE | N_eff | Impact (Q) | Sign Match | Rating |
 |------|-----------|-----|-------|-----------|-----------|--------|
-| `shock_to_npl_kspi` | 349.16 | 33.42 | 8 | 72.80 | Yes | B |
-| `shock_to_cor_kspi` | 360.12 | 45.44 | 8 | 85.96 | Yes | B |
+| `shock_to_npl_kspi_annual` | 349.16 | 33.42 | 8 | 72.80 | Yes | B |
+| `shock_to_cor_kspi_annual` | 360.12 | 45.44 | 8 | 85.96 | Yes | B |
 
 ---
 

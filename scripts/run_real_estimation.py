@@ -1238,7 +1238,7 @@ def generate_report(
             a_sign = "+" if e.point > 0 else ("-" if e.point < 0 else "0")
             sign_match = "Yes" if q_sign == a_sign else "No"
             lines.append(
-                f"| `{edge_id}` | {e.point:.2f} | {e.se:.2f} | "
+                f"| `{annual_id}` | {e.point:.2f} | {e.se:.2f} | "
                 f"{n_eff} | {q_impact:.2f} | {sign_match} | {card.credibility_rating} |"
             )
     lines.append("")

@@ -252,6 +252,8 @@ panels. Both are self-contained single-file HTML documents with no external depe
 
 #### DAG Visualization ([`outputs/agentic/dag_visualization.html`](outputs/agentic/dag_visualization.html))
 
+![DAG Visualization Panel](paper/fig_dag_panel.png)
+
 Interactive force-directed graph of the full causal DAG, built with D3.js v7.
 Serves as the **primary entry point for proposal review**: the output is framed as
 a draft requiring analyst sign-off, with inline decision capabilities so reviewers
@@ -282,6 +284,8 @@ can resolve issues without switching to a separate panel.
 </details>
 
 #### HITL Resolution Panel ([`outputs/agentic/hitl_panel.html`](outputs/agentic/hitl_panel.html))
+
+![HITL Resolution Panel](paper/fig_hitl_panel.png)
 
 Interactive review board for human-in-the-loop issue resolution.
 
