@@ -361,7 +361,7 @@ def generate_issue_guidance(
                     user=user_msg,
                     max_tokens=300,
                 )
-                guidance[issue_key] = _html.escape(result.strip())
+                guidance[issue_key] = result.strip()
                 print(f"    {issue_key}")
             except Exception as e:
                 print(f"  Warning: LLM guidance failed for {issue_key}: {e}")
@@ -796,6 +796,29 @@ function escHtml(s) {
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
+function renderMarkdown(s) {
+    if (!s) return '';
+    var h = escHtml(s);
+    // Bold: **text** or __text__
+    h = h.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    h = h.replace(/__(.+?)__/g, '<strong>$1</strong>');
+    // Italic: *text* or _text_ (but not inside already-converted strong)
+    h = h.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, '<em>$1</em>');
+    h = h.replace(/(?<!_)_(?!_)(.+?)(?<!_)_(?!_)/g, '<em>$1</em>');
+    // Inline code: `text`
+    h = h.replace(/`([^`]+)`/g, '<code style="background:#e8e8e8;padding:1px 3px;font-size:9px;">$1</code>');
+    // Bullet lists: lines starting with - or *
+    h = h.replace(/^[\-\*]\s+(.+)$/gm, '<li>$1</li>');
+    h = h.replace(/((?:<li>.*<\/li>\s*)+)/g, '<ul style="margin:4px 0 4px 16px;padding:0;">$1</ul>');
+    // Numbered lists: lines starting with 1. 2. etc
+    h = h.replace(/^\d+\.\s+(.+)$/gm, '<li>$1</li>');
+    // Line breaks: double newline -> paragraph break, single newline -> <br>
+    h = h.replace(/\n\n+/g, '</p><p style="margin:4px 0;">');
+    h = h.replace(/\n/g, '<br>');
+    h = '<p style="margin:4px 0;">' + h + '</p>';
+    return h;
+}
+
 function formatBeta(beta) {
     if (beta === null || beta === undefined) return '--';
     if (beta === 0) return '0';
@@ -945,7 +968,7 @@ if (allIssues.length === 0) {
         var llmText = ISSUE_GUIDANCE[issue.issue_key] || '';
         var llmHtml = llmText ?
             '<div class="pd-llm-guidance"><div class="pd-llm-guidance-title">AI Analysis</div>' +
-            escHtml(llmText) + '</div>' : '';
+            renderMarkdown(llmText) + '</div>' : '';
 
         div.innerHTML =
             '<div class="pitfall-item-header" data-header="1">' +
