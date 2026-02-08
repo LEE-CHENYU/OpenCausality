@@ -29,7 +29,7 @@ with DAG-Based Reasoning and LLM-Assisted Discovery}
 %% ABSTRACT
 %% ============================================================
 \begin{abstract}
-We introduce \oc{}, an open-source platform that resolves the automation--transparency tradeoff in applied causal inference. \oc{} combines DAG-based causal reasoning with agentic estimation pipelines, where every modeling decision---from identification strategy selection to effect propagation---is logged in a hash-chained audit trail. An always-on \emph{sentinel loop} runs continuously in the background, re-validating the DAG after every change, auto-fixing schema regressions, and surfacing interactive review panels---so analysts never have to hunt for results or wonder whether the specification is still valid. The platform enforces 29 issue-detection rules that catch overclaiming, control shopping, and specification drift; a 7-guardrail propagation engine that performs unit-aware dimensional analysis across multi-edge causal paths; and a 3-stage identifiability screen that downgrades claims based on diagnostic evidence rather than statistical significance alone. A 4-agent agentic loop (DataScout, ModelSmith, Estimator, Judge) iterates between estimation, issue detection, and auto-repair under LLM guidance, while an LLM-assisted pipeline extracts causal claims from the literature and proposes DAG edges---achieving 100\% estimate precision on matched edges in our Kazakhstan bank stress-testing case study while discovering 3 edges absent from the expert-built DAG. All governance decisions---including human-in-the-loop gates and automated patch policies that explicitly prohibit p-hacking---are recorded with cryptographic integrity. \oc{} ships with 18 estimation adapters spanning econometric and ML-based methods, a data-driven causal discovery agent (PC, GES, FCI, NOTEARS), a DoWhy refutation engine for post-estimation robustness, a natural-language query interface, and 204 passing tests across 40{,}969 lines of code.
+We introduce \oc{}, an open-source platform that resolves the automation--transparency tradeoff in applied causal inference. \oc{} combines DAG-based causal reasoning with agentic estimation pipelines, where every modeling decision---from identification strategy selection to effect propagation---is logged in a hash-chained audit trail. An always-on \emph{sentinel loop} runs continuously in the background, re-validating the DAG after every change, auto-fixing schema regressions, and surfacing interactive review panels---so analysts never have to hunt for results or wonder whether the specification is still valid. The platform enforces 29 issue-detection rules that catch overclaiming, control shopping, and specification drift; a 7-guardrail propagation engine that performs unit-aware dimensional analysis across multi-edge causal paths; and a 3-stage identifiability screen that downgrades claims based on diagnostic evidence rather than statistical significance alone. A 4-agent agentic loop (DataScout, ModelSmith, Estimator, Judge) iterates between estimation, issue detection, and auto-repair under LLM guidance, while an LLM-assisted pipeline extracts causal claims from the literature and proposes DAG edges---achieving 100\% estimate precision on matched edges in our Kazakhstan bank stress-testing case study while discovering 3 edges absent from the expert-built DAG. All governance decisions---including human-in-the-loop gates and automated patch policies that explicitly prohibit p-hacking---are recorded with cryptographic integrity. \oc{} ships with 19 estimation adapters spanning econometric and ML-based methods, a data-driven causal discovery agent (PC, GES, FCI, NOTEARS), a DoWhy refutation engine for post-estimation robustness, a natural-language query interface, and 204 passing tests across 49{,}743 lines of code.
 \end{abstract}
 
 %% ============================================================
@@ -40,14 +40,14 @@ We introduce \oc{}, an open-source platform that resolves the automation--transp
 
 Applied causal inference faces a fundamental tension: automation accelerates analysis but obscures the chain of decisions that produced the results. A researcher running a modern causal-ML pipeline can obtain point estimates in seconds, yet documenting \emph{why} a particular identification strategy was chosen, which controls were included, and what diagnostic checks were performed remains a manual, error-prone process. This opacity undermines reproducibility and invites specification searching~\citep{simmons2011false}.
 
-Existing frameworks address parts of this problem. DoWhy~\citep{sharma2020dowhy} formalizes the identify-estimate-refute workflow. EconML~\citep{battocchi2022econml} provides heterogeneous treatment-effect estimators. CausalML~\citep{chen2020causalml} targets uplift modeling. However, none of these systems treats every estimation decision as an auditable event, enforces claim-level restrictions based on identification strength, or prevents automated specification searching through explicit policy enforcement.
+Existing frameworks address parts of this problem. DoWhy~\citep{sharma2020dowhy} formalizes the identify-estimate-refute workflow. EconML~\citep{battocchi2019econml} provides heterogeneous treatment-effect estimators. CausalML~\citep{chen2020causalml} targets uplift modeling. However, none of these systems treats every estimation decision as an auditable event, enforces claim-level restrictions based on identification strength, or prevents automated specification searching through explicit policy enforcement.
 
 We introduce \oc{},\footnote{Code and data: \url{https://github.com/LEE-CHENYU/OpenCausality}} an open-source platform that makes the entire causal inference workflow---from DAG construction to effect propagation to human review---both automated and transparent. Our key insight is that \emph{the audit trail is not a byproduct of estimation; it is a first-class output}. Every edge estimate, diagnostic result, issue flag, and governance decision is recorded in a hash-chained ledger that can be committed to version control and independently verified. An always-on sentinel loop runs alongside estimation, continuously validating the DAG, auto-healing schema regressions, and surfacing interactive panels---ensuring that the specification never silently degrades.
 
 \paragraph{Contributions.} We make the following contributions:
 
 \begin{enumerate}[leftmargin=*, itemsep=2pt]
-    \item A \textbf{DAG-based causal inference platform} with 18 estimation adapters (econometric and ML-based), mode-aware effect propagation, unit-dimensional analysis across 9 unit types, and 7 guardrails that gate edge usage based on identification strength, time-series diagnostics, and issue severity (Section~\ref{sec:propagation}).
+    \item A \textbf{DAG-based causal inference platform} with 19 estimation adapters (econometric and ML-based), mode-aware effect propagation, unit-dimensional analysis across 9 unit types, and 7 guardrails that gate edge usage based on identification strength, time-series diagnostics, and issue severity (Section~\ref{sec:propagation}).
 
     \item A \textbf{29-rule issue detection engine} with a PatchPolicy whitelist that explicitly prohibits control shopping, sample trimming, lag searching, and outcome switching---preventing automated p-hacking while permitting safe auto-fixes (Section~\ref{sec:issues}).
 
@@ -69,7 +69,7 @@ We evaluate \oc{} on a Kazakhstan bank stress-testing case study involving 32 no
 \label{sec:related}
 
 \paragraph{Causal inference frameworks.}
-One line of work provides programmatic interfaces for causal estimation. DoWhy~\citep{sharma2020dowhy} implements an identify-estimate-refute loop using graphical criteria, while EconML~\citep{battocchi2022econml} extends this with double/debiased ML and heterogeneous treatment-effect estimators. DoubleML~\citep{bach2022doubleml} focuses on Neyman-orthogonal score functions. CausalML~\citep{chen2020causalml} targets uplift modeling for business applications. These frameworks automate estimation but do not enforce claim-level restrictions, detect specification searching, or maintain hash-chained audit trails. \oc{} builds on their estimator building blocks while adding governance, propagation, and auditability layers.
+One line of work provides programmatic interfaces for causal estimation. DoWhy~\citep{sharma2020dowhy} implements an identify-estimate-refute loop using graphical criteria, while EconML~\citep{battocchi2019econml} extends this with double/debiased ML and heterogeneous treatment-effect estimators. DoubleML~\citep{bach2022doubleml} focuses on Neyman-orthogonal score functions. CausalML~\citep{chen2020causalml} targets uplift modeling for business applications. These frameworks automate estimation but do not enforce claim-level restrictions, detect specification searching, or maintain hash-chained audit trails. \oc{} builds on their estimator building blocks while adding governance, propagation, and auditability layers.
 
 \paragraph{Causal discovery.}
 Classical algorithms---PC~\citep{spirtes2000causation}, GES~\citep{chickering2002optimal}, and NOTEARS~\citep{zheng2018dags}---learn DAG structure from observational data. causal-learn~\citep{zheng2024causallearn} and gCastle~\citep{zhang2021gcastle} provide implementations. \oc{} integrates these algorithms directly via a \texttt{DiscoveryAgent} that wraps PC, GES, FCI, and NOTEARS with lazy imports, compares discovered structures against existing DAGs, and routes proposed edges through HITL governance (Section~\ref{sec:discovery}). Our LLM-assisted pipeline (Section~\ref{sec:llm}) offers an alternative discovery path via literature extraction.
@@ -91,7 +91,7 @@ The replication crisis~\citep{ioannidis2005why} has motivated pre-registration~\
 \begin{enumerate}[leftmargin=*, itemsep=1pt]
     \item \textbf{DAG Layer}: Parses YAML-specified DAGs with typed nodes (observed, latent, policy) and typed edges (causal, reaction function, bridge, identity). Validates acyclicity, unit presence, and node-source bindings.
 
-    \item \textbf{Estimation Layer}: Dispatches edges to one of 18 adapters via a unified \texttt{EstimationRequest} $\to$ \texttt{Adapter.estimate()} $\to$ \texttt{EstimationResult} interface. Adapters span econometric methods (local projections, panel FE, IV-2SLS, DiD, RDD, regression kink, synthetic control) and ML-based methods (DoWhy backdoor/IV/frontdoor, DoubleML PLR/IRM/PLIV, EconML CATE, CausalML uplift). A config-driven registry dynamically loads adapters from YAML.
+    \item \textbf{Estimation Layer}: Dispatches edges to one of 19 adapters via a unified \texttt{EstimationRequest} $\to$ \texttt{Adapter.estimate()} $\to$ \texttt{EstimationResult} interface. Adapters span econometric methods (local projections, panel FE, IV-2SLS, DiD, RDD, regression kink, synthetic control) and ML-based methods (DoWhy backdoor/IV/frontdoor, DoubleML PLR/IRM/PLIV, EconML CATE, CausalML uplift). A config-driven registry dynamically loads adapters from YAML.
 
     \item \textbf{Inference Layer}: Runs 3-stage identifiability screening, TSGuard diagnostics, DoWhy refutation tests (4 robustness checks), 29-rule issue detection, and 7-guardrail effect propagation. Produces EdgeCards (YAML artifacts combining estimates, diagnostics, identification results, and literature references).
 
@@ -162,7 +162,7 @@ The replication crisis~\citep{ioannidis2005why} has motivated pre-registration~\
     \node[font=\tiny, rotate=90, purple!60] at (7.2, 2.25) {validate $\to$ heal $\to$ surface};
 
     \end{tikzpicture}
-    \caption{Architecture of \oc{}. Four functional layers---DAG, Estimation (18 adapters), Inference (identifiability, refutation, issues, propagation), and Governance (hash-chained audit, HITL)---are wrapped by the \textbf{sentinel loop}, an always-on background monitor that continuously validates, auto-heals, and surfaces interactive panels. Purple dashed arrow shows the sentinel's validate--heal--surface cycle.}
+    \caption{Architecture of \oc{}. Four functional layers---DAG, Estimation (19 adapters), Inference (identifiability, refutation, issues, propagation), and Governance (hash-chained audit, HITL)---are wrapped by the \textbf{sentinel loop}, an always-on background monitor that continuously validates, auto-heals, and surfaces interactive panels. Purple dashed arrow shows the sentinel's validate--heal--surface cycle.}
     \label{fig:architecture}
 \end{figure}
 
@@ -183,11 +183,11 @@ class EstimatorAdapter(ABC):
     def estimate(self, request: EstimationRequest) -> EstimationResult: ...
 \end{lstlisting}
 
-Table~\ref{tab:adapters} lists all 18 adapters. The registry supports both built-in mappings and YAML-configurable dispatch (\texttt{design\_registry.yaml}), enabling new estimators to be added without modifying core code. All ML-based adapters use lazy imports---\texttt{dowhy}, \texttt{doubleml}, \texttt{econml}, and \texttt{causalml} are only loaded when the corresponding design is dispatched.
+Table~\ref{tab:adapters} lists all 19 adapters. The registry supports both built-in mappings and YAML-configurable dispatch (\texttt{design\_registry.yaml}), enabling new estimators to be added without modifying core code. All ML-based adapters use lazy imports---\texttt{dowhy}, \texttt{doubleml}, \texttt{econml}, and \texttt{causalml} are only loaded when the corresponding design is dispatched.
 
 \begin{table}[t]
 \centering
-\caption{Estimation adapters in \oc{}. The registry supports 18 adapters spanning econometric and ML-based methods. All share a unified \texttt{EstimationRequest}~$\to$~\texttt{EstimationResult} interface.}
+\caption{Estimation adapters in \oc{}. The registry supports 19 adapters spanning econometric and ML-based methods. All share a unified \texttt{EstimationRequest}~$\to$~\texttt{EstimationResult} interface.}
 \label{tab:adapters}
 \scriptsize
 \begin{tabular}{@{}llll@{}}
@@ -480,7 +480,7 @@ The governance framework catches five categories of methodological loopholes:
 \begin{figure}[t]
     \centering
     \includegraphics[width=\textwidth, trim=0 0 0 0, clip]{fig_hitl_panel.png}
-    \caption{HITL Resolution Panel. The review board shows 55 detected issues (19 \texttt{CRITICAL}, 7 \texttt{HIGH}), grouped by rule type. Each issue card displays edge estimates, credibility rating, and action dropdown with justification field. Bulk actions and JSON export support the governance workflow.}
+    \caption{HITL Resolution Panel. The review board shows detected issues grouped by rule type and severity. Each issue card displays edge estimates, credibility rating, and action dropdown with justification field. Bulk actions and JSON export support the governance workflow.}
     \label{fig:hitl-panel}
 \end{figure}
 
@@ -581,7 +581,8 @@ Nodes & 32 & 17 \\
 Edges & 20 & 13 \\
 Structural matches & --- & 4/20 (20\%) \\
 Estimate match (common edges) & --- & 4/4 (100\%) \\
-Novel edges (NL only) & --- & 3 \\
+NL-only edges & --- & 9 \\
+Novel edges (lit.-supported) & --- & 3 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -666,7 +667,7 @@ The dominant open issue type is \texttt{SIGNIFICANT\_BUT\_NOT\_IDENTIFIED} (492 
 \end{figure}
 
 %% ============================================================
-%% 10  LIMITATIONS
+%% 12  LIMITATIONS
 %% ============================================================
 \section{Limitations}
 \label{sec:limitations}
@@ -687,12 +688,12 @@ The LLM can fabricate plausible-sounding causal edges not present in the source 
 The delta-method SE formula (Equation~\ref{eq:delta}) assumes independence across edges. When edges share confounders, standard errors are underestimated. The engine warns but does not correct for this.
 
 %% ============================================================
-%% 11  CONCLUSION
+%% 13  CONCLUSION
 %% ============================================================
 \section{Conclusion}
 \label{sec:conclusion}
 
-\oc{} demonstrates that automation and transparency in causal inference are not mutually exclusive. By treating every modeling decision as an auditable event---logged in a hash-chained ledger, gated by identifiability screens and refutation tests, and protected by anti-p-hacking policies---the platform enables researchers to move faster while maintaining the evidentiary standards that credible causal claims demand. The always-on sentinel loop ensures that this rigor is continuous rather than episodic: the DAG is re-validated after every change, schema regressions are auto-healed, and interactive review panels are surfaced the moment estimation completes. With 18 estimation adapters spanning econometric and ML-based methods, data-driven causal discovery (PC, GES, FCI, NOTEARS), a 4-agent agentic pipeline, and LLM-assisted literature extraction, \oc{} bridges expert-specified and data-driven structure learning within a unified governance framework. We release \oc{} as open-source software to support reproducible causal inference research.
+\oc{} demonstrates that automation and transparency in causal inference are not mutually exclusive. By treating every modeling decision as an auditable event---logged in a hash-chained ledger, gated by identifiability screens and refutation tests, and protected by anti-p-hacking policies---the platform enables researchers to move faster while maintaining the evidentiary standards that credible causal claims demand. The always-on sentinel loop ensures that this rigor is continuous rather than episodic: the DAG is re-validated after every change, schema regressions are auto-healed, and interactive review panels are surfaced the moment estimation completes. With 19 estimation adapters spanning econometric and ML-based methods, data-driven causal discovery (PC, GES, FCI, NOTEARS), a 4-agent agentic pipeline, and LLM-assisted literature extraction, \oc{} bridges expert-specified and data-driven structure learning within a unified governance framework. We release \oc{} as open-source software to support reproducible causal inference research.
 
 %% ============================================================
 %% REFERENCES
