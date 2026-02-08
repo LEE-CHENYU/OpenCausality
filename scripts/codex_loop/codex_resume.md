@@ -1,11 +1,11 @@
 # Codex Estimation Loop Resume
 
-**Last Updated:** 2026-02-05
-**Status:** Ready for first automated run
+**Last Updated:** 2026-02-08
+**Status:** Iteration 1 complete (validation passing; sign warnings remain)
 
 ## Current Focus
 
-Initial validation and quality check of the KSPI K2 estimation pipeline.
+Validation and quality check of the KSPI K2 estimation pipeline (EdgeCards + report consistency).
 
 ## Previous Changes (Manual Session)
 
@@ -24,17 +24,32 @@ Initial validation and quality check of the KSPI K2 estimation pipeline.
 - ✅ Visualization label overlap - Fixed formatting
 
 ### Pending Validation
-- [ ] Run pre-estimation validation on DAG
-- [ ] Run post-estimation validation on EdgeCards
-- [ ] Check report consistency
+- [x] Run pre-estimation validation on DAG
+- [x] Run post-estimation validation on EdgeCards
+- [x] Check report consistency
+
+## Iteration 1 Changes
+
+1. Filled missing `treatment_unit` / `outcome_unit` and sample-size fields in EdgeCards (identity, bridge, immutable, sector panel).
+2. Labeled reaction-function EdgeCards to forbid `policy_counterfactual` use.
+3. Made the annual robustness table use annual EdgeCard IDs (e.g., `*_annual`) so report checks can match values to cards.
+4. Completed Unit Normalization table coverage for annual robustness variants.
+5. Fixed `shared/agentic/report_checker.py` so mismatches are correctly detected (no truthiness bug) and matching is rounding-aware.
+6. Archived legacy/non-DAG EdgeCards (old DAG hash) under `outputs/agentic/cards/edge_cards/_legacy/`.
+
+## Validation Results (Iteration 1)
+
+1. Pre-estimation (`config/agentic/dags/kspi_k2_full.yaml`): PASSED (0 errors, 0 warnings)
+2. Post-estimation (EdgeCards): PASSED (0 errors); remaining warnings:
+   - `vix_to_fx` sign inconsistency (expected +, got -)
+   - `cpi_to_nbk_rate` sign inconsistency (expected +, got -)
+3. Report consistency (`outputs/agentic/KSPI_K2_REAL_ESTIMATION_REPORT.md`): PASSED (0 errors, 0 warnings)
+4. Re-estimation spot-check (sign warnings): re-ran `vix_to_fx` and `cpi_to_nbk_rate`; estimates unchanged
 
 ## Next Steps
 
-1. Run `python -c "from shared.agentic.validation import DAGValidator; v=DAGValidator.from_yaml('config/agentic/dags/kspi_k2_full.yaml'); print(v.validate_pre_estimation().to_markdown())"`
-2. If issues found, fix them
-3. Run `python scripts/run_real_estimation.py` if re-estimation needed
-4. Check report consistency
-5. Update this file with results
+1. Domain review: decide how to handle the two remaining sign-inconsistency warnings without changing expected signs.
+2. Optional: run a full `python scripts/run_real_estimation.py` refresh to regenerate all artifacts from code (expect timestamp churn).
 
 ## Risks / Blockers
 
