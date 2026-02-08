@@ -1,11 +1,11 @@
 # Codex Estimation Loop Resume
 
 **Last Updated:** 2026-02-08
-**Status:** Iteration 1 complete (validation passing; sign warnings remain)
+**Status:** Iteration 2 complete (validation passing; sign warnings remain)
 
 ## Current Focus
 
-Validation and quality check of the KSPI K2 estimation pipeline (EdgeCards + report consistency).
+Validation and quality check of the KSPI K2 estimation pipeline (EdgeCards + report consistency), with attention on the two remaining sign-inconsistency warnings.
 
 ## Previous Changes (Manual Session)
 
@@ -45,6 +45,19 @@ Validation and quality check of the KSPI K2 estimation pipeline (EdgeCards + rep
    - `cpi_to_nbk_rate` sign inconsistency (expected +, got -)
 3. Report consistency (`outputs/agentic/KSPI_K2_REAL_ESTIMATION_REPORT.md`): PASSED (0 errors, 0 warnings)
 4. Re-estimation spot-check (sign warnings): re-ran `vix_to_fx` and `cpi_to_nbk_rate`; estimates unchanged
+
+## Iteration 2 Changes
+
+1. Re-ran the full validation checklist (pre-estimation DAG checks, post-estimation EdgeCard checks, report consistency): no new errors introduced.
+2. Re-ran targeted re-estimation spot-checks for the two sign-inconsistency edges (`vix_to_fx`, `cpi_to_nbk_rate`): estimates unchanged.
+
+## Validation Results (Iteration 2)
+
+1. Pre-estimation (`config/agentic/dags/kspi_k2_full.yaml`): PASSED (0 errors, 0 warnings)
+2. Post-estimation (EdgeCards): PASSED (0 errors); remaining warnings:
+   - `vix_to_fx` sign inconsistency (expected +, got -0.0324)
+   - `cpi_to_nbk_rate` sign inconsistency (expected +, got -0.5353)
+3. Report consistency (`outputs/agentic/KSPI_K2_REAL_ESTIMATION_REPORT.md`): PASSED (0 errors, 0 warnings)
 
 ## Next Steps
 
