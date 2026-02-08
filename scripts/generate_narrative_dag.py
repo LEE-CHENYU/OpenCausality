@@ -122,15 +122,47 @@ def _build_dag(base_dag: Any, proposed_edges: list[Any], new_nodes: list[Any]) -
     """Build a new DAGSpec from proposed edges and new nodes."""
     from shared.agentic.dag.parser import DAGMetadata, DAGSpec, EdgeSpec
 
+    new_node_map = {n.id: n for n in new_nodes}
+
+    # Resolve empty from_node/to_node using requires_new_nodes
+    for pe in proposed_edges:
+        if not pe.to_node and pe.requires_new_nodes:
+            candidate = _canonical_id(pe.requires_new_nodes[0])
+            if candidate in new_node_map:
+                pe.to_node = candidate
+        if not pe.from_node and pe.requires_new_nodes:
+            candidate = _canonical_id(pe.requires_new_nodes[-1])
+            if candidate in new_node_map:
+                pe.from_node = candidate
+
+    # Drop edges with unresolved empty endpoints
+    proposed_edges = [pe for pe in proposed_edges if pe.from_node and pe.to_node]
+
     referenced_ids: set[str] = set()
     for pe in proposed_edges:
-        referenced_ids.add(pe.from_node)
+        # Handle multi-input from_node like "ppop_kspi + cor_kspi"
+        for part in pe.from_node.split(" + "):
+            referenced_ids.add(part.strip())
         referenced_ids.add(pe.to_node)
 
     existing_node_map = {n.id: n for n in base_dag.nodes}
-    nodes = [existing_node_map[nid] for nid in referenced_ids if nid in existing_node_map]
-    new_node_map = {n.id: n for n in new_nodes}
-    for nid in referenced_ids:
+
+    # Transitively include nodes referenced by depends_on / identity
+    def _collect_deps(nid: str, collected: set[str]) -> None:
+        if nid not in existing_node_map:
+            return
+        node = existing_node_map[nid]
+        for dep in getattr(node, "depends_on", []) or []:
+            if dep not in collected:
+                collected.add(dep)
+                _collect_deps(dep, collected)
+
+    all_ids = set(referenced_ids)
+    for nid in list(referenced_ids):
+        _collect_deps(nid, all_ids)
+
+    nodes = [existing_node_map[nid] for nid in all_ids if nid in existing_node_map]
+    for nid in all_ids:
         if nid not in existing_node_map and nid in new_node_map:
             nodes.append(new_node_map[nid])
 

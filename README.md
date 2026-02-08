@@ -43,12 +43,17 @@ opencausality monitor
 ### Prerequisites
 
 - Python 3.10+
-- An Anthropic API key (for LLM features) or any LiteLLM-compatible provider
+- One of: Anthropic API key, OpenAI API key (via LiteLLM), or `codex`/`claude` CLI installed (no key needed)
 - Panel data in CSV or Parquet format
 
-Running `opencausality init` generates a `.env` file. At minimum set
-`ANTHROPIC_API_KEY=sk-ant-...`. Optional: `SEMANTIC_SCHOLAR_API_KEY`,
-`LLM_PROVIDER=litellm`, `LLM_MODEL=claude-sonnet-4-20250514`.
+Running `opencausality init` generates a `.env` file. LLM provider options:
+- `LLM_PROVIDER=anthropic` with `ANTHROPIC_API_KEY=sk-ant-...`
+- `LLM_PROVIDER=litellm` with `OPENAI_API_KEY=sk-...` (routes through LiteLLM)
+- `LLM_PROVIDER=codex` (default) -- shells out to `codex exec`, no API key needed
+- `LLM_PROVIDER=claude_cli` -- shells out to `claude -p`, no API key needed
+
+If `LLM_PROVIDER=anthropic` but no API key is set, the system auto-falls back to
+the codex CLI provider with a warning.
 
 ---
 
@@ -65,10 +70,12 @@ constrain the estimation engine. The causal model is an explicit, version-contro
 artifact, not something implicit in the code.
 
 The estimation engine processes each edge independently through a unified adapter
-registry. Seven adapters cover all design types: Local Projections with Newey-West HAC
-standard errors, Panel LP with exposure-shift FE, IV 2SLS with first-stage diagnostics,
-Difference-in-Differences with TWFE and pre-trend tests, Immutable Evidence, Accounting
-Bridge, and Identity sensitivities. Each adapter implements a common
+registry. Eleven adapters cover all design types: Local Projections with Newey-West HAC
+standard errors, Panel LP with exposure-shift FE, Panel FE Backdoor with entity/time
+fixed effects (via `linearmodels.PanelOLS`), IV 2SLS with first-stage diagnostics,
+Difference-in-Differences with TWFE and pre-trend tests, Regression Discontinuity (RDD),
+Regression Kink Design (RKD) with local-linear WLS, Synthetic Control, Immutable
+Evidence, Accounting Bridge, and Identity sensitivities. Each adapter implements a common
 `EstimationRequest -> estimate() -> EstimationResult` interface, so new estimation
 methods plug in without touching dispatch code. Data assembly, control set construction
 from DAG conditional independence structure, and impulse response functions at multiple
@@ -87,21 +94,33 @@ report with credibility ratings, and a hash-chained JSONL audit log.
 
 1. **DAG Specification** -- Define nodes and edges in YAML with expected signs,
    identification strategies, lag structures, and unit specs.
-2. **Data Scout** -- Catalog datasets, match variables to DAG nodes, assemble
-   estimation-ready panels (CSV/Parquet, automatic frequency detection).
-3. **Paper Scout** -- Search Semantic Scholar for literature supporting or challenging
-   each edge. Citations attached to EdgeCards with relevance scores.
-4. **Design Selection** -- Check back-door/front-door criteria for each edge; flag
+2. **Auto-Ingest** -- Any files dropped in `data/raw/` are automatically profiled,
+   standardized to Parquet, and registered as node loaders before estimation begins.
+3. **Data Scout** -- Catalog datasets, match variables to DAG nodes, assemble
+   estimation-ready panels (CSV/Parquet, automatic frequency detection). When
+   auto-download fails, actionable guidance is logged telling users which files to
+   drop and in what format.
+4. **Paper Scout** -- Search Semantic Scholar, OpenAlex, CORE, and arXiv for
+   literature supporting or challenging each edge. When a local PDF is available,
+   full-text extraction via pymupdf/pypdf feeds richer causal claims to the LLM.
+   Citations attached to EdgeCards with relevance scores.
+5. **Design Selection** -- Check back-door/front-door criteria for each edge; flag
    edges where identification is absent.
-5. **Estimation** -- Adapter registry dispatches to the appropriate estimator
-   (LP, Panel LP, IV 2SLS, DID, Immutable, Accounting Bridge, Identity).
+6. **Estimation** -- Adapter registry dispatches to the appropriate estimator
+   (LP, Panel LP, Panel FE Backdoor, IV 2SLS, DID, RDD, Regression Kink,
+   Synthetic Control, Immutable, Accounting Bridge, Identity).
    Controls derived from DAG structure. HAC standard errors at multiple horizons.
-6. **Issue Detection** -- 29 rules flag overclaiming, control shopping, null dropping,
+7. **DAG Auto-Repair** -- LLM-assisted validation loop that detects and fixes DAG
+   errors (invalid edge IDs, missing dependencies) up to 3 attempts before
+   falling back to human review. Governed by PatchPolicy.
+8. **Issue Detection** -- 29 rules flag overclaiming, control shopping, null dropping,
    specification drift, timing failures. Each produces a typed issue with severity.
-7. **HITL Review** -- Flagged issues surfaced in an interactive HTML panel. Analyst
-   selects action (accept, reject, revise, escalate) with justification.
-8. **System Report** -- Aggregated results with per-edge credibility ratings, DAG
-   assessment, and literature links. Output as markdown.
+9. **PatchBot Auto-Fix** -- Auto-fixable issues (e.g., missing edge units) are
+   repaired by PatchBot within policy constraints. Fixes are logged in the audit trail.
+10. **HITL Review** -- Flagged issues surfaced in an interactive HTML panel. Analyst
+    selects action (accept, reject, revise, escalate) with justification.
+11. **System Report** -- Aggregated results with per-edge credibility ratings, DAG
+    assessment, and literature links. Output as markdown.
 
 ---
 
@@ -369,13 +388,16 @@ shared/
 │   ├── ts_guard.py       # Time-series validator (stationarity, cointegration)
 │   └── agent_loop.py     # Main orchestrator
 ├── engine/               # Estimation engine
-│   ├── adapters/         #   Adapter registry (LP, Panel LP, IV 2SLS, DID,
+│   ├── adapters/         #   Adapter registry (LP, Panel LP, Panel FE Backdoor,
+│   │                     #     IV 2SLS, DID, RDD, Regression Kink, Synthetic Control,
 │   │                     #     Immutable, Identity, Accounting Bridge)
 │   ├── ts_estimator.py   #   LP estimator, HAC SE, accounting bridge
 │   ├── panel_estimator.py #  Panel LP with exposure-shift FE
 │   └── data_assembler.py #   Edge data assembly, node loaders
 ├── llm/                  # LLM abstraction layer
-│   ├── client.py         #   LLMClient ABC, AnthropicClient, LiteLLMClient
+│   ├── client.py         #   LLMClient ABC, AnthropicClient, LiteLLMClient,
+│   │                     #     CodexCLIClient (shells out to codex/claude CLI)
+│   ├── pdf_extractor.py  #   PDF text extraction + LLM causal claim extraction
 │   └── prompts.py        #   Prompt templates for extraction and matching
 └── data/                 # Data clients (kz_bank_panel, etc.)
 
@@ -408,9 +430,10 @@ examples/                     # Example narratives and tutorial data
 ### Key Design Decisions
 
 **Adapter registry for estimation.** All estimation flows through
-`EstimationRequest → Adapter.estimate() → EstimationResult`. Seven adapters cover
-LP, Panel LP, IV 2SLS, DID, Immutable, Accounting Bridge, and Identity designs.
-New estimators plug in by subclassing `EstimatorAdapter` and registering.
+`EstimationRequest → Adapter.estimate() → EstimationResult`. Eleven adapters cover
+LP, Panel LP, Panel FE Backdoor, IV 2SLS, DID, RDD, Regression Kink, Synthetic
+Control, Immutable, Accounting Bridge, and Identity designs. New estimators plug in
+by subclassing `EstimatorAdapter` and registering.
 
 **Dataclasses over Pydantic.** Avoids heavy dependencies; serialization is explicit
 via dedicated reader/writer functions.
@@ -421,8 +444,10 @@ append-only (JSONL). EdgeCards serve both roles (YAML).
 **Hash chains over databases.** File-based hash chains for portability -- the entire
 audit trail can be committed to git with no infrastructure dependency.
 
-**LLM abstraction layer.** `LLMClient` ABC with Anthropic (default) and LiteLLM
-(OpenAI, Cohere, etc.) implementations. Switching requires one environment variable.
+**LLM abstraction layer.** `LLMClient` ABC with four implementations: Anthropic
+(direct API), LiteLLM (OpenAI, Cohere, etc.), CodexCLI (`codex exec`), and
+ClaudeCLI (`claude -p`). Switching requires one environment variable. If Anthropic
+is selected but no API key is found, the factory auto-falls back to the codex CLI.
 
 ---
 
@@ -456,9 +481,13 @@ opencausality loop stop
 
 ### Provider Support
 
-Agents support two providers via the `--provider` flag:
-- **codex** (default): Uses `codex exec` with full-auto mode
-- **claude**: Uses `claude -p` with scoped tool permissions
+Agents support multiple LLM providers via `LLM_PROVIDER` in `.env`:
+- **codex** (default): Shells out to `codex exec` with full-auto mode, no API key needed
+- **claude_cli**: Shells out to `claude -p`, no API key needed
+- **anthropic**: Direct Anthropic API calls (requires `ANTHROPIC_API_KEY`)
+- **litellm**: Routes through LiteLLM to any supported provider (OpenAI, Cohere, etc.)
+
+If `anthropic` is selected but no key is found, auto-falls back to `codex`.
 
 ### Guardrails
 
@@ -612,6 +641,52 @@ intervals for propagated effects.
 
 ---
 
+## Recent Changes (v0.3.0)
+
+### New Features
+
+- **Panel FE Backdoor adapter** -- Dedicated panel fixed-effects estimator using
+  `linearmodels.PanelOLS` with entity+time FE and clustered standard errors.
+  Previously, `PANEL_FE_BACKDOOR` incorrectly reused the time-series `LPAdapter`.
+- **Regression Kink adapter** -- Estimates slope changes at kink points using
+  local-linear WLS with triangular kernel weighting. Previously had no adapter.
+- **Multi-provider LLM layer** -- Added `CodexCLIClient` (shells out to `codex exec`)
+  and `ClaudeCLIClient` (shells out to `claude -p`) alongside existing Anthropic and
+  LiteLLM backends. Auto-fallback when no API key is available.
+- **PDF-to-claims extraction** -- PaperScout now feeds downloaded PDFs through the LLM
+  for full-text causal claim extraction (pymupdf with pypdf fallback), rather than
+  relying solely on abstracts.
+- **User data guidance** -- When DataScout cannot auto-fetch data for a node, actionable
+  guidance is logged: file format, expected columns, and the `opencausality data ingest`
+  command to run after dropping files in `data/raw/`.
+- **Auto-ingest at startup** -- `run()` now calls `auto_ingest()` before estimation,
+  automatically profiling and registering any user-dropped files in `data/raw/`.
+- **DAG auto-repair** -- LLM-assisted validation loop detects and fixes DAG errors
+  (invalid edge IDs, missing node specs) with up to 3 repair attempts, governed by
+  PatchPolicy.
+- **Robust PDF parser** -- `PaperParser` now uses a 3-tier fallback (pymupdf -> pypdf ->
+  plain text) instead of crashing on non-PDF or corrupted files.
+
+### Bug Fixes
+
+- Fixed `_run_data_scout()` referencing non-existent `scout_report.download_paths`.
+  Now correctly iterates `scout_report.results` to register loaders from downloads.
+- Fixed `_attempt_dag_auto_repair()` passing `issue_key` (a computed property) as a
+  constructor argument to `Issue()`. Now uses proper fields (`run_id`, `rule_id`, `scope`).
+- Fixed `WelfareSimulator` test signatures: tests now call `simulate_scenario()` with
+  proper study types instead of the base class `simulate()` method.
+
+### Test Coverage
+
+- 34 new unit tests across 5 test files: agent loop (8), issue/PatchBot (7),
+  LLM providers (9), Panel FE adapter (3), Regression Kink adapter (4),
+  PDF parser (3).
+- Full test suite: 165 passing tests.
+- End-to-end pipeline verified: 100% estimate match (20/20 edges) between agentic
+  pipeline and expert manual baseline on KSPI K2 DAG.
+
+---
+
 ## Vision & Roadmap
 
 OpenCausality treats causal models as first-class software artifacts — versioned,
@@ -708,8 +783,12 @@ implements `EstimatorAdapter` with a single `estimate(request) -> result` method
 |--------|---------|---------|-------------|
 | LOCAL_PROJECTIONS | LPAdapter | Newey-West LP | HAC SE, IRF at h=0..6 |
 | PANEL_LP_EXPOSURE_FE | PanelLPAdapter | Panel LP | Entity/time FE, clustered SE |
+| PANEL_FE_BACKDOOR | PanelFEBackdoorAdapter | linearmodels PanelOLS | Entity+time FE, clustered SE, within-R2 |
 | IV_2SLS | IV2SLSAdapter | linearmodels IV2SLS | First-stage F, Sargan test |
 | DID_EVENT_STUDY | DIDEventStudyAdapter | linearmodels PanelOLS | Pre-trend test, TWFE |
+| RDD | RDDAdapter | Local-linear WLS | McCrary density test, bandwidth sensitivity |
+| REGRESSION_KINK | RegressionKinkAdapter | Local-linear WLS | Density test at kink, bandwidth sensitivity |
+| SYNTHETIC_CONTROL | SynthControlAdapter | Weighted donor pool | Pre-treatment RMSPE |
 | IMMUTABLE_EVIDENCE | ImmutableAdapter | Validated evidence | Source block provenance |
 | ACCOUNTING_BRIDGE | AccountingBridgeAdapter | Deterministic | Sensitivity at current values |
 | IDENTITY | IdentityAdapter | Partial derivatives | Mechanical formula |

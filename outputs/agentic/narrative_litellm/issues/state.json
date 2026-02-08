@@ -1,0 +1,29 @@
+{
+  "last_updated": "2026-02-08T17:25:55.671902+00:00",
+  "baseline_run_id": "",
+  "baseline_mode": "",
+  "baseline_dag_hash": "",
+  "issues": {
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:real_expenditure_pos__marketplace_revenue_kspi": {
+      "status": "OPEN",
+      "opened_run": "046af382",
+      "severity": "CRITICAL",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0102 but claim_level=REDUCED_FORM. Significance does not establish causation."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:ppop_kspi_minus_provisions_to_total_capital_kspi": {
+      "status": "OPEN",
+      "opened_run": "046af382",
+      "severity": "CRITICAL",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0000 but claim_level=BLOCKED_ID. Significance does not establish causation."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:nbk_rate_to_deposit_cost": {
+      "status": "OPEN",
+      "opened_run": "046af382",
+      "severity": "CRITICAL",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0003 but claim_level=BLOCKED_ID. Significance does not establish causation."
+    }
+  }
+}

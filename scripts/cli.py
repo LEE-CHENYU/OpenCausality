@@ -377,6 +377,11 @@ def dag_run(
         "--verbose", "-v",
         help="Verbose output",
     ),
+    force: bool = typer.Option(
+        False,
+        "--force", "-f",
+        help="Continue despite DAG validation errors (treat as warnings)",
+    ),
 ):
     """
     Run a DAG specification through the agentic estimation loop.
@@ -418,10 +423,15 @@ def dag_run(
         validation = validate_dag(dag, raise_on_error=False)
 
         if not validation.is_valid:
-            console.print("[bold red]DAG validation failed![/bold red]")
-            for issue in validation.errors():
-                console.print(f"  [red]ERROR[/red] {issue.location}: {issue.message}")
-            raise typer.Exit(1)
+            if force:
+                console.print("[bold yellow]DAG validation errors (--force: continuing anyway):[/bold yellow]")
+                for issue in validation.errors():
+                    console.print(f"  [yellow]WARN[/yellow] {issue.location}: {issue.message}")
+            else:
+                console.print("[bold red]DAG validation failed![/bold red]")
+                for issue in validation.errors():
+                    console.print(f"  [red]ERROR[/red] {issue.location}: {issue.message}")
+                raise typer.Exit(1)
 
         if validation.warnings():
             for issue in validation.warnings():
@@ -434,6 +444,7 @@ def dag_run(
             mode=mode,
             max_iterations=max_iterations,
             output_dir=output_dir or Path("outputs/agentic"),
+            force_run=force,
         )
 
         # Run loop

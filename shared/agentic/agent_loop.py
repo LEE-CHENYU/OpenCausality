@@ -101,6 +101,9 @@ class AgentLoopConfig:
     # Notifications
     auto_open_browser: bool = False
 
+    # Skip strict validation (for NL-generated DAGs)
+    force_run: bool = False
+
 
 @dataclass
 class DataCatalog:
@@ -300,9 +303,13 @@ class AgentLoop:
         if not self.validation_report.is_valid:
             self.validation_report = self._attempt_dag_auto_repair(self.validation_report)
             if not self.validation_report.is_valid:
-                logger.error("DAG validation failed (after auto-repair attempts)")
-                logger.error(self.validation_report.summary())
-                return self._create_error_report("DAG validation failed")
+                if self.config.force_run:
+                    logger.warning("DAG validation failed but force_run=True, continuing")
+                    logger.warning(self.validation_report.summary())
+                else:
+                    logger.error("DAG validation failed (after auto-repair attempts)")
+                    logger.error(self.validation_report.summary())
+                    return self._create_error_report("DAG validation failed")
 
         # Phase 1: DataScout
         self._run_data_scout()
@@ -618,7 +625,7 @@ class AgentLoop:
                 return report
 
             applied_any = False
-            for error in report.errors:
+            for error in report.errors():
                 error_type = getattr(error, "error_type", "") or ""
                 handler_action = self._VALIDATION_ERROR_HANDLERS.get(error_type)
                 if handler_action is None:

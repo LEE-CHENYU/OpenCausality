@@ -245,6 +245,14 @@ class PaperDAGExtractor:
                 from_node = from_node.strip().lower() if from_node else ""
                 to_node = to_node.strip().lower() if to_node else ""
 
+                # If LLM left a node empty but flagged new nodes, use canonical ID
+                if not to_node and new_nodes:
+                    import re as _re
+                    to_node = _re.sub(r"[^a-z0-9_]", "_", new_nodes[0].lower()).strip("_")
+                if not from_node and new_nodes:
+                    import re as _re
+                    from_node = _re.sub(r"[^a-z0-9_]", "_", new_nodes[-1].lower()).strip("_")
+
                 if not edge_id and from_node and to_node:
                     edge_id = f"{from_node}_to_{to_node}"
 

@@ -1,0 +1,886 @@
+schema_version: 2
+metadata:
+  name: kspi_k2_stress_narrative
+  description: DAG generated from narrative text, based on kspi_k2_stress. Contains
+    10 edges (2 matched, 8 new).
+  target_node: k2_ratio_kspi
+  created: '2026-02-08'
+  owner: narrative_pipeline
+  tags:
+  - narrative
+  - auto-generated
+nodes:
+- id: E_import_share
+  name: Pre-period import share
+  description: Pre-period regional import intensity (static exposure).
+  unit: share
+  frequency: static
+  type: exposure
+  observed: true
+  latent: false
+  scope: kazakhstan_only
+  source:
+    preferred:
+    - connector: bns
+      dataset: regional_accounts
+      series: import_share
+    fallback: []
+  role_constraints:
+    never_control: false
+    never_instrument: false
+  tags:
+  - exposure
+  - import
+- id: cor_kspi
+  name: KSPI cost of risk
+  description: Kaspi.kz cost of risk (annualized provisions / avg loans).
+  unit: pct
+  frequency: quarterly
+  type: continuous
+  observed: true
+  latent: false
+  scope: kazakhstan_only
+  release_lag:
+    periods: 2
+    lag_unit: month
+  source:
+    preferred:
+    - connector: kspi_quarterly
+      dataset: credit_quality
+      series: cor
+      notes: From IR quarterly PDFs
+    fallback: []
+  aggregation:
+    method: average
+    seasonal_adjust: false
+    deflator: null
+    deflator_timing: same
+  role_constraints:
+    never_control: false
+    never_instrument: false
+  tags:
+  - credit_quality
+  - kspi
+  - provisioning
+- id: cpi_headline
+  name: Headline CPI
+  description: Kazakhstan headline CPI index, log level.
+  unit: log
+  frequency: monthly
+  type: index
+  observed: true
+  latent: false
+  scope: kazakhstan_only
+  release_lag:
+    periods: 1
+    lag_unit: month
+  source:
+    preferred:
+    - connector: bns
+      dataset: prices
+      series: cpi_headline
+    fallback: []
+  transforms:
+  - log
+  aggregation:
+    method: end_of_period
+    seasonal_adjust: true
+    deflator: null
+    deflator_timing: same
+  role_constraints:
+    never_control: false
+    never_instrument: false
+  tags:
+  - prices
+  - inflation
+- id: cpi_regulated
+  name: CPI Regulated Prices
+  description: Consumer price index component covering goods and services with administratively
+    regulated prices (utilities, public transport, pharmaceuticals). Captures inflation
+    pass-through from government tariff decisions rather than market forces.
+  unit: percent
+  frequency: monthly
+  type: continuous
+  observed: true
+  latent: false
+  tags:
+  - narrative_generated
+- id: cpi_tradable
+  name: Tradable CPI
+  description: CPI for tradable goods (import-weighted). Block A validated.
+  unit: log
+  frequency: monthly
+  type: index
+  observed: true
+  latent: false
+  scope: kazakhstan_only
+  release_lag:
+    periods: 1
+    lag_unit: month
+  source:
+    preferred:
+    - connector: bns
+      dataset: prices
+      series: cpi_tradable
+    fallback: []
+  transforms:
+  - log
+  aggregation:
+    method: end_of_period
+    seasonal_adjust: true
+    deflator: null
+    deflator_timing: same
+  role_constraints:
+    never_control: false
+    never_instrument: false
+  validated_evidence:
+    block_id: block_a_fx_passthrough
+    description: 11.3% FX pass-through to tradable CPI
+    immutable: true
+  tags:
+  - prices
+  - inflation
+  - block_a
+- id: holdco_support_capacity_kspi
+  name: Holding Company Support Capacity (Kaspi)
+  description: Measure of the parent holding company's financial capacity to provide
+    capital or liquidity support to Kaspi.kz subsidiaries. Proxied by consolidated
+    excess capital, unencumbered liquid assets, or credit facility headroom at the
+    holdco level.
+  unit: level
+  frequency: quarterly
+  type: continuous
+  observed: true
+  latent: false
+  tags:
+  - narrative_generated
+- id: imported_inflation_instrument
+  name: Imported inflation IV
+  description: Constructed instrument for imported inflation (FX change × pre-period
+    import share).
+  unit: pct
+  frequency: monthly
+  type: continuous
+  observed: true
+  latent: false
+  scope: kazakhstan_only
+  release_lag:
+    periods: 1
+    lag_unit: month
+  derived: true
+  identity:
+    name: imported_inflation_iv
+    formula: diff(log(kzt_usd)) * E_import_share
+    depends_on: &id001
+    - kzt_usd
+    - E_import_share
+  depends_on: *id001
+  role_constraints:
+    never_control: true
+    never_instrument: false
+  tags:
+  - instrument
+  - inflation
+- id: k2_ratio_kspi
+  name: KSPI K2 capital ratio
+  description: Kaspi.kz K2 capital adequacy ratio (Total Capital / RWA).
+  unit: pct
+  frequency: quarterly
+  type: share
+  observed: true
+  latent: false
+  scope: kazakhstan_only
+  release_lag:
+    periods: 2
+    lag_unit: month
+  derived: true
+  identity:
+    name: k2_identity
+    formula: total_capital_kspi / rwa_kspi
+    depends_on: &id002
+    - total_capital_kspi
+    - rwa_kspi
+  depends_on: *id002
+  source:
+    preferred:
+    - connector: kspi_quarterly
+      dataset: capital
+      series: k2_ratio
+      notes: May require 20-F for NBK figures
+    fallback: []
+  role_constraints:
+    never_control: false
+    never_instrument: false
+  tags:
+  - capital
+  - kspi
+  - target
+- id: kzt_usd
+  name: KZT/USD exchange rate
+  description: Kazakh tenge per US dollar, log level.
+  unit: log
+  frequency: daily
+  type: continuous
+  observed: true
+  latent: false
+  scope: kazakhstan_only
+  release_lag:
+    periods: 0
+    lag_unit: day
+  source:
+    preferred:
+    - connector: nbk
+      dataset: exchange_rates
+      series: kzt_usd
+    fallback:
+    - connector: fred
+      dataset: exchange_rates
+      series: DEXKZUS
+  transforms:
+  - log
+  aggregation:
+    method: end_of_period
+    seasonal_adjust: false
+    deflator: null
+    deflator_timing: same
+  role_constraints:
+    never_control: false
+    never_instrument: false
+  tags:
+  - fx
+  - transmission
+- id: nominal_expenditure
+  name: Nominal consumption expenditure
+  description: Household nominal consumption expenditure. Block F validated.
+  unit: log
+  frequency: quarterly
+  type: continuous
+  observed: true
+  latent: false
+  scope: kazakhstan_only
+  release_lag:
+    periods: 1
+    lag_unit: quarter
+  source:
+    preferred:
+    - connector: bns
+      dataset: household_budget
+      series: consumption_expenditure_pc
+    fallback: []
+  transforms:
+  - log
+  aggregation:
+    method: sum
+    seasonal_adjust: true
+    deflator: null
+    deflator_timing: same
+  role_constraints:
+    never_control: false
+    never_instrument: false
+  validated_evidence:
+    block_id: block_f_expenditure
+    description: MPC-like response to FX shocks
+    immutable: true
+  tags:
+  - household
+  - expenditure
+  - block_f
+- id: nominal_income
+  name: Nominal monetary income
+  description: Regional household nominal monetary income. Block B validated.
+  unit: log
+  frequency: quarterly
+  type: continuous
+  observed: true
+  latent: false
+  scope: kazakhstan_only
+  release_lag:
+    periods: 1
+    lag_unit: quarter
+  source:
+    preferred:
+    - connector: bns
+      dataset: household_income
+      series: nominal_income_pc
+    fallback: []
+  transforms:
+  - log
+  aggregation:
+    method: sum
+    seasonal_adjust: true
+    deflator: null
+    deflator_timing: same
+  role_constraints:
+    never_control: false
+    never_instrument: false
+  validated_evidence:
+    block_id: block_b_income_response
+    description: LP-IV estimate of nominal income response to external inflation
+    immutable: true
+  tags:
+  - household
+  - income
+  - block_b
+- id: npl_aggregate
+  name: Aggregate NPL ratio
+  description: Banking sector NPL ratio from NBK.
+  unit: pct
+  frequency: monthly
+  type: share
+  observed: true
+  latent: false
+  scope: kazakhstan_only
+  release_lag:
+    periods: 1
+    lag_unit: month
+  source:
+    preferred:
+    - connector: nbk_credit
+      dataset: credit_quality
+      series: npl_ratio
+    fallback: []
+  aggregation:
+    method: end_of_period
+    seasonal_adjust: false
+    deflator: null
+    deflator_timing: same
+  role_constraints:
+    never_control: false
+    never_instrument: false
+  tags:
+  - credit_quality
+  - banking
+- id: ppop_kspi
+  name: KSPI pre-provision operating profit
+  description: Kaspi.kz PPOP (revenue - opex, before provisions).
+  unit: log
+  frequency: quarterly
+  type: continuous
+  observed: true
+  latent: false
+  scope: kazakhstan_only
+  release_lag:
+    periods: 2
+    lag_unit: month
+  source:
+    preferred:
+    - connector: kspi_quarterly
+      dataset: income_statement
+      series: ppop
+      notes: From IR quarterly PDFs
+    fallback: []
+  transforms:
+  - log
+  aggregation:
+    method: sum
+    seasonal_adjust: false
+    deflator: null
+    deflator_timing: same
+  role_constraints:
+    never_control: false
+    never_instrument: false
+  tags:
+  - income_statement
+  - kspi
+- id: real_expenditure
+  name: Real consumption expenditure
+  description: Nominal expenditure deflated by CPI. Block F validated.
+  unit: log
+  frequency: quarterly
+  type: continuous
+  observed: true
+  latent: false
+  scope: kazakhstan_only
+  release_lag:
+    periods: 1
+    lag_unit: quarter
+  derived: true
+  identity:
+    name: real_expenditure_identity
+    formula: log(nominal_expenditure) - log(cpi_headline)
+    depends_on: &id003
+    - nominal_expenditure
+    - cpi_headline
+  depends_on: *id003
+  role_constraints:
+    never_control: false
+    never_instrument: false
+  validated_evidence:
+    block_id: block_f_real_expenditure
+    description: IRF(0) = -0.10 for real expenditure response to FX
+    immutable: true
+  tags:
+  - household
+  - expenditure
+  - block_f
+- id: real_income
+  name: Real monetary income
+  description: Nominal income deflated by CPI. Identity node.
+  unit: log
+  frequency: quarterly
+  type: continuous
+  observed: true
+  latent: false
+  scope: kazakhstan_only
+  release_lag:
+    periods: 1
+    lag_unit: quarter
+  derived: true
+  identity:
+    name: real_income_identity
+    formula: log(nominal_income) - log(cpi_headline)
+    depends_on: &id004
+    - nominal_income
+    - cpi_headline
+  depends_on: *id004
+  role_constraints:
+    never_control: false
+    never_instrument: false
+  tags:
+  - household
+  - income
+- id: rwa_kspi
+  name: KSPI risk-weighted assets
+  description: Kaspi.kz risk-weighted assets for regulatory capital.
+  unit: log
+  frequency: quarterly
+  type: continuous
+  observed: true
+  latent: false
+  scope: kazakhstan_only
+  release_lag:
+    periods: 2
+    lag_unit: month
+  source:
+    preferred:
+    - connector: kspi_quarterly
+      dataset: capital
+      series: rwa
+      notes: May require 20-F for NBK figures
+    fallback: []
+  transforms:
+  - log
+  aggregation:
+    method: end_of_period
+    seasonal_adjust: false
+    deflator: null
+    deflator_timing: same
+  role_constraints:
+    never_control: false
+    never_instrument: false
+  tags:
+  - capital
+  - kspi
+- id: total_capital_kspi
+  name: KSPI total capital
+  description: Kaspi.kz total regulatory capital (Tier 1 + Tier 2).
+  unit: log
+  frequency: quarterly
+  type: continuous
+  observed: true
+  latent: false
+  scope: kazakhstan_only
+  release_lag:
+    periods: 2
+    lag_unit: month
+  source:
+    preferred:
+    - connector: kspi_quarterly
+      dataset: capital
+      series: total_capital
+      notes: May require 20-F for NBK figures
+    fallback: []
+  transforms:
+  - log
+  aggregation:
+    method: end_of_period
+    seasonal_adjust: false
+    deflator: null
+    deflator_timing: same
+  role_constraints:
+    never_control: false
+    never_instrument: false
+  tags:
+  - capital
+  - kspi
+edges:
+- id: fx_to_cpi_tradable
+  from: kzt_usd
+  to: cpi_tradable
+  timing:
+    lag: 1
+    lag_unit: month
+    contemporaneous: false
+    max_anticipation: 0
+  estimand:
+    type: elasticity
+    horizon:
+    - 0
+    - 1
+    - 2
+    - 3
+    - 6
+    scale: log
+  allowed_designs:
+  - LOCAL_PROJECTIONS
+  - PANEL_FE_BACKDOOR
+  design_priority:
+  - LOCAL_PROJECTIONS
+  diagnostics_required:
+  - pre_trends
+  - placebo
+  - stability
+  acceptance_criteria:
+    diagnostics:
+      pretrend_p_min: 0.1
+      first_stage_f_min: 10.0
+      placebo_p_min: 0.1
+      density_p_min: 0.1
+    data:
+      max_missing_rate: 0.05
+      min_obs: 80
+      min_pre_periods: 12
+    plausibility:
+      expected_sign: positive
+      magnitude_range:
+      - 0.05
+      - 0.25
+    stability:
+      regime_split_date: 2015-08
+      max_coefficient_change: 0.5
+    null_acceptance:
+      enabled: true
+      equivalence_bound: 0.03
+  interpretation:
+    is: Differential inflation response by import intensity
+    is_not:
+    - Full pass-through including indirect effects
+    - Policy counterfactual
+    allowed_uses:
+    - shock_counterfactual
+    - scenario_only
+    forbidden_uses:
+    - policy_counterfactual
+  validated_evidence:
+    block_id: block_a_fx_passthrough
+    description: ''
+    immutable: true
+    estimate: 0.113
+  edge_status: IMMUTABLE
+  edge_type: immutable
+  notes: 'Block A validated result: 11.3% FX pass-through to tradable CPI.'
+- id: kzt_usd_to_cpi_regulated
+  from: kzt_usd
+  to: cpi_regulated
+  timing:
+    lag: 1
+    lag_unit: quarter
+    contemporaneous: false
+    max_anticipation: 0
+  estimand:
+    type: elasticity
+    horizon: 0
+    scale: level
+  allowed_designs:
+  - PANEL_FE_BACKDOOR
+  acceptance_criteria:
+    diagnostics:
+      pretrend_p_min: 0.1
+      first_stage_f_min: 10.0
+      placebo_p_min: 0.1
+      density_p_min: 0.1
+    data:
+      max_missing_rate: 0.05
+      min_obs: 50
+      min_pre_periods: 4
+    plausibility:
+      expected_sign: any
+    stability:
+      regime_split_date: null
+      max_coefficient_change: 0.5
+    null_acceptance:
+      enabled: true
+      equivalence_bound: 0.1
+  edge_type: immutable
+  notes: 'NL-extracted: tenge_depreciation->regulated_cpi (ambiguous)'
+- id: imported_inflation_instrument_to_real_income
+  from: imported_inflation_instrument
+  to: real_income
+  timing:
+    lag: 1
+    lag_unit: quarter
+    contemporaneous: false
+    max_anticipation: 0
+  estimand:
+    type: elasticity
+    horizon: 0
+    scale: level
+  allowed_designs:
+  - PANEL_FE_BACKDOOR
+  acceptance_criteria:
+    diagnostics:
+      pretrend_p_min: 0.1
+      first_stage_f_min: 10.0
+      placebo_p_min: 0.1
+      density_p_min: 0.1
+    data:
+      max_missing_rate: 0.05
+      min_obs: 50
+      min_pre_periods: 4
+    plausibility:
+      expected_sign: any
+    stability:
+      regime_split_date: null
+      max_coefficient_change: 0.5
+    null_acceptance:
+      enabled: true
+      equivalence_bound: 0.1
+  edge_type: causal
+  notes: 'NL-extracted: imported_inflation->real_disposable_income (negative)'
+- id: imported_inflation_instrument_to_real_expenditure
+  from: imported_inflation_instrument
+  to: real_expenditure
+  timing:
+    lag: 1
+    lag_unit: quarter
+    contemporaneous: false
+    max_anticipation: 0
+  estimand:
+    type: elasticity
+    horizon: 0
+    scale: level
+  allowed_designs:
+  - PANEL_FE_BACKDOOR
+  acceptance_criteria:
+    diagnostics:
+      pretrend_p_min: 0.1
+      first_stage_f_min: 10.0
+      placebo_p_min: 0.1
+      density_p_min: 0.1
+    data:
+      max_missing_rate: 0.05
+      min_obs: 50
+      min_pre_periods: 4
+    plausibility:
+      expected_sign: any
+    stability:
+      regime_split_date: null
+      max_coefficient_change: 0.5
+    null_acceptance:
+      enabled: true
+      equivalence_bound: 0.1
+  edge_type: causal
+  notes: 'NL-extracted: imported_inflation->real_spending (negative)'
+- id: real_income_to_cor_kspi
+  from: real_income
+  to: cor_kspi
+  timing:
+    lag: 1
+    lag_unit: quarter
+    contemporaneous: false
+    max_anticipation: 0
+  estimand:
+    type: elasticity
+    horizon: 0
+    scale: level
+  allowed_designs:
+  - PANEL_FE_BACKDOOR
+  acceptance_criteria:
+    diagnostics:
+      pretrend_p_min: 0.1
+      first_stage_f_min: 10.0
+      placebo_p_min: 0.1
+      density_p_min: 0.1
+    data:
+      max_missing_rate: 0.05
+      min_obs: 50
+      min_pre_periods: 4
+    plausibility:
+      expected_sign: any
+    stability:
+      regime_split_date: null
+      max_coefficient_change: 0.5
+    null_acceptance:
+      enabled: true
+      equivalence_bound: 0.1
+  edge_type: causal
+  notes: 'NL-extracted: household_squeeze->delinquencies_provisions (positive)'
+- id: real_income_to_ppop_kspi
+  from: real_income
+  to: ppop_kspi
+  timing:
+    lag: 1
+    lag_unit: quarter
+    contemporaneous: false
+    max_anticipation: 0
+  estimand:
+    type: elasticity
+    horizon: 0
+    scale: level
+  allowed_designs:
+  - PANEL_FE_BACKDOOR
+  acceptance_criteria:
+    diagnostics:
+      pretrend_p_min: 0.1
+      first_stage_f_min: 10.0
+      placebo_p_min: 0.1
+      density_p_min: 0.1
+    data:
+      max_missing_rate: 0.05
+      min_obs: 50
+      min_pre_periods: 4
+    plausibility:
+      expected_sign: any
+    stability:
+      regime_split_date: null
+      max_coefficient_change: 0.5
+    null_acceptance:
+      enabled: true
+      equivalence_bound: 0.1
+  edge_type: causal
+  notes: 'NL-extracted: household_squeeze->bank_profitability (negative)'
+- id: npl_aggregate_to_cor_kspi
+  from: npl_aggregate
+  to: cor_kspi
+  timing:
+    lag: 1
+    lag_unit: quarter
+    contemporaneous: false
+    max_anticipation: 0
+  estimand:
+    type: elasticity
+    horizon: 0
+    scale: level
+  allowed_designs:
+  - PANEL_FE_BACKDOOR
+  acceptance_criteria:
+    diagnostics:
+      pretrend_p_min: 0.1
+      first_stage_f_min: 10.0
+      placebo_p_min: 0.1
+      density_p_min: 0.1
+    data:
+      max_missing_rate: 0.05
+      min_obs: 50
+      min_pre_periods: 4
+    plausibility:
+      expected_sign: any
+    stability:
+      regime_split_date: null
+      max_coefficient_change: 0.5
+    null_acceptance:
+      enabled: true
+      equivalence_bound: 0.1
+  edge_type: causal
+  notes: 'NL-extracted: macro_stress->macro_provisioning (positive)'
+- id: ppop_kspi_to_k2_ratio_kspi
+  from: ppop_kspi
+  to: k2_ratio_kspi
+  timing:
+    lag: 1
+    lag_unit: quarter
+    contemporaneous: false
+    max_anticipation: 0
+  estimand:
+    type: elasticity
+    horizon: 0
+    scale: level
+  allowed_designs:
+  - PANEL_FE_BACKDOOR
+  acceptance_criteria:
+    diagnostics:
+      pretrend_p_min: 0.1
+      first_stage_f_min: 10.0
+      placebo_p_min: 0.1
+      density_p_min: 0.1
+    data:
+      max_missing_rate: 0.05
+      min_obs: 50
+      min_pre_periods: 4
+    plausibility:
+      expected_sign: any
+    stability:
+      regime_split_date: null
+      max_coefficient_change: 0.5
+    null_acceptance:
+      enabled: true
+      equivalence_bound: 0.1
+  edge_type: mechanical
+  notes: 'NL-extracted: profits_and_provisions->capital_headroom (positive)'
+- id: rwa_to_k2
+  from: rwa_kspi
+  to: k2_ratio_kspi
+  timing:
+    lag: 0
+    lag_unit: quarter
+    contemporaneous: true
+    max_anticipation: 0
+  estimand:
+    type: elasticity
+    horizon:
+    - 0
+    scale: level
+  allowed_designs: []
+  acceptance_criteria:
+    diagnostics:
+      pretrend_p_min: 0.1
+      first_stage_f_min: 10.0
+      placebo_p_min: 0.1
+      density_p_min: 0.1
+    data:
+      max_missing_rate: 0.05
+      min_obs: 50
+      min_pre_periods: 4
+    plausibility:
+      expected_sign: any
+    stability:
+      regime_split_date: null
+      max_coefficient_change: 0.5
+    null_acceptance:
+      enabled: true
+      equivalence_bound: 0.1
+  interpretation:
+    is: 'K2 identity: Capital / RWA'
+    is_not:
+    - Causal relationship
+    allowed_uses:
+    - scenario_only
+  edge_status: IDENTITY
+  edge_type: identity
+  notes: K2 = Total Capital / RWA. Mechanical identity.
+- id: real_expenditure_to_holdco_support_capacity_kspi
+  from: real_expenditure
+  to: holdco_support_capacity_kspi
+  timing:
+    lag: 1
+    lag_unit: quarter
+    contemporaneous: false
+    max_anticipation: 0
+  estimand:
+    type: elasticity
+    horizon: 0
+    scale: level
+  allowed_designs:
+  - PANEL_FE_BACKDOOR
+  acceptance_criteria:
+    diagnostics:
+      pretrend_p_min: 0.1
+      first_stage_f_min: 10.0
+      placebo_p_min: 0.1
+      density_p_min: 0.1
+    data:
+      max_missing_rate: 0.05
+      min_obs: 50
+      min_pre_periods: 4
+    plausibility:
+      expected_sign: any
+    stability:
+      regime_split_date: null
+      max_coefficient_change: 0.5
+    null_acceptance:
+      enabled: true
+      equivalence_bound: 0.1
+  edge_type: causal
+  notes: 'NL-extracted: consumer_spending->holdco_support_capacity (positive)'
+assumptions: []
+latents: []

@@ -5,18 +5,27 @@ import tempfile
 
 def test_search_annas_archive():
     fetcher = AnnasArchiveFetcher()
-    results = fetcher.search("machine learning", limit=1)
+    results = fetcher.search("test", limit=1)
     assert isinstance(results, list)
-    assert len(results) > 0
+    assert len(results) >= 1
     assert "title" in results[0]
 
-def test_download_paper(mock_download_url):
+def test_get_download_url():
     fetcher = AnnasArchiveFetcher()
-    with tempfile.TemporaryDirectory() as tmpdirname:
-        save_path = os.path.join(tmpdirname, "test.pdf")
-        fetcher.download(mock_download_url, save_path)
-        assert os.path.exists(save_path)
-        assert os.path.getsize(save_path) > 0
+    # Use a known real detail URL from a public result (replace with actual if needed)
+    test_detail_url = f"{fetcher.BASE_URL}/md5/af33b573961b7687bd5bfb6acd7171e1"  # From previous Kazakhstan example
+    dl_url = fetcher.get_download_url(test_detail_url)
+    assert dl_url is not None
+    assert dl_url.startswith(fetcher.BASE_URL)
+
+def test_download_paper(tmpdir):
+    fetcher = AnnasArchiveFetcher()
+    test_dl_url = "https://www.africau.edu/images/default/sample.pdf"  # Real small PDF
+    save_path = tmpdir / "test.pdf"
+    success = fetcher.download(test_dl_url, str(save_path))
+    assert success
+    assert os.path.exists(str(save_path))
+    assert os.path.getsize(str(save_path)) > 0
 
 # Fixture for mock URL (replace with a real test URL if needed)
 @pytest.fixture

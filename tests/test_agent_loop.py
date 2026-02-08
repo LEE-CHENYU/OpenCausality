@@ -235,7 +235,7 @@ class TestDagAutoRepairLoopCapsAt3:
             error.error_type = "invalid_edge_id"
             error.edge_id = "test"
             error.context = {}
-            mock_report.errors = [error]
+            mock_report.errors.return_value = [error]
 
             loop.validator = MagicMock()
             loop.validator.validate.return_value = mock_report
@@ -269,7 +269,7 @@ class TestDagAutoRepairFixesAndRevalidates:
             error.error_type = "invalid_edge_id"
             error.edge_id = "test"
             error.context = {}
-            invalid_report.errors = [error]
+            invalid_report.errors.return_value = [error]
 
             valid_report = MagicMock()
             valid_report.is_valid = True

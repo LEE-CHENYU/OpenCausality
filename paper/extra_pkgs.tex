@@ -1,0 +1,58 @@
+\usepackage[export]{adjustbox}
+\usepackage[ruled]{algorithm2e}
+\usepackage[inline, shortlabels]{enumitem}
+\usepackage[T1]{fontenc}
+\usepackage{hyperref}
+\usepackage{microtype}
+\usepackage{pifont}
+\usepackage{xcolor}
+\usepackage{xurl}
+% Figures and Tables
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tabularray}
+\usepackage{subcaption}
+% Monospaced Code Blocks
+\usepackage{listings}
+% Math Packages
+\usepackage{amsmath, amsfonts, amssymb}
+\usepackage{nicefrac}
+
+\UseTblrLibrary{booktabs}
+
+\lstset{
+  backgroundcolor=\color{white},
+  basicstyle=\ttfamily\small,
+  breakatwhitespace=false,
+  breaklines=true,
+  captionpos=b,
+  columns=fullflexible,
+  commentstyle=\color{gray},
+  escapeinside={\%*}{*)},
+  extendedchars=true,
+  frame=none,
+  keepspaces=true,
+  keywordstyle=\color{blue},
+  language=Python,
+  numbers=none,
+  numbersep=5pt,
+  numberstyle=\color{black},
+  rulecolor=\color{black},
+  showspaces=false,
+  showstringspaces=false,
+  showtabs=false,
+  stepnumber=1,
+  stringstyle=\color{red},
+  tabsize=4,
+}
+
+\makeatletter
+\newcommand{\ssymbol}[1]{\@fnsymbol{#1}}
+\newcommand{\romanNumeral}[1]{\expandafter\@slowromancap\romannumeral #1@}
+\makeatother
+
+% Custom commands for the paper
+\newcommand{\oc}{\textsc{OpenCausality}}
+\newcommand{\eg}{e.g.,\xspace}
+\newcommand{\ie}{i.e.,\xspace}
+\usepackage{xspace}
