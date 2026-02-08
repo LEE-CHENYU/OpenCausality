@@ -42,7 +42,7 @@ Applied causal inference faces a fundamental tension: automation accelerates ana
 
 Existing frameworks address parts of this problem. DoWhy~\citep{sharma2020dowhy} formalizes the identify-estimate-refute workflow. EconML~\citep{battocchi2022econml} provides heterogeneous treatment-effect estimators. CausalML~\citep{chen2020causalml} targets uplift modeling. However, none of these systems treats every estimation decision as an auditable event, enforces claim-level restrictions based on identification strength, or prevents automated specification searching through explicit policy enforcement.
 
-We introduce \oc{}, an open-source platform that makes the entire causal inference workflow---from DAG construction to effect propagation to human review---both automated and transparent. Our key insight is that \emph{the audit trail is not a byproduct of estimation; it is a first-class output}. Every edge estimate, diagnostic result, issue flag, and governance decision is recorded in a hash-chained ledger that can be committed to version control and independently verified.
+We introduce \oc{}, an open-source platform that makes the entire causal inference workflow---from DAG construction to effect propagation to human review---both automated and transparent. Our key insight is that \emph{the audit trail is not a byproduct of estimation; it is a first-class output}. Every edge estimate, diagnostic result, issue flag, and governance decision is recorded in a hash-chained ledger that can be committed to version control and independently verified. An always-on sentinel loop runs alongside estimation, continuously validating the DAG, auto-healing schema regressions, and surfacing interactive panels---ensuring that the specification never silently degrades.
 
 \paragraph{Contributions.} We make the following contributions:
 
@@ -149,14 +149,20 @@ The replication crisis~\citep{ioannidis2005why} has motivated pre-registration~\
     \draw[arr] (0, 2.45) -- (0, 2.15);
     \draw[arr] (0, 0.95) -- (0, 0.65);
 
-    % Feedback arrow from governance back to inference
-    \draw[arr, dashed] (6.2, 0.3) -- (6.2, 1.2) -- (5.8, 1.2);
+    % Sentinel: outer wrapping box
+    \begin{scope}[on background layer]
+    \node[draw=purple!60, thick, dashed, rounded corners=6pt,
+          fill=purple!3, inner sep=8pt,
+          fit=(dag)(est)(inf)(gov),
+          label={[font=\small\bfseries, purple!70]above:Sentinel Loop (always-on)}] (sentinel) {};
+    \end{scope}
 
-    % Side labels
-    \node[font=\tiny, rotate=90, gray] at (6.6, 0.75) {feedback};
+    % Sentinel cycle arrow on right side
+    \draw[arr, purple!60, dashed, thick] (6.8, -0.3) -- (6.8, 4.8) -- (6.4, 4.8);
+    \node[font=\tiny, rotate=90, purple!60] at (7.2, 2.25) {validate $\to$ heal $\to$ surface};
 
     \end{tikzpicture}
-    \caption{Architecture of \oc{}. The DAG layer specifies causal structure and supports data-driven discovery (PC/GES/FCI/NOTEARS). The estimation layer dispatches to 18 adapters spanning econometric and ML-based methods. The inference layer screens identifiability, runs refutation tests, detects issues, and propagates effects with 7 guardrails. The governance layer logs all decisions in a hash-chained audit trail with HITL gates. Dashed arrow indicates governance feedback.}
+    \caption{Architecture of \oc{}. Four functional layers---DAG, Estimation (18 adapters), Inference (identifiability, refutation, issues, propagation), and Governance (hash-chained audit, HITL)---are wrapped by the \textbf{sentinel loop}, an always-on background monitor that continuously validates, auto-heals, and surfaces interactive panels. Purple dashed arrow shows the sentinel's validate--heal--surface cycle.}
     \label{fig:architecture}
 \end{figure}
 
@@ -451,7 +457,53 @@ The \texttt{HITLGate} detects conditions requiring human decisions from three so
 Each estimated edge produces an \texttt{EdgeCard}---a YAML file combining estimates (point, SE, CI, $p$-value, IRF), diagnostics (13 automated checks), identification results (claim level, risks), counterfactual eligibility (shock/policy), propagation role, credibility score and rating (A/B/C/D), and literature references. EdgeCards are both human-readable and machine-parseable, serving as the interface between the estimation and governance layers.
 
 %% ============================================================
-%% 9  EXPERIMENTS
+%% 10  SENTINEL LOOP AND AGENTIC PIPELINE
+%% ============================================================
+\section{Sentinel Loop and Agentic Pipeline}
+\label{sec:sentinel}
+
+A key design principle of \oc{} is that validation and healing should be \emph{continuous}, not a one-shot pre-flight check. The sentinel loop and the agentic pipeline together ensure that the DAG specification, estimation results, and governance artifacts remain consistent throughout the entire research workflow.
+
+\subsection{The Sentinel Loop}
+
+The sentinel is an always-on background process that wraps the entire pipeline. It auto-starts when the user runs \texttt{opencausality dag run} and polls every 5 minutes during long-running estimations. Each cycle performs three operations:
+
+\begin{enumerate}[leftmargin=*, itemsep=1pt]
+    \item \textbf{Continuous DAG validation}: Re-runs the full validation suite (acyclicity, unit presence, edge-type labeling, node-source bindings, endpoint existence) against the active DAG. If a code change or manual edit introduces a schema error, the sentinel catches it within one polling cycle.
+
+    \item \textbf{Auto-healing}: Fixable schema regressions---missing unit specifications, malformed edge IDs, orphan nodes---are repaired in-place by PatchBot under PatchPolicy constraints. All repairs are logged in the hash-chained audit trail so analysts can review what changed and why.
+
+    \item \textbf{Panel auto-build and surface}: When estimation completes, the sentinel rebuilds both the interactive DAG visualization (D3.js with issue overlays, edge-type legend, and risk indicators) and the HITL review panel (HTML with severity-coded cards, action dropdowns, and justification fields), then opens them in the default browser. No manual step is needed to see results.
+\end{enumerate}
+
+If the sentinel is already running when a new pipeline starts, the process detects the existing PID file and skips re-launch, preventing duplicate monitors.
+
+\subsection{The 4-Agent Agentic Pipeline}
+
+The agentic loop orchestrates four LLM-assisted agents in a 7-phase pipeline:
+
+\begin{enumerate}[leftmargin=*, itemsep=1pt]
+    \item[\textbf{0.}] \textbf{Auto-ingest \& validate}: Files dropped in \texttt{data/raw/} are profiled, standardized to Parquet, and registered as node loaders. The DAG is validated with LLM-assisted auto-repair (up to 3 attempts for invalid edge IDs, missing dependencies).
+
+    \item[\textbf{1.}] \textbf{DataScout}: Catalogs data availability, matches variables to DAG nodes, fetches missing data from 20 built-in connectors (FRED, NBK, BNS, Semantic Scholar, OpenAlex, arXiv). When downloads fail, actionable guidance is logged.
+
+    \item[\textbf{2.}] \textbf{ModelSmith}: Selects estimation designs from the registry using credibility-based ranking. Writes ModelSpecs with explicit identification assumptions and conditioning sets derived from DAG structure.
+
+    \item[\textbf{3.}] \textbf{Estimator}: Executes ModelSpecs through the adapter registry, runs TSGuard diagnostics, produces EdgeCards.
+
+    \item[\textbf{4.}] \textbf{Judge}: Scores credibility per edge, flags weak links, proposes refinements. PatchBot applies auto-fixes within policy, re-queuing affected edges for re-estimation.
+
+    \item[\textbf{5.}] \textbf{Convergence}: The loop iterates phases 2--4 until no re-queued tasks remain and no auto-fixable issues are open. In \texttt{CONFIRMATION} mode, only a single pass is permitted (locked specification).
+
+    \item[\textbf{6.}] \textbf{HITL gate}: Issues requiring human judgment are surfaced in the HITL panel. The pipeline pauses until all decisions are recorded.
+\end{enumerate}
+
+\subsection{DAG Auto-Repair}
+
+When the validation suite detects structural errors, the \texttt{AgentLoop} invokes an LLM-assisted repair cycle. For each error, a handler is looked up from a registry of error-type$\to$action mappings (\eg \texttt{identity\_deps\_missing} $\to$ \texttt{fix\_dag\_identity\_deps}, \texttt{edge\_id\_invalid} $\to$ \texttt{fix\_edge\_id\_syntax}). If the PatchPolicy permits the repair in the current mode, PatchBot applies the fix and the DAG is re-validated. This cycle repeats up to 3 times before falling back to HITL review. All repair actions are logged with the LLM model identifier and prompt hash.
+
+%% ============================================================
+%% 11  EXPERIMENTS
 %% ============================================================
 \section{Experiments}
 \label{sec:experiments}
@@ -608,7 +660,7 @@ The delta-method SE formula (Equation~\ref{eq:delta}) assumes independence acros
 \section{Conclusion}
 \label{sec:conclusion}
 
-\oc{} demonstrates that automation and transparency in causal inference are not mutually exclusive. By treating every modeling decision as an auditable event---logged in a hash-chained ledger, gated by identifiability screens and refutation tests, and protected by anti-p-hacking policies---the platform enables researchers to move faster while maintaining the evidentiary standards that credible causal claims demand. With 18 estimation adapters spanning econometric and ML-based methods, data-driven causal discovery (PC, GES, FCI, NOTEARS), and LLM-assisted literature extraction, \oc{} bridges expert-specified and data-driven structure learning within a unified governance framework. We release \oc{} as open-source software to support reproducible causal inference research.
+\oc{} demonstrates that automation and transparency in causal inference are not mutually exclusive. By treating every modeling decision as an auditable event---logged in a hash-chained ledger, gated by identifiability screens and refutation tests, and protected by anti-p-hacking policies---the platform enables researchers to move faster while maintaining the evidentiary standards that credible causal claims demand. The always-on sentinel loop ensures that this rigor is continuous rather than episodic: the DAG is re-validated after every change, schema regressions are auto-healed, and interactive review panels are surfaced the moment estimation completes. With 18 estimation adapters spanning econometric and ML-based methods, data-driven causal discovery (PC, GES, FCI, NOTEARS), a 4-agent agentic pipeline, and LLM-assisted literature extraction, \oc{} bridges expert-specified and data-driven structure learning within a unified governance framework. We release \oc{} as open-source software to support reproducible causal inference research.
 
 %% ============================================================
 %% REFERENCES

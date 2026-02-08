@@ -29,6 +29,10 @@ estimates:
   - 0.5714285714285714
   - 0.5714285714285714
   pvalue: null
+  treatment_unit: 1 bn KZT net loans increase
+  outcome_unit: bn KZT RWA increase (avg risk weight)
+  n_calendar_periods: 1
+  n_effective_obs_h0: 1
 diagnostics:
   identity_consistency:
     name: identity_consistency

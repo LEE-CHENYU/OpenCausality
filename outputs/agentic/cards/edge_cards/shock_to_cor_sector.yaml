@@ -39,6 +39,9 @@ estimates:
   - 23.05676005848876
   - 49.29946479725244
   pvalue: 4.747533899274181e-05
+  treatment_unit: 1pp CPI shock × E_consumer exposure
+  outcome_unit: bps CoR differential per unit exposure
+  n_effective_obs_h0: 48
   horizons: *id001
   irf:
   - 36.1781124278706

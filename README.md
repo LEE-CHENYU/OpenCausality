@@ -253,20 +253,31 @@ panels. Both are self-contained single-file HTML documents with no external depe
 #### DAG Visualization ([`outputs/agentic/dag_visualization.html`](outputs/agentic/dag_visualization.html))
 
 Interactive force-directed graph of the full causal DAG, built with D3.js v7.
+Serves as the **primary entry point for proposal review**: the output is framed as
+a draft requiring analyst sign-off, with inline decision capabilities so reviewers
+can resolve issues without switching to a separate panel.
 
 <details>
 <summary><b>Panel features</b></summary>
 
+- **"DRAFT PROPOSAL" banner** at top, framing the output as requiring analyst review
 - **Nodes** as draggable circles with labels; dashed borders for latent variables,
   red rings for identification risks
 - **Edges** color-coded by type (back-door, front-door, IV, etc.) with coefficient
-  labels; dashed lines for null results; orange stroke for edges with CRITICAL issues
+  labels; dashed lines for null results; orange stroke for edges with CRITICAL issues;
+  dimmed dashed stroke for fully resolved edges
 - **Hover tooltips** showing edge estimates, p-values, identification status, controls,
   and any open issues with severity
 - **Controls panel** (top-left): filter by edge type, toggle labels, zoom reset
-- **Pitfall sidebar**: open issues sorted by severity, click to highlight the
-  affected edge in the graph
-- **Keyboard shortcuts**: `R` reset zoom, `L` toggle labels, `F` fit graph
+- **Click-to-highlight**: clicking a sidebar issue highlights the corresponding edge
+  with a pulse animation and pans the viewport to center it
+- **Inline decision panels**: each issue expands to show registry-powered explanation
+  ("Why it matters") and guidance ("Decision guidance"), rule-specific action dropdown
+  with tooltips, justification field, and confirm/defer buttons
+- **Progress tracking**: progress bar shows resolution count; confirmed issues are
+  visually marked as resolved (dimmed, strikethrough)
+- **JSON export**: download all decisions matching the HITL panel format, tagged with
+  `source: "dag_visualization"` for audit trail distinction
 
 </details>
 
@@ -422,11 +433,18 @@ Supports bulk actions and exports decisions as JSON for pipeline re-ingestion.
 
 ### The Review and Approval Process
 
-The workflow: (1) estimation runs and issues are flagged, (2) HITL panel is built from
-the issue ledger, (3) analyst reviews each issue and records decisions with
-justifications, (4) decisions are exported as JSON and ingested by the pipeline,
-(5) the audit log records each decision with a hash-chain link, creating an immutable
-record.
+The workflow follows a **proposal → review → approval** pattern:
+
+1. Estimation runs and issues are flagged automatically by the governance system.
+2. The **DAG visualization** is built as a "Draft Proposal" — the primary entry point
+   for review. Analysts can click issues in the sidebar to highlight the affected edge,
+   read registry-powered explanations and guidance, and record decisions inline.
+3. For bulk or detailed operations, the **HITL panel** provides a table-based view with
+   per-rule columns, bulk actions, and full decision guides.
+4. Both panels export decisions as JSON (with `source` tag for audit distinction) that
+   can be ingested by the pipeline.
+5. The audit log records each decision with a hash-chain link, creating an immutable
+   record.
 
 Decisions affect pipeline behavior: "accept" downgrades credibility but allows the edge
 into the report with a caveat; "reject" suppresses the edge; "revise" triggers
@@ -677,7 +695,7 @@ python scripts/build_dag_viz.py config/agentic/dags/kspi_k2_full.yaml \
   --state outputs/agentic/issues/state.json
 ```
 
-Features: node/edge tooltips, edge type legend, risk indicators (orange stroke for CRITICAL issues, red ring for identification risks), pitfall sidebar with open issues sorted by severity, filter by edge type and rating.
+Features: "Draft Proposal" banner, node/edge tooltips, edge type legend, risk indicators (orange stroke for CRITICAL issues, red ring for identification risks), click-to-highlight pitfall sidebar with inline decision panels (registry-powered explanations, action dropdowns with tooltips), progress tracking, JSON export, filter by edge type and rating.
 
 ---
 

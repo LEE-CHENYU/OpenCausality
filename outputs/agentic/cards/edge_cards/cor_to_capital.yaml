@@ -29,6 +29,10 @@ estimates:
   - -22.4
   - -22.4
   pvalue: null
+  treatment_unit: 1pp CoR increase
+  outcome_unit: bn KZT capital decline (provisions)
+  n_calendar_periods: 1
+  n_effective_obs_h0: 1
 diagnostics:
   identity_consistency:
     name: identity_consistency

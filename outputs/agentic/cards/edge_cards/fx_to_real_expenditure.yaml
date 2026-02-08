@@ -29,6 +29,9 @@ estimates:
   - -0.18
   - -0.02
   pvalue: 0.012
+  treatment_unit: 10% KZT depreciation
+  outcome_unit: '% real expenditure decline'
+  n_effective_obs_h0: 60
 diagnostics:
   validated_evidence:
     name: validated_evidence

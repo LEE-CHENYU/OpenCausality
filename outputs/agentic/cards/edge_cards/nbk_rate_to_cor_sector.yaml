@@ -39,6 +39,9 @@ estimates:
   - -2.5873409752358483
   - 2.8571053817050793
   pvalue: 0.9257977355121394
+  treatment_unit: 1pp rate × E_shortterm exposure
+  outcome_unit: pp CoR differential per unit exposure
+  n_effective_obs_h0: 30
   horizons: *id001
   irf:
   - 0.13488220323461544

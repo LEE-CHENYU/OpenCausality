@@ -29,6 +29,9 @@ estimates:
   - 0.3
   - 1.0
   pvalue: 0.0003
+  treatment_unit: 1pp CPI inflation
+  outcome_unit: pp nominal income growth
+  n_effective_obs_h0: 80
 diagnostics:
   validated_evidence:
     name: validated_evidence

@@ -149,7 +149,7 @@ interpretation:
   population: Kazakhstan aggregate time-series (Kaspi Bank)
   conditions: Sample period, no regime changes
   allowed_uses: []
-  forbidden_uses: []
+  forbidden_uses: [policy_counterfactual]
 failure_flags:
   weak_identification: false
   potential_bad_control: false

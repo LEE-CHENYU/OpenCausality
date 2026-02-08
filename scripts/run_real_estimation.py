@@ -324,6 +324,7 @@ def build_lp_edge_card(
     edge_units = EDGE_UNITS.get(edge_id, {})
     treatment_unit = edge_units.get("treatment_unit", "")
     outcome_unit = edge_units.get("outcome_unit", "")
+    is_reaction_fn = bool(edge_units.get("is_reaction_function", False))
 
     estimates = Estimates(
         point=float(point) if not np.isnan(point) else 0.0,
@@ -408,6 +409,9 @@ def build_lp_edge_card(
         population="Kazakhstan aggregate time-series (Kaspi Bank)",
         conditions="Sample period, no regime changes",
     )
+    if is_reaction_fn and "policy_counterfactual" not in interpretation.forbidden_uses:
+        # Reaction functions should never be used as policy counterfactual edges.
+        interpretation.forbidden_uses.append("policy_counterfactual")
 
     # Counterfactual applicability
     counterfactual = CounterfactualApplicability(
@@ -498,11 +502,15 @@ def build_lp_edge_card(
 
 def build_immutable_edge_card(result: ImmutableResult) -> EdgeCard:
     """Build EdgeCard from immutable (validated evidence) result."""
+    edge_units = EDGE_UNITS.get(result.edge_id, {})
     estimates = Estimates(
         point=result.point_estimate,
         se=result.se,
         ci_95=(result.ci_lower, result.ci_upper),
         pvalue=result.pvalue,
+        treatment_unit=edge_units.get("treatment_unit", ""),
+        outcome_unit=edge_units.get("outcome_unit", ""),
+        n_effective_obs_h0=result.nobs,
     )
 
     diagnostics = {
@@ -568,11 +576,17 @@ def build_immutable_edge_card(result: ImmutableResult) -> EdgeCard:
 
 def build_identity_edge_card(result: IdentityResult) -> EdgeCard:
     """Build EdgeCard from identity (mechanical) result."""
+    edge_units = EDGE_UNITS.get(result.edge_id, {})
     estimates = Estimates(
         point=result.sensitivity,
         se=0.0,  # Deterministic
         ci_95=(result.sensitivity, result.sensitivity),
         pvalue=None,
+        treatment_unit=edge_units.get("treatment_unit", ""),
+        outcome_unit=edge_units.get("outcome_unit", ""),
+        # Deterministic snapshot evaluation; define N=1 to satisfy validators.
+        n_calendar_periods=1,
+        n_effective_obs_h0=1,
     )
 
     diagnostics = {
@@ -630,11 +644,17 @@ def build_identity_edge_card(result: IdentityResult) -> EdgeCard:
 
 def build_bridge_edge_card(result: AccountingBridgeResult) -> EdgeCard:
     """Build EdgeCard from accounting bridge result."""
+    edge_units = EDGE_UNITS.get(result.edge_id, {})
     estimates = Estimates(
         point=result.sensitivity,
         se=0.0,  # Deterministic
         ci_95=(result.sensitivity, result.sensitivity),
         pvalue=None,
+        treatment_unit=edge_units.get("treatment_unit", ""),
+        outcome_unit=edge_units.get("outcome_unit", ""),
+        # Deterministic snapshot evaluation; define N=1 to satisfy validators.
+        n_calendar_periods=1,
+        n_effective_obs_h0=1,
     )
 
     diagnostics = {
@@ -709,6 +729,7 @@ def build_panel_edge_card(
     ci_hi = point + 1.96 * se if not np.isnan(se) else np.nan
     pval = panel_result.pvalues[0] if panel_result.pvalues and not np.isnan(panel_result.pvalues[0]) else None
 
+    edge_units = EDGE_UNITS.get(edge_id, {})
     estimates = Estimates(
         point=float(point) if not np.isnan(point) else 0.0,
         se=float(se) if not np.isnan(se) else 0.0,
@@ -719,6 +740,11 @@ def build_panel_edge_card(
         irf=panel_result.coefficients,
         irf_ci_lower=panel_result.ci_lower,
         irf_ci_upper=panel_result.ci_upper,
+        treatment_unit=edge_units.get("treatment_unit", ""),
+        outcome_unit=edge_units.get("outcome_unit", ""),
+        # Panel N can exceed calendar periods; only report effective obs.
+        n_effective_obs_h0=n_obs,
+        n_effective_obs_by_horizon=list(panel_result.nobs) if panel_result.nobs else None,
     )
 
     diagnostics: dict[str, DiagnosticResult] = {}
@@ -1415,8 +1441,16 @@ def generate_report(
         "| Edge | Treatment Unit | Outcome Unit |",
         "|------|---------------|--------------|",
     ])
-    for edge_id in ALL_EDGES:
-        units = EDGE_UNITS.get(edge_id, {})
+    unit_edges = list(ALL_EDGES)
+    # Include any annual robustness variants that were actually produced.
+    for base_id in ANNUAL_LP_EDGES:
+        annual_id = base_id + "_annual"
+        if annual_id in cards:
+            unit_edges.append(annual_id)
+
+    for edge_id in unit_edges:
+        base_id = edge_id.replace("_annual", "")
+        units = EDGE_UNITS.get(base_id, {})
         t_unit = units.get("treatment_unit", "not specified")
         o_unit = units.get("outcome_unit", "not specified")
         is_rf = units.get("is_reaction_function", False)
@@ -2214,6 +2248,8 @@ def main(output_dir: Path | None = None, query_mode: str = "REDUCED_FORM"):
             cards_dir=cards_dir,
             state_path=state_path,
             output_path=output_dir / "dag_visualization.html",
+            actions_path=Path("config/agentic/hitl_actions.yaml"),
+            registry_path=Path("config/agentic/issue_registry.yaml"),
         )
         logger.info(f"DAG visualization built: {viz_path}")
     except Exception as e:

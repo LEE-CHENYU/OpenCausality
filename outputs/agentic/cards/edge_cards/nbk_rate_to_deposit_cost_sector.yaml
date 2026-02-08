@@ -39,6 +39,9 @@ estimates:
   - -1.6074513254607745
   - 0.4547877179145251
   pvalue: 0.3153039909733131
+  treatment_unit: 1pp rate × E_demand_dep exposure
+  outcome_unit: pp deposit cost differential per unit exposure
+  n_effective_obs_h0: 30
   horizons: *id001
   irf:
   - -0.5763318037731248

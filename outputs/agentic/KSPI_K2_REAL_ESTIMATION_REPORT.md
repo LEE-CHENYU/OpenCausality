@@ -196,7 +196,9 @@ Deterministic partial derivatives of K2 = 100 * Capital / RWA.
 | `cpi_to_nominal_income` | 1pp CPI inflation | pp nominal income growth |
 | `fx_to_real_expenditure` | 10% KZT depreciation | % real expenditure decline |
 | `shock_to_npl_kspi` | 1pp tradable CPI shock (quarterly) | bps NPL ratio change |
+| `shock_to_npl_kspi_annual` | 1pp tradable CPI shock (quarterly) | bps NPL ratio change |
 | `shock_to_cor_kspi` | 1pp tradable CPI shock (quarterly) | bps CoR change |
+| `shock_to_cor_kspi_annual` | 1pp tradable CPI shock (quarterly) | bps CoR change |
 | `nbk_rate_to_deposit_cost` | 1pp NBK base rate increase | pp deposit cost increase |
 | `nbk_rate_to_cor` | 1pp NBK base rate increase | pp CoR increase |
 | `expenditure_to_payments_revenue` | 1% real expenditure change | bn KZT payments revenue |

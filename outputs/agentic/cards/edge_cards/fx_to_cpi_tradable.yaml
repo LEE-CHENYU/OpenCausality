@@ -29,6 +29,9 @@ estimates:
   - 0.058
   - 0.168
   pvalue: 0.0001
+  treatment_unit: 10% KZT depreciation
+  outcome_unit: pp tradable CPI (cumulative 12m)
+  n_effective_obs_h0: 1200
 diagnostics:
   validated_evidence:
     name: validated_evidence
