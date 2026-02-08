@@ -50,12 +50,17 @@ benchmark_app = typer.Typer(
     name="benchmark",
     help="Benchmarking and evaluation commands",
 )
+discover_app = typer.Typer(
+    name="discover",
+    help="Causal discovery commands (PC, GES, NOTEARS)",
+)
 app.add_typer(dag_app, name="dag")
 app.add_typer(config_app, name="config")
 app.add_typer(data_app, name="data")
 app.add_typer(agent_app, name="agent")
 app.add_typer(loop_app, name="loop")
 app.add_typer(benchmark_app, name="benchmark")
+app.add_typer(discover_app, name="discover")
 
 
 @app.callback()
@@ -1461,6 +1466,198 @@ def benchmark_report(
                 f"{s.coverage_90:.1%}",
             )
         console.print(table)
+
+
+# ============================================================================
+# Discover Commands (Causal Discovery)
+# ============================================================================
+
+@discover_app.command("pc")
+def discover_pc(
+    data: Path = typer.Argument(
+        ...,
+        help="Path to CSV data file",
+        exists=True,
+    ),
+    alpha: float = typer.Option(0.05, "--alpha", "-a", help="Significance level"),
+    dag: Optional[Path] = typer.Option(None, "--dag", help="Existing DAG YAML to compare against"),
+    output: Optional[Path] = typer.Option(None, "--output", "-o", help="Output JSON file"),
+):
+    """Run PC algorithm for constraint-based causal discovery."""
+    _run_discovery("PC", data, dag, output, alpha=alpha)
+
+
+@discover_app.command("ges")
+def discover_ges(
+    data: Path = typer.Argument(
+        ...,
+        help="Path to CSV data file",
+        exists=True,
+    ),
+    dag: Optional[Path] = typer.Option(None, "--dag", help="Existing DAG YAML to compare against"),
+    output: Optional[Path] = typer.Option(None, "--output", "-o", help="Output JSON file"),
+):
+    """Run GES (Greedy Equivalence Search) algorithm."""
+    _run_discovery("GES", data, dag, output)
+
+
+@discover_app.command("notears")
+def discover_notears(
+    data: Path = typer.Argument(
+        ...,
+        help="Path to CSV data file",
+        exists=True,
+    ),
+    lambda1: float = typer.Option(0.1, "--lambda", "-l", help="L1 penalty for sparsity"),
+    dag: Optional[Path] = typer.Option(None, "--dag", help="Existing DAG YAML to compare against"),
+    output: Optional[Path] = typer.Option(None, "--output", "-o", help="Output JSON file"),
+):
+    """Run NOTEARS algorithm for continuous structure learning."""
+    _run_discovery("NOTEARS", data, dag, output, lambda1=lambda1)
+
+
+@discover_app.command("compare")
+def discover_compare(
+    dag: Path = typer.Argument(
+        ...,
+        help="Path to DAG YAML",
+        exists=True,
+    ),
+    result: Path = typer.Argument(
+        ...,
+        help="Path to discovery result JSON",
+        exists=True,
+    ),
+):
+    """Compare a discovery result against an existing DAG."""
+    import json
+
+    from shared.agentic.dag.parser import parse_dag
+    from shared.agentic.agents.discovery_agent import DiscoveryAgent, DiscoveryResult, DiscoveredEdge
+
+    existing_dag = parse_dag(dag)
+
+    with open(result) as f:
+        data = json.load(f)
+
+    disc_result = DiscoveryResult(
+        algorithm=data.get("algorithm", "unknown"),
+        edges_discovered=[
+            DiscoveredEdge(
+                from_node=e["from_node"],
+                to_node=e["to_node"],
+                edge_type=e.get("edge_type", "directed"),
+                weight=e.get("weight", 1.0),
+            )
+            for e in data.get("edges", [])
+        ],
+        node_names=data.get("node_names", []),
+    )
+
+    agent = DiscoveryAgent()
+    comparison = agent.compare_with_dag(disc_result, existing_dag)
+
+    table = Table(title="Discovery vs DAG Comparison")
+    table.add_column("Category", style="cyan")
+    table.add_column("Count", justify="right")
+    table.add_column("Edges", style="white")
+
+    for category in ["confirmed", "contradicted", "novel", "missing"]:
+        edges = comparison[category]
+        edge_strs = [f"{e.from_node} -> {e.to_node}" for e in edges[:5]]
+        suffix = f" (+{len(edges) - 5})" if len(edges) > 5 else ""
+        table.add_row(
+            category.capitalize(),
+            str(len(edges)),
+            ", ".join(edge_strs) + suffix if edge_strs else "-",
+        )
+
+    console.print(table)
+
+
+def _run_discovery(
+    algorithm: str,
+    data_path: Path,
+    dag_path: Optional[Path],
+    output_path: Optional[Path],
+    **kwargs,
+):
+    """Internal helper to run a discovery algorithm."""
+    import json
+
+    import pandas as pd
+
+    from shared.agentic.agents.discovery_agent import DiscoveryAgent
+
+    console.print(f"[bold cyan]Running {algorithm} discovery on {data_path}[/bold cyan]")
+
+    df = pd.read_csv(data_path)
+    agent = DiscoveryAgent()
+
+    if algorithm == "PC":
+        result = agent.run_pc(df, alpha=kwargs.get("alpha", 0.05))
+    elif algorithm == "GES":
+        result = agent.run_ges(df)
+    elif algorithm == "NOTEARS":
+        result = agent.run_notears(df, lambda1=kwargs.get("lambda1", 0.1))
+    else:
+        console.print(f"[red]Unknown algorithm: {algorithm}[/red]")
+        raise typer.Exit(1)
+
+    # Display results
+    console.print(f"  Algorithm: {result.algorithm}")
+    console.print(f"  Edges discovered: {len(result.edges_discovered)}")
+    console.print(f"  Nodes: {len(result.node_names)}")
+
+    table = Table(title="Discovered Edges")
+    table.add_column("From", style="cyan")
+    table.add_column("To", style="cyan")
+    table.add_column("Type", style="yellow")
+    table.add_column("Weight", justify="right")
+
+    for edge in result.edges_discovered:
+        table.add_row(
+            edge.from_node,
+            edge.to_node,
+            edge.edge_type,
+            f"{edge.weight:.3f}",
+        )
+
+    console.print(table)
+
+    # Compare with existing DAG if provided
+    if dag_path:
+        from shared.agentic.dag.parser import parse_dag
+
+        existing_dag = parse_dag(dag_path)
+        comparison = agent.compare_with_dag(result, existing_dag)
+
+        console.print("\n[bold]Comparison with existing DAG:[/bold]")
+        for category in ["confirmed", "contradicted", "novel", "missing"]:
+            edges = comparison[category]
+            color = {"confirmed": "green", "contradicted": "red", "novel": "yellow", "missing": "dim"}[category]
+            console.print(f"  [{color}]{category.capitalize()}: {len(edges)}[/{color}]")
+
+    # Save output
+    if output_path:
+        output_data = {
+            "algorithm": result.algorithm,
+            "node_names": result.node_names,
+            "edges": [
+                {
+                    "from_node": e.from_node,
+                    "to_node": e.to_node,
+                    "edge_type": e.edge_type,
+                    "weight": e.weight,
+                }
+                for e in result.edges_discovered
+            ],
+            "metadata": result.metadata,
+        }
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(output_path, "w") as f:
+            json.dump(output_data, f, indent=2)
+        console.print(f"\n[green]Saved to {output_path}[/green]")
 
 
 if __name__ == "__main__":

@@ -756,18 +756,18 @@ source code.
 Candidate upstream tools, grouped by function. OpenCausality orchestrates these
 through its plugin contracts — it does not re-implement their algorithms.
 
-| Category | Tool | License | Integration Point |
-|---|---|---|---|
-| Inference | DoWhy | MIT | Orchestration target (identify → estimate → refute) |
-| Inference | causallib | Apache-2.0 | Estimator building blocks |
-| Causal ML | EconML | MIT | HTE / DML / DR / IV estimators |
-| Causal ML | CausalML | Apache-2.0 | Uplift modeling |
-| Causal ML | DoubleML | BSD-3 | Double/debiased ML |
-| Discovery | causal-learn | MIT | Classical discovery algorithms |
-| Discovery | gCastle | Apache-2.0 | Gradient-based discovery (NOTEARS) |
-| Graphs | pywhy-graphs | MIT | Graph interop with PyWhy ecosystem |
-| Benchmarks | example-causal-datasets | CC0 | Standard test datasets |
-| Benchmarks | ACIC 2023 | MIT | Competition benchmark tasks |
+| Category | Tool | License | Integration Point | Status |
+|---|---|---|---|---|
+| Inference | DoWhy | MIT | Orchestration target (identify → estimate → refute) | **Integrated**: Backdoor, IV, Frontdoor adapters + RefutationEngine |
+| Inference | causallib | Apache-2.0 | Estimator building blocks | Planned |
+| Causal ML | EconML | MIT | HTE / DML / DR / IV estimators | **Integrated**: CATE adapter (LinearDML, CausalForest) |
+| Causal ML | CausalML | Apache-2.0 | Uplift modeling | **Integrated**: S/T/X-learner meta-learners |
+| Causal ML | DoubleML | BSD-3 | Double/debiased ML | **Integrated**: PLR, IRM, PLIV adapters |
+| Discovery | causal-learn | MIT | Classical discovery algorithms | **Integrated**: DiscoveryAgent (PC, GES, FCI) |
+| Discovery | gCastle | Apache-2.0 | Gradient-based discovery (NOTEARS) | **Integrated**: DiscoveryAgent (NOTEARS) |
+| Graphs | pywhy-graphs | MIT | Graph interop with PyWhy ecosystem | **Integrated**: ADMG conversion layer |
+| Benchmarks | example-causal-datasets | CC0 | Standard test datasets | Planned |
+| Benchmarks | ACIC 2023 | MIT | Competition benchmark tasks | Planned |
 
 GPL-licensed tools (Tetrad, Tigramite, DAGitty) are supported as optional external
 executors — they are never bundled as dependencies.
@@ -788,10 +788,18 @@ implements `EstimatorAdapter` with a single `estimate(request) -> result` method
 | DID_EVENT_STUDY | DIDEventStudyAdapter | linearmodels PanelOLS | Pre-trend test, TWFE |
 | RDD | RDDAdapter | Local-linear WLS | McCrary density test, bandwidth sensitivity |
 | REGRESSION_KINK | RegressionKinkAdapter | Local-linear WLS | Density test at kink, bandwidth sensitivity |
-| SYNTHETIC_CONTROL | SynthControlAdapter | Weighted donor pool | Pre-treatment RMSPE |
+| SYNTHETIC_CONTROL | SynthControlAdapter | scipy.optimize | Pre-RMSPE, Fisher permutation, donor weights |
 | IMMUTABLE_EVIDENCE | ImmutableAdapter | Validated evidence | Source block provenance |
 | ACCOUNTING_BRIDGE | AccountingBridgeAdapter | Deterministic | Sensitivity at current values |
 | IDENTITY | IdentityAdapter | Partial derivatives | Mechanical formula |
+| DOWHY_BACKDOOR | DoWhyBackdoorAdapter | DoWhy | Graph-verified backdoor, refutation tests |
+| DOWHY_IV | DoWhyIVAdapter | DoWhy | Graph-verified IV, identification check |
+| DOWHY_FRONTDOOR | DoWhyFrontdoorAdapter | DoWhy | Frontdoor criterion via mediators |
+| DML_PLR | DMLAdapter | DoubleML | Cross-fitted ML nuisance, n_folds/n_rep |
+| DML_IRM | DMLAdapter | DoubleML | Doubly-robust binary treatment, propensity overlap |
+| DML_PLIV | DMLAdapter | DoubleML | IV with ML first stage, instrument strength |
+| ECONML_CATE | EconMLCATEAdapter | EconML | CATE distribution, heterogeneity detection |
+| CAUSALML_UPLIFT | CausalMLUpliftAdapter | CausalML | S/T/X-learner uplift, CATE distribution |
 
 Adding a new adapter requires: (1) subclass `EstimatorAdapter`, (2) register in
 `shared/engine/adapters/registry.py`, (3) optionally add to `design_registry.yaml`.

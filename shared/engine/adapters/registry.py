@@ -27,6 +27,18 @@ _BUILTIN_ADAPTERS: dict[str, str] = {
     "SYNTHETIC_CONTROL": "shared.engine.adapters.synth_control_adapter.SynthControlAdapter",
     "PANEL_FE_BACKDOOR": "shared.engine.adapters.panel_fe_adapter.PanelFEBackdoorAdapter",
     "REGRESSION_KINK": "shared.engine.adapters.regression_kink_adapter.RegressionKinkAdapter",
+    # DoWhy adapters
+    "DOWHY_BACKDOOR": "shared.engine.adapters.dowhy_backdoor_adapter.DoWhyBackdoorAdapter",
+    "DOWHY_IV": "shared.engine.adapters.dowhy_iv_adapter.DoWhyIVAdapter",
+    "DOWHY_FRONTDOOR": "shared.engine.adapters.dowhy_frontdoor_adapter.DoWhyFrontdoorAdapter",
+    # DoubleML adapters
+    "DML_PLR": "shared.engine.adapters.dml_adapter.DMLAdapter",
+    "DML_IRM": "shared.engine.adapters.dml_adapter.DMLAdapter",
+    "DML_PLIV": "shared.engine.adapters.dml_adapter.DMLAdapter",
+    # EconML adapter
+    "ECONML_CATE": "shared.engine.adapters.econml_cate_adapter.EconMLCATEAdapter",
+    # CausalML adapter
+    "CAUSALML_UPLIFT": "shared.engine.adapters.causalml_adapter.CausalMLUpliftAdapter",
 }
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent

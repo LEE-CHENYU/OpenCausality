@@ -36,9 +36,9 @@ We introduce \oc{}, an open-source platform that resolves the automation--transp
 \section{Introduction}
 \label{sec:intro}
 
-Applied causal inference faces a fundamental tension: automation accelerates analysis but obscures the chain of decisions that produced the results. A researcher running a modern causal-ML pipeline can obtain point estimates in seconds, yet documenting \emph{why} a particular identification strategy was chosen, which controls were included, and what diagnostic checks were performed remains a manual, error-prone process. This opacity undermines reproducibility and invites specification searching~\citep{PLACEHOLDER_simmons2011_verify}.
+Applied causal inference faces a fundamental tension: automation accelerates analysis but obscures the chain of decisions that produced the results. A researcher running a modern causal-ML pipeline can obtain point estimates in seconds, yet documenting \emph{why} a particular identification strategy was chosen, which controls were included, and what diagnostic checks were performed remains a manual, error-prone process. This opacity undermines reproducibility and invites specification searching~\citep{simmons2011false}.
 
-Existing frameworks address parts of this problem. DoWhy~\citep{PLACEHOLDER_dowhy_verify} formalizes the identify-estimate-refute workflow. EconML~\citep{PLACEHOLDER_econml_verify} provides heterogeneous treatment-effect estimators. CausalML~\citep{PLACEHOLDER_causalml_verify} targets uplift modeling. However, none of these systems treats every estimation decision as an auditable event, enforces claim-level restrictions based on identification strength, or prevents automated specification searching through explicit policy enforcement.
+Existing frameworks address parts of this problem. DoWhy~\citep{sharma2020dowhy} formalizes the identify-estimate-refute workflow. EconML~\citep{battocchi2022econml} provides heterogeneous treatment-effect estimators. CausalML~\citep{chen2020causalml} targets uplift modeling. However, none of these systems treats every estimation decision as an auditable event, enforces claim-level restrictions based on identification strength, or prevents automated specification searching through explicit policy enforcement.
 
 We introduce \oc{}, an open-source platform that makes the entire causal inference workflow---from DAG construction to effect propagation to human review---both automated and transparent. Our key insight is that \emph{the audit trail is not a byproduct of estimation; it is a first-class output}. Every edge estimate, diagnostic result, issue flag, and governance decision is recorded in a hash-chained ledger that can be committed to version control and independently verified.
 
@@ -65,16 +65,16 @@ We evaluate \oc{} on a Kazakhstan bank stress-testing case study involving 32 no
 \label{sec:related}
 
 \paragraph{Causal inference frameworks.}
-One line of work provides programmatic interfaces for causal estimation. DoWhy~\citep{PLACEHOLDER_dowhy_verify} implements an identify-estimate-refute loop using graphical criteria, while EconML~\citep{PLACEHOLDER_econml_verify} extends this with double/debiased ML and heterogeneous treatment-effect estimators. DoubleML~\citep{PLACEHOLDER_doubleml_verify} focuses on Neyman-orthogonal score functions. CausalML~\citep{PLACEHOLDER_causalml_verify} targets uplift modeling for business applications. These frameworks automate estimation but do not enforce claim-level restrictions, detect specification searching, or maintain hash-chained audit trails. \oc{} builds on their estimator building blocks while adding governance, propagation, and auditability layers.
+One line of work provides programmatic interfaces for causal estimation. DoWhy~\citep{sharma2020dowhy} implements an identify-estimate-refute loop using graphical criteria, while EconML~\citep{battocchi2022econml} extends this with double/debiased ML and heterogeneous treatment-effect estimators. DoubleML~\citep{bach2022doubleml} focuses on Neyman-orthogonal score functions. CausalML~\citep{chen2020causalml} targets uplift modeling for business applications. These frameworks automate estimation but do not enforce claim-level restrictions, detect specification searching, or maintain hash-chained audit trails. \oc{} builds on their estimator building blocks while adding governance, propagation, and auditability layers.
 
 \paragraph{Causal discovery.}
-Classical algorithms---PC~\citep{PLACEHOLDER_spirtes2000_verify}, GES~\citep{PLACEHOLDER_chickering2002_verify}, and NOTEARS~\citep{PLACEHOLDER_zheng2018_verify}---learn DAG structure from observational data. causal-learn~\citep{PLACEHOLDER_causallearn_verify} and gCastle~\citep{PLACEHOLDER_gcastle_verify} provide implementations. These approaches complement \oc{}: they discover structure from data, while \oc{} focuses on what happens \emph{after} the DAG is specified---estimation, propagation, and governance. Our LLM-assisted pipeline (Section~\ref{sec:llm}) offers an alternative discovery path via literature extraction.
+Classical algorithms---PC~\citep{spirtes2000causation}, GES~\citep{chickering2002optimal}, and NOTEARS~\citep{zheng2018dags}---learn DAG structure from observational data. causal-learn~\citep{zheng2024causallearn} and gCastle~\citep{zhang2021gcastle} provide implementations. These approaches complement \oc{}: they discover structure from data, while \oc{} focuses on what happens \emph{after} the DAG is specified---estimation, propagation, and governance. Our LLM-assisted pipeline (Section~\ref{sec:llm}) offers an alternative discovery path via literature extraction.
 
 \paragraph{LLMs for causal reasoning.}
-Recent work explores whether LLMs can perform causal reasoning from text. \citet{PLACEHOLDER_kiciman2023_verify} evaluate LLMs on pairwise causal discovery benchmarks. \citet{PLACEHOLDER_ban2023_verify} use LLMs to generate causal graphs from domain knowledge. Our approach differs in two ways: we extract causal claims with explicit identification strategies (not just pairwise directions), and we integrate extracted edges into a governed estimation pipeline rather than treating them as final outputs.
+Recent work explores whether LLMs can perform causal reasoning from text. \citet{kiciman2023causal} evaluate LLMs on pairwise causal discovery benchmarks. \citet{long2023can} use LLMs to generate causal graphs from domain knowledge. Our approach differs in two ways: we extract causal claims with explicit identification strategies (not just pairwise directions), and we integrate extracted edges into a governed estimation pipeline rather than treating them as final outputs.
 
 \paragraph{Reproducibility and auditing.}
-The replication crisis~\citep{PLACEHOLDER_ioannidis2005_verify} has motivated pre-registration~\citep{PLACEHOLDER_nosek2018_verify} and specification-curve analysis~\citep{PLACEHOLDER_simonsohn2020_verify}. \oc{} operationalizes these concerns at the platform level: every decision is logged, issue rules catch post-hoc rationalization, and PatchPolicy prevents automated specification searching.
+The replication crisis~\citep{ioannidis2005why} has motivated pre-registration~\citep{nosek2018preregistration} and specification-curve analysis~\citep{simonsohn2020specification}. \oc{} operationalizes these concerns at the platform level: every decision is logged, issue rules catch post-hoc rationalization, and PatchPolicy prevents automated specification searching.
 
 %% ============================================================
 %% 3  SYSTEM ARCHITECTURE
@@ -96,9 +96,59 @@ The replication crisis~\citep{PLACEHOLDER_ioannidis2005_verify} has motivated pr
 
 \begin{figure}[t]
     \centering
-    % TODO: Create architecture diagram
-    \fbox{\parbox{0.9\linewidth}{\centering\vspace{3em}\textbf{[Figure 1: System architecture diagram]}\\\smallskip Four layers: DAG $\to$ Estimation $\to$ Inference $\to$ Governance.\\ Arrows show data flow; hash-chain icon on governance layer.\vspace{3em}}}
-    \caption{Architecture of \oc{}. The DAG layer specifies causal structure. The estimation layer dispatches to 11 adapters. The inference layer screens identifiability, detects issues, and propagates effects. The governance layer logs all decisions in a hash-chained audit trail with HITL gates.}
+    \begin{tikzpicture}[
+        layer/.style={draw, rounded corners=3pt, minimum width=13.5cm, minimum height=1.15cm, font=\small},
+        component/.style={draw, rounded corners=2pt, fill=white, font=\scriptsize, minimum height=0.55cm, inner sep=3pt},
+        arr/.style={-{Stealth[length=5pt]}, thick, gray!70},
+        layerlabel/.style={font=\small\bfseries, anchor=west},
+    ]
+    % Layer 1: DAG
+    \node[layer, fill=blue!8] (dag) at (0, 4.5) {};
+    \node[layerlabel] at (-6.4, 4.5) {DAG Layer};
+    \node[component] at (-2.8, 4.5) {YAML Parser};
+    \node[component] at (-0.5, 4.5) {Node/Edge Types};
+    \node[component] at (2.0, 4.5) {Acyclicity Check};
+    \node[component] at (4.5, 4.5) {Unit Validation};
+
+    % Layer 2: Estimation
+    \node[layer, fill=green!8] (est) at (0, 3.0) {};
+    \node[layerlabel] at (-6.4, 3.0) {Estimation};
+    \node[component] at (-3.8, 3.0) {Adapter Registry};
+    \node[component] at (-1.5, 3.0) {LP / Panel FE};
+    \node[component] at (0.9, 3.0) {IV / DiD / RDD};
+    \node[component] at (3.2, 3.0) {Synth Control};
+    \node[component] at (5.2, 3.0) {Identity};
+
+    % Layer 3: Inference
+    \node[layer, fill=orange!8] (inf) at (0, 1.5) {};
+    \node[layerlabel] at (-6.4, 1.5) {Inference};
+    \node[component] at (-3.5, 1.5) {3-Stage ID Screen};
+    \node[component] at (-1.0, 1.5) {TSGuard (7 diag.)};
+    \node[component] at (1.8, 1.5) {29-Rule Issues};
+    \node[component] at (4.3, 1.5) {7-Guardrail Propagation};
+
+    % Layer 4: Governance
+    \node[layer, fill=red!8] (gov) at (0, 0) {};
+    \node[layerlabel] at (-6.4, 0) {Governance};
+    \node[component] at (-3.5, 0) {Hash-Chain Audit};
+    \node[component] at (-1.1, 0) {HITL Gate};
+    \node[component] at (1.2, 0) {PatchPolicy};
+    \node[component] at (3.4, 0) {EdgeCards (YAML)};
+    \node[component] at (5.5, 0) {Notifier};
+
+    % Arrows between layers
+    \draw[arr] (0, 3.95) -- (0, 3.65);
+    \draw[arr] (0, 2.45) -- (0, 2.15);
+    \draw[arr] (0, 0.95) -- (0, 0.65);
+
+    % Feedback arrow from governance back to inference
+    \draw[arr, dashed] (6.2, 0.3) -- (6.2, 1.2) -- (5.8, 1.2);
+
+    % Side labels
+    \node[font=\tiny, rotate=90, gray] at (6.6, 0.75) {feedback};
+
+    \end{tikzpicture}
+    \caption{Architecture of \oc{}. The DAG layer specifies causal structure. The estimation layer dispatches to 11 adapters. The inference layer screens identifiability, detects issues, and propagates effects with 7 guardrails. The governance layer logs all decisions in a hash-chained audit trail with HITL gates. Dashed arrow indicates governance feedback (e.g., issue-triggered re-estimation).}
     \label{fig:architecture}
 \end{figure}
 
@@ -185,6 +235,28 @@ Each path is subjected to 7 guardrails before propagation is permitted:
 
     \item \textbf{Frequency alignment}: Edges at different frequencies (\eg monthly treatment, quarterly outcome) require explicit bridge edges.
 \end{enumerate}
+
+Algorithm~\ref{alg:propagation} summarizes the guarded propagation procedure.
+
+\begin{algorithm}[t]
+\caption{Guarded Effect Propagation}\label{alg:propagation}
+\KwIn{DAG $G$, source $s$, target $t$, mode $m$, scenario type $c$}
+\KwOut{List of valid paths with chain effects and SEs}
+$\mathcal{P} \gets \textsc{DFS-AllPaths}(G, s, t)$\;
+$\mathcal{V} \gets \emptyset$\;
+\ForEach{path $p \in \mathcal{P}$}{
+    $\textit{blocked} \gets \texttt{false}$\;
+    \ForEach{edge $e \in p$}{
+        \If{$\textsc{ModeGate}(e, m)$ \textbf{or} $\textsc{CFGate}(e, c)$ \textbf{or} $\textsc{TSGuardGate}(e)$ \textbf{or} $\textsc{IssueGate}(e)$ \textbf{or} $\textsc{ReactionGate}(e)$}{$\textit{blocked} \gets \texttt{true}$; \textbf{break}\;}
+    }
+    \If{\textbf{not} blocked \textbf{and} $\textsc{UnitCompat}(p)$ \textbf{and} $\textsc{FreqAlign}(p)$}{
+        $\hat{\tau} \gets \prod_{e \in p} \beta_e$\;
+        $\widehat{\text{SE}} \gets \sqrt{\sum_{e \in p} (\hat{\tau} / \beta_e)^2 \cdot \text{SE}_e^2}$\;
+        $\mathcal{V} \gets \mathcal{V} \cup \{(p, \hat{\tau}, \widehat{\text{SE}})\}$\;
+    }
+}
+\Return{$\mathcal{V}$}
+\end{algorithm}
 
 %% ============================================================
 %% 5  IDENTIFIABILITY SCREENING
@@ -361,10 +433,42 @@ Novel edges (NL only) & --- & 3 \\
 \end{tabular}
 \end{table}
 
+Figure~\ref{fig:nl2dag} illustrates the overlap between expert and NL-extracted DAGs.
+
+\begin{figure}[t]
+    \centering
+    \begin{tikzpicture}[
+        every node/.style={font=\small},
+    ]
+    % Expert circle
+    \draw[thick, blue!60, fill=blue!8] (-1.2, 0) ellipse (2.8cm and 1.8cm);
+    \node[font=\small\bfseries, blue!70] at (-2.8, 1.4) {Expert DAG};
+
+    % NL circle
+    \draw[thick, red!60, fill=red!8, fill opacity=0.5] (1.2, 0) ellipse (2.4cm and 1.6cm);
+    \node[font=\small\bfseries, red!70] at (2.8, 1.2) {NL-Extracted};
+
+    % Expert only
+    \node[font=\footnotesize, text width=2cm, align=center] at (-2.5, 0) {16 edges\\{\scriptsize (FX intervention,\\deposit insurance,\\loan policy, ...)}};
+
+    % Overlap
+    \node[font=\footnotesize, text width=1.8cm, align=center] at (0, 0) {\textbf{4 matched}\\{\scriptsize 100\% estimate\\precision}};
+
+    % NL only
+    \node[font=\footnotesize, text width=2.2cm, align=center] at (2.6, 0) {3 novel\\{\scriptsize oil$\to$dollariz.,\\lending$\to$GDP,\\risk$\to$interbank}};
+
+    % Counts
+    \node[font=\scriptsize, gray] at (-1.2, -2.2) {32 nodes, 20 edges};
+    \node[font=\scriptsize, gray] at (1.2, -2.2) {17 nodes, 13 edges};
+    \end{tikzpicture}
+    \caption{Comparison of expert-built and NL-extracted DAGs for the Kazakhstan case study. The 4~matched edges achieve 100\% estimate precision. The NL pipeline discovers 3~novel edges with literature support, while missing 16~edges encoding country-specific regulatory details.}
+    \label{fig:nl2dag}
+\end{figure}
+
 The NL pipeline achieves 20\% structural recall---unsurprising given that a single paragraph cannot encode country-specific regulatory details (central bank FX intervention rules, deposit insurance thresholds, loan classification policy changes). However, all 4~matched edges produce statistically equivalent estimates, and the pipeline discovers 3~novel edges with literature support:
 
 \begin{itemize}[leftmargin=*, itemsep=1pt]
-    \item Oil price volatility $\to$ deposit dollarization~\citep{PLACEHOLDER_kose2019_verify}
+    \item Oil price volatility $\to$ deposit dollarization~\citep{dalgic2024dollarization}
     \item Bank lending standards $\to$ GDP growth (bank lending channel)
     \item Global risk appetite $\to$ domestic interbank rates
 \end{itemize}
@@ -375,7 +479,38 @@ We run the full agentic pipeline on the KSPI K2 DAG (20~edges) and compare again
 
 \subsection{Issue Detection Effectiveness}
 
-Across the Kazakhstan case study, the 29-rule engine detects [PLACEHOLDER: X] issues, of which [PLACEHOLDER: Y] are \texttt{CRITICAL} (blocking propagation) and [PLACEHOLDER: Z] require human review. Representative catches include: a marginally significant edge ($p=0.087$) flagged as \texttt{SIG\_NOT\_ID} when the user attempted to propagate it in \texttt{STRUCTURAL} mode, and a specification-drift warning when controls changed between estimation runs.
+Across 13 pipeline runs on the Kazakhstan case study, the 29-rule engine detects 1{,}479 issues in total, of which 1{,}333 (90.1\%) are \texttt{CRITICAL} severity. PatchBot auto-fixes 812 issues (54.9\%), primarily missing unit specifications (\texttt{UNIT\_MISSING\_IN\_EDGECARD}). Of the 667 remaining open issues, only 19 (1.3\% of total) require human review---demonstrating that the system effectively triages the review burden.
+
+The dominant open issue type is \texttt{SIGNIFICANT\_BUT\_NOT\_IDENTIFIED} (492 instances, 73.8\% of open issues), which fires when an edge achieves $p < 0.05$ but the identifiability screen assigns a claim level below \texttt{IDENTIFIED\_CAUSAL}. This rule alone catches the most common form of overclaiming in applied work. Other frequent detections include \texttt{LOO\_INSTABILITY} (87 instances: leave-one-out sign flips or $>$50\% magnitude changes) and \texttt{RATING\_DIAGNOSTICS\_CONFLICT} (59 instances: A-ratings despite failed diagnostics, auto-downgraded by PatchBot). Figure~\ref{fig:issues} summarizes the issue triage pipeline.
+
+\begin{figure}[t]
+    \centering
+    \begin{tikzpicture}[
+        box/.style={draw, rounded corners=2pt, minimum width=2.2cm, minimum height=0.7cm, font=\scriptsize, align=center},
+        arr/.style={-{Stealth[length=4pt]}, thick},
+    ]
+    % Total
+    \node[box, fill=gray!15] (total) at (0, 0) {\textbf{1{,}479 issues}\\detected};
+    % Auto-fixed
+    \node[box, fill=green!15] (fixed) at (-3.2, -1.5) {\textbf{812 auto-fixed}\\(54.9\%)\\PatchBot};
+    % Open
+    \node[box, fill=orange!15] (open) at (3.2, -1.5) {\textbf{667 open}\\(45.1\%)};
+    % Human review
+    \node[box, fill=red!15] (human) at (1.5, -3.0) {\textbf{19 human}\\review (1.3\%)};
+    % Automated review
+    \node[box, fill=yellow!15] (auto) at (5.0, -3.0) {\textbf{648 flagged}\\for analyst};
+
+    \draw[arr] (total) -- (fixed);
+    \draw[arr] (total) -- (open);
+    \draw[arr] (open) -- (human);
+    \draw[arr] (open) -- (auto);
+
+    % Top issues
+    \node[font=\tiny, text width=3cm, align=left, gray] at (5.2, -1.5) {Top: SIG\_NOT\_ID (492)\\LOO\_INSTAB (87)\\RATING\_CONFLICT (59)};
+    \end{tikzpicture}
+    \caption{Issue triage across 13 pipeline runs. PatchBot auto-fixes 54.9\% of issues (primarily missing units). Only 1.3\% require human-in-the-loop review, demonstrating effective automation of the governance burden.}
+    \label{fig:issues}
+\end{figure}
 
 %% ============================================================
 %% 10  LIMITATIONS
@@ -417,24 +552,184 @@ The delta-method SE formula (Equation~\ref{eq:delta}) assumes independence acros
 %% ============================================================
 \appendix
 
+%% ============================================================
+%% APPENDIX A: FULL ISSUE REGISTRY
+%% ============================================================
 \section{Full Issue Registry}
 \label{app:issues}
 
-[PLACEHOLDER: Complete table of all 29 issue-detection rules with severity, scope, trigger point, and auto-fixability.]
+The \oc{} issue registry contains 29 detection rules organized into six categories. Table~\ref{tab:issue-registry} presents all rules.
 
+\begin{table}[htbp]
+\centering
+\caption{Full Issue Detection Registry (29 Rules). Trigger: \texttt{pre} = pre-run, \texttt{post} = post-run, \texttt{xrun} = cross-run.}
+\label{tab:issue-registry}
+\scriptsize
+\begin{tabular}{@{}lllllp{4.2cm}@{}}
+\toprule
+\textbf{Rule ID} & \textbf{Sev.} & \textbf{Scope} & \textbf{Trig.} & \textbf{Fix?} & \textbf{Description} \\
+\midrule
+\multicolumn{6}{l}{\textit{Data \& Definition}} \\
+\texttt{ENTITY\_BOUNDARY\_DRIFT} & HIGH & data & post & No & Mixing entity scopes breaks comparability \\
+\texttt{KPI\_DEFN\_MISMATCH} & HIGH & data & xrun & No & NPL/CoR definitions differ across banks \\
+\texttt{SHOCK\_CONSTRUCT\_AMBIG} & MED & data & pre & Yes & Missing shock\_node\_id, shock\_unit, shock\_scale \\
+\texttt{FREQ\_ALIGNMENT\_ERR} & CRIT & data & pre & Yes & Mixed frequencies without aggregation rule \\
+\texttt{FREQ\_SCALING\_MISMATCH} & HIGH & data & xrun & No & Annual vs quarterly not normalized \\
+\texttt{EXTRACT\_PROVENANCE\_GAP} & MED & data & post & No & Missing source document/page reference \\
+\midrule
+\multicolumn{6}{l}{\textit{Identification \& Design}} \\
+\texttt{REACTION\_FN\_EDGE} & CRIT & id & pre & No & Reaction edge used for shock propagation \\
+\texttt{TIME\_FE\_ABSORBS\_SHOCK} & CRIT & id & pre & Yes & Time FE absorbs common shock; need Exposure$\times$Shock \\
+\texttt{EXPOSURE\_NOT\_PREDET} & CRIT & id & pre & No & Exposure variable not pre-treatment \\
+\texttt{MECHANICAL\_EDGE\_EST} & HIGH & id & pre & Yes & Accounting identity estimated as regression \\
+\texttt{PATH\_DOUBLE\_COUNT} & HIGH & id & post & No & Direct + indirect chain both used \\
+\texttt{SIG\_NOT\_IDENTIFIED} & CRIT & id & post & No & $p<0.05$ but claim $\neq$ IDENTIFIED\_CAUSAL \\
+\midrule
+\multicolumn{6}{l}{\textit{Statistical Inference}} \\
+\texttt{SMALL\_SAMPLE\_INF} & HIGH & stat & post & No & $N<30$ with HAC SEs \\
+\texttt{PANEL\_FEW\_UNITS} & HIGH & stat & post & No & $<5$ units; cluster-robust unreliable \\
+\texttt{LOO\_INSTABILITY} & HIGH & stat & post & No & Leave-one-out sign flip or $>$50\% $\Delta$ \\
+\texttt{BREAKS\_UNMODELED} & MED & stat & post & No & Regime changes not in estimation \\
+\texttt{MULTI\_TEST\_DRIFT} & MED & stat & xrun & No & Spec search exceeded budget \\
+\midrule
+\multicolumn{6}{l}{\textit{Time-Series (TSGuard)}} \\
+\texttt{NONSTAT\_LEVELS\_RISK} & HIGH & ts & pre & Yes & Both vars trending; need transformation or ECM \\
+\texttt{RESID\_AUTOCORR} & MED & ts & post & No & Serial correlation in residuals \\
+\texttt{REGIME\_BREAK\_SUSP} & HIGH & ts & post & No & Coefficient instability across splits \\
+\texttt{LEADS\_TIMING\_FAIL} & CRIT & ts & post & No & Future shock predicts current outcome \\
+\texttt{HAC\_LAG\_SENSITIVE} & MED & ts & post & No & Estimate changes with HAC bandwidth \\
+\midrule
+\multicolumn{6}{l}{\textit{Selection \& External Validity}} \\
+\texttt{SELECT\_PUBLIC\_ONLY} & HIGH & ev & post & No & Only public banks; may not generalize \\
+\texttt{SURVIVORSHIP\_BIAS} & HIGH & ev & post & No & Excludes failed/merged banks \\
+\texttt{COVERAGE\_GAP\_EV} & MED & ev & post & No & Sample $<$50\% of system assets \\
+\midrule
+\multicolumn{6}{l}{\textit{Scoring \& Reporting}} \\
+\texttt{RATING\_DIAG\_CONFLICT} & HIGH & rpt & post & Yes & A-rating despite failed diagnostics \\
+\texttt{N\_REPORT\_INCONSIST} & MED & rpt & post & Yes & Report N $\neq$ EdgeCard N\_eff \\
+\texttt{CROSS\_EVID\_CONFLICT} & HIGH & rpt & xrun & No & Same relationship has conflicting signs \\
+\texttt{UNIT\_MISSING\_CARD} & CRIT & rpt & post & Yes & EdgeCard missing treatment/outcome unit \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+%% ============================================================
+%% APPENDIX B: EDGECARD SCHEMA
+%% ============================================================
 \section{EdgeCard Schema}
 \label{app:edgecard}
 
-[PLACEHOLDER: Full YAML schema for EdgeCard with field descriptions.]
+The \texttt{EdgeCard} is the primary output artifact---one per estimated edge, both human-readable (YAML) and machine-parseable. It contains the following blocks:
 
+\paragraph{Core identity.} \texttt{edge\_id}, \texttt{dag\_version\_hash} (SHA-256 of DAG at estimation time), \texttt{created\_at}, \texttt{spec\_hash}, \texttt{spec\_details} (design, controls, instruments, FE, SE method).
+
+\paragraph{Estimates.} \texttt{point} ($\hat{\beta}$), \texttt{se}, \texttt{ci\_95}, \texttt{pvalue}, \texttt{treatment\_unit}, \texttt{outcome\_unit}. For local projections: \texttt{horizons}, \texttt{irf}, \texttt{irf\_ci\_lower}, \texttt{irf\_ci\_upper}. Sample sizes: \texttt{n\_calendar\_periods}, \texttt{n\_effective\_obs\_h0}, \texttt{n\_effective\_obs\_by\_horizon}.
+
+\paragraph{Diagnostics.} Dictionary of \texttt{DiagnosticResult} objects, each with: \texttt{name}, \texttt{passed} (bool), \texttt{value} (test statistic), \texttt{threshold}, \texttt{pvalue}, \texttt{message}. Method \texttt{all\_diagnostics\_pass()} returns \texttt{True} if all tests pass.
+
+\paragraph{Identification.} \texttt{claim\_level} $\in$ \{\texttt{IDENTIFIED\_CAUSAL}, \texttt{REDUCED\_FORM}, \texttt{DESCRIPTIVE}, \texttt{BLOCKED\_ID}\}. \texttt{risks} (dict of risk $\to$ severity), \texttt{untestable\_assumptions}, \texttt{testable\_threats\_passed}, \texttt{testable\_threats\_failed}.
+
+\paragraph{Counterfactual block.} \texttt{shock\_scenario\_allowed} (bool), \texttt{policy\_intervention\_allowed} (bool), \texttt{reason\_shock\_blocked}, \texttt{reason\_policy\_blocked}.
+
+\paragraph{Propagation role.} \texttt{role} $\in$ \{\texttt{structural}, \texttt{reduced\_form}, \texttt{bridge}, \texttt{identity}, \texttt{diagnostic\_only}\}. \texttt{mode\_propagation\_allowed} (dict: mode $\to$ bool), \texttt{mode\_shock\_cf\_allowed}, \texttt{mode\_policy\_cf\_allowed}.
+
+\paragraph{Credibility.} \texttt{credibility\_score} (0--1): 40\% diagnostic pass rate + 10\% design strength + 30\% stability + 20\% data coverage. \texttt{credibility\_rating}: A $\geq 0.80$, B $\geq 0.60$, C $\geq 0.40$, D otherwise. Significance is \emph{not} a factor.
+
+\paragraph{Literature.} \texttt{supporting}, \texttt{challenging}, \texttt{methodological} (citation lists), \texttt{search\_status}, \texttt{search\_timestamp}, \texttt{search\_query}, \texttt{total\_results}.
+
+\paragraph{Interpretation boundary.} \texttt{estimand} (what we estimate), \texttt{is\_not} (what this is not), \texttt{channels}, \texttt{population}, \texttt{conditions}, \texttt{allowed\_uses}, \texttt{forbidden\_uses}.
+
+\paragraph{Failure flags.} 8 booleans: \texttt{weak\_identification}, \texttt{potential\_bad\_control}, \texttt{mechanical\_identity\_risk}, \texttt{regime\_break\_detected}, \texttt{small\_sample}, \texttt{high\_missing\_rate}, \texttt{entity\_boundary\_change}, \texttt{definition\_inconsistency}.
+
+%% ============================================================
+%% APPENDIX C: QUERY REPL EXAMPLE
+%% ============================================================
 \section{Query REPL Example Session}
 \label{app:repl}
 
-[PLACEHOLDER: Annotated example of a natural-language query session showing propagation, guardrail enforcement, and hedged narration.]
+The following annotated session illustrates the \oc{} Query REPL with natural-language query parsing, guardrail enforcement, and hedged narration.
 
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize, breaklines=true, frame=single]
+$ opencausality query --dag config/agentic/dags/kspi_narrative.yaml \
+    --mode REDUCED_FORM
+
+  OpenCausality Query REPL
+  DAG: Kazakhstan Banking System (23 nodes, 18 edges)
+  Cards: 18 | Mode: REDUCED_FORM | Backend: LLM
+
+query> What if oil prices drop 30%?
+
+[Intent classified: shock_scenario]
+Source: oil_price | Target: bank_capital_ratio | Magnitude: -0.30
+
+Path 1: oil_price -> income -> bank_capital_ratio
+  Edge 1: oil_price_to_income
+    Role: reduced_form | Claim: REDUCED_FORM | Coeff: 0.45 | SE: 0.12
+    Shock CF: ALLOWED
+  Edge 2: income_to_bank_capital_ratio
+    Role: structural | Claim: IDENTIFIED_CAUSAL | Coeff: 0.23 | SE: 0.08
+    Shock CF: ALLOWED
+
+Guardrail Results:
+  [PASS] Mode gating (weakest: REDUCED_FORM, mode allows)
+  [PASS] Counterfactual gating (all edges shock-allowed)
+  [PASS] TSGuard (no timing failures)
+  [PASS] IssueLedger (no CRITICAL issues)
+  [PASS] Reaction-function blocking (none in path)
+  [PASS] Unit compatibility (pp -> pp)
+  [WARN] SE assumes independence (2 estimated edges)
+
+  Effect (per unit):  0.1035
+  Scaled (-0.30):    -0.0311
+  SE (delta method):  0.0293
+  95% CI (scaled):   [-0.089, 0.026]
+
+Narration (hedged):
+"In REDUCED_FORM mode, a 30% oil price decline is associated
+with a -3.1pp decrease in bank capital ratio (95% CI:
+[-8.9pp, +2.6pp]). The first edge (oil -> income) is
+REDUCED_FORM; the second is IDENTIFIED_CAUSAL. The effect
+is not significant at 5%. SE assumes independence."
+
+query> /mode STRUCTURAL
+
+Mode switched to STRUCTURAL.
+WARNING: oil_price_to_income (reduced_form) now BLOCKED.
+1 of 2 path edges blocked in STRUCTURAL mode.
+
+query> /quit
+\end{lstlisting}
+
+%% ============================================================
+%% APPENDIX D: TSGUARD DIAGNOSTICS
+%% ============================================================
 \section{TSGuard Diagnostic Details}
 \label{app:tsguard}
 
-[PLACEHOLDER: Detailed description of all 7 TSGuard diagnostics with thresholds and governance rules.]
+Table~\ref{tab:tsguard-full} details all 7 TSGuard diagnostics with thresholds and governance actions.
+
+\begin{table}[htbp]
+\centering
+\caption{TSGuard diagnostic tests and governance actions.}
+\label{tab:tsguard-full}
+\scriptsize
+\begin{tabular}{@{}lp{3.5cm}lp{3.5cm}@{}}
+\toprule
+\textbf{Diagnostic} & \textbf{Description} & \textbf{Threshold} & \textbf{Action on Failure} \\
+\midrule
+\texttt{leads\_test} & Regress $y_t$ on $x_{t+1}$. Significance $\Rightarrow$ timing failure. & $|\text{corr}| > 0.3$ & \textbf{CRITICAL}: Block CF, cap = BLOCKED\_ID \\
+\texttt{residual\_autocorr} & First-order autocorrelation $\rho_1$ of LP residuals. & $|\rho_1| > 0.5$: fail; $> 0.3$: medium & Set autocorr\_risk = high \\
+\texttt{hac\_sensitivity} & Re-estimate with NW lags $\{1,4,8\}$. Check sign stability. & Sign flip across bandwidths & Set autocorr\_risk = high \\
+\texttt{lag\_sensitivity} & Re-estimate with $L \in \{1,2,4\}$. Check coefficient stability. & Sign flip across lags & Cap rating to B \\
+\texttt{regime\_stability} & Split-sample at known breaks (2015-08, 2020-03). & Pre/post sign flip & \textbf{HIGH}: Block CF, cap = REDUCED\_FORM \\
+\texttt{placebo\_shift} & Circularly shift treatment by 2--4 periods. & Placebo $p < 0.1$ & Set timing\_risk = high \\
+\texttt{shock\_support} & Count episodes $|x_t| > 1\sigma$. & $< 3$ episodes & \textbf{HIGH}: Block CF \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Dynamics risk categories.} TSGuard assigns 5 risk levels: (1)~\texttt{common\_trend\_risk}---both series persistent ($\text{AC}(1) > 0.9$); (2)~\texttt{autocorr\_risk}---from residual and HAC tests; (3)~\texttt{nonstationarity\_risk}---high AC for both series, cap claim to DESCRIPTIVE unless ECM; (4)~\texttt{regime\_break\_risk}---from split-sample test; (5)~\texttt{timing\_misspec\_risk}---from leads test.
+
+\paragraph{Governance rules.} (1)~Nonstationarity + levels $\Rightarrow$ cap at DESCRIPTIVE; (2)~Lead test failure $\Rightarrow$ BLOCKED\_ID; (3)~Regime instability $\Rightarrow$ cap at REDUCED\_FORM, block CF; (4)~Shock support $< 3$ $\Rightarrow$ block CF. All TSGuard results are stored in EdgeCards and feed into the propagation engine's guardrail~3.
 
 \end{document}

@@ -292,6 +292,227 @@ designs:
       edge_card_fields: ["kink_estimate", "se", "bandwidth", "density_ratio"]
     notes: "Identifies off slope change at kink; requires correctly specified kink point."
 
+  # -------------------------------------------------------------------------
+  # DOWHY_BACKDOOR: DoWhy Backdoor Adjustment
+  # Credibility: 0.65 (Graph-aware, relies on correct graph specification)
+  # -------------------------------------------------------------------------
+  - id: "DOWHY_BACKDOOR"
+    name: "DoWhy Backdoor Adjustment"
+    description: "Graph-aware backdoor adjustment via DoWhy. Requires causal graph GML."
+    adapter_class: "shared.engine.adapters.dowhy_backdoor_adapter.DoWhyBackdoorAdapter"
+    credibility_weight: 0.65
+    requirements:
+      data:
+        min_obs: 50
+      variables:
+        treatment_type: ["continuous", "binary"]
+        outcome_type: ["continuous", "share", "index"]
+    template:
+      model: "DoWhy backdoor: E[Y | do(X)] via graph-identified adjustment set"
+      standard_errors: "bootstrap"
+    diagnostics:
+      required:
+        - "graph_validity"
+        - "backdoor_identified"
+      optional:
+        - "refutation_random_common_cause"
+        - "refutation_placebo"
+    outputs:
+      edge_card_fields: ["beta", "se", "backdoor_variables", "refutation_results"]
+    notes: "Requires correct causal graph specification. Use refutation engine to validate."
+
+  # -------------------------------------------------------------------------
+  # DOWHY_IV: DoWhy Graph-Aware IV
+  # Credibility: 0.9 (IV with graph-verified exclusion restriction)
+  # -------------------------------------------------------------------------
+  - id: "DOWHY_IV"
+    name: "DoWhy Graph-Aware IV"
+    description: "Instrumental variables with DoWhy's graph-based identification verification."
+    adapter_class: "shared.engine.adapters.dowhy_iv_adapter.DoWhyIVAdapter"
+    credibility_weight: 0.9
+    requirements:
+      data:
+        min_obs: 50
+      variables:
+        treatment_type: ["continuous"]
+        outcome_type: ["continuous", "share", "index"]
+        instrument_count_min: 1
+    template:
+      model: "DoWhy IV: graph-verified instrument → treatment → outcome"
+      standard_errors: "robust"
+    diagnostics:
+      required:
+        - "iv_identified"
+        - "graph_validity"
+      optional:
+        - "refutation_placebo"
+    outputs:
+      edge_card_fields: ["beta", "se", "instruments", "iv_identified"]
+    notes: "Complements IV_2SLS by adding graph-based identification verification."
+
+  # -------------------------------------------------------------------------
+  # DOWHY_FRONTDOOR: DoWhy Frontdoor Criterion
+  # Credibility: 0.85 (Novel identification not otherwise available)
+  # -------------------------------------------------------------------------
+  - id: "DOWHY_FRONTDOOR"
+    name: "DoWhy Frontdoor Criterion"
+    description: "Frontdoor criterion estimation via known mediators."
+    adapter_class: "shared.engine.adapters.dowhy_frontdoor_adapter.DoWhyFrontdoorAdapter"
+    credibility_weight: 0.85
+    requirements:
+      data:
+        min_obs: 100
+      variables:
+        treatment_type: ["continuous", "binary"]
+        outcome_type: ["continuous"]
+    template:
+      model: "DoWhy frontdoor: T → M → Y with unobserved T ← U → Y"
+      standard_errors: "bootstrap"
+    diagnostics:
+      required:
+        - "frontdoor_identified"
+        - "mediator_validity"
+      optional:
+        - "refutation_placebo"
+    outputs:
+      edge_card_fields: ["beta", "se", "mediators"]
+    notes: "Requires correctly specified mediator and no direct T→Y path."
+
+  # -------------------------------------------------------------------------
+  # DML_PLR: DoubleML Partially Linear Regression
+  # Credibility: 0.75 (ML-based nuisance, cross-fitted)
+  # -------------------------------------------------------------------------
+  - id: "DML_PLR"
+    name: "DoubleML PLR"
+    description: "Partially linear regression with cross-fitted ML nuisance parameters."
+    adapter_class: "shared.engine.adapters.dml_adapter.DMLAdapter"
+    credibility_weight: 0.75
+    requirements:
+      data:
+        min_obs: 100
+      variables:
+        treatment_type: ["continuous"]
+        outcome_type: ["continuous", "share"]
+    template:
+      model: "Y = theta*D + g(X) + e; D = m(X) + v (cross-fitted)"
+      standard_errors: "dml_cross_fitted"
+    diagnostics:
+      required:
+        - "nuisance_scores"
+      optional:
+        - "sensitivity_ml_learner"
+    outputs:
+      edge_card_fields: ["theta", "se", "n_folds", "ml_learner"]
+    notes: "Robust to functional form; requires selection-on-observables."
+
+  # -------------------------------------------------------------------------
+  # DML_IRM: DoubleML Interactive Regression Model
+  # Credibility: 0.7 (Binary treatment, propensity-based)
+  # -------------------------------------------------------------------------
+  - id: "DML_IRM"
+    name: "DoubleML IRM"
+    description: "Interactive regression model for binary treatment with ML nuisance."
+    adapter_class: "shared.engine.adapters.dml_adapter.DMLAdapter"
+    credibility_weight: 0.7
+    requirements:
+      data:
+        min_obs: 100
+      variables:
+        treatment_type: ["binary"]
+        outcome_type: ["continuous", "share"]
+    template:
+      model: "ATE via doubly-robust scoring with cross-fitted propensity"
+      standard_errors: "dml_cross_fitted"
+    diagnostics:
+      required:
+        - "propensity_overlap"
+      optional:
+        - "sensitivity_ml_learner"
+    outputs:
+      edge_card_fields: ["ate", "se", "n_folds"]
+    notes: "Binary treatment only. Doubly robust to either outcome or propensity misspecification."
+
+  # -------------------------------------------------------------------------
+  # DML_PLIV: DoubleML Partially Linear IV
+  # Credibility: 0.85 (IV with ML first stage)
+  # -------------------------------------------------------------------------
+  - id: "DML_PLIV"
+    name: "DoubleML PLIV"
+    description: "Partially linear IV model with ML nuisance parameters."
+    adapter_class: "shared.engine.adapters.dml_adapter.DMLAdapter"
+    credibility_weight: 0.85
+    requirements:
+      data:
+        min_obs: 100
+      variables:
+        treatment_type: ["continuous"]
+        outcome_type: ["continuous"]
+        instrument_count_min: 1
+    template:
+      model: "Y = theta*D + g(X) + e; D = r(X,Z) + v (IV with ML)"
+      standard_errors: "dml_cross_fitted"
+    diagnostics:
+      required:
+        - "instrument_strength"
+      optional:
+        - "sensitivity_ml_learner"
+    outputs:
+      edge_card_fields: ["theta", "se", "instruments", "n_folds"]
+    notes: "Combines IV identification with ML flexibility for nuisance parameters."
+
+  # -------------------------------------------------------------------------
+  # ECONML_CATE: EconML Heterogeneous Treatment Effects
+  # Credibility: 0.7 (Descriptive heterogeneity, not new identification)
+  # -------------------------------------------------------------------------
+  - id: "ECONML_CATE"
+    name: "EconML CATE"
+    description: "Conditional Average Treatment Effects via LinearDML or CausalForest."
+    adapter_class: "shared.engine.adapters.econml_cate_adapter.EconMLCATEAdapter"
+    credibility_weight: 0.7
+    requirements:
+      data:
+        min_obs: 200
+      variables:
+        treatment_type: ["continuous", "binary"]
+        outcome_type: ["continuous"]
+    template:
+      model: "CATE(x) = E[Y(1) - Y(0) | X=x] via DML/CausalForest"
+      standard_errors: "asymptotic"
+    diagnostics:
+      required:
+        - "heterogeneity_test"
+      optional:
+        - "cate_distribution"
+    outputs:
+      edge_card_fields: ["ate", "cate_std", "cate_p10", "cate_p90", "heterogeneity_detected"]
+    notes: "Primary value is detecting treatment effect heterogeneity across subgroups."
+
+  # -------------------------------------------------------------------------
+  # CAUSALML_UPLIFT: CausalML Meta-Learners
+  # Credibility: 0.5 (Descriptive, requires strong assumptions)
+  # -------------------------------------------------------------------------
+  - id: "CAUSALML_UPLIFT"
+    name: "CausalML Uplift"
+    description: "S/T/X-learner meta-learners for uplift estimation. Binary treatment."
+    adapter_class: "shared.engine.adapters.causalml_adapter.CausalMLUpliftAdapter"
+    credibility_weight: 0.5
+    requirements:
+      data:
+        min_obs: 200
+      variables:
+        treatment_type: ["binary"]
+        outcome_type: ["continuous"]
+    template:
+      model: "CATE via S/T/X-learner meta-learner"
+      standard_errors: "bootstrap"
+    diagnostics:
+      required: []
+      optional:
+        - "uplift_calibration"
+    outputs:
+      edge_card_fields: ["ate", "cate_std", "learner_type"]
+    notes: "Descriptive only. Not causally identified without strong unconfoundedness assumption."
+
 # =============================================================================
 # CREDIBILITY RANKING
 # =============================================================================
@@ -329,6 +550,38 @@ credibility_ranking:
   - design: "REGRESSION_KINK"
     weight: 0.95
     reason: "Strong quasi-experimental design identifying off slope change"
+
+  - design: "DOWHY_IV"
+    weight: 0.9
+    reason: "Graph-verified IV with DoWhy identification check"
+
+  - design: "DOWHY_FRONTDOOR"
+    weight: 0.85
+    reason: "Frontdoor criterion — novel identification strategy"
+
+  - design: "DML_PLIV"
+    weight: 0.85
+    reason: "IV with ML flexibility for nuisance parameters"
+
+  - design: "DML_PLR"
+    weight: 0.75
+    reason: "Cross-fitted ML nuisance, robust to functional form"
+
+  - design: "DML_IRM"
+    weight: 0.7
+    reason: "Doubly robust binary treatment with ML nuisance"
+
+  - design: "ECONML_CATE"
+    weight: 0.7
+    reason: "Heterogeneous treatment effects via DML/CausalForest"
+
+  - design: "DOWHY_BACKDOOR"
+    weight: 0.65
+    reason: "Graph-aware backdoor adjustment via DoWhy"
+
+  - design: "CAUSALML_UPLIFT"
+    weight: 0.5
+    reason: "Descriptive uplift — requires strong unconfoundedness"
 
 # =============================================================================
 # EDGE TYPE RULES (NEW v3)

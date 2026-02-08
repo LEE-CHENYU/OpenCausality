@@ -398,6 +398,199 @@ def make_regression_kink_dgp(
     return df, {"slope_change": slope_change, "kink_point": kink_point}
 
 
+def make_backdoor_dgp(
+    n: int = 500,
+    beta: float = 2.0,
+    seed: int = 42,
+) -> tuple[pd.DataFrame, dict]:
+    """Backdoor adjustment DGP: X <- Z -> Y, X -> Y.
+
+    Structure:
+        Z ~ N(0, 1)        (confounder)
+        X = 0.5*Z + u      (treatment, confounded)
+        Y = beta*X + 0.8*Z + e  (outcome, confounded)
+
+    Adjusting for Z identifies beta.
+    """
+    rng = np.random.default_rng(seed)
+    Z = rng.standard_normal(n)
+    u = rng.normal(0, 0.3, n)
+    e = rng.normal(0, 0.5, n)
+    X = 0.5 * Z + u
+    Y = beta * X + 0.8 * Z + e
+    df = pd.DataFrame({"Y": Y, "X": X, "Z": Z})
+    return df, {"beta": beta}
+
+
+def make_frontdoor_dgp(
+    n: int = 1000,
+    beta_xm: float = 0.8,
+    beta_my: float = 1.5,
+    seed: int = 42,
+) -> tuple[pd.DataFrame, dict]:
+    """Frontdoor criterion DGP: X -> M -> Y, with U confounding X and Y.
+
+    Structure:
+        U ~ N(0, 1)          (unobserved confounder)
+        X = U + v             (treatment, confounded by U)
+        M = beta_xm * X + w  (mediator, NOT confounded)
+        Y = beta_my * M + 0.5*U + e  (outcome, confounded by U)
+
+    Total causal effect of X on Y = beta_xm * beta_my.
+    Frontdoor criterion identifies this despite U.
+    """
+    rng = np.random.default_rng(seed)
+    U = rng.standard_normal(n)
+    v = rng.normal(0, 0.3, n)
+    w = rng.normal(0, 0.3, n)
+    e = rng.normal(0, 0.5, n)
+    X = U + v
+    M = beta_xm * X + w
+    Y = beta_my * M + 0.5 * U + e
+    df = pd.DataFrame({"Y": Y, "X": X, "M": M})
+    return df, {"total_effect": beta_xm * beta_my, "beta_xm": beta_xm, "beta_my": beta_my}
+
+
+def make_dml_dgp(
+    n: int = 500,
+    theta: float = 1.5,
+    seed: int = 42,
+) -> tuple[pd.DataFrame, dict]:
+    """DGP for DoubleML: partially linear with nonlinear confounding.
+
+    Structure:
+        X1, X2 ~ N(0, 1)  (controls)
+        D = 0.5*X1 + 0.3*X1^2 + 0.2*X2 + v  (treatment)
+        Y = theta*D + sin(X1) + X2^2 + e       (outcome with nonlinear confounding)
+
+    Linear methods are biased; DML with flexible learners recovers theta.
+    """
+    rng = np.random.default_rng(seed)
+    X1 = rng.standard_normal(n)
+    X2 = rng.standard_normal(n)
+    v = rng.normal(0, 0.3, n)
+    e = rng.normal(0, 0.5, n)
+    D = 0.5 * X1 + 0.3 * X1**2 + 0.2 * X2 + v
+    Y = theta * D + np.sin(X1) + X2**2 + e
+    df = pd.DataFrame({"Y": Y, "D": D, "X1": X1, "X2": X2})
+    return df, {"theta": theta}
+
+
+def make_heterogeneous_dgp(
+    n: int = 1000,
+    base_effect: float = 2.0,
+    heterogeneity: float = 1.0,
+    seed: int = 42,
+) -> tuple[pd.DataFrame, dict]:
+    """DGP with heterogeneous treatment effects for CATE estimation.
+
+    Structure:
+        X1, X2 ~ N(0, 1)
+        D ~ Bernoulli(0.5)
+        CATE(X) = base_effect + heterogeneity * X1  (linear heterogeneity)
+        Y = CATE(X) * D + 0.5*X1 + 0.3*X2 + e
+
+    ATE = base_effect. Heterogeneity increases with X1.
+    """
+    rng = np.random.default_rng(seed)
+    X1 = rng.standard_normal(n)
+    X2 = rng.standard_normal(n)
+    D = rng.binomial(1, 0.5, n).astype(float)
+    e = rng.normal(0, 0.5, n)
+    cate = base_effect + heterogeneity * X1
+    Y = cate * D + 0.5 * X1 + 0.3 * X2 + e
+    df = pd.DataFrame({"Y": Y, "D": D, "X1": X1, "X2": X2})
+    return df, {
+        "ate": base_effect,
+        "heterogeneity": heterogeneity,
+        "cate_std_approx": heterogeneity,  # std of X1 ≈ 1
+    }
+
+
+def make_discovery_dgp(
+    n: int = 500,
+    seed: int = 42,
+) -> tuple[pd.DataFrame, dict]:
+    """Known 3-node DAG for testing causal discovery: X -> Z -> Y.
+
+    Structure:
+        X ~ N(0, 1)
+        Z = 0.8*X + v
+        Y = 1.2*Z + e
+
+    True skeleton: X-Z-Y. True direction: X->Z->Y.
+    """
+    rng = np.random.default_rng(seed)
+    X = rng.standard_normal(n)
+    v = rng.normal(0, 0.3, n)
+    e = rng.normal(0, 0.3, n)
+    Z = 0.8 * X + v
+    Y = 1.2 * Z + e
+    df = pd.DataFrame({"X": X, "Z": Z, "Y": Y})
+    return df, {
+        "true_edges": [("X", "Z"), ("Z", "Y")],
+        "true_non_edges": [("X", "Y")],
+    }
+
+
+def make_synth_control_dgp(
+    n_units: int = 10,
+    n_periods: int = 30,
+    treatment_period: int = 15,
+    att: float = 5.0,
+    seed: int = 42,
+) -> tuple[pd.DataFrame, dict]:
+    """Synthetic Control DGP: one treated unit, multiple donors.
+
+    Structure:
+        Unit 0 is treated at treatment_period.
+        Pre-treatment: all units follow similar trends.
+        Post-treatment: unit 0 receives ATT shift.
+    """
+    rng = np.random.default_rng(seed)
+    data = []
+    for unit in range(n_units):
+        # Unit-specific baseline
+        baseline = rng.uniform(5, 15)
+        trend = rng.uniform(0.05, 0.15)
+        for t in range(n_periods):
+            y = baseline + trend * t + rng.normal(0, 0.5)
+            # Add treatment effect to unit 0 in post-period
+            if unit == 0 and t >= treatment_period:
+                y += att
+            treated = 1.0 if (unit == 0 and t >= treatment_period) else 0.0
+            data.append({"unit": unit, "time": t, "Y": y, "treated": treated})
+    df = pd.DataFrame(data)
+    return df, {
+        "att": att,
+        "treated_unit": 0,
+        "treatment_period": treatment_period,
+        "n_donors": n_units - 1,
+    }
+
+
+def make_uplift_dgp(
+    n: int = 1000,
+    ate: float = 1.5,
+    seed: int = 42,
+) -> tuple[pd.DataFrame, dict]:
+    """DGP for CausalML uplift estimation: binary treatment, heterogeneous effects.
+
+    Structure:
+        X1, X2 ~ N(0, 1)
+        D ~ Bernoulli(0.5)  (randomized)
+        Y = ate * D + 0.5*X1 + 0.3*X2 + e
+    """
+    rng = np.random.default_rng(seed)
+    X1 = rng.standard_normal(n)
+    X2 = rng.standard_normal(n)
+    D = rng.binomial(1, 0.5, n).astype(float)
+    e = rng.normal(0, 0.5, n)
+    Y = ate * D + 0.5 * X1 + 0.3 * X2 + e
+    df = pd.DataFrame({"Y": Y, "D": D, "X1": X1, "X2": X2})
+    return df, {"ate": ate}
+
+
 def make_minimal_dag_yaml(
     edges: list[dict[str, str]],
     nodes: list[dict[str, str]],
