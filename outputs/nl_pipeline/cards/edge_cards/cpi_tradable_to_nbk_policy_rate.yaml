@@ -1,0 +1,336 @@
+edge_id: cpi_tradable_to_nbk_policy_rate
+dag_version_hash: ad15bc0cce16f45404add1b3fcd41c8e240778f69fc77d2a330129aa65bc7b2b
+created_at: '2026-02-07T23:18:05.559749'
+data_provenance:
+  treatment_source:
+    connector: parquet_file
+    dataset: cpi_tradable
+    series: null
+    retrieval_time: null
+    file_path: null
+    file_checksum: null
+    row_count: 69
+    column_count: null
+    date_range:
+    - '2019-01-01'
+    - '2024-09-01'
+    cache_key: null
+  outcome_source:
+    connector: parquet_file
+    dataset: nbk_policy_rate
+    series: null
+    retrieval_time: null
+    file_path: null
+    file_checksum: null
+    row_count: 69
+    column_count: null
+    date_range:
+    - '2019-01-01'
+    - '2024-09-01'
+    cache_key: null
+  control_sources: {}
+  instrument_sources: {}
+  combined_row_count: 69
+  combined_date_range:
+  - '2019-01-01'
+  - '2024-09-01'
+  missing_rate: null
+  panel_dimensions: null
+  entity_boundary_note: null
+  kpi_definitions: null
+spec_hash: b327b4b58bb76c861cb9ea83d801f78185de731f39d0cf1487f8bfe48ffdf5b0
+spec_details:
+  design: LOCAL_PROJECTIONS
+  controls:
+  - y_lag1
+  - y_lag2
+  - x_lag1
+  - x_lag2
+  instruments: []
+  fixed_effects: []
+  se_method: HAC_newey_west
+  sample_filter: null
+  horizon: &id001
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  bandwidth: null
+estimates:
+  point: 6.800121648775024
+  se: 15.28887410515466
+  ci_95:
+  - -23.166071597328106
+  - 36.76631489487816
+  pvalue: 0.6564817639320399
+  horizons: *id001
+  irf:
+  - 6.800121648775024
+  - 34.12033004582099
+  - 43.02467838319538
+  - 59.62243714606666
+  - 69.3370467095835
+  - 61.03782516206597
+  - 47.573780216030386
+  irf_ci_lower:
+  - -23.165520961495154
+  - -7.5719592120252415
+  - -13.214447460771225
+  - -28.298011388715864
+  - -20.34068353381018
+  - -41.831452312560856
+  - -96.03903023875223
+  irf_ci_upper:
+  - 36.765764259045206
+  - 75.81261930366722
+  - 99.26380422716198
+  - 147.54288568084917
+  - 159.01477695297717
+  - 163.9071026366928
+  - 191.18659067081302
+diagnostics:
+  hac_bandwidth:
+    name: hac_bandwidth
+    passed: true
+    value: 3.0
+    threshold: null
+    pvalue: null
+    message: 'Newey-West bandwidth: 3'
+  effective_obs:
+    name: effective_obs
+    passed: true
+    value: 67.0
+    threshold: 20.0
+    pvalue: null
+    message: ''
+  sign_consistency:
+    name: sign_consistency
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: No expected sign specified
+  ts_leads_test:
+    name: ts_leads_test
+    passed: false
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: fail'
+  ts_residual_autocorr:
+    name: ts_residual_autocorr
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_hac_sensitivity:
+    name: ts_hac_sensitivity
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_lag_sensitivity:
+    name: ts_lag_sensitivity
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_regime_stability:
+    name: ts_regime_stability
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_shock_support:
+    name: ts_shock_support
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+all_diagnostics_pass: false
+interpretation:
+  estimand: IRF of nbk_policy_rate to a unit shock in cpi_tradable
+  is_not: Structural causal effect under all interventions
+  channels:
+  - direct
+  - indirect
+  population: ''
+  conditions: ''
+  allowed_uses: []
+  forbidden_uses: []
+failure_flags:
+  weak_identification: false
+  potential_bad_control: false
+  mechanical_identity_risk: false
+  regime_break_detected: false
+  small_sample: false
+  high_missing_rate: false
+  entity_boundary_change: false
+  definition_inconsistency: false
+counterfactual:
+  supports_shock_path: true
+  supports_policy_intervention: false
+  intervention_note: Reduced-form LP estimate
+  external_validity: ''
+credibility_rating: A
+credibility_score: 0.8595555555555555
+identification:
+  claim_level: BLOCKED_ID
+  risks:
+    unmeasured_confounding: medium
+    simultaneity: low
+    weak_variation: low
+    measurement_error: low
+    selection: low
+  untestable_assumptions:
+  - No omitted common cause of treatment and outcome
+  testable_threats_passed:
+  - hac_bandwidth
+  - effective_obs
+  - sign_consistency
+  - ts_residual_autocorr
+  - ts_hac_sensitivity
+  - ts_lag_sensitivity
+  - ts_regime_stability
+  - ts_shock_support
+  testable_threats_failed:
+  - ts_leads_test
+counterfactual_block:
+  shock_scenario_allowed: false
+  policy_intervention_allowed: false
+  reason_shock_blocked: Shock CF requires REDUCED_FORM+, edge has BLOCKED_ID
+  reason_policy_blocked: REDUCED_FORM mode does not allow policy interventions
+  allowed: false
+  reason_blocked: Shock CF requires REDUCED_FORM+, edge has BLOCKED_ID
+propagation_role:
+  role: diagnostic_only
+  overlapping_paths: []
+  selected_for_counterfactual: false
+  mode_propagation_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: false
+    DESCRIPTIVE: true
+  mode_shock_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: false
+    DESCRIPTIVE: false
+  mode_policy_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: false
+    DESCRIPTIVE: false
+literature:
+  supporting:
+  - doi: 10.2139/ssrn.2782626
+    title: 'Downskilling: Changes in Employer Skill Requirements Over the Business
+      Cycle'
+    authors:
+    - A. Modestino
+    - D. Shoag
+    - Joshua Ballance
+    year: 2016
+    excerpt: ''
+    relevance: supporting
+    edge_id: cpi_tradable_to_nbk_policy_rate
+    paper_id: 58f257ebb02c5056c2a47518b325a84dea132ddf
+    citation_count: 113
+    search_query: Tradable CPI NBK base rate causal effect
+    source: semantic_scholar
+    pdf_url: ''
+  - doi: ''
+    title: Is Kazakhstan vulnerable to the Dutch disease
+    authors:
+    - Karlygash Kuralbayeva
+    - Ali M. Kutan
+    - M. Wyzan
+    year: 2001
+    excerpt: Kazakhstan possesses extensive natural resources reserves that are expected
+      to yield significant&#13;\nexport revenues. Since Kazakhstan’s attaining independence
+      in 1991, the composition of exports has&#13;\nchanged in favor of energy-related
+      sectors. In the context of such evidence and considerable
+    relevance: supporting
+    edge_id: cpi_tradable_to_nbk_policy_rate
+    paper_id: ''
+    citation_count: 22
+    search_query: Tradable CPI NBK base rate causal effect
+    source: openalex
+    pdf_url: http://hdl.handle.net/10419/39623
+  - doi: 10.52903/econbull20235801
+    title: Effects of a sovereign credit rating upgrade to investment grade on the
+      Greek economy
+    authors:
+    - Marianthi Anastasatou
+    - Hiona Balfoussia
+    - Zacharias Bragoudakis
+    - Dimitrios Malliaropulos
+    - Petros M. Migiakis
+    - Dimitris Papageorgiou
+    - Pavlos Petroulas
+    - Petros Migiakis
+    - Bank of Greece
+    - Dimitris Papageorgiou
+    - Bank of Greece
+    - Pavlos Petroulas
+    - Bank of Greece
+    year: 2023
+    excerpt: The paper investigates the potential effects of a sovereign credit rating
+      upgrade to investment grade on the trajectory of the Greek economy. A cross-country
+      empirical analysis of past upgrades suggests that an economy’s upgrade to investment
+      grade is associated with a reduction in sovereign bond yi
+    relevance: supporting
+    edge_id: cpi_tradable_to_nbk_policy_rate
+    paper_id: ''
+    citation_count: 2
+    search_query: Tradable CPI NBK base rate causal effect
+    source: openalex
+    pdf_url: https://doi.org/10.52903/econbull20235801
+  - doi: 10.5089/9781475598759.002
+    title: Republic of Kazakhstan
+    authors:
+    - International Monetary Fund. Middle East and Central Asia Dept.
+    year: 2017
+    excerpt: This Selected Issues Paper evaluates Kazakhstan’s oil rules, current
+      fiscal stance, and long-term sustainability. The sharp and sustained drop in
+      oil prices since 2014 has reduced the value of Kazakhstan’s oil wealth. Kazakhstan’s
+      non-oil deficit path has been higher than suggested by long-term benc
+    relevance: supporting
+    edge_id: cpi_tradable_to_nbk_policy_rate
+    paper_id: ''
+    citation_count: 1
+    search_query: Tradable CPI NBK base rate causal effect
+    source: openalex
+    pdf_url: https://www.elibrary.imf.org/doc/IMF002/24266-9781475598759/24266-9781475598759/Other_formats/Source_PDF/24266-9781475598810.pdf
+  challenging: []
+  methodological:
+  - doi: 10.9734/ajeba/2020/v19i330306
+    title: A VECM Analysis of the Relations the CPI, PPI, GDP Per Capita, Exchange
+      Rate in the Republic of Azerbaijan
+    authors:
+    - R. I. Davudova
+    year: 2020
+    excerpt: 'Aims: The study focuses on an empirical analysis of a macroeconomic
+      indicators system, that reflect the level and pace of a country''s socio-economic
+      development, such as CPI, PPI, GDP per capita, exchange rate, taking into account
+      the consequences of the COVID19 pandemic and oil prices on the exampl'
+    relevance: methodological
+    edge_id: cpi_tradable_to_nbk_policy_rate
+    paper_id: 8513d8b46fada0c84b654394ee9e1bb83af65562
+    citation_count: 2
+    search_query: Tradable CPI NBK base rate causal effect
+    source: semantic_scholar
+    pdf_url: ''
+  search_status: SEARCHED
+  search_timestamp: '2026-02-07T23:18:05.559815'
+  search_query: Tradable CPI NBK base rate causal effect
+  total_results: 5
+companion_edge_id: null
+variant_of: null
+is_precisely_null: true
+null_equivalence_bound: 30.57774821030932

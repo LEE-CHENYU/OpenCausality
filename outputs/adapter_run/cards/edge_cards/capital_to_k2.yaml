@@ -1,0 +1,164 @@
+edge_id: capital_to_k2
+dag_version_hash: 49a9bf958299c86ba87b7e094af5fa005e11b36612c9b099e44e9baa01f22116
+created_at: '2026-02-07T23:12:58.443715'
+data_provenance:
+  treatment_source: null
+  outcome_source: null
+  control_sources: {}
+  instrument_sources: {}
+  combined_row_count: null
+  combined_date_range: null
+  missing_rate: null
+  panel_dimensions: null
+  entity_boundary_note: null
+  kpi_definitions: null
+spec_hash: e582f930ce9896f4f11444ee5cacdafd5fe5affd270856c3a0d680d029846d79
+spec_details:
+  design: IDENTITY
+  controls: []
+  instruments: []
+  fixed_effects: []
+  se_method: deterministic
+  sample_filter: null
+  horizon: null
+  bandwidth: null
+estimates:
+  point: 0.0625
+  se: 0.0
+  ci_95:
+  - 0.0625
+  - 0.0625
+  pvalue: null
+diagnostics:
+  identity_check:
+    name: identity_check
+    passed: true
+    value: 0.0625
+    threshold: null
+    pvalue: null
+    message: 'Deterministic: dK2/dCapital = 100 / RWA'
+all_diagnostics_pass: true
+interpretation:
+  estimand: 'Sensitivity: dK2/dCapital = 100 / RWA'
+  is_not: Causal effect; this is a mechanical identity
+  channels: []
+  population: ''
+  conditions: ''
+  allowed_uses: []
+  forbidden_uses: []
+failure_flags:
+  weak_identification: false
+  potential_bad_control: false
+  mechanical_identity_risk: true
+  regime_break_detected: false
+  small_sample: false
+  high_missing_rate: false
+  entity_boundary_change: false
+  definition_inconsistency: false
+counterfactual:
+  supports_shock_path: true
+  supports_policy_intervention: true
+  intervention_note: Mechanical identity; always holds by definition
+  external_validity: ''
+credibility_rating: A
+credibility_score: 0.94
+identification:
+  claim_level: IDENTIFIED_CAUSAL
+  risks:
+    unmeasured_confounding: low
+    simultaneity: low
+    weak_variation: low
+    measurement_error: low
+    selection: low
+  untestable_assumptions: []
+  testable_threats_passed:
+  - identity_check
+  testable_threats_failed: []
+counterfactual_block:
+  shock_scenario_allowed: true
+  policy_intervention_allowed: false
+  reason_shock_blocked: null
+  reason_policy_blocked: REDUCED_FORM mode does not allow policy interventions
+  allowed: true
+  reason_blocked: REDUCED_FORM mode does not allow policy interventions
+propagation_role:
+  role: identity
+  overlapping_paths: []
+  selected_for_counterfactual: true
+  mode_propagation_allowed:
+    STRUCTURAL: true
+    REDUCED_FORM: true
+    DESCRIPTIVE: true
+  mode_shock_cf_allowed:
+    STRUCTURAL: true
+    REDUCED_FORM: true
+    DESCRIPTIVE: false
+  mode_policy_cf_allowed:
+    STRUCTURAL: true
+    REDUCED_FORM: false
+    DESCRIPTIVE: false
+literature:
+  supporting:
+  - doi: ''
+    title: The Theory of Crowd Capital
+    authors:
+    - John Prpic
+    - Prashant Shukla
+    year: 2012
+    excerpt: We are seeing more and more organizations undertaking activities to engage
+      dispersed populations through IS. Using the knowledge-based view of the organization,
+      this work conceptualizes a theory of Crowd Capital to explain this phenomenon.
+      Crowd Capital is a heterogeneous knowledge resource generate
+    relevance: supporting
+    edge_id: capital_to_k2
+    paper_id: 1210.2013v1
+    citation_count: 0
+    search_query: KSPI total capital KSPI K2 capital ratio causal effect
+    source: arxiv
+    pdf_url: https://arxiv.org/pdf/1210.2013v1
+  - doi: ''
+    title: A Micro-foundation of Social Capital in Evolving Social Networks
+    authors:
+    - Ahmed M. Alaa
+    - Kartik Ahuja
+    - Mihaela van der Schaar
+    year: 2015
+    excerpt: A social network confers benefits and advantages on individuals (and
+      on groups), the literature refers to these advantages as social capital. This
+      paper presents a micro-founded mathematical model of the evolution of a social
+      network and of the social capital of individuals within the network. The e
+    relevance: supporting
+    edge_id: capital_to_k2
+    paper_id: 1511.02429v1
+    citation_count: 0
+    search_query: KSPI total capital KSPI K2 capital ratio causal effect
+    source: arxiv
+    pdf_url: https://arxiv.org/pdf/1511.02429v1
+  - doi: ''
+    title: A Mathematical Model of Foreign Capital Inflow
+    authors:
+    - Gopal K. Basak
+    - Pranab Kumar Das
+    - Allena Rohit
+    year: 2016
+    excerpt: The paper models foreign capital inflow from the developed to the developing
+      countries in a stochastic dynamic programming (SDP) framework. Under some regularity
+      conditions, the existence of the solutions to the SDP problem is proved and
+      they are then obtained by numerical technique because of the n
+    relevance: supporting
+    edge_id: capital_to_k2
+    paper_id: 1603.02438v2
+    citation_count: 0
+    search_query: KSPI total capital KSPI K2 capital ratio causal effect
+    source: arxiv
+    pdf_url: https://arxiv.org/pdf/1603.02438v2
+  challenging: []
+  methodological: []
+  search_status: SEARCHED
+  search_timestamp: '2026-02-07T23:12:58.443746'
+  search_query: KSPI total capital KSPI K2 capital ratio causal effect
+  total_results: 3
+companion_edge_id: null
+variant_of: null
+is_precisely_null: false
+null_equivalence_bound: null

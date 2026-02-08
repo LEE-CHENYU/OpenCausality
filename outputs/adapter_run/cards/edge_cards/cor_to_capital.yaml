@@ -1,0 +1,202 @@
+edge_id: cor_to_capital
+dag_version_hash: 49a9bf958299c86ba87b7e094af5fa005e11b36612c9b099e44e9baa01f22116
+created_at: '2026-02-07T23:12:58.436894'
+data_provenance:
+  treatment_source: null
+  outcome_source: null
+  control_sources: {}
+  instrument_sources: {}
+  combined_row_count: null
+  combined_date_range: null
+  missing_rate: null
+  panel_dimensions: null
+  entity_boundary_note: null
+  kpi_definitions: null
+spec_hash: 1dd3f83caf2c01ce39a6cdece5af917045523595f5feffa7e940b3b0405bd6f5
+spec_details:
+  design: ACCOUNTING_BRIDGE
+  controls: []
+  instruments: []
+  fixed_effects: []
+  se_method: deterministic
+  sample_filter: null
+  horizon: null
+  bandwidth: null
+estimates:
+  point: -22.4
+  se: 0.0
+  ci_95:
+  - -22.4
+  - -22.4
+  pvalue: null
+diagnostics:
+  identity_consistency:
+    name: identity_consistency
+    passed: true
+    value: -22.4
+    threshold: null
+    pvalue: null
+    message: 'Deterministic: d(capital)/d(CoR) = -avg_loans * (1 - tax_rate) / 100'
+all_diagnostics_pass: true
+interpretation:
+  estimand: A 1pp increase in CoR reduces capital by ~22.4 bn KZT (pre-tax provision
+    impact on capital).
+  is_not: Causal effect; this is an accounting identity
+  channels: []
+  population: ''
+  conditions: ''
+  allowed_uses: []
+  forbidden_uses: []
+failure_flags:
+  weak_identification: false
+  potential_bad_control: false
+  mechanical_identity_risk: true
+  regime_break_detected: false
+  small_sample: false
+  high_missing_rate: false
+  entity_boundary_change: false
+  definition_inconsistency: false
+counterfactual:
+  supports_shock_path: true
+  supports_policy_intervention: true
+  intervention_note: Accounting bridge; deterministic at current values
+  external_validity: ''
+credibility_rating: A
+credibility_score: 0.9299999999999999
+identification:
+  claim_level: IDENTIFIED_CAUSAL
+  risks:
+    unmeasured_confounding: low
+    simultaneity: low
+    weak_variation: low
+    measurement_error: low
+    selection: low
+  untestable_assumptions: []
+  testable_threats_passed:
+  - identity_consistency
+  testable_threats_failed: []
+counterfactual_block:
+  shock_scenario_allowed: true
+  policy_intervention_allowed: false
+  reason_shock_blocked: null
+  reason_policy_blocked: REDUCED_FORM mode does not allow policy interventions
+  allowed: true
+  reason_blocked: REDUCED_FORM mode does not allow policy interventions
+propagation_role:
+  role: bridge
+  overlapping_paths: []
+  selected_for_counterfactual: true
+  mode_propagation_allowed:
+    STRUCTURAL: true
+    REDUCED_FORM: true
+    DESCRIPTIVE: true
+  mode_shock_cf_allowed:
+    STRUCTURAL: true
+    REDUCED_FORM: true
+    DESCRIPTIVE: false
+  mode_policy_cf_allowed:
+    STRUCTURAL: true
+    REDUCED_FORM: false
+    DESCRIPTIVE: false
+literature:
+  supporting:
+  - doi: 10.3390/su15086420
+    title: A New Hybrid Decision-Making Model for Promoting Sustainable Social Rental
+      Housing
+    authors:
+    - Wei Jiang
+    - Wentao Lu Qiu
+    - Sheng-Hau Lin
+    - Huiming Lv
+    - Xiaofeng Zhao
+    - Cong Hao
+    year: 2023
+    excerpt: The realization of sustainable social rental housing is regarded as an
+      important policy to solve the housing burden, but social rental housing is often
+      unsustainable. This study assesses the sustainability of social rental housing.
+      However, the decision-making models, such as the classical decision-
+    relevance: supporting
+    edge_id: cor_to_capital
+    paper_id: ''
+    citation_count: 12
+    search_query: KSPI cost of risk KSPI total capital causal effect
+    source: openalex
+    pdf_url: https://www.mdpi.com/2071-1050/15/8/6420/pdf?version=1681111230
+  - doi: 10.25501/soas.00029228
+    title: 'Emerging stock markets in the Pacific Basin : An empirical analysis with
+      particular reference to the Korean stock market.'
+    authors:
+    - Hyun-Jung Ryoo
+    year: 2001
+    excerpt: 'This thesis investigates emerging stock markets in the Pacific Basin
+      with particular reference to the Korean stock market, which is representative
+      of typical, fast-growing emerging markets. Using a broader range of econometric
+      models, the short-run and long-run behaviour of stock prices, the impact '
+    relevance: supporting
+    edge_id: cor_to_capital
+    paper_id: ''
+    citation_count: 1
+    search_query: KSPI cost of risk KSPI total capital causal effect
+    source: openalex
+    pdf_url: https://eprints.soas.ac.uk/29228/1/10731323.pdf
+  - doi: ''
+    title: 'Foundations of a Welfare Regime: The Case of Indonesia'
+    authors:
+    - Ramadani Torheim
+    year: 2013
+    excerpt: Indonesia is at a crossroads in building its welfare regime. The study
+      seeks to analyse the salient characteristics and enabling factors that influence
+      Indonesia’s current social policies in light of welfare state theories. The
+      adoption of the Social Security Providers Law in late 2011 underlined th
+    relevance: supporting
+    edge_id: cor_to_capital
+    paper_id: ''
+    citation_count: 1
+    search_query: KSPI cost of risk KSPI total capital causal effect
+    source: openalex
+    pdf_url: http://hdl.handle.net/10852/36942
+  - doi: 10.21314/JOP.2019.229
+    title: On the Selection of Loss Severity Distributions to Model Operational Risk
+    authors:
+    - Daniel Hadley
+    - Harry Joe
+    - Natalia Nolde
+    year: 2021
+    excerpt: 'Accurate modeling of operational risk is important for a bank and the
+      finance industry as a whole to prepare for potentially catastrophic losses.
+      One approach to modeling operational is the loss distribution approach, which
+      requires a bank to group operational losses into risk categories and select '
+    relevance: supporting
+    edge_id: cor_to_capital
+    paper_id: 2107.03979v1
+    citation_count: 0
+    search_query: KSPI cost of risk KSPI total capital causal effect
+    source: arxiv
+    pdf_url: https://arxiv.org/pdf/2107.03979v1
+  challenging: []
+  methodological:
+  - doi: ''
+    title: Sequential Design and Spatial Modeling for Portfolio Tail Risk Measurement
+    authors:
+    - Michael Ludkovski
+    - James Risk
+    year: 2017
+    excerpt: We consider calculation of capital requirements when the underlying economic
+      scenarios are determined by simulatable risk factors. In the respective nested
+      simulation framework, the goal is to estimate portfolio tail risk, quantified
+      via VaR or TVaR of a given collection of future economic scenarios
+    relevance: methodological
+    edge_id: cor_to_capital
+    paper_id: 1710.05204v2
+    citation_count: 0
+    search_query: KSPI cost of risk KSPI total capital causal effect
+    source: arxiv
+    pdf_url: https://arxiv.org/pdf/1710.05204v2
+  search_status: SEARCHED
+  search_timestamp: '2026-02-07T23:12:58.436935'
+  search_query: KSPI cost of risk KSPI total capital causal effect
+  total_results: 5
+companion_edge_id: null
+variant_of: null
+is_precisely_null: false
+null_equivalence_bound: null

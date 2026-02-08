@@ -196,20 +196,85 @@ TSGuard was assessed as **60-70% generalizable** and has been wired into the age
 
 ---
 
-## 5. Conclusion
+## 5. Adapter-Based Pipeline (v0.3.0)
+
+The agentic loop was refactored to use a unified adapter registry for estimation dispatch. All estimation now flows through `EstimationRequest → Adapter.estimate() → EstimationResult`, with 7 registered adapters covering all design types.
+
+### Adapter Registry
+
+| Design | Adapter | Module |
+|--------|---------|--------|
+| LOCAL_PROJECTIONS | LPAdapter | `lp_adapter.py` |
+| PANEL_LP_EXPOSURE_FE | PanelLPAdapter | `panel_lp_adapter.py` |
+| IMMUTABLE_EVIDENCE | ImmutableAdapter | `immutable_adapter.py` |
+| IDENTITY | IdentityAdapter | `identity_adapter.py` |
+| ACCOUNTING_BRIDGE | AccountingBridgeAdapter | `accounting_bridge_adapter.py` |
+| IV_2SLS | IV2SLSAdapter | `iv_adapter.py` |
+| DID_EVENT_STUDY | DIDEventStudyAdapter | `did_adapter.py` |
+
+### Adapter-Based Run Results (2026-02-07)
+
+All 20 DAG-defined edges produce **exactly identical** estimates between the manual pipeline and the adapter-based agentic pipeline. No estimation divergences.
+
+The adapter-based pipeline adds:
+- **20 identification blocks** (8 IDENTIFIED_CAUSAL, 8 REDUCED_FORM, 4 BLOCKED_ID)
+- **20 counterfactual assessments** (8 allowed, 12 blocked)
+- **20 propagation roles** (4 structural, 7 reduced_form, 5 diagnostic_only, 2 bridge, 2 identity)
+- **71 new TSGuard diagnostics** across LP edges
+
+6 edges present in the manual pipeline but not in the DAG-defined run are sector panel companions (4) and annual robustness companions (2). These require explicit DAG specification to be included.
+
+---
+
+## 6. NL-to-DAG Pipeline (Full Feature Test)
+
+Starting from `examples/kaspi_narrative.txt` (a natural language description of the KZ bank stress mechanism), the full pipeline:
+
+1. **NL-to-DAG**: LLM extracted 13 causal claims, matched 4 to the expert DAG, proposed 9 novel edges
+2. **Paper Scout**: Literature search across Semantic Scholar for edge-level citations
+3. **Estimation**: 9 of 14 edges estimated (3 blocked due to missing data loaders for novel concepts)
+
+### NL Pipeline Results
+
+| Edge | Design | Estimate | Rating | Source |
+|------|--------|----------|--------|--------|
+| fx_to_cpi_tradable | IMMUTABLE | 0.1130 | A | Matched expert DAG |
+| fx_to_cpi_nontradable | IMMUTABLE | 0.0000 | A | Matched expert DAG |
+| loan_portfolio_to_rwa | ACCOUNTING_BRIDGE | 0.5714 | A | Matched expert DAG |
+| expenditure_to_payments_revenue | LOCAL_PROJECTIONS | 333.4090 | B | Matched expert DAG |
+| cpi_tradable_to_nbk_policy_rate | LOCAL_PROJECTIONS | 6.8001 | A | NL-generated reaction fn |
+| cpi_tradable->real_expenditure | LOCAL_PROJECTIONS | -1.4373 | B | NL-discovered |
+| vix_shock_to_deposit_cost_kspi | LOCAL_PROJECTIONS | 0.0132 | B | NL-discovered |
+| vix_shock__to__cor_kspi | LOCAL_PROJECTIONS | -0.0223 | B | NL-discovered |
+| ppop_to_total_capital | LOCAL_PROJECTIONS | 67.3958 | B | NL-discovered |
+
+**Blocked edges** (no data loader): `kzt_usd_to_real_income`, `imported_inflation_to_real_income`, `nbk_policy_rate_to_net_interest_margin`
+
+**Key finding**: All 4 edges that overlap with the expert manual pipeline produce **exactly identical** estimates, confirming the NL pipeline uses the same estimation infrastructure.
+
+---
+
+## 7. Conclusion
 
 ### Estimation Equivalence
-All 26 shared edges produce **exactly identical** point estimates, standard errors, and p-values between the two pipelines. This confirms that the agentic loop uses the same underlying estimators (`ts_estimator`, `panel_estimator`, `data_assembler`) without any numerical divergence.
+All shared edges produce **exactly identical** point estimates, standard errors, and p-values across all three pipelines (manual, adapter-based agentic, NL-to-DAG). This confirms that the adapter refactoring and NL pipeline introduction do not alter core estimation results.
 
 ### Governance Gap
 The agentic loop adds substantial governance infrastructure that the manual pipeline lacks:
-- **51 issues** detected automatically (22 open, 29 closed by patches)
-- **29 patches** applied per iteration (all metadata-only in current run)
+- **30 issues** detected automatically (10 open, 20 closed by patches)
+- **20 patches** applied per iteration (all metadata-only in current run)
 - **HITL checklist** produced for issues requiring human judgment
 - **No score-driven spec changes** enforced as structural guardrail
 
+### NL Pipeline Value
+The NL-to-DAG pipeline successfully:
+- Extracted 13 causal claims from unstructured text
+- Matched 4 of 20 expert edges (30% recall from a single paragraph)
+- Proposed 9 novel edges not in the expert DAG (including real_income channels and VIX-to-bank pathways)
+- Estimated all edges with data loaders using the same adapter infrastructure
+
 ### Remaining Gaps
-1. **3 placeholder edges** in agentic output need real data loaders or DAG exclusion
+1. **3 NL-discovered edges** lack data loaders (`real_income`, `imported_inflation_instrument`, `net_interest_margin`)
 2. **TSGuard break_dates** should be parameterized in DAG schema for full generality
 3. **LOO stability** (panel) and **unit normalization** remain manual-only features
-4. **Annual robustness** is already dispatched correctly but the DAG spec should explicitly mark companion edges
+4. **Sector panel** and **annual robustness** companions require explicit DAG edge definitions

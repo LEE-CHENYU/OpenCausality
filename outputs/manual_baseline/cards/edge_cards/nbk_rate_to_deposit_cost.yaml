@@ -1,0 +1,201 @@
+edge_id: nbk_rate_to_deposit_cost
+dag_version_hash: a0d5c383631c52aa262f288704c6f7868d48b73d5034761245939de8eeea1d72
+created_at: '2026-02-07T23:09:01.492464'
+data_provenance:
+  treatment_source:
+    connector: parquet_file
+    dataset: nbk_policy_rate
+    series: null
+    retrieval_time: null
+    file_path: null
+    file_checksum: null
+    row_count: 19
+    column_count: null
+    date_range:
+    - '2019-10-01'
+    - '2024-07-01'
+    cache_key: null
+  outcome_source:
+    connector: parquet_file
+    dataset: deposit_cost_kspi
+    series: null
+    retrieval_time: null
+    file_path: null
+    file_checksum: null
+    row_count: 19
+    column_count: null
+    date_range:
+    - '2019-10-01'
+    - '2024-07-01'
+    cache_key: null
+  control_sources: {}
+  instrument_sources: {}
+  combined_row_count: 19
+  combined_date_range:
+  - '2019-10-01'
+  - '2024-07-01'
+  missing_rate: null
+  panel_dimensions: null
+  entity_boundary_note: null
+  kpi_definitions: null
+spec_hash: c3c5071ebab1b83d9c2359a2c1302f42ef68b238b6d340b4b6d51b5ad93bd75f
+spec_details:
+  design: LOCAL_PROJECTIONS
+  controls:
+  - y_lag1
+  - y_lag2
+  - x_lag1
+  - x_lag2
+  instruments: []
+  fixed_effects: []
+  se_method: HAC_newey_west
+  sample_filter: null
+  horizon: &id001
+  - 0
+  - 1
+  - 2
+  bandwidth: null
+estimates:
+  point: 0.22265648578368194
+  se: 0.06178252515647664
+  ci_95:
+  - 0.10156273647698773
+  - 0.34375023509037617
+  pvalue: 0.00031350811161777947
+  horizons: *id001
+  irf:
+  - 0.22265648578368194
+  - 0.23155188232487073
+  - 0.22057786914618138
+  irf_ci_lower:
+  - 0.10156496160304786
+  - 0.09758268401170836
+  - 0.10582167316678476
+  irf_ci_upper:
+  - 0.34374800996431604
+  - 0.3655210806380331
+  - 0.335334065125578
+  treatment_unit: 1pp NBK base rate increase
+  outcome_unit: pp deposit cost increase
+  n_calendar_periods: 19
+  n_effective_obs_h0: 18
+  n_effective_obs_by_horizon:
+  - 18
+  - 17
+  - 16
+diagnostics:
+  hac_bandwidth:
+    name: hac_bandwidth
+    passed: true
+    value: 2.0
+    threshold: null
+    pvalue: null
+    message: 'Newey-West bandwidth: 2'
+  effective_obs:
+    name: effective_obs
+    passed: false
+    value: 18.0
+    threshold: 20.0
+    pvalue: null
+    message: 18 observations (small sample)
+  r_squared_h0:
+    name: r_squared_h0
+    passed: true
+    value: 0.9050956251827973
+    threshold: null
+    pvalue: null
+    message: 'R-squared at h=0: 0.9051'
+  residual_ac1:
+    name: residual_ac1
+    passed: false
+    value: 0.5934938375313563
+    threshold: 0.5
+    pvalue: null
+    message: 'AR(1) residual autocorrelation: 0.593'
+  sign_consistency:
+    name: sign_consistency
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: No expected sign specified
+all_diagnostics_pass: false
+interpretation:
+  estimand: IRF of deposit_cost_kspi to a unit shock in nbk_policy_rate
+  is_not: Structural causal effect under all interventions
+  channels:
+  - direct
+  - indirect through unobserved channels
+  population: Kazakhstan aggregate time-series (Kaspi Bank)
+  conditions: Sample period, no regime changes
+  allowed_uses: []
+  forbidden_uses: []
+failure_flags:
+  weak_identification: false
+  potential_bad_control: false
+  mechanical_identity_risk: false
+  regime_break_detected: false
+  small_sample: true
+  high_missing_rate: false
+  entity_boundary_change: false
+  definition_inconsistency: false
+counterfactual:
+  supports_shock_path: true
+  supports_policy_intervention: false
+  intervention_note: Reduced-form LP estimate; valid for shock propagation, not policy
+    counterfactuals
+  external_validity: ''
+credibility_rating: B
+credibility_score: 0.73
+identification:
+  claim_level: BLOCKED_ID
+  risks:
+    unmeasured_confounding: medium
+    simultaneity: low
+    weak_variation: low
+    measurement_error: low
+    selection: low
+  untestable_assumptions:
+  - No omitted common cause of treatment and outcome
+  testable_threats_passed:
+  - hac_bandwidth
+  - r_squared_h0
+  - sign_consistency
+  testable_threats_failed:
+  - effective_obs
+  - residual_ac1
+counterfactual_block:
+  shock_scenario_allowed: false
+  policy_intervention_allowed: false
+  reason_shock_blocked: Claim level capped to BLOCKED_ID
+  reason_policy_blocked: Claim level capped to BLOCKED_ID
+  allowed: false
+  reason_blocked: Claim level capped to BLOCKED_ID
+propagation_role:
+  role: diagnostic_only
+  overlapping_paths: []
+  selected_for_counterfactual: false
+  mode_propagation_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: false
+    DESCRIPTIVE: true
+  mode_shock_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: false
+    DESCRIPTIVE: false
+  mode_policy_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: false
+    DESCRIPTIVE: false
+literature:
+  supporting: []
+  challenging: []
+  methodological: []
+  search_status: PENDING
+  search_timestamp: null
+  search_query: ''
+  total_results: 0
+companion_edge_id: nbk_rate_to_deposit_cost_sector
+variant_of: null
+is_precisely_null: false
+null_equivalence_bound: null

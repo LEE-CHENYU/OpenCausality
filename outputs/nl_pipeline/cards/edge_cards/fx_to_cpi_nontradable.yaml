@@ -1,0 +1,185 @@
+edge_id: fx_to_cpi_nontradable
+dag_version_hash: ad15bc0cce16f45404add1b3fcd41c8e240778f69fc77d2a330129aa65bc7b2b
+created_at: '2026-02-07T23:18:04.054448'
+data_provenance:
+  treatment_source: null
+  outcome_source: null
+  control_sources: {}
+  instrument_sources: {}
+  combined_row_count: null
+  combined_date_range: null
+  missing_rate: null
+  panel_dimensions: null
+  entity_boundary_note: null
+  kpi_definitions: null
+spec_hash: 3cd8d61ed8c8fce944339d672111bfc406d15a3e7db2cecade9100f86d2c9383
+spec_details:
+  design: IMMUTABLE_EVIDENCE
+  controls: []
+  instruments: []
+  fixed_effects: []
+  se_method: from_source_block
+  sample_filter: null
+  horizon: null
+  bandwidth: null
+estimates:
+  point: 0.0
+  se: 0.015
+  ci_95:
+  - -0.029
+  - 0.029
+  pvalue: 0.99
+diagnostics:
+  validated_evidence:
+    name: validated_evidence
+    passed: true
+    value: 1.0
+    threshold: null
+    pvalue: null
+    message: Validated from Block A DiD (falsification)
+all_diagnostics_pass: true
+interpretation:
+  estimand: FX pass-through to non-tradable CPI. Precisely null result from falsification
+    test confirming identification validity.
+  is_not: Re-estimated result; locked validated evidence
+  channels: []
+  population: ''
+  conditions: ''
+  allowed_uses: []
+  forbidden_uses: []
+failure_flags:
+  weak_identification: false
+  potential_bad_control: false
+  mechanical_identity_risk: false
+  regime_break_detected: false
+  small_sample: false
+  high_missing_rate: false
+  entity_boundary_change: false
+  definition_inconsistency: false
+counterfactual:
+  supports_shock_path: true
+  supports_policy_intervention: false
+  intervention_note: Validated evidence from Block A DiD (falsification)
+  external_validity: ''
+credibility_rating: A
+credibility_score: 0.99
+identification:
+  claim_level: IDENTIFIED_CAUSAL
+  risks:
+    unmeasured_confounding: low
+    simultaneity: low
+    weak_variation: low
+    measurement_error: low
+    selection: low
+  untestable_assumptions: []
+  testable_threats_passed:
+  - validated_evidence
+  testable_threats_failed: []
+counterfactual_block:
+  shock_scenario_allowed: true
+  policy_intervention_allowed: false
+  reason_shock_blocked: null
+  reason_policy_blocked: REDUCED_FORM mode does not allow policy interventions
+  allowed: true
+  reason_blocked: REDUCED_FORM mode does not allow policy interventions
+propagation_role:
+  role: structural
+  overlapping_paths: []
+  selected_for_counterfactual: true
+  mode_propagation_allowed:
+    STRUCTURAL: true
+    REDUCED_FORM: true
+    DESCRIPTIVE: true
+  mode_shock_cf_allowed:
+    STRUCTURAL: true
+    REDUCED_FORM: true
+    DESCRIPTIVE: false
+  mode_policy_cf_allowed:
+    STRUCTURAL: true
+    REDUCED_FORM: false
+    DESCRIPTIVE: false
+literature:
+  supporting:
+  - doi: 10.5089/9781475598759.002
+    title: Republic of Kazakhstan
+    authors:
+    - International Monetary Fund. Middle East and Central Asia Dept.
+    year: 2017
+    excerpt: This Selected Issues Paper evaluates Kazakhstan’s oil rules, current
+      fiscal stance, and long-term sustainability. The sharp and sustained drop in
+      oil prices since 2014 has reduced the value of Kazakhstan’s oil wealth. Kazakhstan’s
+      non-oil deficit path has been higher than suggested by long-term benc
+    relevance: supporting
+    edge_id: fx_to_cpi_nontradable
+    paper_id: ''
+    citation_count: 1
+    search_query: KZT/USD exchange rate Non-tradable CPI causal effect
+    source: openalex
+    pdf_url: https://www.elibrary.imf.org/doc/IMF002/24266-9781475598759/24266-9781475598759/Other_formats/Source_PDF/24266-9781475598810.pdf
+  - doi: 10.1515/jci-2021-0042
+    title: A Unifying Causal Framework for Analyzing Dataset Shift-stable Learning
+      Algorithms
+    authors:
+    - Adarsh Subbaswamy
+    - Bryant Chen
+    - Suchi Saria
+    year: 2019
+    excerpt: Recent interest in the external validity of prediction models (i.e.,
+      the problem of different train and test distributions, known as dataset shift)
+      has produced many methods for finding predictive distributions that are invariant
+      to dataset shifts and can be used for prediction in new, unseen enviro
+    relevance: supporting
+    edge_id: fx_to_cpi_nontradable
+    paper_id: 1905.11374v5
+    citation_count: 0
+    search_query: KZT/USD exchange rate Non-tradable CPI causal effect
+    source: arxiv
+    pdf_url: https://arxiv.org/pdf/1905.11374v5
+  - doi: ''
+    title: 'Text as Causal Mediators: Research Design for Causal Estimates of Differential
+      Treatment of Social Groups via Language Aspects'
+    authors:
+    - Katherine A. Keith
+    - Douglas Rice
+    - Brendan O'Connor
+    year: 2021
+    excerpt: Using observed language to understand interpersonal interactions is important
+      in high-stakes decision making. We propose a causal research design for observational
+      (non-experimental) data to estimate the natural direct and indirect effects
+      of social group signals (e.g. race or gender) on speakers' r
+    relevance: supporting
+    edge_id: fx_to_cpi_nontradable
+    paper_id: 2109.07542v1
+    citation_count: 0
+    search_query: KZT/USD exchange rate Non-tradable CPI causal effect
+    source: arxiv
+    pdf_url: https://arxiv.org/pdf/2109.07542v1
+  challenging: []
+  methodological:
+  - doi: 10.1515/jci-2022-0060
+    title: 'Quantitative probing: Validating causal models using quantitative domain
+      knowledge'
+    authors:
+    - Daniel Grünbaum
+    - Maike L. Stern
+    - Elmar W. Lang
+    year: 2022
+    excerpt: We present quantitative probing as a model-agnostic framework for validating
+      causal models in the presence of quantitative domain knowledge. The method is
+      constructed as an analogue of the train/test split in correlation-based machine
+      learning and as an enhancement of current causal validation strat
+    relevance: methodological
+    edge_id: fx_to_cpi_nontradable
+    paper_id: 2209.03013v1
+    citation_count: 0
+    search_query: KZT/USD exchange rate Non-tradable CPI causal effect
+    source: arxiv
+    pdf_url: https://arxiv.org/pdf/2209.03013v1
+  search_status: SEARCHED
+  search_timestamp: '2026-02-07T23:18:04.054483'
+  search_query: KZT/USD exchange rate Non-tradable CPI causal effect
+  total_results: 4
+companion_edge_id: null
+variant_of: null
+is_precisely_null: true
+null_equivalence_bound: 0.03

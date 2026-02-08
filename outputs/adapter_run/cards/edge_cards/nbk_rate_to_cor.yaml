@@ -1,0 +1,274 @@
+edge_id: nbk_rate_to_cor
+dag_version_hash: 49a9bf958299c86ba87b7e094af5fa005e11b36612c9b099e44e9baa01f22116
+created_at: '2026-02-07T23:12:58.382300'
+data_provenance:
+  treatment_source:
+    connector: parquet_file
+    dataset: nbk_policy_rate
+    series: null
+    retrieval_time: null
+    file_path: null
+    file_checksum: null
+    row_count: 19
+    column_count: null
+    date_range:
+    - '2019-10-01'
+    - '2024-07-01'
+    cache_key: null
+  outcome_source:
+    connector: parquet_file
+    dataset: cor_kspi
+    series: null
+    retrieval_time: null
+    file_path: null
+    file_checksum: null
+    row_count: 19
+    column_count: null
+    date_range:
+    - '2019-10-01'
+    - '2024-07-01'
+    cache_key: null
+  control_sources: {}
+  instrument_sources: {}
+  combined_row_count: 19
+  combined_date_range:
+  - '2019-10-01'
+  - '2024-07-01'
+  missing_rate: null
+  panel_dimensions: null
+  entity_boundary_note: null
+  kpi_definitions: null
+spec_hash: 2d952de6a9f225a46b956987d0a55069a9bb3d2c55a9600c2c18f16a7473ef2b
+spec_details:
+  design: LOCAL_PROJECTIONS
+  controls:
+  - y_lag1
+  - x_lag1
+  instruments: []
+  fixed_effects: []
+  se_method: HAC_newey_west
+  sample_filter: null
+  horizon: &id001
+  - 0
+  - 1
+  - 2
+  bandwidth: null
+estimates:
+  point: 0.3559558353990485
+  se: 0.11934467793177896
+  ci_95:
+  - 0.12204026665276177
+  - 0.5898714041453352
+  pvalue: 0.002858237880200499
+  horizons: *id001
+  irf:
+  - 0.3559558353990485
+  - 0.22116761501803994
+  - 0.05780567090738267
+  irf_ci_lower:
+  - 0.12204456490622959
+  - 0.042063940443230696
+  - -0.09167783381956501
+  irf_ci_upper:
+  - 0.5898671058918674
+  - 0.4002712895928492
+  - 0.20728917563433036
+diagnostics:
+  hac_bandwidth:
+    name: hac_bandwidth
+    passed: true
+    value: 2.0
+    threshold: null
+    pvalue: null
+    message: 'Newey-West bandwidth: 2'
+  effective_obs:
+    name: effective_obs
+    passed: false
+    value: 18.0
+    threshold: 20.0
+    pvalue: null
+    message: ''
+  sign_consistency:
+    name: sign_consistency
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: No expected sign specified
+  ts_leads_test:
+    name: ts_leads_test
+    passed: false
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: fail'
+  ts_residual_autocorr:
+    name: ts_residual_autocorr
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_hac_sensitivity:
+    name: ts_hac_sensitivity
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_lag_sensitivity:
+    name: ts_lag_sensitivity
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_regime_stability:
+    name: ts_regime_stability
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_shock_support:
+    name: ts_shock_support
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+all_diagnostics_pass: false
+interpretation:
+  estimand: IRF of cor_kspi to a unit shock in nbk_policy_rate
+  is_not: Structural causal effect under all interventions
+  channels:
+  - direct
+  - indirect
+  population: ''
+  conditions: ''
+  allowed_uses: []
+  forbidden_uses: []
+failure_flags:
+  weak_identification: false
+  potential_bad_control: false
+  mechanical_identity_risk: false
+  regime_break_detected: false
+  small_sample: true
+  high_missing_rate: false
+  entity_boundary_change: false
+  definition_inconsistency: false
+counterfactual:
+  supports_shock_path: true
+  supports_policy_intervention: false
+  intervention_note: Reduced-form LP estimate
+  external_validity: ''
+credibility_rating: B
+credibility_score: 0.79
+identification:
+  claim_level: BLOCKED_ID
+  risks:
+    unmeasured_confounding: medium
+    simultaneity: low
+    weak_variation: low
+    measurement_error: low
+    selection: low
+  untestable_assumptions:
+  - No omitted common cause of treatment and outcome
+  testable_threats_passed:
+  - hac_bandwidth
+  - sign_consistency
+  - ts_residual_autocorr
+  - ts_hac_sensitivity
+  - ts_lag_sensitivity
+  - ts_regime_stability
+  - ts_shock_support
+  testable_threats_failed:
+  - effective_obs
+  - ts_leads_test
+counterfactual_block:
+  shock_scenario_allowed: false
+  policy_intervention_allowed: false
+  reason_shock_blocked: Shock CF requires REDUCED_FORM+, edge has BLOCKED_ID
+  reason_policy_blocked: REDUCED_FORM mode does not allow policy interventions
+  allowed: false
+  reason_blocked: Shock CF requires REDUCED_FORM+, edge has BLOCKED_ID
+propagation_role:
+  role: diagnostic_only
+  overlapping_paths: []
+  selected_for_counterfactual: false
+  mode_propagation_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: false
+    DESCRIPTIVE: true
+  mode_shock_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: false
+    DESCRIPTIVE: false
+  mode_policy_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: false
+    DESCRIPTIVE: false
+literature:
+  supporting:
+  - doi: 10.21314/JOP.2019.229
+    title: On the Selection of Loss Severity Distributions to Model Operational Risk
+    authors:
+    - Daniel Hadley
+    - Harry Joe
+    - Natalia Nolde
+    year: 2021
+    excerpt: 'Accurate modeling of operational risk is important for a bank and the
+      finance industry as a whole to prepare for potentially catastrophic losses.
+      One approach to modeling operational is the loss distribution approach, which
+      requires a bank to group operational losses into risk categories and select '
+    relevance: supporting
+    edge_id: nbk_rate_to_cor
+    paper_id: 2107.03979v1
+    citation_count: 0
+    search_query: NBK base rate KSPI cost of risk causal effect
+    source: arxiv
+    pdf_url: https://arxiv.org/pdf/2107.03979v1
+  challenging: []
+  methodological:
+  - doi: ''
+    title: Sequential Design and Spatial Modeling for Portfolio Tail Risk Measurement
+    authors:
+    - Michael Ludkovski
+    - James Risk
+    year: 2017
+    excerpt: We consider calculation of capital requirements when the underlying economic
+      scenarios are determined by simulatable risk factors. In the respective nested
+      simulation framework, the goal is to estimate portfolio tail risk, quantified
+      via VaR or TVaR of a given collection of future economic scenarios
+    relevance: methodological
+    edge_id: nbk_rate_to_cor
+    paper_id: 1710.05204v2
+    citation_count: 0
+    search_query: NBK base rate KSPI cost of risk causal effect
+    source: arxiv
+    pdf_url: https://arxiv.org/pdf/1710.05204v2
+  - doi: ''
+    title: Statistical Emulators for Pricing and Hedging Longevity Risk Products
+    authors:
+    - James Risk
+    - Michael Ludkovski
+    year: 2015
+    excerpt: 'We propose the use of statistical emulators for the purpose of valuing
+      mortality-linked contracts in stochastic mortality models. Such models typically
+      require (nested) evaluation of expected values of nonlinear functionals of multi-dimensional
+      stochastic processes. Except in the simplest cases, no '
+    relevance: methodological
+    edge_id: nbk_rate_to_cor
+    paper_id: 1508.00310v2
+    citation_count: 0
+    search_query: NBK base rate KSPI cost of risk causal effect
+    source: arxiv
+    pdf_url: https://arxiv.org/pdf/1508.00310v2
+  search_status: SEARCHED
+  search_timestamp: '2026-02-07T23:12:58.382342'
+  search_query: NBK base rate KSPI cost of risk causal effect
+  total_results: 3
+companion_edge_id: null
+variant_of: null
+is_precisely_null: false
+null_equivalence_bound: null

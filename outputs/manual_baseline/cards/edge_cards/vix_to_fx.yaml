@@ -1,0 +1,221 @@
+edge_id: vix_to_fx
+dag_version_hash: a0d5c383631c52aa262f288704c6f7868d48b73d5034761245939de8eeea1d72
+created_at: '2026-02-07T23:09:01.339320'
+data_provenance:
+  treatment_source:
+    connector: parquet_file
+    dataset: vix_shock
+    series: null
+    retrieval_time: null
+    file_path: null
+    file_checksum: null
+    row_count: 192
+    column_count: null
+    date_range:
+    - '2010-01-01'
+    - '2025-12-01'
+    cache_key: null
+  outcome_source:
+    connector: parquet_file
+    dataset: kzt_usd
+    series: null
+    retrieval_time: null
+    file_path: null
+    file_checksum: null
+    row_count: 192
+    column_count: null
+    date_range:
+    - '2010-01-01'
+    - '2025-12-01'
+    cache_key: null
+  control_sources: {}
+  instrument_sources: {}
+  combined_row_count: 192
+  combined_date_range:
+  - '2010-01-01'
+  - '2025-12-01'
+  missing_rate: null
+  panel_dimensions: null
+  entity_boundary_note: null
+  kpi_definitions: null
+spec_hash: b327b4b58bb76c861cb9ea83d801f78185de731f39d0cf1487f8bfe48ffdf5b0
+spec_details:
+  design: LOCAL_PROJECTIONS
+  controls:
+  - y_lag1
+  - y_lag2
+  - x_lag1
+  - x_lag2
+  instruments: []
+  fixed_effects: []
+  se_method: HAC_newey_west
+  sample_filter: null
+  horizon: &id001
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  bandwidth: null
+estimates:
+  point: -0.032423327653582856
+  se: 0.10994554441748393
+  ci_95:
+  - -0.24791659471185135
+  - 0.18306993940468563
+  pvalue: 0.768067585702398
+  horizons: *id001
+  irf:
+  - -0.032423327653582856
+  - 0.19834224814101634
+  - 0.3622928443710425
+  - 0.37687765217747443
+  - 0.4940322445233804
+  - 0.4110267401382289
+  - 0.43536249290173257
+  irf_ci_lower:
+  - -0.24791263497250016
+  - -0.19016467504294735
+  - -0.1116040744556091
+  - -0.07932276700941193
+  - -0.04887135028264572
+  - -0.2236732375559159
+  - -0.23047408428755323
+  irf_ci_upper:
+  - 0.18306597966533444
+  - 0.58684917132498
+  - 0.836189763197694
+  - 0.8330780713643609
+  - 1.0369358393294066
+  - 1.0457267178323737
+  - 1.1011990700910184
+  treatment_unit: 1 point VIX increase
+  outcome_unit: '% change in USD/KZT'
+  n_calendar_periods: 192
+  n_effective_obs_h0: 190
+  n_effective_obs_by_horizon:
+  - 190
+  - 189
+  - 188
+  - 187
+  - 186
+  - 185
+  - 184
+diagnostics:
+  hac_bandwidth:
+    name: hac_bandwidth
+    passed: true
+    value: 4.0
+    threshold: null
+    pvalue: null
+    message: 'Newey-West bandwidth: 4'
+  effective_obs:
+    name: effective_obs
+    passed: true
+    value: 190.0
+    threshold: 20.0
+    pvalue: null
+    message: 190 observations
+  r_squared_h0:
+    name: r_squared_h0
+    passed: true
+    value: 0.9916890853634435
+    threshold: null
+    pvalue: null
+    message: 'R-squared at h=0: 0.9917'
+  residual_ac1:
+    name: residual_ac1
+    passed: true
+    value: -0.0037915798556732118
+    threshold: 0.5
+    pvalue: null
+    message: 'AR(1) residual autocorrelation: -0.004'
+  sign_consistency:
+    name: sign_consistency
+    passed: false
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'Sign inconsistent: expected +, got -0.0324'
+all_diagnostics_pass: false
+interpretation:
+  estimand: IRF of kzt_usd to a unit shock in vix_shock
+  is_not: Structural causal effect under all interventions
+  channels:
+  - direct
+  - indirect through unobserved channels
+  population: Kazakhstan aggregate time-series (Kaspi Bank)
+  conditions: Sample period, no regime changes
+  allowed_uses: []
+  forbidden_uses: []
+failure_flags:
+  weak_identification: false
+  potential_bad_control: false
+  mechanical_identity_risk: false
+  regime_break_detected: false
+  small_sample: false
+  high_missing_rate: false
+  entity_boundary_change: false
+  definition_inconsistency: false
+counterfactual:
+  supports_shock_path: true
+  supports_policy_intervention: false
+  intervention_note: Reduced-form LP estimate; valid for shock propagation, not policy
+    counterfactuals
+  external_validity: ''
+credibility_rating: A
+credibility_score: 0.8900000000000001
+identification:
+  claim_level: REDUCED_FORM
+  risks:
+    unmeasured_confounding: medium
+    simultaneity: low
+    weak_variation: low
+    measurement_error: low
+    selection: low
+  untestable_assumptions:
+  - No omitted common cause of treatment and outcome
+  testable_threats_passed:
+  - hac_bandwidth
+  - effective_obs
+  - r_squared_h0
+  - residual_ac1
+  testable_threats_failed:
+  - sign_consistency
+counterfactual_block:
+  shock_scenario_allowed: false
+  policy_intervention_allowed: false
+  reason_shock_blocked: Design LOCAL_PROJECTIONS provides REDUCED_FORM level only
+  reason_policy_blocked: Design LOCAL_PROJECTIONS provides REDUCED_FORM level only
+  allowed: false
+  reason_blocked: Design LOCAL_PROJECTIONS provides REDUCED_FORM level only
+propagation_role:
+  role: reduced_form
+  overlapping_paths: []
+  selected_for_counterfactual: true
+  mode_propagation_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: true
+    DESCRIPTIVE: true
+  mode_shock_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: true
+    DESCRIPTIVE: false
+  mode_policy_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: false
+    DESCRIPTIVE: false
+literature:
+  supporting: []
+  challenging: []
+  methodological: []
+  search_status: PENDING
+  search_timestamp: null
+  search_query: ''
+  total_results: 0
+companion_edge_id: null
+variant_of: null
+is_precisely_null: true
+null_equivalence_bound: 0.21989108883496786

@@ -1,0 +1,29 @@
+{
+  "last_updated": "2026-02-08T07:18:05.882608+00:00",
+  "baseline_run_id": "",
+  "baseline_mode": "",
+  "baseline_dag_hash": "",
+  "issues": {
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:expenditure_to_payments_revenue": {
+      "status": "OPEN",
+      "opened_run": "002a5e7a",
+      "severity": "CRITICAL",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0000 but claim_level=REDUCED_FORM. Significance does not establish causation."
+    },
+    "RATING_DIAGNOSTICS_CONFLICT:cpi_tradable_to_nbk_policy_rate": {
+      "status": "OPEN",
+      "opened_run": "002a5e7a",
+      "severity": "HIGH",
+      "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
+      "message": "A-rating despite failed diagnostics."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:ppop_kspi_and_provisions_expense_kspi_to_total_capital_kspi": {
+      "status": "OPEN",
+      "opened_run": "002a5e7a",
+      "severity": "CRITICAL",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0000 but claim_level=BLOCKED_ID. Significance does not establish causation."
+    }
+  }
+}

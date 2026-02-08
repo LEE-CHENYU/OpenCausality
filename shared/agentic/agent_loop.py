@@ -716,6 +716,8 @@ class AgentLoop:
                 edge_card = self._create_accounting_bridge_card(task)
             elif group in ("MONTHLY_LP", "QUARTERLY_LP"):
                 edge_card = self._create_lp_card(task, is_quarterly=(group == "QUARTERLY_LP"))
+            elif group == "KSPI_ONLY":
+                edge_card = self._create_lp_card(task, is_quarterly=True)
             elif group == "DYNAMIC_LP":
                 edge_card = self._create_lp_card(task, is_quarterly=False)
             elif design_id is not None and task.edge_id in EDGE_NODE_MAP:

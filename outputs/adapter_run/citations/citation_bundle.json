@@ -1,0 +1,1602 @@
+[
+  {
+    "edge_id": "oil_supply_to_brent",
+    "citations": [
+      {
+        "doi": "10.1257/AER.99.3.1053",
+        "title": "Not All Oil Price Shocks are Alike: Disentangling Demand and Supply Shocks in the Crude Oil Market",
+        "authors": [
+          "L. Kilian"
+        ],
+        "year": 2006,
+        "excerpt": "",
+        "relevance": "supporting",
+        "edge_id": "oil_supply_to_brent",
+        "paper_id": "cd2fa5dd72f0747b172109d4f53f6f39470312fb",
+        "citation_count": 4224,
+        "search_query": "Oil supply shock Brent crude oil price causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      },
+      {
+        "doi": "10.1093/qje/qjaa004",
+        "title": "The Fall of the Labor Share and the Rise of Superstar Firms*",
+        "authors": [
+          "David Autor",
+          "David Dorn",
+          "Lawrence F. Katz",
+          "Christina Patterson",
+          "John Van Reenen"
+        ],
+        "year": 2020,
+        "excerpt": "Abstract The fall of labor\u2019s share of GDP in the United States and many other countries in recent decades is well documented but its causes remain uncertain. Existing empirical assessments typically rely on industry or macro data, obscuring heterogeneity among firms. In this article, we analyze micr",
+        "relevance": "supporting",
+        "edge_id": "oil_supply_to_brent",
+        "paper_id": "",
+        "citation_count": 1935,
+        "search_query": "Oil supply shock Brent crude oil price causal effect",
+        "source": "openalex",
+        "pdf_url": "https://academic.oup.com/qje/article-pdf/135/2/645/32994954/qjaa004.pdf"
+      },
+      {
+        "doi": "10.1257/jep.6.3.3",
+        "title": "Medical Care Costs: How Much Welfare Loss?",
+        "authors": [
+          "Joseph P. Newhouse"
+        ],
+        "year": 1992,
+        "excerpt": "Hardly a week goes by without a front-page newspaper article on rising health care costs and the uninsured. In this article, I focus mainly on costs, arguing that the issue has been somewhat misconceived: while the level of medical care spending in the U.S. is a cause for concern, the welfare losses",
+        "relevance": "supporting",
+        "edge_id": "oil_supply_to_brent",
+        "paper_id": "",
+        "citation_count": 1208,
+        "search_query": "Oil supply shock Brent crude oil price causal effect",
+        "source": "openalex",
+        "pdf_url": "https://www.aeaweb.org/articles/pdf/doi/10.1257/jep.6.3.3"
+      },
+      {
+        "doi": "10.1257/jep.15.4.101",
+        "title": "Vector Autoregressions",
+        "authors": [
+          "James H. Stock",
+          "Mark W. Watson"
+        ],
+        "year": 2001,
+        "excerpt": "This paper critically reviews the use of vector autoregressions (VARs) for four tasks: data description, forecasting, structural inference, and policy analysis. The paper begins with a review of VAR analysis, highlighting the differences between reduced-form VARs, recursive VARs and structural VARs.",
+        "relevance": "methodological",
+        "edge_id": "oil_supply_to_brent",
+        "paper_id": "",
+        "citation_count": 1085,
+        "search_query": "Oil supply shock Brent crude oil price causal effect",
+        "source": "openalex",
+        "pdf_url": "https://www.aeaweb.org/articles/pdf/doi/10.1257/jep.15.4.101"
+      },
+      {
+        "doi": "10.1063/5.0042359",
+        "title": "Does US-China trade war affect the Brent crude oil price? An ARIMAX forecasting approach",
+        "authors": [
+          "Ilma Amira Rahmayanti",
+          "Christopher Andreas",
+          "S. M. Ulyah"
+        ],
+        "year": 2021,
+        "excerpt": "Trade tension or trade war between the U.S. and China has had a significant impact on many sectors in the world. The business sector is one of them. Trade tension began on March 22nd 2018, after U.S. President imposed a $50 billion import duty on Chinese goods entering the United States. In return, ",
+        "relevance": "supporting",
+        "edge_id": "oil_supply_to_brent",
+        "paper_id": "5b8e89e0abb571bbd7d92277bbc125b2fd88c641",
+        "citation_count": 7,
+        "search_query": "Oil supply shock Brent crude oil price causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      }
+    ]
+  },
+  {
+    "edge_id": "oil_supply_to_fx",
+    "citations": [
+      {
+        "doi": "10.47312/aefr.v6i2.334",
+        "title": "Relationship Between Crude Oil Price Fluctuations, Economic Growth, Inflation, and Exchange Rate in Indonesia 1967-2019",
+        "authors": [
+          "Salwinar Aprin Nitami",
+          "B. Hayati"
+        ],
+        "year": 2021,
+        "excerpt": "Economic fluctuations can be caused by demand shocks and supply shocks. One of the supply shocks is caused by changes in world crude oil prices. As a net importer of crude oil, any change in crude oil prices makes domestic economic activity vulnerable to these shocks. The purpose of this study is to",
+        "relevance": "supporting",
+        "edge_id": "oil_supply_to_fx",
+        "paper_id": "a0f1c50129ea71872b4d27a9f43877c89600b0a0",
+        "citation_count": 7,
+        "search_query": "Oil supply shock KZT/USD exchange rate causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      },
+      {
+        "doi": "10.32479/ijeep.14266",
+        "title": "Wavelet Coherence and Continuous Wavelet Transform - Implementation and Application to the Relationship between Exchange Rate and Oil Price for Importing and Exporting Countries",
+        "authors": [
+          "Jassim Aladwani"
+        ],
+        "year": 2023,
+        "excerpt": "The purpose of this study is to analyses the time\u2013frequency relationship between exchange rate and the oil price for exporting and importing countries by using measures of continuous wavelet transform (CWT) and Wavelet coherence (WCT). The findings of wavelet coherence (WCT) analysis indicates that ",
+        "relevance": "supporting",
+        "edge_id": "oil_supply_to_fx",
+        "paper_id": "",
+        "citation_count": 5,
+        "search_query": "Oil supply shock KZT/USD exchange rate causal effect",
+        "source": "openalex",
+        "pdf_url": "https://econjournals.com/index.php/ijeep/article/download/14266/7421"
+      },
+      {
+        "doi": "10.32479/ijeep.16549",
+        "title": "Asymmetric Effect of Oil Prices on Kazakhstan\u2019s Stock Market Index and Exchange Rate",
+        "authors": [
+          "A. Syzdykova",
+          "G. Azretbergenova"
+        ],
+        "year": 2024,
+        "excerpt": "In this study, the asymmetric effect of oil prices in Kazakhstan on the exchange rate (USD/KZT) and Kazakhstan stock market index (KASE) returns was analyzed using the non-linear ARDL cointegration (NARDL) method with monthly data for the period January 2010-February 2024. As a result of the finding",
+        "relevance": "supporting",
+        "edge_id": "oil_supply_to_fx",
+        "paper_id": "8e2de21c6f5846b2b256f24392952489a7125b8d",
+        "citation_count": 2,
+        "search_query": "Oil supply shock KZT/USD exchange rate causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      },
+      {
+        "doi": "10.17059/ekon.reg.2022-1-15",
+        "title": "The Impact of the Local Financial Market on Economic Growth: A Case Study of Kazakhstan",
+        "authors": [
+          "Yuliya Nichkasova",
+          "E. Nezhinsky",
+          "Halina A. Shmarlouskaya"
+        ],
+        "year": 2022,
+        "excerpt": "Kazakhstan\u2019s financial market has always been the focus of the government attention as an important element of country development. Therefore, the main goal is to build a well-developed, competitive and trustworthy financial market that has a dominant influence on the economy and sustainable develop",
+        "relevance": "supporting",
+        "edge_id": "oil_supply_to_fx",
+        "paper_id": "",
+        "citation_count": 2,
+        "search_query": "Oil supply shock KZT/USD exchange rate causal effect",
+        "source": "openalex",
+        "pdf_url": "https://www.economyofregions.org/ojs/index.php/er/article/download/16/40/125"
+      },
+      {
+        "doi": "10.71097/ijsat.v16.i3.8049",
+        "title": "Exploring the Dynamic Interdependencies of Exchange Rates, Exports, and Imports in Kazakhstan: Johansen Cointegration &amp; A Vector Autoregression Analysis",
+        "authors": [
+          "Shyam Charan Barma"
+        ],
+        "year": 2025,
+        "excerpt": "This study examines the relationships among exchange rate, exports, and imports in the Kazakhstan economy using monthly data from November 1993 to October 2022. All variables are non-stationary at levels but become stationary after first differencing, indicating they are integrated of order one, I(1",
+        "relevance": "supporting",
+        "edge_id": "oil_supply_to_fx",
+        "paper_id": "",
+        "citation_count": 1,
+        "search_query": "Oil supply shock KZT/USD exchange rate causal effect",
+        "source": "openalex",
+        "pdf_url": "https://www.ijsat.org/papers/2025/3/8049.pdf"
+      }
+    ]
+  },
+  {
+    "edge_id": "oil_demand_to_fx",
+    "citations": [
+      {
+        "doi": "10.47312/aefr.v6i2.334",
+        "title": "Relationship Between Crude Oil Price Fluctuations, Economic Growth, Inflation, and Exchange Rate in Indonesia 1967-2019",
+        "authors": [
+          "Salwinar Aprin Nitami",
+          "B. Hayati"
+        ],
+        "year": 2021,
+        "excerpt": "Economic fluctuations can be caused by demand shocks and supply shocks. One of the supply shocks is caused by changes in world crude oil prices. As a net importer of crude oil, any change in crude oil prices makes domestic economic activity vulnerable to these shocks. The purpose of this study is to",
+        "relevance": "supporting",
+        "edge_id": "oil_demand_to_fx",
+        "paper_id": "a0f1c50129ea71872b4d27a9f43877c89600b0a0",
+        "citation_count": 7,
+        "search_query": "Oil demand shock KZT/USD exchange rate causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      },
+      {
+        "doi": "10.32479/ijeep.14266",
+        "title": "Wavelet Coherence and Continuous Wavelet Transform - Implementation and Application to the Relationship between Exchange Rate and Oil Price for Importing and Exporting Countries",
+        "authors": [
+          "Jassim Aladwani"
+        ],
+        "year": 2023,
+        "excerpt": "The purpose of this study is to analyses the time\u2013frequency relationship between exchange rate and the oil price for exporting and importing countries by using measures of continuous wavelet transform (CWT) and Wavelet coherence (WCT). The findings of wavelet coherence (WCT) analysis indicates that ",
+        "relevance": "supporting",
+        "edge_id": "oil_demand_to_fx",
+        "paper_id": "",
+        "citation_count": 5,
+        "search_query": "Oil demand shock KZT/USD exchange rate causal effect",
+        "source": "openalex",
+        "pdf_url": "https://econjournals.com/index.php/ijeep/article/download/14266/7421"
+      },
+      {
+        "doi": "10.32479/ijeep.16549",
+        "title": "Asymmetric Effect of Oil Prices on Kazakhstan\u2019s Stock Market Index and Exchange Rate",
+        "authors": [
+          "A. Syzdykova",
+          "G. Azretbergenova"
+        ],
+        "year": 2024,
+        "excerpt": "In this study, the asymmetric effect of oil prices in Kazakhstan on the exchange rate (USD/KZT) and Kazakhstan stock market index (KASE) returns was analyzed using the non-linear ARDL cointegration (NARDL) method with monthly data for the period January 2010-February 2024. As a result of the finding",
+        "relevance": "supporting",
+        "edge_id": "oil_demand_to_fx",
+        "paper_id": "8e2de21c6f5846b2b256f24392952489a7125b8d",
+        "citation_count": 2,
+        "search_query": "Oil demand shock KZT/USD exchange rate causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      },
+      {
+        "doi": "10.17059/ekon.reg.2022-1-15",
+        "title": "The Impact of the Local Financial Market on Economic Growth: A Case Study of Kazakhstan",
+        "authors": [
+          "Yuliya Nichkasova",
+          "E. Nezhinsky",
+          "Halina A. Shmarlouskaya"
+        ],
+        "year": 2022,
+        "excerpt": "Kazakhstan\u2019s financial market has always been the focus of the government attention as an important element of country development. Therefore, the main goal is to build a well-developed, competitive and trustworthy financial market that has a dominant influence on the economy and sustainable develop",
+        "relevance": "supporting",
+        "edge_id": "oil_demand_to_fx",
+        "paper_id": "",
+        "citation_count": 2,
+        "search_query": "Oil demand shock KZT/USD exchange rate causal effect",
+        "source": "openalex",
+        "pdf_url": "https://www.economyofregions.org/ojs/index.php/er/article/download/16/40/125"
+      },
+      {
+        "doi": "10.71097/ijsat.v16.i3.8049",
+        "title": "Exploring the Dynamic Interdependencies of Exchange Rates, Exports, and Imports in Kazakhstan: Johansen Cointegration &amp; A Vector Autoregression Analysis",
+        "authors": [
+          "Shyam Charan Barma"
+        ],
+        "year": 2025,
+        "excerpt": "This study examines the relationships among exchange rate, exports, and imports in the Kazakhstan economy using monthly data from November 1993 to October 2022. All variables are non-stationary at levels but become stationary after first differencing, indicating they are integrated of order one, I(1",
+        "relevance": "supporting",
+        "edge_id": "oil_demand_to_fx",
+        "paper_id": "",
+        "citation_count": 1,
+        "search_query": "Oil demand shock KZT/USD exchange rate causal effect",
+        "source": "openalex",
+        "pdf_url": "https://www.ijsat.org/papers/2025/3/8049.pdf"
+      }
+    ]
+  },
+  {
+    "edge_id": "vix_to_fx",
+    "citations": [
+      {
+        "doi": "10.32479/ijeep.16549",
+        "title": "Asymmetric Effect of Oil Prices on Kazakhstan\u2019s Stock Market Index and Exchange Rate",
+        "authors": [
+          "A. Syzdykova",
+          "G. Azretbergenova"
+        ],
+        "year": 2024,
+        "excerpt": "In this study, the asymmetric effect of oil prices in Kazakhstan on the exchange rate (USD/KZT) and Kazakhstan stock market index (KASE) returns was analyzed using the non-linear ARDL cointegration (NARDL) method with monthly data for the period January 2010-February 2024. As a result of the finding",
+        "relevance": "supporting",
+        "edge_id": "vix_to_fx",
+        "paper_id": "8e2de21c6f5846b2b256f24392952489a7125b8d",
+        "citation_count": 2,
+        "search_query": "VIX shock KZT/USD exchange rate causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      },
+      {
+        "doi": "",
+        "title": "Oil Price , Exchange Rate and DJIA : Effect to Malaysian Stock Market",
+        "authors": [
+          "Syukriah Ali",
+          "N. Mokhtar",
+          "Kartini Kasim"
+        ],
+        "year": 2016,
+        "excerpt": "",
+        "relevance": "supporting",
+        "edge_id": "vix_to_fx",
+        "paper_id": "a304873b5f87197ee16e95deb5d33cf460b787b3",
+        "citation_count": 1,
+        "search_query": "VIX shock KZT/USD exchange rate causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      },
+      {
+        "doi": "10.1515/jci-2022-0060",
+        "title": "Quantitative probing: Validating causal models using quantitative domain knowledge",
+        "authors": [
+          "Daniel Gr\u00fcnbaum",
+          "Maike L. Stern",
+          "Elmar W. Lang"
+        ],
+        "year": 2022,
+        "excerpt": "We present quantitative probing as a model-agnostic framework for validating causal models in the presence of quantitative domain knowledge. The method is constructed as an analogue of the train/test split in correlation-based machine learning and as an enhancement of current causal validation strat",
+        "relevance": "methodological",
+        "edge_id": "vix_to_fx",
+        "paper_id": "2209.03013v1",
+        "citation_count": 0,
+        "search_query": "VIX shock KZT/USD exchange rate causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/2209.03013v1"
+      },
+      {
+        "doi": "10.1515/jci-2021-0042",
+        "title": "A Unifying Causal Framework for Analyzing Dataset Shift-stable Learning Algorithms",
+        "authors": [
+          "Adarsh Subbaswamy",
+          "Bryant Chen",
+          "Suchi Saria"
+        ],
+        "year": 2019,
+        "excerpt": "Recent interest in the external validity of prediction models (i.e., the problem of different train and test distributions, known as dataset shift) has produced many methods for finding predictive distributions that are invariant to dataset shifts and can be used for prediction in new, unseen enviro",
+        "relevance": "supporting",
+        "edge_id": "vix_to_fx",
+        "paper_id": "1905.11374v5",
+        "citation_count": 0,
+        "search_query": "VIX shock KZT/USD exchange rate causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/1905.11374v5"
+      },
+      {
+        "doi": "",
+        "title": "Effect of foreign equity flows on stock market volatility in Kenya Empirical evidence at Nairobi securities exchange",
+        "authors": [
+          "Isaac L. Ochieng\u00e2",
+          "T. Olweny",
+          "O. Oluoch",
+          "Gordon O. Ochere"
+        ],
+        "year": 2019,
+        "excerpt": "",
+        "relevance": "supporting",
+        "edge_id": "vix_to_fx",
+        "paper_id": "431874f869885ddd7597634551b9bf44386e10a2",
+        "citation_count": 0,
+        "search_query": "VIX shock KZT/USD exchange rate causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      }
+    ]
+  },
+  {
+    "edge_id": "fx_to_cpi_tradable",
+    "citations": [
+      {
+        "doi": "10.5089/9781475598759.002",
+        "title": "Republic of Kazakhstan",
+        "authors": [
+          "International Monetary Fund. Middle East and Central Asia Dept."
+        ],
+        "year": 2017,
+        "excerpt": "This Selected Issues Paper evaluates Kazakhstan\u2019s oil rules, current fiscal stance, and long-term sustainability. The sharp and sustained drop in oil prices since 2014 has reduced the value of Kazakhstan\u2019s oil wealth. Kazakhstan\u2019s non-oil deficit path has been higher than suggested by long-term benc",
+        "relevance": "supporting",
+        "edge_id": "fx_to_cpi_tradable",
+        "paper_id": "",
+        "citation_count": 1,
+        "search_query": "KZT/USD exchange rate Tradable CPI causal effect",
+        "source": "openalex",
+        "pdf_url": "https://www.elibrary.imf.org/doc/IMF002/24266-9781475598759/24266-9781475598759/Other_formats/Source_PDF/24266-9781475598810.pdf"
+      },
+      {
+        "doi": "10.1515/jci-2022-0060",
+        "title": "Quantitative probing: Validating causal models using quantitative domain knowledge",
+        "authors": [
+          "Daniel Gr\u00fcnbaum",
+          "Maike L. Stern",
+          "Elmar W. Lang"
+        ],
+        "year": 2022,
+        "excerpt": "We present quantitative probing as a model-agnostic framework for validating causal models in the presence of quantitative domain knowledge. The method is constructed as an analogue of the train/test split in correlation-based machine learning and as an enhancement of current causal validation strat",
+        "relevance": "methodological",
+        "edge_id": "fx_to_cpi_tradable",
+        "paper_id": "2209.03013v1",
+        "citation_count": 0,
+        "search_query": "KZT/USD exchange rate Tradable CPI causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/2209.03013v1"
+      },
+      {
+        "doi": "10.1515/jci-2021-0042",
+        "title": "A Unifying Causal Framework for Analyzing Dataset Shift-stable Learning Algorithms",
+        "authors": [
+          "Adarsh Subbaswamy",
+          "Bryant Chen",
+          "Suchi Saria"
+        ],
+        "year": 2019,
+        "excerpt": "Recent interest in the external validity of prediction models (i.e., the problem of different train and test distributions, known as dataset shift) has produced many methods for finding predictive distributions that are invariant to dataset shifts and can be used for prediction in new, unseen enviro",
+        "relevance": "supporting",
+        "edge_id": "fx_to_cpi_tradable",
+        "paper_id": "1905.11374v5",
+        "citation_count": 0,
+        "search_query": "KZT/USD exchange rate Tradable CPI causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/1905.11374v5"
+      },
+      {
+        "doi": "",
+        "title": "Temporal causality in purchasing power parity relationship: Evidence from Australia",
+        "authors": [
+          "Kamrul Hassan",
+          "Ariful Hoque"
+        ],
+        "year": 2013,
+        "excerpt": "",
+        "relevance": "supporting",
+        "edge_id": "fx_to_cpi_tradable",
+        "paper_id": "f160af166806983e850f2bdb760116a00ea1a4b3",
+        "citation_count": 0,
+        "search_query": "KZT/USD exchange rate Tradable CPI causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      },
+      {
+        "doi": "",
+        "title": "Text as Causal Mediators: Research Design for Causal Estimates of Differential Treatment of Social Groups via Language Aspects",
+        "authors": [
+          "Katherine A. Keith",
+          "Douglas Rice",
+          "Brendan O'Connor"
+        ],
+        "year": 2021,
+        "excerpt": "Using observed language to understand interpersonal interactions is important in high-stakes decision making. We propose a causal research design for observational (non-experimental) data to estimate the natural direct and indirect effects of social group signals (e.g. race or gender) on speakers' r",
+        "relevance": "supporting",
+        "edge_id": "fx_to_cpi_tradable",
+        "paper_id": "2109.07542v1",
+        "citation_count": 0,
+        "search_query": "KZT/USD exchange rate Tradable CPI causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/2109.07542v1"
+      }
+    ]
+  },
+  {
+    "edge_id": "fx_to_cpi_nontradable",
+    "citations": [
+      {
+        "doi": "10.5089/9781475598759.002",
+        "title": "Republic of Kazakhstan",
+        "authors": [
+          "International Monetary Fund. Middle East and Central Asia Dept."
+        ],
+        "year": 2017,
+        "excerpt": "This Selected Issues Paper evaluates Kazakhstan\u2019s oil rules, current fiscal stance, and long-term sustainability. The sharp and sustained drop in oil prices since 2014 has reduced the value of Kazakhstan\u2019s oil wealth. Kazakhstan\u2019s non-oil deficit path has been higher than suggested by long-term benc",
+        "relevance": "supporting",
+        "edge_id": "fx_to_cpi_nontradable",
+        "paper_id": "",
+        "citation_count": 1,
+        "search_query": "KZT/USD exchange rate Non-tradable CPI causal effect",
+        "source": "openalex",
+        "pdf_url": "https://www.elibrary.imf.org/doc/IMF002/24266-9781475598759/24266-9781475598759/Other_formats/Source_PDF/24266-9781475598810.pdf"
+      },
+      {
+        "doi": "10.1515/jci-2022-0060",
+        "title": "Quantitative probing: Validating causal models using quantitative domain knowledge",
+        "authors": [
+          "Daniel Gr\u00fcnbaum",
+          "Maike L. Stern",
+          "Elmar W. Lang"
+        ],
+        "year": 2022,
+        "excerpt": "We present quantitative probing as a model-agnostic framework for validating causal models in the presence of quantitative domain knowledge. The method is constructed as an analogue of the train/test split in correlation-based machine learning and as an enhancement of current causal validation strat",
+        "relevance": "methodological",
+        "edge_id": "fx_to_cpi_nontradable",
+        "paper_id": "2209.03013v1",
+        "citation_count": 0,
+        "search_query": "KZT/USD exchange rate Non-tradable CPI causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/2209.03013v1"
+      },
+      {
+        "doi": "10.1515/jci-2021-0042",
+        "title": "A Unifying Causal Framework for Analyzing Dataset Shift-stable Learning Algorithms",
+        "authors": [
+          "Adarsh Subbaswamy",
+          "Bryant Chen",
+          "Suchi Saria"
+        ],
+        "year": 2019,
+        "excerpt": "Recent interest in the external validity of prediction models (i.e., the problem of different train and test distributions, known as dataset shift) has produced many methods for finding predictive distributions that are invariant to dataset shifts and can be used for prediction in new, unseen enviro",
+        "relevance": "supporting",
+        "edge_id": "fx_to_cpi_nontradable",
+        "paper_id": "1905.11374v5",
+        "citation_count": 0,
+        "search_query": "KZT/USD exchange rate Non-tradable CPI causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/1905.11374v5"
+      },
+      {
+        "doi": "",
+        "title": "Text as Causal Mediators: Research Design for Causal Estimates of Differential Treatment of Social Groups via Language Aspects",
+        "authors": [
+          "Katherine A. Keith",
+          "Douglas Rice",
+          "Brendan O'Connor"
+        ],
+        "year": 2021,
+        "excerpt": "Using observed language to understand interpersonal interactions is important in high-stakes decision making. We propose a causal research design for observational (non-experimental) data to estimate the natural direct and indirect effects of social group signals (e.g. race or gender) on speakers' r",
+        "relevance": "supporting",
+        "edge_id": "fx_to_cpi_nontradable",
+        "paper_id": "2109.07542v1",
+        "citation_count": 0,
+        "search_query": "KZT/USD exchange rate Non-tradable CPI causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/2109.07542v1"
+      }
+    ]
+  },
+  {
+    "edge_id": "cpi_to_nbk_rate",
+    "citations": [
+      {
+        "doi": "10.9734/ajeba/2020/v19i330306",
+        "title": "A VECM Analysis of the Relations the CPI, PPI, GDP Per Capita, Exchange Rate in the Republic of Azerbaijan",
+        "authors": [
+          "R. I. Davudova"
+        ],
+        "year": 2020,
+        "excerpt": "Aims: The study focuses on an empirical analysis of a macroeconomic indicators system, that reflect the level and pace of a country's socio-economic development, such as CPI, PPI, GDP per capita, exchange rate, taking into account the consequences of the COVID19 pandemic and oil prices on the exampl",
+        "relevance": "methodological",
+        "edge_id": "cpi_to_nbk_rate",
+        "paper_id": "8513d8b46fada0c84b654394ee9e1bb83af65562",
+        "citation_count": 2,
+        "search_query": "Headline CPI NBK base rate causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      },
+      {
+        "doi": "10.32508/stdjelm.v8i2.1364",
+        "title": "Perceived inflation in the Vietnamese economy: New points in methodology and applications",
+        "authors": [
+          "Thanh Xu\u00e2n Th\u1ecb Ph\u1ea1m",
+          "C\u00e0nh Th\u1ecb Nguy\u1ec5n",
+          "T\u00edn H\u1eefu H\u1ed3"
+        ],
+        "year": 2024,
+        "excerpt": "Researching and developing methods to measure perceived inflation is an indispensable requirement for the monetary policy management of the State Bank of Vietnam, especially in the context of interest rate amplitudes. remains at the lowest level in history in Vietnam. This study was conducted in tha",
+        "relevance": "supporting",
+        "edge_id": "cpi_to_nbk_rate",
+        "paper_id": "2e1882c5e916427fdead89055d24a66ecf381985",
+        "citation_count": 0,
+        "search_query": "Headline CPI NBK base rate causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      },
+      {
+        "doi": "10.1515/jci-2022-0060",
+        "title": "Quantitative probing: Validating causal models using quantitative domain knowledge",
+        "authors": [
+          "Daniel Gr\u00fcnbaum",
+          "Maike L. Stern",
+          "Elmar W. Lang"
+        ],
+        "year": 2022,
+        "excerpt": "We present quantitative probing as a model-agnostic framework for validating causal models in the presence of quantitative domain knowledge. The method is constructed as an analogue of the train/test split in correlation-based machine learning and as an enhancement of current causal validation strat",
+        "relevance": "methodological",
+        "edge_id": "cpi_to_nbk_rate",
+        "paper_id": "2209.03013v1",
+        "citation_count": 0,
+        "search_query": "Headline CPI NBK base rate causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/2209.03013v1"
+      },
+      {
+        "doi": "10.1515/jci-2021-0042",
+        "title": "A Unifying Causal Framework for Analyzing Dataset Shift-stable Learning Algorithms",
+        "authors": [
+          "Adarsh Subbaswamy",
+          "Bryant Chen",
+          "Suchi Saria"
+        ],
+        "year": 2019,
+        "excerpt": "Recent interest in the external validity of prediction models (i.e., the problem of different train and test distributions, known as dataset shift) has produced many methods for finding predictive distributions that are invariant to dataset shifts and can be used for prediction in new, unseen enviro",
+        "relevance": "supporting",
+        "edge_id": "cpi_to_nbk_rate",
+        "paper_id": "1905.11374v5",
+        "citation_count": 0,
+        "search_query": "Headline CPI NBK base rate causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/1905.11374v5"
+      },
+      {
+        "doi": "",
+        "title": "Determinants of Inflation rate in Nigeria",
+        "authors": [
+          "Kayode David Toluhi"
+        ],
+        "year": 2023,
+        "excerpt": "",
+        "relevance": "supporting",
+        "edge_id": "cpi_to_nbk_rate",
+        "paper_id": "d4bfeda8616714cd2270cfe6219f292b53db2c55",
+        "citation_count": 0,
+        "search_query": "Headline CPI NBK base rate causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      }
+    ]
+  },
+  {
+    "edge_id": "fx_to_nbk_rate",
+    "citations": [
+      {
+        "doi": "10.6007/IJAREMS/V4-I3/1798",
+        "title": "International Oil Prices and Exchange Rate in Nigeria: A Causality Analysis",
+        "authors": [
+          "E. Osuji"
+        ],
+        "year": 2015,
+        "excerpt": "",
+        "relevance": "supporting",
+        "edge_id": "fx_to_nbk_rate",
+        "paper_id": "5d62b71bb43db2a0b37f66876519be666473ab03",
+        "citation_count": 29,
+        "search_query": "KZT/USD exchange rate NBK base rate causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      },
+      {
+        "doi": "10.1155/2021/7280879",
+        "title": "Influence of Exchange Rate on Foreign Direct Investment Inflows: An Empirical Analysis Based on Co-Integration and Granger Causality Test",
+        "authors": [
+          "Lan Tan",
+          "Yifan Xu",
+          "Alemayehu Gashaw"
+        ],
+        "year": 2021,
+        "excerpt": "Although it is widely recognized that Foreign Direct Investment (FDI) inflows have a dominant effect on economic growth of host countries, the determinants of FDI inflows are still unclear. Especially, about the effect of exchange rate on FDI inflow, the results reached by scholars vary across count",
+        "relevance": "methodological",
+        "edge_id": "fx_to_nbk_rate",
+        "paper_id": "f1801b0898815f72e4afa66aad665d9ea28aecad",
+        "citation_count": 17,
+        "search_query": "KZT/USD exchange rate NBK base rate causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      },
+      {
+        "doi": "10.12775/DEM.2018.003",
+        "title": "An Inquiry into the Effect of the Interest Rate, Gold Price, and the Exchange Rate on Stock Exchange Index: Evidence from Nepal",
+        "authors": [
+          "M. Devkota",
+          "Humnath Panta"
+        ],
+        "year": 2018,
+        "excerpt": "This study examines the causal relationship between the Nepalese Stock Exchange (NEPSE) Index, the interest rate, gold price, and the USD exchange rate in Nepal. The monthly time series data from January 2006 to June 2018 are used.\u00a0Time series properties of the data are diagnosed using the Ng-Perron",
+        "relevance": "supporting",
+        "edge_id": "fx_to_nbk_rate",
+        "paper_id": "0ad17a6da3df790bc85e4cfc811d5bfb0e70d687",
+        "citation_count": 3,
+        "search_query": "KZT/USD exchange rate NBK base rate causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      },
+      {
+        "doi": "",
+        "title": "Institutions in transition countries",
+        "authors": [
+          "Dawid Pi\u0105tek",
+          "Adam Baszy\u0144ski",
+          "Micha\u0142 Pilc"
+        ],
+        "year": 2014,
+        "excerpt": "The aim of this report is to present and evaluate the changes which have taken place in institutions of 28 transition countries after 1989. Institutions are here understood as formal rules, including procedural and regulatory institutional solutions determining the economic and political structure o",
+        "relevance": "supporting",
+        "edge_id": "fx_to_nbk_rate",
+        "paper_id": "",
+        "citation_count": 3,
+        "search_query": "KZT/USD exchange rate NBK base rate causal effect",
+        "source": "openalex",
+        "pdf_url": "https://depot.ceon.pl/handle/123456789/4621"
+      },
+      {
+        "doi": "10.5089/9781475598759.002",
+        "title": "Republic of Kazakhstan",
+        "authors": [
+          "International Monetary Fund. Middle East and Central Asia Dept."
+        ],
+        "year": 2017,
+        "excerpt": "This Selected Issues Paper evaluates Kazakhstan\u2019s oil rules, current fiscal stance, and long-term sustainability. The sharp and sustained drop in oil prices since 2014 has reduced the value of Kazakhstan\u2019s oil wealth. Kazakhstan\u2019s non-oil deficit path has been higher than suggested by long-term benc",
+        "relevance": "supporting",
+        "edge_id": "fx_to_nbk_rate",
+        "paper_id": "",
+        "citation_count": 1,
+        "search_query": "KZT/USD exchange rate NBK base rate causal effect",
+        "source": "openalex",
+        "pdf_url": "https://www.elibrary.imf.org/doc/IMF002/24266-9781475598759/24266-9781475598759/Other_formats/Source_PDF/24266-9781475598810.pdf"
+      }
+    ]
+  },
+  {
+    "edge_id": "nbk_rate_to_deposit_cost",
+    "citations": [
+      {
+        "doi": "",
+        "title": "Numerical Integration in Random Coefficient Models of Demand",
+        "authors": [
+          "D. Brunner"
+        ],
+        "year": 2017,
+        "excerpt": "",
+        "relevance": "supporting",
+        "edge_id": "nbk_rate_to_deposit_cost",
+        "paper_id": "d4424d7df7e39bb8de40746d61b0dd44f176e572",
+        "citation_count": 1,
+        "search_query": "NBK base rate KSPI deposit cost causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      },
+      {
+        "doi": "10.1515/jci-2022-0060",
+        "title": "Quantitative probing: Validating causal models using quantitative domain knowledge",
+        "authors": [
+          "Daniel Gr\u00fcnbaum",
+          "Maike L. Stern",
+          "Elmar W. Lang"
+        ],
+        "year": 2022,
+        "excerpt": "We present quantitative probing as a model-agnostic framework for validating causal models in the presence of quantitative domain knowledge. The method is constructed as an analogue of the train/test split in correlation-based machine learning and as an enhancement of current causal validation strat",
+        "relevance": "methodological",
+        "edge_id": "nbk_rate_to_deposit_cost",
+        "paper_id": "2209.03013v1",
+        "citation_count": 0,
+        "search_query": "NBK base rate KSPI deposit cost causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/2209.03013v1"
+      },
+      {
+        "doi": "10.1515/jci-2021-0042",
+        "title": "A Unifying Causal Framework for Analyzing Dataset Shift-stable Learning Algorithms",
+        "authors": [
+          "Adarsh Subbaswamy",
+          "Bryant Chen",
+          "Suchi Saria"
+        ],
+        "year": 2019,
+        "excerpt": "Recent interest in the external validity of prediction models (i.e., the problem of different train and test distributions, known as dataset shift) has produced many methods for finding predictive distributions that are invariant to dataset shifts and can be used for prediction in new, unseen enviro",
+        "relevance": "supporting",
+        "edge_id": "nbk_rate_to_deposit_cost",
+        "paper_id": "1905.11374v5",
+        "citation_count": 0,
+        "search_query": "NBK base rate KSPI deposit cost causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/1905.11374v5"
+      },
+      {
+        "doi": "",
+        "title": "The Impact of Macroeconomic Variables on Stock Prices index : The Case of Tehran Stock Exchange",
+        "authors": [
+          "Elham Jamali",
+          "Mahsa Ghahri",
+          "M. Mirzakhani"
+        ],
+        "year": 2016,
+        "excerpt": "",
+        "relevance": "supporting",
+        "edge_id": "nbk_rate_to_deposit_cost",
+        "paper_id": "b0660a7d9a0707b19d3ea2c0c1e88a2702254ff0",
+        "citation_count": 0,
+        "search_query": "NBK base rate KSPI deposit cost causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      },
+      {
+        "doi": "",
+        "title": "Financial institutions after the crisis: facing new challenges and new regulatory frameworks",
+        "authors": [
+          "S. Bressan",
+          "Taylor A. Begley",
+          "N. Martynova"
+        ],
+        "year": 2015,
+        "excerpt": "",
+        "relevance": "supporting",
+        "edge_id": "nbk_rate_to_deposit_cost",
+        "paper_id": "f1d447d7217c57d054425ee2f5b3fd176f21df62",
+        "citation_count": 0,
+        "search_query": "NBK base rate KSPI deposit cost causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      }
+    ]
+  },
+  {
+    "edge_id": "nbk_rate_to_cor",
+    "citations": [
+      {
+        "doi": "10.21314/JOP.2019.229",
+        "title": "On the Selection of Loss Severity Distributions to Model Operational Risk",
+        "authors": [
+          "Daniel Hadley",
+          "Harry Joe",
+          "Natalia Nolde"
+        ],
+        "year": 2021,
+        "excerpt": "Accurate modeling of operational risk is important for a bank and the finance industry as a whole to prepare for potentially catastrophic losses. One approach to modeling operational is the loss distribution approach, which requires a bank to group operational losses into risk categories and select ",
+        "relevance": "supporting",
+        "edge_id": "nbk_rate_to_cor",
+        "paper_id": "2107.03979v1",
+        "citation_count": 0,
+        "search_query": "NBK base rate KSPI cost of risk causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/2107.03979v1"
+      },
+      {
+        "doi": "",
+        "title": "Sequential Design and Spatial Modeling for Portfolio Tail Risk Measurement",
+        "authors": [
+          "Michael Ludkovski",
+          "James Risk"
+        ],
+        "year": 2017,
+        "excerpt": "We consider calculation of capital requirements when the underlying economic scenarios are determined by simulatable risk factors. In the respective nested simulation framework, the goal is to estimate portfolio tail risk, quantified via VaR or TVaR of a given collection of future economic scenarios",
+        "relevance": "methodological",
+        "edge_id": "nbk_rate_to_cor",
+        "paper_id": "1710.05204v2",
+        "citation_count": 0,
+        "search_query": "NBK base rate KSPI cost of risk causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/1710.05204v2"
+      },
+      {
+        "doi": "",
+        "title": "Statistical Emulators for Pricing and Hedging Longevity Risk Products",
+        "authors": [
+          "James Risk",
+          "Michael Ludkovski"
+        ],
+        "year": 2015,
+        "excerpt": "We propose the use of statistical emulators for the purpose of valuing mortality-linked contracts in stochastic mortality models. Such models typically require (nested) evaluation of expected values of nonlinear functionals of multi-dimensional stochastic processes. Except in the simplest cases, no ",
+        "relevance": "methodological",
+        "edge_id": "nbk_rate_to_cor",
+        "paper_id": "1508.00310v2",
+        "citation_count": 0,
+        "search_query": "NBK base rate KSPI cost of risk causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/1508.00310v2"
+      }
+    ]
+  },
+  {
+    "edge_id": "cpi_to_nominal_income",
+    "citations": [
+      {
+        "doi": "10.3386/w23687",
+        "title": "The Rise of Market Power and the Macroeconomic Implications",
+        "authors": [
+          "Jan De Loecker",
+          "Jan Eeckhout"
+        ],
+        "year": 2017,
+        "excerpt": "wages; market power; mark-ups; technology; market dynamism; market structure",
+        "relevance": "supporting",
+        "edge_id": "cpi_to_nominal_income",
+        "paper_id": "",
+        "citation_count": 783,
+        "search_query": "Headline CPI Nominal monetary income causal effect",
+        "source": "openalex",
+        "pdf_url": "https://doi.org/10.3386/w23687"
+      },
+      {
+        "doi": "10.3386/w15836",
+        "title": "The Natural Resource Curse: A Survey",
+        "authors": [
+          "Jeffrey A. Frankel"
+        ],
+        "year": 2010,
+        "excerpt": "It is striking how often countries with oil or other natural resource wealth have failed to grow more rapidly than those without. This is the phenomenon known as the Natural Resource Curse. The principle is not confined to individual anecdotes or case studies, but has been borne out in econometric t",
+        "relevance": "supporting",
+        "edge_id": "cpi_to_nominal_income",
+        "paper_id": "",
+        "citation_count": 581,
+        "search_query": "Headline CPI Nominal monetary income causal effect",
+        "source": "openalex",
+        "pdf_url": "https://doi.org/10.3386/w15836"
+      },
+      {
+        "doi": "10.2139/ssrn.3520654",
+        "title": "Eight Centuries of Global Real Interest Rates, R-G, and the \u2018Suprasecular\u2019 Decline, 1311\u20132018",
+        "authors": [
+          "Paul Schmelzing"
+        ],
+        "year": 2020,
+        "excerpt": "",
+        "relevance": "supporting",
+        "edge_id": "cpi_to_nominal_income",
+        "paper_id": "",
+        "citation_count": 114,
+        "search_query": "Headline CPI Nominal monetary income causal effect",
+        "source": "openalex",
+        "pdf_url": "https://papers.ssrn.com/sol3/Delivery.cfm?abstractid=3520654"
+      },
+      {
+        "doi": "10.1017/S1365100516001097",
+        "title": "OIL PRICE SHOCKS, INFLATION, AND CHINESE MONETARY POLICY",
+        "authors": [
+          "Yunqing Wang",
+          "Qigui Zhu",
+          "Jun Wu"
+        ],
+        "year": 2017,
+        "excerpt": "",
+        "relevance": "supporting",
+        "edge_id": "cpi_to_nominal_income",
+        "paper_id": "ff476e581ee27f7e02a692c075aeae16860e81c1",
+        "citation_count": 18,
+        "search_query": "Headline CPI Nominal monetary income causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      },
+      {
+        "doi": "10.32468/inf-pol-mont-eng.tr1-2023",
+        "title": "Monetary Policy Report - January 2023",
+        "authors": [],
+        "year": 2023,
+        "excerpt": "1. Macroeconomic Summary In December, headline inflation (13.1%) and the average of the core inflation measures (10.3%) continued to trend upward, posting higher rates than those estimated by the Central Bank's technical staff and surpassing the market average. Inflation expectations for all terms e",
+        "relevance": "supporting",
+        "edge_id": "cpi_to_nominal_income",
+        "paper_id": "4a38e5f258dbb6ad7a390c3b3d59e7bc104a6fa5",
+        "citation_count": 1,
+        "search_query": "Headline CPI Nominal monetary income causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      }
+    ]
+  },
+  {
+    "edge_id": "fx_to_real_expenditure",
+    "citations": [
+      {
+        "doi": "10.21511/imfi.17(2).2020.01",
+        "title": "Impact of inflation on economic growth: evidence from Nigeria",
+        "authors": [
+          "Anthony Olugbenga Adaramola",
+          "Oluwabunmi Dada"
+        ],
+        "year": 2020,
+        "excerpt": "In an attempt to examine the influence of inflation on the growth prospects of the Nigerian economy, the study employs the autoregressive distributed lag on the selected variables, i.e. real gross domestic product (GDP), inflation rate, interest rate, exchange rate, degree of economy`s openness, mon",
+        "relevance": "challenging",
+        "edge_id": "fx_to_real_expenditure",
+        "paper_id": "58f8b2604b1c529d259bc3671c36d042cbd61f41",
+        "citation_count": 98,
+        "search_query": "KZT/USD exchange rate Real consumption expenditure causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      },
+      {
+        "doi": "10.1186/s40854-023-00481-7",
+        "title": "Triggering economic growth to ensure financial stability: case study of Northern Cyprus",
+        "authors": [
+          "Ergin Akalpler"
+        ],
+        "year": 2023,
+        "excerpt": "This study questions the importance of public debt in stable growth between 1980 and 2018, specifically, the Ricardian equivalence hypothesis and Keynesian view are questioned. This study used data obtained from the Northern Cyprus State Planning Office. A restricted vector autoregressive model is u",
+        "relevance": "challenging",
+        "edge_id": "fx_to_real_expenditure",
+        "paper_id": "3054ab7e48ec2ead09c93e737123064b653982d3",
+        "citation_count": 6,
+        "search_query": "KZT/USD exchange rate Real consumption expenditure causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      },
+      {
+        "doi": "10.17059/ekon.reg.2022-1-15",
+        "title": "The Impact of the Local Financial Market on Economic Growth: A Case Study of Kazakhstan",
+        "authors": [
+          "Yuliya Nichkasova",
+          "E. Nezhinsky",
+          "Halina A. Shmarlouskaya"
+        ],
+        "year": 2022,
+        "excerpt": "Kazakhstan\u2019s financial market has always been the focus of the government attention as an important element of country development. Therefore, the main goal is to build a well-developed, competitive and trustworthy financial market that has a dominant influence on the economy and sustainable develop",
+        "relevance": "supporting",
+        "edge_id": "fx_to_real_expenditure",
+        "paper_id": "",
+        "citation_count": 2,
+        "search_query": "KZT/USD exchange rate Real consumption expenditure causal effect",
+        "source": "openalex",
+        "pdf_url": "https://www.economyofregions.org/ojs/index.php/er/article/download/16/40/125"
+      },
+      {
+        "doi": "10.3390/su17010036",
+        "title": "Economic Aspects of Sustainable Development: Eco-Branding in Manufacturing Enterprises from Kazakhstan",
+        "authors": [
+          "\u041b. \u041c. \u0414\u0430\u0432\u0438\u0434\u0435\u043d\u043a\u043e",
+          "\u0410. \u0410. \u0422\u0438\u0442\u043a\u043e\u0432",
+          "Nurzhanat Sherimova",
+          "Ansagan Beisembina"
+        ],
+        "year": 2024,
+        "excerpt": "Economic science provides a rich methodological toolkit for sustainable development combined with the principles of the circular economy and green marketing. The practical adaptation of a set of assessment tools helped the realisation of the goal of this study in the form of the systematisation of i",
+        "relevance": "supporting",
+        "edge_id": "fx_to_real_expenditure",
+        "paper_id": "",
+        "citation_count": 1,
+        "search_query": "KZT/USD exchange rate Real consumption expenditure causal effect",
+        "source": "openalex",
+        "pdf_url": "https://www.mdpi.com/2071-1050/17/1/36/pdf?version=1735119338"
+      },
+      {
+        "doi": "10.5089/9781475598759.002",
+        "title": "Republic of Kazakhstan",
+        "authors": [
+          "International Monetary Fund. Middle East and Central Asia Dept."
+        ],
+        "year": 2017,
+        "excerpt": "This Selected Issues Paper evaluates Kazakhstan\u2019s oil rules, current fiscal stance, and long-term sustainability. The sharp and sustained drop in oil prices since 2014 has reduced the value of Kazakhstan\u2019s oil wealth. Kazakhstan\u2019s non-oil deficit path has been higher than suggested by long-term benc",
+        "relevance": "supporting",
+        "edge_id": "fx_to_real_expenditure",
+        "paper_id": "",
+        "citation_count": 1,
+        "search_query": "KZT/USD exchange rate Real consumption expenditure causal effect",
+        "source": "openalex",
+        "pdf_url": "https://www.elibrary.imf.org/doc/IMF002/24266-9781475598759/24266-9781475598759/Other_formats/Source_PDF/24266-9781475598810.pdf"
+      }
+    ]
+  },
+  {
+    "edge_id": "shock_to_npl_kspi",
+    "citations": [
+      {
+        "doi": "10.1515/jci-2018-0008",
+        "title": "The Inflation Technique Completely Solves the Causal Compatibility Problem",
+        "authors": [
+          "Miguel Navascues",
+          "Elie Wolfe"
+        ],
+        "year": 2017,
+        "excerpt": "The causal compatibility question asks whether a given causal structure graph -- possibly involving latent variables -- constitutes a genuinely plausible causal explanation for a given probability distribution over the graph's observed variables. Algorithms predicated on merely necessary constraints",
+        "relevance": "supporting",
+        "edge_id": "shock_to_npl_kspi",
+        "paper_id": "1707.06476v3",
+        "citation_count": 0,
+        "search_query": "Imported inflation IV KSPI NPL ratio causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/1707.06476v3"
+      },
+      {
+        "doi": "10.1515/jci-2022-0060",
+        "title": "Quantitative probing: Validating causal models using quantitative domain knowledge",
+        "authors": [
+          "Daniel Gr\u00fcnbaum",
+          "Maike L. Stern",
+          "Elmar W. Lang"
+        ],
+        "year": 2022,
+        "excerpt": "We present quantitative probing as a model-agnostic framework for validating causal models in the presence of quantitative domain knowledge. The method is constructed as an analogue of the train/test split in correlation-based machine learning and as an enhancement of current causal validation strat",
+        "relevance": "methodological",
+        "edge_id": "shock_to_npl_kspi",
+        "paper_id": "2209.03013v1",
+        "citation_count": 0,
+        "search_query": "Imported inflation IV KSPI NPL ratio causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/2209.03013v1"
+      },
+      {
+        "doi": "",
+        "title": "Text as Causal Mediators: Research Design for Causal Estimates of Differential Treatment of Social Groups via Language Aspects",
+        "authors": [
+          "Katherine A. Keith",
+          "Douglas Rice",
+          "Brendan O'Connor"
+        ],
+        "year": 2021,
+        "excerpt": "Using observed language to understand interpersonal interactions is important in high-stakes decision making. We propose a causal research design for observational (non-experimental) data to estimate the natural direct and indirect effects of social group signals (e.g. race or gender) on speakers' r",
+        "relevance": "supporting",
+        "edge_id": "shock_to_npl_kspi",
+        "paper_id": "2109.07542v1",
+        "citation_count": 0,
+        "search_query": "Imported inflation IV KSPI NPL ratio causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/2109.07542v1"
+      }
+    ]
+  },
+  {
+    "edge_id": "shock_to_cor_kspi",
+    "citations": [
+      {
+        "doi": "10.25501/soas.00029228",
+        "title": "Emerging stock markets in the Pacific Basin : An empirical analysis with particular reference to the Korean stock market.",
+        "authors": [
+          "Hyun-Jung Ryoo"
+        ],
+        "year": 2001,
+        "excerpt": "This thesis investigates emerging stock markets in the Pacific Basin with particular reference to the Korean stock market, which is representative of typical, fast-growing emerging markets. Using a broader range of econometric models, the short-run and long-run behaviour of stock prices, the impact ",
+        "relevance": "supporting",
+        "edge_id": "shock_to_cor_kspi",
+        "paper_id": "",
+        "citation_count": 1,
+        "search_query": "Imported inflation IV KSPI cost of risk causal effect",
+        "source": "openalex",
+        "pdf_url": "https://eprints.soas.ac.uk/29228/1/10731323.pdf"
+      },
+      {
+        "doi": "10.1515/jci-2018-0008",
+        "title": "The Inflation Technique Completely Solves the Causal Compatibility Problem",
+        "authors": [
+          "Miguel Navascues",
+          "Elie Wolfe"
+        ],
+        "year": 2017,
+        "excerpt": "The causal compatibility question asks whether a given causal structure graph -- possibly involving latent variables -- constitutes a genuinely plausible causal explanation for a given probability distribution over the graph's observed variables. Algorithms predicated on merely necessary constraints",
+        "relevance": "supporting",
+        "edge_id": "shock_to_cor_kspi",
+        "paper_id": "1707.06476v3",
+        "citation_count": 0,
+        "search_query": "Imported inflation IV KSPI cost of risk causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/1707.06476v3"
+      },
+      {
+        "doi": "10.21314/JOP.2019.229",
+        "title": "On the Selection of Loss Severity Distributions to Model Operational Risk",
+        "authors": [
+          "Daniel Hadley",
+          "Harry Joe",
+          "Natalia Nolde"
+        ],
+        "year": 2021,
+        "excerpt": "Accurate modeling of operational risk is important for a bank and the finance industry as a whole to prepare for potentially catastrophic losses. One approach to modeling operational is the loss distribution approach, which requires a bank to group operational losses into risk categories and select ",
+        "relevance": "supporting",
+        "edge_id": "shock_to_cor_kspi",
+        "paper_id": "2107.03979v1",
+        "citation_count": 0,
+        "search_query": "Imported inflation IV KSPI cost of risk causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/2107.03979v1"
+      },
+      {
+        "doi": "",
+        "title": "Sequential Design and Spatial Modeling for Portfolio Tail Risk Measurement",
+        "authors": [
+          "Michael Ludkovski",
+          "James Risk"
+        ],
+        "year": 2017,
+        "excerpt": "We consider calculation of capital requirements when the underlying economic scenarios are determined by simulatable risk factors. In the respective nested simulation framework, the goal is to estimate portfolio tail risk, quantified via VaR or TVaR of a given collection of future economic scenarios",
+        "relevance": "methodological",
+        "edge_id": "shock_to_cor_kspi",
+        "paper_id": "1710.05204v2",
+        "citation_count": 0,
+        "search_query": "Imported inflation IV KSPI cost of risk causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/1710.05204v2"
+      }
+    ]
+  },
+  {
+    "edge_id": "expenditure_to_payments_revenue",
+    "citations": [
+      {
+        "doi": "",
+        "title": "Macroeconomic framework for the economy of Bangladesh",
+        "authors": [
+          "B. Khondker",
+          "Selim Raihan"
+        ],
+        "year": 2008,
+        "excerpt": "",
+        "relevance": "supporting",
+        "edge_id": "expenditure_to_payments_revenue",
+        "paper_id": "827dd3aa59ae7916f6104664647120278791958b",
+        "citation_count": 1,
+        "search_query": "Real consumption expenditure KSPI Payments revenue causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      },
+      {
+        "doi": "",
+        "title": "Foundations of a Welfare Regime: The Case of Indonesia",
+        "authors": [
+          "Ramadani Torheim"
+        ],
+        "year": 2013,
+        "excerpt": "Indonesia is at a crossroads in building its welfare regime. The study seeks to analyse the salient characteristics and enabling factors that influence Indonesia\u2019s current social policies in light of welfare state theories. The adoption of the Social Security Providers Law in late 2011 underlined th",
+        "relevance": "supporting",
+        "edge_id": "expenditure_to_payments_revenue",
+        "paper_id": "",
+        "citation_count": 1,
+        "search_query": "Real consumption expenditure KSPI Payments revenue causal effect",
+        "source": "openalex",
+        "pdf_url": "http://hdl.handle.net/10852/36942"
+      },
+      {
+        "doi": "",
+        "title": "Corporate Liquidity and Real Investments",
+        "authors": [
+          "Yang Zhao",
+          "Joshua D. Rauh",
+          "A. Krishnamurthy"
+        ],
+        "year": 2019,
+        "excerpt": "",
+        "relevance": "supporting",
+        "edge_id": "expenditure_to_payments_revenue",
+        "paper_id": "07bedfd82cffadf7a1f645f6de296e0511409ad4",
+        "citation_count": 0,
+        "search_query": "Real consumption expenditure KSPI Payments revenue causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      },
+      {
+        "doi": "",
+        "title": "1 PUBLIC EXPENDITURE AND INFLATION DYNAMICS IN NIGERIA 1970-2004",
+        "authors": [
+          "Dr. Lawrence Ohale",
+          "Dr A. E. Cookey"
+        ],
+        "year": 2015,
+        "excerpt": "",
+        "relevance": "supporting",
+        "edge_id": "expenditure_to_payments_revenue",
+        "paper_id": "949fcbff58a6d39de27217dad0073183b745034d",
+        "citation_count": 0,
+        "search_query": "Real consumption expenditure KSPI Payments revenue causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      },
+      {
+        "doi": "",
+        "title": "A statistical physics analysis of expenditure in the UK",
+        "authors": [
+          "Elvis Oltean",
+          "Fedor Kusmartsev"
+        ],
+        "year": 2014,
+        "excerpt": "Most papers which explored so far macroeconomic variables took into account income and wealth. Equally important as the previous macroeconomic variables is the expenditure or consumption, which shows the amount of goods and services that a person or a household purchased. Using statistical distribut",
+        "relevance": "supporting",
+        "edge_id": "expenditure_to_payments_revenue",
+        "paper_id": "1410.3865v2",
+        "citation_count": 0,
+        "search_query": "Real consumption expenditure KSPI Payments revenue causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/1410.3865v2"
+      }
+    ]
+  },
+  {
+    "edge_id": "cor_to_capital",
+    "citations": [
+      {
+        "doi": "10.3390/su15086420",
+        "title": "A New Hybrid Decision-Making Model for Promoting Sustainable Social Rental Housing",
+        "authors": [
+          "Wei Jiang",
+          "Wentao Lu Qiu",
+          "Sheng-Hau Lin",
+          "Huiming Lv",
+          "Xiaofeng Zhao",
+          "Cong Hao"
+        ],
+        "year": 2023,
+        "excerpt": "The realization of sustainable social rental housing is regarded as an important policy to solve the housing burden, but social rental housing is often unsustainable. This study assesses the sustainability of social rental housing. However, the decision-making models, such as the classical decision-",
+        "relevance": "supporting",
+        "edge_id": "cor_to_capital",
+        "paper_id": "",
+        "citation_count": 12,
+        "search_query": "KSPI cost of risk KSPI total capital causal effect",
+        "source": "openalex",
+        "pdf_url": "https://www.mdpi.com/2071-1050/15/8/6420/pdf?version=1681111230"
+      },
+      {
+        "doi": "10.25501/soas.00029228",
+        "title": "Emerging stock markets in the Pacific Basin : An empirical analysis with particular reference to the Korean stock market.",
+        "authors": [
+          "Hyun-Jung Ryoo"
+        ],
+        "year": 2001,
+        "excerpt": "This thesis investigates emerging stock markets in the Pacific Basin with particular reference to the Korean stock market, which is representative of typical, fast-growing emerging markets. Using a broader range of econometric models, the short-run and long-run behaviour of stock prices, the impact ",
+        "relevance": "supporting",
+        "edge_id": "cor_to_capital",
+        "paper_id": "",
+        "citation_count": 1,
+        "search_query": "KSPI cost of risk KSPI total capital causal effect",
+        "source": "openalex",
+        "pdf_url": "https://eprints.soas.ac.uk/29228/1/10731323.pdf"
+      },
+      {
+        "doi": "",
+        "title": "Foundations of a Welfare Regime: The Case of Indonesia",
+        "authors": [
+          "Ramadani Torheim"
+        ],
+        "year": 2013,
+        "excerpt": "Indonesia is at a crossroads in building its welfare regime. The study seeks to analyse the salient characteristics and enabling factors that influence Indonesia\u2019s current social policies in light of welfare state theories. The adoption of the Social Security Providers Law in late 2011 underlined th",
+        "relevance": "supporting",
+        "edge_id": "cor_to_capital",
+        "paper_id": "",
+        "citation_count": 1,
+        "search_query": "KSPI cost of risk KSPI total capital causal effect",
+        "source": "openalex",
+        "pdf_url": "http://hdl.handle.net/10852/36942"
+      },
+      {
+        "doi": "10.21314/JOP.2019.229",
+        "title": "On the Selection of Loss Severity Distributions to Model Operational Risk",
+        "authors": [
+          "Daniel Hadley",
+          "Harry Joe",
+          "Natalia Nolde"
+        ],
+        "year": 2021,
+        "excerpt": "Accurate modeling of operational risk is important for a bank and the finance industry as a whole to prepare for potentially catastrophic losses. One approach to modeling operational is the loss distribution approach, which requires a bank to group operational losses into risk categories and select ",
+        "relevance": "supporting",
+        "edge_id": "cor_to_capital",
+        "paper_id": "2107.03979v1",
+        "citation_count": 0,
+        "search_query": "KSPI cost of risk KSPI total capital causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/2107.03979v1"
+      },
+      {
+        "doi": "",
+        "title": "Sequential Design and Spatial Modeling for Portfolio Tail Risk Measurement",
+        "authors": [
+          "Michael Ludkovski",
+          "James Risk"
+        ],
+        "year": 2017,
+        "excerpt": "We consider calculation of capital requirements when the underlying economic scenarios are determined by simulatable risk factors. In the respective nested simulation framework, the goal is to estimate portfolio tail risk, quantified via VaR or TVaR of a given collection of future economic scenarios",
+        "relevance": "methodological",
+        "edge_id": "cor_to_capital",
+        "paper_id": "1710.05204v2",
+        "citation_count": 0,
+        "search_query": "KSPI cost of risk KSPI total capital causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/1710.05204v2"
+      }
+    ]
+  },
+  {
+    "edge_id": "loan_portfolio_to_rwa",
+    "citations": [
+      {
+        "doi": "10.25501/soas.00029228",
+        "title": "Emerging stock markets in the Pacific Basin : An empirical analysis with particular reference to the Korean stock market.",
+        "authors": [
+          "Hyun-Jung Ryoo"
+        ],
+        "year": 2001,
+        "excerpt": "This thesis investigates emerging stock markets in the Pacific Basin with particular reference to the Korean stock market, which is representative of typical, fast-growing emerging markets. Using a broader range of econometric models, the short-run and long-run behaviour of stock prices, the impact ",
+        "relevance": "supporting",
+        "edge_id": "loan_portfolio_to_rwa",
+        "paper_id": "",
+        "citation_count": 1,
+        "search_query": "KSPI net loan portfolio KSPI risk-weighted assets causal effect",
+        "source": "openalex",
+        "pdf_url": "https://eprints.soas.ac.uk/29228/1/10731323.pdf"
+      },
+      {
+        "doi": "10.1016/j.jempfin.2015.03.003",
+        "title": "Portfolio optimization for heavy-tailed assets: Extreme Risk Index vs. Markowitz",
+        "authors": [
+          "Georg Mainik",
+          "Georgi Mitov",
+          "Ludger R\u00fcschendorf"
+        ],
+        "year": 2015,
+        "excerpt": "Using daily returns of the S&P 500 stocks from 2001 to 2011, we perform a backtesting study of the portfolio optimization strategy based on the extreme risk index (ERI). This method uses multivariate extreme value theory to minimize the probability of large portfolio losses. With more than 400 stock",
+        "relevance": "supporting",
+        "edge_id": "loan_portfolio_to_rwa",
+        "paper_id": "1505.04045v1",
+        "citation_count": 0,
+        "search_query": "KSPI net loan portfolio KSPI risk-weighted assets causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/1505.04045v1"
+      },
+      {
+        "doi": "",
+        "title": "Optimal Portfolio with Power Utility of Absolute and Relative Wealth",
+        "authors": [
+          "Andrey Sarantsev"
+        ],
+        "year": 2021,
+        "excerpt": "Portfolio managers often evaluate performance relative to benchmark, usually taken to be the Standard & Poor 500 stock index fund. This relative portfolio wealth is defined as the absolute portfolio wealth divided by wealth from investing in the benchmark (including reinvested dividends). The classi",
+        "relevance": "supporting",
+        "edge_id": "loan_portfolio_to_rwa",
+        "paper_id": "2105.08139v2",
+        "citation_count": 0,
+        "search_query": "KSPI net loan portfolio KSPI risk-weighted assets causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/2105.08139v2"
+      },
+      {
+        "doi": "",
+        "title": "Sparsity and Stability for Minimum-Variance Portfolios",
+        "authors": [
+          "Sven Husmann",
+          "Antoniya Shivarova",
+          "Rick Steinert"
+        ],
+        "year": 2019,
+        "excerpt": "The popularity of modern portfolio theory has decreased among practitioners because of its unfavorable out-of-sample performance. Estimation errors tend to affect the optimal weight calculation noticeably, especially when a large number of assets is considered. To overcome these issues, many methods",
+        "relevance": "supporting",
+        "edge_id": "loan_portfolio_to_rwa",
+        "paper_id": "1910.11840v1",
+        "citation_count": 0,
+        "search_query": "KSPI net loan portfolio KSPI risk-weighted assets causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/1910.11840v1"
+      }
+    ]
+  },
+  {
+    "edge_id": "portfolio_mix_to_rwa",
+    "citations": [
+      {
+        "doi": "10.1016/j.jempfin.2015.03.003",
+        "title": "Portfolio optimization for heavy-tailed assets: Extreme Risk Index vs. Markowitz",
+        "authors": [
+          "Georg Mainik",
+          "Georgi Mitov",
+          "Ludger R\u00fcschendorf"
+        ],
+        "year": 2015,
+        "excerpt": "Using daily returns of the S&P 500 stocks from 2001 to 2011, we perform a backtesting study of the portfolio optimization strategy based on the extreme risk index (ERI). This method uses multivariate extreme value theory to minimize the probability of large portfolio losses. With more than 400 stock",
+        "relevance": "supporting",
+        "edge_id": "portfolio_mix_to_rwa",
+        "paper_id": "1505.04045v1",
+        "citation_count": 0,
+        "search_query": "KSPI portfolio mix KSPI risk-weighted assets causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/1505.04045v1"
+      },
+      {
+        "doi": "",
+        "title": "Optimal Portfolio with Power Utility of Absolute and Relative Wealth",
+        "authors": [
+          "Andrey Sarantsev"
+        ],
+        "year": 2021,
+        "excerpt": "Portfolio managers often evaluate performance relative to benchmark, usually taken to be the Standard & Poor 500 stock index fund. This relative portfolio wealth is defined as the absolute portfolio wealth divided by wealth from investing in the benchmark (including reinvested dividends). The classi",
+        "relevance": "supporting",
+        "edge_id": "portfolio_mix_to_rwa",
+        "paper_id": "2105.08139v2",
+        "citation_count": 0,
+        "search_query": "KSPI portfolio mix KSPI risk-weighted assets causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/2105.08139v2"
+      },
+      {
+        "doi": "",
+        "title": "Sparsity and Stability for Minimum-Variance Portfolios",
+        "authors": [
+          "Sven Husmann",
+          "Antoniya Shivarova",
+          "Rick Steinert"
+        ],
+        "year": 2019,
+        "excerpt": "The popularity of modern portfolio theory has decreased among practitioners because of its unfavorable out-of-sample performance. Estimation errors tend to affect the optimal weight calculation noticeably, especially when a large number of assets is considered. To overcome these issues, many methods",
+        "relevance": "supporting",
+        "edge_id": "portfolio_mix_to_rwa",
+        "paper_id": "1910.11840v1",
+        "citation_count": 0,
+        "search_query": "KSPI portfolio mix KSPI risk-weighted assets causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/1910.11840v1"
+      }
+    ]
+  },
+  {
+    "edge_id": "capital_to_k2",
+    "citations": [
+      {
+        "doi": "",
+        "title": "The Theory of Crowd Capital",
+        "authors": [
+          "John Prpic",
+          "Prashant Shukla"
+        ],
+        "year": 2012,
+        "excerpt": "We are seeing more and more organizations undertaking activities to engage dispersed populations through IS. Using the knowledge-based view of the organization, this work conceptualizes a theory of Crowd Capital to explain this phenomenon. Crowd Capital is a heterogeneous knowledge resource generate",
+        "relevance": "supporting",
+        "edge_id": "capital_to_k2",
+        "paper_id": "1210.2013v1",
+        "citation_count": 0,
+        "search_query": "KSPI total capital KSPI K2 capital ratio causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/1210.2013v1"
+      },
+      {
+        "doi": "",
+        "title": "A Micro-foundation of Social Capital in Evolving Social Networks",
+        "authors": [
+          "Ahmed M. Alaa",
+          "Kartik Ahuja",
+          "Mihaela van der Schaar"
+        ],
+        "year": 2015,
+        "excerpt": "A social network confers benefits and advantages on individuals (and on groups), the literature refers to these advantages as social capital. This paper presents a micro-founded mathematical model of the evolution of a social network and of the social capital of individuals within the network. The e",
+        "relevance": "supporting",
+        "edge_id": "capital_to_k2",
+        "paper_id": "1511.02429v1",
+        "citation_count": 0,
+        "search_query": "KSPI total capital KSPI K2 capital ratio causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/1511.02429v1"
+      },
+      {
+        "doi": "",
+        "title": "A Mathematical Model of Foreign Capital Inflow",
+        "authors": [
+          "Gopal K. Basak",
+          "Pranab Kumar Das",
+          "Allena Rohit"
+        ],
+        "year": 2016,
+        "excerpt": "The paper models foreign capital inflow from the developed to the developing countries in a stochastic dynamic programming (SDP) framework. Under some regularity conditions, the existence of the solutions to the SDP problem is proved and they are then obtained by numerical technique because of the n",
+        "relevance": "supporting",
+        "edge_id": "capital_to_k2",
+        "paper_id": "1603.02438v2",
+        "citation_count": 0,
+        "search_query": "KSPI total capital KSPI K2 capital ratio causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/1603.02438v2"
+      }
+    ]
+  },
+  {
+    "edge_id": "rwa_to_k2",
+    "citations": [
+      {
+        "doi": "10.1515/jci-2022-0060",
+        "title": "Quantitative probing: Validating causal models using quantitative domain knowledge",
+        "authors": [
+          "Daniel Gr\u00fcnbaum",
+          "Maike L. Stern",
+          "Elmar W. Lang"
+        ],
+        "year": 2022,
+        "excerpt": "We present quantitative probing as a model-agnostic framework for validating causal models in the presence of quantitative domain knowledge. The method is constructed as an analogue of the train/test split in correlation-based machine learning and as an enhancement of current causal validation strat",
+        "relevance": "methodological",
+        "edge_id": "rwa_to_k2",
+        "paper_id": "2209.03013v1",
+        "citation_count": 0,
+        "search_query": "KSPI risk-weighted assets KSPI K2 capital ratio causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/2209.03013v1"
+      },
+      {
+        "doi": "",
+        "title": "Capital Asset Pricing Model with Size Factor and Normalizing by Volatility Index",
+        "authors": [
+          "Abraham Atsiwo",
+          "Andrey Sarantsev"
+        ],
+        "year": 2024,
+        "excerpt": "The Capital Asset Pricing Model (CAPM) relates a well-diversified stock portfolio to a benchmark portfolio. We insert size effect in CAPM, capturing the observation that small stocks have higher risk and return than large stocks, on average. Dividing stock index returns by the Volatility Index makes",
+        "relevance": "supporting",
+        "edge_id": "rwa_to_k2",
+        "paper_id": "2411.19444v3",
+        "citation_count": 0,
+        "search_query": "KSPI risk-weighted assets KSPI K2 capital ratio causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/2411.19444v3"
+      },
+      {
+        "doi": "",
+        "title": "Text as Causal Mediators: Research Design for Causal Estimates of Differential Treatment of Social Groups via Language Aspects",
+        "authors": [
+          "Katherine A. Keith",
+          "Douglas Rice",
+          "Brendan O'Connor"
+        ],
+        "year": 2021,
+        "excerpt": "Using observed language to understand interpersonal interactions is important in high-stakes decision making. We propose a causal research design for observational (non-experimental) data to estimate the natural direct and indirect effects of social group signals (e.g. race or gender) on speakers' r",
+        "relevance": "supporting",
+        "edge_id": "rwa_to_k2",
+        "paper_id": "2109.07542v1",
+        "citation_count": 0,
+        "search_query": "KSPI risk-weighted assets KSPI K2 capital ratio causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/2109.07542v1"
+      }
+    ]
+  }
+]

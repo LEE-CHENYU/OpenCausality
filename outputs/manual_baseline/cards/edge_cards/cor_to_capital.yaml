@@ -1,0 +1,115 @@
+edge_id: cor_to_capital
+dag_version_hash: a0d5c383631c52aa262f288704c6f7868d48b73d5034761245939de8eeea1d72
+created_at: '2026-02-07T23:09:03.711966'
+data_provenance:
+  treatment_source: null
+  outcome_source: null
+  control_sources: {}
+  instrument_sources: {}
+  combined_row_count: null
+  combined_date_range: null
+  missing_rate: null
+  panel_dimensions: null
+  entity_boundary_note: null
+  kpi_definitions: null
+spec_hash: 1dd3f83caf2c01ce39a6cdece5af917045523595f5feffa7e940b3b0405bd6f5
+spec_details:
+  design: ACCOUNTING_BRIDGE
+  controls: []
+  instruments: []
+  fixed_effects: []
+  se_method: deterministic
+  sample_filter: null
+  horizon: null
+  bandwidth: null
+estimates:
+  point: -22.4
+  se: 0.0
+  ci_95:
+  - -22.4
+  - -22.4
+  pvalue: null
+diagnostics:
+  identity_consistency:
+    name: identity_consistency
+    passed: true
+    value: -22.4
+    threshold: null
+    pvalue: null
+    message: 'Accounting bridge: d(capital)/d(CoR) = -avg_loans * (1 - tax_rate) /
+      100'
+all_diagnostics_pass: true
+interpretation:
+  estimand: 'Accounting sensitivity: d(capital)/d(CoR) = -avg_loans * (1 - tax_rate)
+    / 100'
+  is_not: Causal effect; this is a near-mechanical accounting relationship
+  channels:
+  - accounting/mechanical
+  population: ''
+  conditions: 'Evaluated at: {''loans'': 2800.0, ''capital'': 259.2, ''tax_rate'':
+    0.2, ''cor'': 3.2}'
+  allowed_uses: []
+  forbidden_uses: []
+failure_flags:
+  weak_identification: false
+  potential_bad_control: false
+  mechanical_identity_risk: true
+  regime_break_detected: false
+  small_sample: false
+  high_missing_rate: false
+  entity_boundary_change: false
+  definition_inconsistency: false
+counterfactual:
+  supports_shock_path: true
+  supports_policy_intervention: true
+  intervention_note: Accounting bridge; holds by construction under current risk weights
+    / tax regime
+  external_validity: ''
+credibility_rating: A
+credibility_score: 0.9299999999999999
+identification:
+  claim_level: IDENTIFIED_CAUSAL
+  risks:
+    unmeasured_confounding: low
+    simultaneity: low
+    weak_variation: low
+    measurement_error: low
+    selection: low
+  untestable_assumptions: []
+  testable_threats_passed: []
+  testable_threats_failed: []
+counterfactual_block:
+  shock_scenario_allowed: true
+  policy_intervention_allowed: false
+  reason_shock_blocked: null
+  reason_policy_blocked: REDUCED_FORM mode does not allow policy interventions
+  allowed: true
+  reason_blocked: REDUCED_FORM mode does not allow policy interventions
+propagation_role:
+  role: bridge
+  overlapping_paths: []
+  selected_for_counterfactual: true
+  mode_propagation_allowed:
+    STRUCTURAL: true
+    REDUCED_FORM: true
+    DESCRIPTIVE: true
+  mode_shock_cf_allowed:
+    STRUCTURAL: true
+    REDUCED_FORM: true
+    DESCRIPTIVE: false
+  mode_policy_cf_allowed:
+    STRUCTURAL: true
+    REDUCED_FORM: false
+    DESCRIPTIVE: false
+literature:
+  supporting: []
+  challenging: []
+  methodological: []
+  search_status: PENDING
+  search_timestamp: null
+  search_query: ''
+  total_results: 0
+companion_edge_id: null
+variant_of: null
+is_precisely_null: false
+null_equivalence_bound: null

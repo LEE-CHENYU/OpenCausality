@@ -1,0 +1,167 @@
+edge_id: rwa_to_k2
+dag_version_hash: 49a9bf958299c86ba87b7e094af5fa005e11b36612c9b099e44e9baa01f22116
+created_at: '2026-02-07T23:12:58.306834'
+data_provenance:
+  treatment_source: null
+  outcome_source: null
+  control_sources: {}
+  instrument_sources: {}
+  combined_row_count: null
+  combined_date_range: null
+  missing_rate: null
+  panel_dimensions: null
+  entity_boundary_note: null
+  kpi_definitions: null
+spec_hash: e582f930ce9896f4f11444ee5cacdafd5fe5affd270856c3a0d680d029846d79
+spec_details:
+  design: IDENTITY
+  controls: []
+  instruments: []
+  fixed_effects: []
+  se_method: deterministic
+  sample_filter: null
+  horizon: null
+  bandwidth: null
+estimates:
+  point: -0.010125
+  se: 0.0
+  ci_95:
+  - -0.010125
+  - -0.010125
+  pvalue: null
+diagnostics:
+  identity_check:
+    name: identity_check
+    passed: true
+    value: -0.010125
+    threshold: null
+    pvalue: null
+    message: 'Deterministic: dK2/dRWA = -100 * Capital / RWA^2'
+all_diagnostics_pass: true
+interpretation:
+  estimand: 'Sensitivity: dK2/dRWA = -100 * Capital / RWA^2'
+  is_not: Causal effect; this is a mechanical identity
+  channels: []
+  population: ''
+  conditions: ''
+  allowed_uses: []
+  forbidden_uses: []
+failure_flags:
+  weak_identification: false
+  potential_bad_control: false
+  mechanical_identity_risk: true
+  regime_break_detected: false
+  small_sample: false
+  high_missing_rate: false
+  entity_boundary_change: false
+  definition_inconsistency: false
+counterfactual:
+  supports_shock_path: true
+  supports_policy_intervention: true
+  intervention_note: Mechanical identity; always holds by definition
+  external_validity: ''
+credibility_rating: A
+credibility_score: 0.94
+identification:
+  claim_level: IDENTIFIED_CAUSAL
+  risks:
+    unmeasured_confounding: low
+    simultaneity: low
+    weak_variation: low
+    measurement_error: low
+    selection: low
+  untestable_assumptions: []
+  testable_threats_passed:
+  - identity_check
+  testable_threats_failed: []
+counterfactual_block:
+  shock_scenario_allowed: true
+  policy_intervention_allowed: false
+  reason_shock_blocked: null
+  reason_policy_blocked: REDUCED_FORM mode does not allow policy interventions
+  allowed: true
+  reason_blocked: REDUCED_FORM mode does not allow policy interventions
+propagation_role:
+  role: identity
+  overlapping_paths: []
+  selected_for_counterfactual: true
+  mode_propagation_allowed:
+    STRUCTURAL: true
+    REDUCED_FORM: true
+    DESCRIPTIVE: true
+  mode_shock_cf_allowed:
+    STRUCTURAL: true
+    REDUCED_FORM: true
+    DESCRIPTIVE: false
+  mode_policy_cf_allowed:
+    STRUCTURAL: true
+    REDUCED_FORM: false
+    DESCRIPTIVE: false
+literature:
+  supporting:
+  - doi: ''
+    title: Capital Asset Pricing Model with Size Factor and Normalizing by Volatility
+      Index
+    authors:
+    - Abraham Atsiwo
+    - Andrey Sarantsev
+    year: 2024
+    excerpt: The Capital Asset Pricing Model (CAPM) relates a well-diversified stock
+      portfolio to a benchmark portfolio. We insert size effect in CAPM, capturing
+      the observation that small stocks have higher risk and return than large stocks,
+      on average. Dividing stock index returns by the Volatility Index makes
+    relevance: supporting
+    edge_id: rwa_to_k2
+    paper_id: 2411.19444v3
+    citation_count: 0
+    search_query: KSPI risk-weighted assets KSPI K2 capital ratio causal effect
+    source: arxiv
+    pdf_url: https://arxiv.org/pdf/2411.19444v3
+  - doi: ''
+    title: 'Text as Causal Mediators: Research Design for Causal Estimates of Differential
+      Treatment of Social Groups via Language Aspects'
+    authors:
+    - Katherine A. Keith
+    - Douglas Rice
+    - Brendan O'Connor
+    year: 2021
+    excerpt: Using observed language to understand interpersonal interactions is important
+      in high-stakes decision making. We propose a causal research design for observational
+      (non-experimental) data to estimate the natural direct and indirect effects
+      of social group signals (e.g. race or gender) on speakers' r
+    relevance: supporting
+    edge_id: rwa_to_k2
+    paper_id: 2109.07542v1
+    citation_count: 0
+    search_query: KSPI risk-weighted assets KSPI K2 capital ratio causal effect
+    source: arxiv
+    pdf_url: https://arxiv.org/pdf/2109.07542v1
+  challenging: []
+  methodological:
+  - doi: 10.1515/jci-2022-0060
+    title: 'Quantitative probing: Validating causal models using quantitative domain
+      knowledge'
+    authors:
+    - Daniel Grünbaum
+    - Maike L. Stern
+    - Elmar W. Lang
+    year: 2022
+    excerpt: We present quantitative probing as a model-agnostic framework for validating
+      causal models in the presence of quantitative domain knowledge. The method is
+      constructed as an analogue of the train/test split in correlation-based machine
+      learning and as an enhancement of current causal validation strat
+    relevance: methodological
+    edge_id: rwa_to_k2
+    paper_id: 2209.03013v1
+    citation_count: 0
+    search_query: KSPI risk-weighted assets KSPI K2 capital ratio causal effect
+    source: arxiv
+    pdf_url: https://arxiv.org/pdf/2209.03013v1
+  search_status: SEARCHED
+  search_timestamp: '2026-02-07T23:12:58.306876'
+  search_query: KSPI risk-weighted assets KSPI K2 capital ratio causal effect
+  total_results: 3
+companion_edge_id: null
+variant_of: null
+is_precisely_null: false
+null_equivalence_bound: null

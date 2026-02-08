@@ -64,10 +64,15 @@ metadata -- expected sign, lag structure, identification strategy, unit specs --
 constrain the estimation engine. The causal model is an explicit, version-controlled
 artifact, not something implicit in the code.
 
-The estimation engine processes each edge independently using Local Projections
-(Jorda, 2005) with Newey-West HAC standard errors. It assembles data slices, constructs
-control sets from the DAG's conditional independence structure, and produces impulse
-response functions at multiple horizons. Every estimation call is logged with its full
+The estimation engine processes each edge independently through a unified adapter
+registry. Seven adapters cover all design types: Local Projections with Newey-West HAC
+standard errors, Panel LP with exposure-shift FE, IV 2SLS with first-stage diagnostics,
+Difference-in-Differences with TWFE and pre-trend tests, Immutable Evidence, Accounting
+Bridge, and Identity sensitivities. Each adapter implements a common
+`EstimationRequest -> estimate() -> EstimationResult` interface, so new estimation
+methods plug in without touching dispatch code. Data assembly, control set construction
+from DAG conditional independence structure, and impulse response functions at multiple
+horizons are handled upstream; every estimation call is logged with its full
 specification so that no result is an orphan.
 
 After estimation, 29 issue detection rules scan for common methodological failures:
@@ -88,8 +93,9 @@ report with credibility ratings, and a hash-chained JSONL audit log.
    each edge. Citations attached to EdgeCards with relevance scores.
 4. **Design Selection** -- Check back-door/front-door criteria for each edge; flag
    edges where identification is absent.
-5. **Estimation** -- Local Projections with HAC standard errors at multiple
-   impulse-response horizons. Controls derived from DAG structure.
+5. **Estimation** -- Adapter registry dispatches to the appropriate estimator
+   (LP, Panel LP, IV 2SLS, DID, Immutable, Accounting Bridge, Identity).
+   Controls derived from DAG structure. HAC standard errors at multiple horizons.
 6. **Issue Detection** -- 29 rules flag overclaiming, control shopping, null dropping,
    specification drift, timing failures. Each produces a typed issue with severity.
 7. **HITL Review** -- Flagged issues surfaced in an interactive HTML panel. Analyst
@@ -151,12 +157,17 @@ build one from scratch.
 
 | Metric                         | Expert DAG | NL-Extracted DAG |
 |--------------------------------|------------|------------------|
-| Nodes                          | 32         | 28               |
-| Edges                          | 20         | 17               |
-| Structural matches             | --         | 14 / 20 (70%)    |
-| Novel edges (not in expert)    | --         | 3                |
-| Missing edges (expert only)    | --         | 6                |
-| Sign agreement (matched edges) | --         | 13 / 14 (93%)    |
+| Nodes                          | 32         | 17               |
+| Edges                          | 20         | 13               |
+| Structural matches             | --         | 4 / 20 (20%)     |
+| Novel edges (not in expert)    | --         | 9                |
+| Missing edges (expert only)    | --         | 16               |
+| Edges estimated                | 26         | 9                |
+| Estimate match (common edges)  | --         | 4/4 (100%)       |
+
+The NL pipeline extracts causal claims from a single paragraph; recall improves
+with longer or multi-document input. All 4 overlapping edges produce identical
+estimates to the expert manual pipeline.
 
 ### What NL Found That Experts Missed
 
@@ -357,7 +368,12 @@ shared/
 │   ├── propagation.py    # PropagationEngine with 7 guardrails
 │   ├── ts_guard.py       # Time-series validator (stationarity, cointegration)
 │   └── agent_loop.py     # Main orchestrator
-├── engine/               # Estimation engine (Local Projections, data assembly)
+├── engine/               # Estimation engine
+│   ├── adapters/         #   Adapter registry (LP, Panel LP, IV 2SLS, DID,
+│   │                     #     Immutable, Identity, Accounting Bridge)
+│   ├── ts_estimator.py   #   LP estimator, HAC SE, accounting bridge
+│   ├── panel_estimator.py #  Panel LP with exposure-shift FE
+│   └── data_assembler.py #   Edge data assembly, node loaders
 ├── llm/                  # LLM abstraction layer
 │   ├── client.py         #   LLMClient ABC, AnthropicClient, LiteLLMClient
 │   └── prompts.py        #   Prompt templates for extraction and matching
@@ -379,11 +395,22 @@ scripts/
 ├── enrich_hitl_text.py       # Enrich HITL panel with LLM-generated explanations
 └── query_repl.py             # Natural language causal query REPL
 
+benchmarks/
+├── __init__.py
+├── acic_loader.py            # ACIC-style synthetic data generator
+├── harness.py                # BenchmarkResult, run/summarize functions
+└── dgp_benchmarks.py         # LP, IV, DID adapter benchmarks
+
 outputs/agentic/              # All output artifacts (gitignored)
 examples/                     # Example narratives and tutorial data
 ```
 
 ### Key Design Decisions
+
+**Adapter registry for estimation.** All estimation flows through
+`EstimationRequest → Adapter.estimate() → EstimationResult`. Seven adapters cover
+LP, Panel LP, IV 2SLS, DID, Immutable, Accounting Bridge, and Identity designs.
+New estimators plug in by subclassing `EstimatorAdapter` and registering.
 
 **Dataclasses over Pydantic.** Avoids heavy dependencies; serialization is explicit
 via dedicated reader/writer functions.
@@ -490,6 +517,8 @@ Features: node/edge tooltips, edge type legend, risk indicators (orange stroke f
 | `opencausality loop stop` | Stop estimation loop gracefully |
 | `opencausality loop status` | Check estimation loop status |
 | `opencausality loop once` | Run single estimation loop iteration |
+| `opencausality benchmark run` | Run benchmarks (DGP, ACIC, or all adapters) |
+| `opencausality benchmark report` | Display benchmark results from last run |
 
 ### Common Flags
 
@@ -499,7 +528,9 @@ Features: node/edge tooltips, edge type legend, risk indicators (orange stroke f
 | `--mode` | `dag run` | Estimation mode: `EXPLORATION` (default) or `CONFIRMATION` |
 | `--edge` | `dag run` | Run estimation for a single edge only |
 | `--dag` | `query` | Path to DAG file for query context |
-| `--format` | `data list` | Output format: `table` (default) or `json` |
+| `--format` | `data list`, `benchmark report` | Output format: `table` (default), `json`, or `markdown` |
+| `--suite` | `benchmark run` | Benchmark suite: `dgp` (default), `acic`, or `all` |
+| `--adapter` | `benchmark run` | Run benchmarks for a specific adapter only |
 
 ---
 
@@ -665,6 +696,62 @@ through its plugin contracts — it does not re-implement their algorithms.
 
 GPL-licensed tools (Tetrad, Tigramite, DAGitty) are supported as optional external
 executors — they are never bundled as dependencies.
+
+---
+
+## Estimation Adapters
+
+OpenCausality uses a unified adapter registry for estimation dispatch. Each adapter
+implements `EstimatorAdapter` with a single `estimate(request) -> result` method.
+
+| Design | Adapter | Backend | Diagnostics |
+|--------|---------|---------|-------------|
+| LOCAL_PROJECTIONS | LPAdapter | Newey-West LP | HAC SE, IRF at h=0..6 |
+| PANEL_LP_EXPOSURE_FE | PanelLPAdapter | Panel LP | Entity/time FE, clustered SE |
+| IV_2SLS | IV2SLSAdapter | linearmodels IV2SLS | First-stage F, Sargan test |
+| DID_EVENT_STUDY | DIDEventStudyAdapter | linearmodels PanelOLS | Pre-trend test, TWFE |
+| IMMUTABLE_EVIDENCE | ImmutableAdapter | Validated evidence | Source block provenance |
+| ACCOUNTING_BRIDGE | AccountingBridgeAdapter | Deterministic | Sensitivity at current values |
+| IDENTITY | IdentityAdapter | Partial derivatives | Mechanical formula |
+
+Adding a new adapter requires: (1) subclass `EstimatorAdapter`, (2) register in
+`shared/engine/adapters/registry.py`, (3) optionally add to `design_registry.yaml`.
+
+---
+
+## Benchmarks
+
+OpenCausality includes a benchmark framework for evaluating adapter correctness against
+known ground truth.
+
+### DGP Benchmarks
+
+Synthetic data generating processes with known treatment effects:
+
+```bash
+opencausality benchmark run --suite dgp
+```
+
+| Adapter | RMSE | Coverage (90% CI) | Seeds |
+|---------|------|-------------------|-------|
+| LOCAL_PROJECTIONS | 0.039 | 90% | 10 |
+| IV_2SLS | 0.033 | 100% | 10 |
+| DID_EVENT_STUDY | 0.048 | 100% | 10 |
+
+### ACIC Benchmarks
+
+Synthetic datasets mimicking the ACIC 2023 competition format with heterogeneous
+treatment effects and selection on observables:
+
+```bash
+opencausality benchmark run --suite acic
+```
+
+### Running All Benchmarks
+
+```bash
+opencausality benchmark run --suite all --format markdown
+```
 
 ---
 

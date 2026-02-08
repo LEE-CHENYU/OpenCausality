@@ -1,0 +1,160 @@
+# Edge Card Comparison Report
+
+**Generated:** 2026-02-07T23:18:14.426699
+**Run A (baseline):** `outputs/manual_baseline`
+**Run B (new):** `outputs/nl_pipeline`
+**Run A edges:** 26
+**Run B edges:** 9
+
+
+## 1. Estimate Validation
+
+Estimates should be **identical** across runs (same data + code).
+Any divergence indicates a potential bug.
+
+**PASS: All estimates match across runs.**
+
+
+## 2. Credibility Rating Changes
+
+1 edge(s) with changed credibility:
+
+| Edge | Rating A | Rating B | Score A | Score B |
+|------|----------|----------|---------|---------|
+| expenditure_to_payments_revenue | B | B | 0.692 | 0.622 |
+
+
+## 3. Diagnostic Changes
+
+3 edge(s) with diagnostic changes:
+
+| Edge | Diagnostic | Status | Details |
+|------|-----------|--------|---------|
+| expenditure_to_payments_revenue | r_squared_h0 | REMOVED | was_passed=True |
+| expenditure_to_payments_revenue | residual_ac1 | REMOVED | was_passed=True |
+| expenditure_to_payments_revenue | ts_hac_sensitivity | NEW | passed=True |
+| expenditure_to_payments_revenue | ts_lag_sensitivity | NEW | passed=False |
+| expenditure_to_payments_revenue | ts_regime_stability | NEW | passed=True |
+| expenditure_to_payments_revenue | ts_residual_autocorr | NEW | passed=True |
+| expenditure_to_payments_revenue | ts_shock_support | NEW | passed=False |
+| fx_to_cpi_nontradable | effective_obs | REMOVED | was_passed=True |
+| fx_to_cpi_tradable | effective_obs | REMOVED | was_passed=True |
+
+
+## 4. New Agentic Fields
+
+Fields only present in Run B (identification, counterfactual_block, propagation_role).
+
+
+### 4.1 Identification Blocks
+
+**9 edges** with identification blocks.
+
+**Claim level distribution:**
+
+- BLOCKED_ID: 2
+- IDENTIFIED_CAUSAL: 3
+- REDUCED_FORM: 4
+
+| Edge | Claim Level | High Risks | Threats Failed |
+|------|------------|------------|----------------|
+| cpi_tradable->real_expenditure | REDUCED_FORM | - | ts_regime_stability |
+| cpi_tradable_to_nbk_policy_rate | BLOCKED_ID | - | ts_leads_test |
+| expenditure_to_payments_revenue | REDUCED_FORM | - | effective_obs, ts_lag_sensitivity, ts_shock_support |
+| fx_to_cpi_nontradable | IDENTIFIED_CAUSAL | - | - |
+| fx_to_cpi_tradable | IDENTIFIED_CAUSAL | - | - |
+| loan_portfolio_to_rwa | IDENTIFIED_CAUSAL | - | - |
+| ppop_kspi_and_provisions_expense_kspi_to_total_capital_kspi | BLOCKED_ID | - | effective_obs, ts_leads_test |
+| vix_shock__to__cor_kspi | REDUCED_FORM | - | ts_lag_sensitivity, ts_regime_stability |
+| vix_shock_to_deposit_cost_kspi | REDUCED_FORM | - | ts_lag_sensitivity, ts_regime_stability |
+
+
+### 4.2 Counterfactual Status
+
+**9 edges** with counterfactual assessment: 3 allowed, 6 blocked.
+
+**Blocked edges:**
+
+| Edge | Reason Blocked |
+|------|---------------|
+| cpi_tradable->real_expenditure | Counterfactual Use: BLOCKED
+Reason: regime break risk
+
+Even if p<0.05, this does not establish a causal effect. |
+| cpi_tradable_to_nbk_policy_rate | Shock CF requires REDUCED_FORM+, edge has BLOCKED_ID |
+| expenditure_to_payments_revenue | Counterfactual Use: BLOCKED
+Reason: insufficient shock episodes
+
+Even if p<0.05, this does not establish a causal effect. |
+| ppop_kspi_and_provisions_expense_kspi_to_total_capital_kspi | Shock CF requires REDUCED_FORM+, edge has BLOCKED_ID |
+| vix_shock__to__cor_kspi | Counterfactual Use: BLOCKED
+Reason: regime break risk
+
+Even if p<0.05, this does not establish a causal effect. |
+| vix_shock_to_deposit_cost_kspi | Counterfactual Use: BLOCKED
+Reason: regime break risk
+
+Even if p<0.05, this does not establish a causal effect. |
+
+
+### 4.3 Propagation Roles
+
+**9 edges** with propagation roles.
+
+**Role distribution:**
+
+- bridge: 2
+- diagnostic_only: 1
+- reduced_form: 4
+- structural: 2
+
+
+## 5. Edge Coverage Differences
+
+**22 edge(s) only in Run A:**
+
+- `capital_to_k2`
+- `cor_to_capital`
+- `cpi_to_nbk_rate`
+- `cpi_to_nominal_income`
+- `fx_to_nbk_rate`
+- `fx_to_real_expenditure`
+- `nbk_rate_to_cor`
+- `nbk_rate_to_cor_sector`
+- `nbk_rate_to_deposit_cost`
+- `nbk_rate_to_deposit_cost_sector`
+- `oil_demand_to_fx`
+- `oil_supply_to_brent`
+- `oil_supply_to_fx`
+- `portfolio_mix_to_rwa`
+- `rwa_to_k2`
+- `shock_to_cor_kspi`
+- `shock_to_cor_kspi_annual`
+- `shock_to_cor_sector`
+- `shock_to_npl_kspi`
+- `shock_to_npl_kspi_annual`
+- `shock_to_npl_sector`
+- `vix_to_fx`
+
+**5 edge(s) only in Run B:**
+
+- `cpi_tradable->real_expenditure`
+- `cpi_tradable_to_nbk_policy_rate`
+- `ppop_kspi_and_provisions_expense_kspi_to_total_capital_kspi`
+- `vix_shock__to__cor_kspi`
+- `vix_shock_to_deposit_cost_kspi`
+
+
+## 6. Summary Assessment
+
+### Correctness
+**VALIDATED**: All estimates are identical across runs. The agentic modules do not alter core estimation results.
+
+### Agentic Value Added
+- **Identification screening**: 9 edges assessed, claim levels assigned (BLOCKED_ID=2, IDENTIFIED_CAUSAL=3, REDUCED_FORM=4)
+- **Counterfactual gating**: 6 edges blocked from counterfactual use
+- **Credibility recalibration**: 1 edges with adjusted ratings
+- **New diagnostics**: 5 additional checks
+
+---
+*Report generated by `compare_runs.py` at 2026-02-07T23:18:14.426832*

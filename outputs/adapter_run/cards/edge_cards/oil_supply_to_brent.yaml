@@ -1,0 +1,326 @@
+edge_id: oil_supply_to_brent
+dag_version_hash: 49a9bf958299c86ba87b7e094af5fa005e11b36612c9b099e44e9baa01f22116
+created_at: '2026-02-07T23:12:58.265812'
+data_provenance:
+  treatment_source:
+    connector: parquet_file
+    dataset: oil_supply_shock
+    series: null
+    retrieval_time: null
+    file_path: null
+    file_checksum: null
+    row_count: 308
+    column_count: null
+    date_range:
+    - '2000-02-01'
+    - '2025-09-01'
+    cache_key: null
+  outcome_source:
+    connector: parquet_file
+    dataset: brent_price
+    series: null
+    retrieval_time: null
+    file_path: null
+    file_checksum: null
+    row_count: 308
+    column_count: null
+    date_range:
+    - '2000-02-01'
+    - '2025-09-01'
+    cache_key: null
+  control_sources: {}
+  instrument_sources: {}
+  combined_row_count: 308
+  combined_date_range:
+  - '2000-02-01'
+  - '2025-09-01'
+  missing_rate: null
+  panel_dimensions: null
+  entity_boundary_note: null
+  kpi_definitions: null
+spec_hash: b327b4b58bb76c861cb9ea83d801f78185de731f39d0cf1487f8bfe48ffdf5b0
+spec_details:
+  design: LOCAL_PROJECTIONS
+  controls:
+  - y_lag1
+  - y_lag2
+  - x_lag1
+  - x_lag2
+  instruments: []
+  fixed_effects: []
+  se_method: HAC_newey_west
+  sample_filter: null
+  horizon: &id001
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  bandwidth: null
+estimates:
+  point: -0.05166562593634781
+  se: 0.005406555751311881
+  ci_95:
+  - -0.0622624752089191
+  - -0.04106877666377652
+  pvalue: 1.2226952161375292e-21
+  horizons: *id001
+  irf:
+  - -0.05166562593634781
+  - -0.021737777393826874
+  - -0.003141081232014462
+  - 0.0073498683125871244
+  - 0.00877777724762631
+  - -0.006882193383710286
+  - -0.0017690083857843184
+  irf_ci_lower:
+  - -0.06226228048932699
+  - -0.03335189693209864
+  - -0.015004278761931434
+  - -0.0016809503866724992
+  - 0.0009198304869694925
+  - -0.017144356663484836
+  - -0.011355531130865792
+  irf_ci_upper:
+  - -0.04106897138336863
+  - -0.010123657855555105
+  - 0.00872211629790251
+  - 0.016380687011846747
+  - 0.01663572400828313
+  - 0.0033799698960642627
+  - 0.007817514359297156
+diagnostics:
+  hac_bandwidth:
+    name: hac_bandwidth
+    passed: true
+    value: 5.0
+    threshold: null
+    pvalue: null
+    message: 'Newey-West bandwidth: 5'
+  effective_obs:
+    name: effective_obs
+    passed: true
+    value: 306.0
+    threshold: 20.0
+    pvalue: null
+    message: ''
+  sign_consistency:
+    name: sign_consistency
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'Sign consistent: expected -, got -0.0517'
+  ts_leads_test:
+    name: ts_leads_test
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_residual_autocorr:
+    name: ts_residual_autocorr
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_hac_sensitivity:
+    name: ts_hac_sensitivity
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_lag_sensitivity:
+    name: ts_lag_sensitivity
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_regime_stability:
+    name: ts_regime_stability
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_shock_support:
+    name: ts_shock_support
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+all_diagnostics_pass: true
+interpretation:
+  estimand: IRF of brent_price to a unit shock in oil_supply_shock
+  is_not: Structural causal effect under all interventions
+  channels:
+  - direct
+  - indirect
+  population: ''
+  conditions: ''
+  allowed_uses: []
+  forbidden_uses: []
+failure_flags:
+  weak_identification: false
+  potential_bad_control: false
+  mechanical_identity_risk: false
+  regime_break_detected: false
+  small_sample: false
+  high_missing_rate: false
+  entity_boundary_change: false
+  definition_inconsistency: false
+counterfactual:
+  supports_shock_path: true
+  supports_policy_intervention: false
+  intervention_note: Reduced-form LP estimate
+  external_validity: ''
+credibility_rating: A
+credibility_score: 0.97
+identification:
+  claim_level: REDUCED_FORM
+  risks:
+    unmeasured_confounding: medium
+    simultaneity: low
+    weak_variation: low
+    measurement_error: low
+    selection: low
+  untestable_assumptions:
+  - No omitted common cause of treatment and outcome
+  testable_threats_passed:
+  - hac_bandwidth
+  - effective_obs
+  - sign_consistency
+  - ts_leads_test
+  - ts_residual_autocorr
+  - ts_hac_sensitivity
+  - ts_lag_sensitivity
+  - ts_regime_stability
+  - ts_shock_support
+  testable_threats_failed: []
+counterfactual_block:
+  shock_scenario_allowed: false
+  policy_intervention_allowed: false
+  reason_shock_blocked: Design LOCAL_PROJECTIONS provides REDUCED_FORM level only
+  reason_policy_blocked: REDUCED_FORM mode does not allow policy interventions
+  allowed: false
+  reason_blocked: Design LOCAL_PROJECTIONS provides REDUCED_FORM level only
+propagation_role:
+  role: reduced_form
+  overlapping_paths: []
+  selected_for_counterfactual: true
+  mode_propagation_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: true
+    DESCRIPTIVE: true
+  mode_shock_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: true
+    DESCRIPTIVE: false
+  mode_policy_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: false
+    DESCRIPTIVE: false
+literature:
+  supporting:
+  - doi: 10.1257/AER.99.3.1053
+    title: 'Not All Oil Price Shocks are Alike: Disentangling Demand and Supply Shocks
+      in the Crude Oil Market'
+    authors:
+    - L. Kilian
+    year: 2006
+    excerpt: ''
+    relevance: supporting
+    edge_id: oil_supply_to_brent
+    paper_id: cd2fa5dd72f0747b172109d4f53f6f39470312fb
+    citation_count: 4224
+    search_query: Oil supply shock Brent crude oil price causal effect
+    source: semantic_scholar
+    pdf_url: ''
+  - doi: 10.1093/qje/qjaa004
+    title: The Fall of the Labor Share and the Rise of Superstar Firms*
+    authors:
+    - David Autor
+    - David Dorn
+    - Lawrence F. Katz
+    - Christina Patterson
+    - John Van Reenen
+    year: 2020
+    excerpt: Abstract The fall of labor’s share of GDP in the United States and many
+      other countries in recent decades is well documented but its causes remain uncertain.
+      Existing empirical assessments typically rely on industry or macro data, obscuring
+      heterogeneity among firms. In this article, we analyze micr
+    relevance: supporting
+    edge_id: oil_supply_to_brent
+    paper_id: ''
+    citation_count: 1935
+    search_query: Oil supply shock Brent crude oil price causal effect
+    source: openalex
+    pdf_url: https://academic.oup.com/qje/article-pdf/135/2/645/32994954/qjaa004.pdf
+  - doi: 10.1257/jep.6.3.3
+    title: 'Medical Care Costs: How Much Welfare Loss?'
+    authors:
+    - Joseph P. Newhouse
+    year: 1992
+    excerpt: 'Hardly a week goes by without a front-page newspaper article on rising
+      health care costs and the uninsured. In this article, I focus mainly on costs,
+      arguing that the issue has been somewhat misconceived: while the level of medical
+      care spending in the U.S. is a cause for concern, the welfare losses'
+    relevance: supporting
+    edge_id: oil_supply_to_brent
+    paper_id: ''
+    citation_count: 1208
+    search_query: Oil supply shock Brent crude oil price causal effect
+    source: openalex
+    pdf_url: https://www.aeaweb.org/articles/pdf/doi/10.1257/jep.6.3.3
+  - doi: 10.1063/5.0042359
+    title: Does US-China trade war affect the Brent crude oil price? An ARIMAX forecasting
+      approach
+    authors:
+    - Ilma Amira Rahmayanti
+    - Christopher Andreas
+    - S. M. Ulyah
+    year: 2021
+    excerpt: 'Trade tension or trade war between the U.S. and China has had a significant
+      impact on many sectors in the world. The business sector is one of them. Trade
+      tension began on March 22nd 2018, after U.S. President imposed a $50 billion
+      import duty on Chinese goods entering the United States. In return, '
+    relevance: supporting
+    edge_id: oil_supply_to_brent
+    paper_id: 5b8e89e0abb571bbd7d92277bbc125b2fd88c641
+    citation_count: 7
+    search_query: Oil supply shock Brent crude oil price causal effect
+    source: semantic_scholar
+    pdf_url: ''
+  challenging: []
+  methodological:
+  - doi: 10.1257/jep.15.4.101
+    title: Vector Autoregressions
+    authors:
+    - James H. Stock
+    - Mark W. Watson
+    year: 2001
+    excerpt: 'This paper critically reviews the use of vector autoregressions (VARs)
+      for four tasks: data description, forecasting, structural inference, and policy
+      analysis. The paper begins with a review of VAR analysis, highlighting the differences
+      between reduced-form VARs, recursive VARs and structural VARs.'
+    relevance: methodological
+    edge_id: oil_supply_to_brent
+    paper_id: ''
+    citation_count: 1085
+    search_query: Oil supply shock Brent crude oil price causal effect
+    source: openalex
+    pdf_url: https://www.aeaweb.org/articles/pdf/doi/10.1257/jep.15.4.101
+  search_status: SEARCHED
+  search_timestamp: '2026-02-07T23:12:58.265866'
+  search_query: Oil supply shock Brent crude oil price causal effect
+  total_results: 5
+companion_edge_id: null
+variant_of: null
+is_precisely_null: false
+null_equivalence_bound: null

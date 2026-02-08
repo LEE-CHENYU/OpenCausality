@@ -1,0 +1,336 @@
+edge_id: vix_shock_to_deposit_cost_kspi
+dag_version_hash: ad15bc0cce16f45404add1b3fcd41c8e240778f69fc77d2a330129aa65bc7b2b
+created_at: '2026-02-07T23:18:05.437930'
+data_provenance:
+  treatment_source:
+    connector: parquet_file
+    dataset: vix_shock
+    series: null
+    retrieval_time: null
+    file_path: null
+    file_checksum: null
+    row_count: 27
+    column_count: null
+    date_range:
+    - '2011-10-01'
+    - '2024-07-01'
+    cache_key: null
+  outcome_source:
+    connector: parquet_file
+    dataset: deposit_cost_kspi
+    series: null
+    retrieval_time: null
+    file_path: null
+    file_checksum: null
+    row_count: 27
+    column_count: null
+    date_range:
+    - '2011-10-01'
+    - '2024-07-01'
+    cache_key: null
+  control_sources: {}
+  instrument_sources: {}
+  combined_row_count: 27
+  combined_date_range:
+  - '2011-10-01'
+  - '2024-07-01'
+  missing_rate: null
+  panel_dimensions: null
+  entity_boundary_note: null
+  kpi_definitions: null
+spec_hash: b327b4b58bb76c861cb9ea83d801f78185de731f39d0cf1487f8bfe48ffdf5b0
+spec_details:
+  design: LOCAL_PROJECTIONS
+  controls:
+  - y_lag1
+  - y_lag2
+  - x_lag1
+  - x_lag2
+  instruments: []
+  fixed_effects: []
+  se_method: HAC_newey_west
+  sample_filter: null
+  horizon: &id001
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  bandwidth: null
+estimates:
+  point: 0.013225673216420005
+  se: 0.034498755350890496
+  ci_95:
+  - -0.05439188727132536
+  - 0.08084323370416537
+  pvalue: 0.701447906967584
+  horizons: *id001
+  irf:
+  - 0.013225673216420005
+  - 0.09374651212237925
+  - 0.17470452579175436
+  - 0.19827946283343414
+  - 0.2002248538863123
+  - 0.17642846141336763
+  - 0.17348449417926995
+  irf_ci_lower:
+  - -0.05439064478278385
+  - 0.03226183647212557
+  - 0.0770651630598917
+  - 0.06942405037176372
+  - 0.08135218190072149
+  - 0.0932077959332558
+  - 0.08496532476091698
+  irf_ci_upper:
+  - 0.08084199121562385
+  - 0.15523118777263292
+  - 0.272343888523617
+  - 0.32713487529510454
+  - 0.3190975258719031
+  - 0.25964912689347946
+  - 0.26200366359762295
+diagnostics:
+  hac_bandwidth:
+    name: hac_bandwidth
+    passed: true
+    value: 2.0
+    threshold: null
+    pvalue: null
+    message: 'Newey-West bandwidth: 2'
+  effective_obs:
+    name: effective_obs
+    passed: true
+    value: 25.0
+    threshold: 20.0
+    pvalue: null
+    message: ''
+  sign_consistency:
+    name: sign_consistency
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: No expected sign specified
+  ts_leads_test:
+    name: ts_leads_test
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_residual_autocorr:
+    name: ts_residual_autocorr
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_hac_sensitivity:
+    name: ts_hac_sensitivity
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_lag_sensitivity:
+    name: ts_lag_sensitivity
+    passed: false
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: fail'
+  ts_regime_stability:
+    name: ts_regime_stability
+    passed: false
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: fail'
+  ts_shock_support:
+    name: ts_shock_support
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+all_diagnostics_pass: false
+interpretation:
+  estimand: IRF of deposit_cost_kspi to a unit shock in vix_shock
+  is_not: Structural causal effect under all interventions
+  channels:
+  - direct
+  - indirect
+  population: ''
+  conditions: ''
+  allowed_uses: []
+  forbidden_uses: []
+failure_flags:
+  weak_identification: false
+  potential_bad_control: false
+  mechanical_identity_risk: false
+  regime_break_detected: true
+  small_sample: true
+  high_missing_rate: false
+  entity_boundary_change: false
+  definition_inconsistency: false
+counterfactual:
+  supports_shock_path: true
+  supports_policy_intervention: false
+  intervention_note: Reduced-form LP estimate
+  external_validity: ''
+credibility_rating: B
+credibility_score: 0.6111111111111112
+identification:
+  claim_level: REDUCED_FORM
+  risks:
+    unmeasured_confounding: medium
+    simultaneity: low
+    weak_variation: low
+    measurement_error: low
+    selection: low
+  untestable_assumptions:
+  - No omitted common cause of treatment and outcome
+  testable_threats_passed:
+  - hac_bandwidth
+  - effective_obs
+  - sign_consistency
+  - ts_leads_test
+  - ts_residual_autocorr
+  - ts_hac_sensitivity
+  - ts_shock_support
+  testable_threats_failed:
+  - ts_lag_sensitivity
+  - ts_regime_stability
+counterfactual_block:
+  shock_scenario_allowed: false
+  policy_intervention_allowed: false
+  reason_shock_blocked: 'Counterfactual Use: BLOCKED
+
+    Reason: regime break risk
+
+
+    Even if p<0.05, this does not establish a causal effect.'
+  reason_policy_blocked: REDUCED_FORM mode does not allow policy interventions
+  allowed: false
+  reason_blocked: 'Counterfactual Use: BLOCKED
+
+    Reason: regime break risk
+
+
+    Even if p<0.05, this does not establish a causal effect.'
+propagation_role:
+  role: reduced_form
+  overlapping_paths: []
+  selected_for_counterfactual: true
+  mode_propagation_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: true
+    DESCRIPTIVE: true
+  mode_shock_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: true
+    DESCRIPTIVE: false
+  mode_policy_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: false
+    DESCRIPTIVE: false
+literature:
+  supporting:
+  - doi: 10.2870/011665
+    title: Essays on the economics of firms and of financial institutions
+    authors:
+    - M. Gatti
+    year: 2019
+    excerpt: ''
+    relevance: supporting
+    edge_id: vix_shock_to_deposit_cost_kspi
+    paper_id: ed5a9ef3da44796debde86629322e24fabe212e9
+    citation_count: 0
+    search_query: VIX shock KSPI deposit cost causal effect
+    source: semantic_scholar
+    pdf_url: ''
+  - doi: 10.1515/jci-2021-0042
+    title: A Unifying Causal Framework for Analyzing Dataset Shift-stable Learning
+      Algorithms
+    authors:
+    - Adarsh Subbaswamy
+    - Bryant Chen
+    - Suchi Saria
+    year: 2019
+    excerpt: Recent interest in the external validity of prediction models (i.e.,
+      the problem of different train and test distributions, known as dataset shift)
+      has produced many methods for finding predictive distributions that are invariant
+      to dataset shifts and can be used for prediction in new, unseen enviro
+    relevance: supporting
+    edge_id: vix_shock_to_deposit_cost_kspi
+    paper_id: 1905.11374v5
+    citation_count: 0
+    search_query: VIX shock KSPI deposit cost causal effect
+    source: arxiv
+    pdf_url: https://arxiv.org/pdf/1905.11374v5
+  - doi: ''
+    title: 'Financial institutions after the crisis: facing new challenges and new
+      regulatory frameworks'
+    authors:
+    - S. Bressan
+    - Taylor A. Begley
+    - N. Martynova
+    year: 2015
+    excerpt: ''
+    relevance: supporting
+    edge_id: vix_shock_to_deposit_cost_kspi
+    paper_id: f1d447d7217c57d054425ee2f5b3fd176f21df62
+    citation_count: 0
+    search_query: VIX shock KSPI deposit cost causal effect
+    source: semantic_scholar
+    pdf_url: ''
+  - doi: ''
+    title: 'Text as Causal Mediators: Research Design for Causal Estimates of Differential
+      Treatment of Social Groups via Language Aspects'
+    authors:
+    - Katherine A. Keith
+    - Douglas Rice
+    - Brendan O'Connor
+    year: 2021
+    excerpt: Using observed language to understand interpersonal interactions is important
+      in high-stakes decision making. We propose a causal research design for observational
+      (non-experimental) data to estimate the natural direct and indirect effects
+      of social group signals (e.g. race or gender) on speakers' r
+    relevance: supporting
+    edge_id: vix_shock_to_deposit_cost_kspi
+    paper_id: 2109.07542v1
+    citation_count: 0
+    search_query: VIX shock KSPI deposit cost causal effect
+    source: arxiv
+    pdf_url: https://arxiv.org/pdf/2109.07542v1
+  challenging: []
+  methodological:
+  - doi: 10.1515/jci-2022-0060
+    title: 'Quantitative probing: Validating causal models using quantitative domain
+      knowledge'
+    authors:
+    - Daniel Grünbaum
+    - Maike L. Stern
+    - Elmar W. Lang
+    year: 2022
+    excerpt: We present quantitative probing as a model-agnostic framework for validating
+      causal models in the presence of quantitative domain knowledge. The method is
+      constructed as an analogue of the train/test split in correlation-based machine
+      learning and as an enhancement of current causal validation strat
+    relevance: methodological
+    edge_id: vix_shock_to_deposit_cost_kspi
+    paper_id: 2209.03013v1
+    citation_count: 0
+    search_query: VIX shock KSPI deposit cost causal effect
+    source: arxiv
+    pdf_url: https://arxiv.org/pdf/2209.03013v1
+  search_status: SEARCHED
+  search_timestamp: '2026-02-07T23:18:05.438134'
+  search_query: VIX shock KSPI deposit cost causal effect
+  total_results: 5
+companion_edge_id: null
+variant_of: null
+is_precisely_null: true
+null_equivalence_bound: 0.06899751070178099
