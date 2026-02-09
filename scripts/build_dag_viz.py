@@ -170,6 +170,15 @@ def load_rule_info(registry_path: Path) -> dict:
 
 def build_nodes_data(dag: dict) -> list[dict]:
     """Build node data for D3."""
+    # Compute connected node IDs
+    edge_nodes: set[str] = set()
+    for e in dag.get("edges", []):
+        edge_nodes.add(e.get("from", ""))
+        edge_nodes.add(e.get("to", ""))
+    for lat in dag.get("latents", []):
+        for a in lat.get("affects", []):
+            edge_nodes.add(a)
+
     nodes = []
     for i, node in enumerate(dag.get("nodes", [])):
         nid = node.get("id", "")
@@ -181,6 +190,7 @@ def build_nodes_data(dag: dict) -> list[dict]:
             "frequency": node.get("frequency", ""),
             "observed": node.get("observed", True),
             "latent": node.get("latent", False),
+            "orphan": nid not in edge_nodes,
         })
     return nodes
 
@@ -282,6 +292,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
         .node circle:hover { stroke-width: 2.5px; }
         .node circle.latent { stroke-dasharray: 4, 3; }
         .node circle.id-risk { stroke: #c00; stroke-width: 2.5px; }
+        .node circle.orphan { stroke: #999; stroke-dasharray: 2, 2; fill: #f8f8f8; }
         .node text {
             font-size: 9px;
             font-weight: 400;
@@ -330,6 +341,25 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
         .tooltip-issue { font-size: 10px; margin: 2px 0; }
         .tooltip-issue.critical { color: #c00; font-weight: 600; }
         .tooltip-issue.high { color: #a16207; }
+        .tooltip-orphan { margin-top: 8px; padding-top: 8px; border-top: 1px solid #eee; }
+        .tooltip-orphan-tag {
+            display: inline-block; font-size: 9px; font-weight: 600;
+            padding: 1px 5px; background: #f8f8f8; border: 1px solid #999;
+            color: #666; margin-bottom: 6px;
+        }
+        .tooltip-orphan-section {
+            padding: 4px 6px; margin-bottom: 3px; font-size: 10px; line-height: 1.5;
+        }
+        .tooltip-orphan-section.role { background: #f8f8f8; }
+        .tooltip-orphan-section.blocker { background: #fff5f5; }
+        .tooltip-orphan-section.path-forward { background: #f0f4ff; }
+        .tooltip-orphan-label {
+            font-weight: 600; font-size: 9px; text-transform: uppercase;
+            letter-spacing: 0.3px; margin-bottom: 1px;
+        }
+        .tooltip-orphan-section.role .tooltip-orphan-label { color: #444; }
+        .tooltip-orphan-section.blocker .tooltip-orphan-label { color: #c00; }
+        .tooltip-orphan-section.path-forward .tooltip-orphan-label { color: #1e40af; }
 
         /* Proposal banner */
         .proposal-banner {
@@ -723,6 +753,7 @@ const RULE_DESCRIPTIONS = __RULES_JSON__;
 const ACTIONS_BY_RULE = __ACTIONS_JSON__;
 const GENERATED_AT = "__GENERATED_AT__";
 const ISSUE_GUIDANCE = __ISSUE_GUIDANCE_JSON__;
+const ORPHAN_EXPLANATIONS = __ORPHAN_EXPLANATIONS_JSON__;
 
 // ── Helpers ──────────────────────────────────────────────────────────────
 function escHtml(s) {
@@ -1303,6 +1334,7 @@ node.append('circle')
     .attr('class', function(d) {
         var cls = '';
         if (d.latent) cls += ' latent';
+        if (d.orphan) cls += ' orphan';
         if (nodeIdRisks[d.id]) cls += ' id-risk';
         return cls;
     });
@@ -1344,6 +1376,37 @@ function showEdgeTooltip(e, d) {
     tooltip.html(html).style('left', (e.pageX + 15) + 'px').style('top', (e.pageY - 15) + 'px').classed('visible', true);
 }
 
+function renderOrphanSections(s) {
+    if (!s) return '';
+    // Match **Role**, **Blocker**, **Blocker (TYPE)**, **Path forward**
+    var sections = [
+        {key: 'role', re: /\*\*Role\*\*:\s*/i},
+        {key: 'blocker', re: /\*\*Blocker(?:\s*\([^)]*\))?\*\*:\s*/i},
+        {key: 'path-forward', re: /\*\*Path\s+forward\*\*:\s*/i}
+    ];
+    var indices = [];
+    sections.forEach(function(sec) {
+        var m = s.match(sec.re);
+        if (m) {
+            // Extract label from matched text (e.g. "Blocker (DATA)")
+            var raw = m[0].replace(/\*\*/g, '').replace(/:\s*$/, '').trim();
+            indices.push({key: sec.key, idx: s.indexOf(m[0]), len: m[0].length, label: raw});
+        }
+    });
+    indices.sort(function(a, b) { return a.idx - b.idx; });
+    if (indices.length === 0) return '<div style="font-size:10px;color:#555">' + escHtml(s) + '</div>';
+    var html = '';
+    for (var i = 0; i < indices.length; i++) {
+        var start = indices[i].idx + indices[i].len;
+        var end = (i + 1 < indices.length) ? indices[i + 1].idx : s.length;
+        var body = s.substring(start, end).trim();
+        html += '<div class="tooltip-orphan-section ' + indices[i].key + '">' +
+            '<div class="tooltip-orphan-label">' + escHtml(indices[i].label) + '</div>' +
+            '<div style="font-size:10px">' + escHtml(body) + '</div></div>';
+    }
+    return html;
+}
+
 function showNodeTooltip(e, d) {
     var html = '<h3>' + d.label + '</h3>';
     html += '<div class="tooltip-row"><span class="tooltip-label">ID</span><span class="tooltip-value">' + d.id + '</span></div>';
@@ -1351,6 +1414,17 @@ function showNodeTooltip(e, d) {
     if (d.unit) html += '<div class="tooltip-row"><span class="tooltip-label">Unit</span><span class="tooltip-value">' + d.unit + '</span></div>';
     if (d.frequency) html += '<div class="tooltip-row"><span class="tooltip-label">Frequency</span><span class="tooltip-value">' + d.frequency + '</span></div>';
     if (d.latent) html += '<div class="tooltip-row"><span class="tooltip-label">Observed</span><span class="tooltip-value null">Latent (unobserved)</span></div>';
+    if (d.orphan) {
+        var orphanText = ORPHAN_EXPLANATIONS[d.id] || '';
+        html += '<div class="tooltip-orphan">';
+        html += '<span class="tooltip-orphan-tag">UNWIRED</span>';
+        if (orphanText) {
+            html += renderOrphanSections(orphanText);
+        } else {
+            html += '<div style="font-size:10px;color:#999;font-style:italic">No edges connect this node. Run with --llm-annotate for analysis.</div>';
+        }
+        html += '</div>';
+    }
     tooltip.html(html).style('left', (e.pageX + 15) + 'px').style('top', (e.pageY - 15) + 'px').classed('visible', true);
 }
 
@@ -1473,6 +1547,7 @@ def build(
 
     annotations = cache["edge_annotations"] if cache else None
     issue_guidance: dict[str, str] = cache["issue_guidance"] if cache else {}
+    orphan_explanations: dict[str, str] = cache.get("orphan_explanations", {}) if cache else {}
 
     # Build data arrays
     nodes = build_nodes_data(dag)
@@ -1498,6 +1573,7 @@ def build(
     html = html.replace("__ACTIONS_JSON__", json.dumps(actions, indent=2))
     html = html.replace("__GENERATED_AT__", generated_at)
     html = html.replace("__ISSUE_GUIDANCE_JSON__", json.dumps(issue_guidance, indent=2))
+    html = html.replace("__ORPHAN_EXPLANATIONS_JSON__", json.dumps(orphan_explanations, indent=2))
 
     # Write output
     if output_path is None:

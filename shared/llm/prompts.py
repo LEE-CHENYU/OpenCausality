@@ -174,6 +174,37 @@ Provide contextual decision guidance."""
 
 
 # ──────────────────────────────────────────────────────────────────────
+# Orphan Node Explanation (DAG Visualization)
+# ──────────────────────────────────────────────────────────────────────
+
+ORPHAN_NODE_SYSTEM = """\
+You are an econometrics expert analyzing a causal DAG for Kazakhstan's banking sector.
+
+A node exists in the DAG but has NO edges connecting it. Explain why it is unwired.
+
+Format your response with these labeled sections:
+**Role**: One sentence on what role this node plays in the causal story.
+**Blocker**: One sentence on what prevents wiring it in. Classify the blocker as one of: DATA (missing or uningested data series), ESTIMATION (edge exists conceptually but has not been estimated), DESIGN (no credible identification strategy available), or REDUNDANT (another node already covers this channel).
+**Path forward**: One sentence on what concrete step would unblock this node, or state that it should be removed if truly redundant.
+
+Be specific. Reference the existing DAG structure provided."""
+
+ORPHAN_NODE_USER = """\
+Orphan node: {node_id}
+Name: {node_name}
+Description: {node_description}
+Unit: {node_unit}
+
+Existing connected nodes in the DAG:
+{connected_nodes}
+
+Existing edges in the DAG:
+{existing_edges}
+
+Explain why this node is unwired and what would unblock it."""
+
+
+# ──────────────────────────────────────────────────────────────────────
 # DAG Repair: Missing Identity Dependencies
 # ──────────────────────────────────────────────────────────────────────
 

@@ -22,6 +22,7 @@
         .node circle:hover { stroke-width: 2.5px; }
         .node circle.latent { stroke-dasharray: 4, 3; }
         .node circle.id-risk { stroke: #c00; stroke-width: 2.5px; }
+        .node circle.orphan { stroke: #999; stroke-dasharray: 2, 2; fill: #f8f8f8; }
         .node text {
             font-size: 9px;
             font-weight: 400;
@@ -70,6 +71,25 @@
         .tooltip-issue { font-size: 10px; margin: 2px 0; }
         .tooltip-issue.critical { color: #c00; font-weight: 600; }
         .tooltip-issue.high { color: #a16207; }
+        .tooltip-orphan { margin-top: 8px; padding-top: 8px; border-top: 1px solid #eee; }
+        .tooltip-orphan-tag {
+            display: inline-block; font-size: 9px; font-weight: 600;
+            padding: 1px 5px; background: #f8f8f8; border: 1px solid #999;
+            color: #666; margin-bottom: 6px;
+        }
+        .tooltip-orphan-section {
+            padding: 4px 6px; margin-bottom: 3px; font-size: 10px; line-height: 1.5;
+        }
+        .tooltip-orphan-section.role { background: #f8f8f8; }
+        .tooltip-orphan-section.blocker { background: #fff5f5; }
+        .tooltip-orphan-section.path-forward { background: #f0f4ff; }
+        .tooltip-orphan-label {
+            font-weight: 600; font-size: 9px; text-transform: uppercase;
+            letter-spacing: 0.3px; margin-bottom: 1px;
+        }
+        .tooltip-orphan-section.role .tooltip-orphan-label { color: #444; }
+        .tooltip-orphan-section.blocker .tooltip-orphan-label { color: #c00; }
+        .tooltip-orphan-section.path-forward .tooltip-orphan-label { color: #1e40af; }
 
         /* Proposal banner */
         .proposal-banner {
@@ -461,7 +481,8 @@ const NODES = [
     "unit": "sd",
     "frequency": "monthly",
     "observed": true,
-    "latent": false
+    "latent": false,
+    "orphan": false
   },
   {
     "id": "oil_demand_shock",
@@ -470,7 +491,8 @@ const NODES = [
     "unit": "sd",
     "frequency": "monthly",
     "observed": true,
-    "latent": false
+    "latent": false,
+    "orphan": false
   },
   {
     "id": "global_activity_shock",
@@ -479,7 +501,8 @@ const NODES = [
     "unit": "innovation",
     "frequency": "monthly",
     "observed": true,
-    "latent": false
+    "latent": false,
+    "orphan": true
   },
   {
     "id": "vix_shock",
@@ -488,7 +511,8 @@ const NODES = [
     "unit": "innovation",
     "frequency": "daily",
     "observed": true,
-    "latent": false
+    "latent": false,
+    "orphan": false
   },
   {
     "id": "kzt_usd",
@@ -497,7 +521,8 @@ const NODES = [
     "unit": "log",
     "frequency": "daily",
     "observed": true,
-    "latent": false
+    "latent": false,
+    "orphan": false
   },
   {
     "id": "brent_price",
@@ -506,7 +531,8 @@ const NODES = [
     "unit": "log",
     "frequency": "daily",
     "observed": true,
-    "latent": false
+    "latent": false,
+    "orphan": false
   },
   {
     "id": "nbk_policy_rate",
@@ -515,7 +541,8 @@ const NODES = [
     "unit": "pct",
     "frequency": "event",
     "observed": true,
-    "latent": false
+    "latent": false,
+    "orphan": false
   },
   {
     "id": "cpi_headline",
@@ -524,7 +551,8 @@ const NODES = [
     "unit": "log",
     "frequency": "monthly",
     "observed": true,
-    "latent": false
+    "latent": false,
+    "orphan": false
   },
   {
     "id": "cpi_tradable",
@@ -533,7 +561,8 @@ const NODES = [
     "unit": "log",
     "frequency": "monthly",
     "observed": true,
-    "latent": false
+    "latent": false,
+    "orphan": false
   },
   {
     "id": "cpi_nontradable",
@@ -542,7 +571,8 @@ const NODES = [
     "unit": "log",
     "frequency": "monthly",
     "observed": true,
-    "latent": false
+    "latent": false,
+    "orphan": false
   },
   {
     "id": "imported_inflation_instrument",
@@ -551,7 +581,8 @@ const NODES = [
     "unit": "pct",
     "frequency": "monthly",
     "observed": true,
-    "latent": false
+    "latent": false,
+    "orphan": false
   },
   {
     "id": "E_import_share",
@@ -560,7 +591,8 @@ const NODES = [
     "unit": "share",
     "frequency": "static",
     "observed": true,
-    "latent": false
+    "latent": false,
+    "orphan": true
   },
   {
     "id": "nominal_income",
@@ -569,7 +601,8 @@ const NODES = [
     "unit": "log",
     "frequency": "quarterly",
     "observed": true,
-    "latent": false
+    "latent": false,
+    "orphan": false
   },
   {
     "id": "real_income",
@@ -578,7 +611,8 @@ const NODES = [
     "unit": "log",
     "frequency": "quarterly",
     "observed": true,
-    "latent": false
+    "latent": false,
+    "orphan": false
   },
   {
     "id": "wage_income",
@@ -587,7 +621,8 @@ const NODES = [
     "unit": "log",
     "frequency": "quarterly",
     "observed": true,
-    "latent": false
+    "latent": false,
+    "orphan": true
   },
   {
     "id": "transfer_income",
@@ -596,7 +631,8 @@ const NODES = [
     "unit": "log",
     "frequency": "quarterly",
     "observed": true,
-    "latent": false
+    "latent": false,
+    "orphan": false
   },
   {
     "id": "nominal_expenditure",
@@ -605,7 +641,8 @@ const NODES = [
     "unit": "log",
     "frequency": "quarterly",
     "observed": true,
-    "latent": false
+    "latent": false,
+    "orphan": true
   },
   {
     "id": "real_expenditure",
@@ -614,7 +651,8 @@ const NODES = [
     "unit": "log",
     "frequency": "quarterly",
     "observed": true,
-    "latent": false
+    "latent": false,
+    "orphan": false
   },
   {
     "id": "npl_aggregate",
@@ -623,7 +661,8 @@ const NODES = [
     "unit": "pct",
     "frequency": "monthly",
     "observed": true,
-    "latent": false
+    "latent": false,
+    "orphan": true
   },
   {
     "id": "npl_kspi",
@@ -632,7 +671,8 @@ const NODES = [
     "unit": "pct",
     "frequency": "quarterly",
     "observed": true,
-    "latent": false
+    "latent": false,
+    "orphan": false
   },
   {
     "id": "cor_kspi",
@@ -641,7 +681,8 @@ const NODES = [
     "unit": "pct",
     "frequency": "quarterly",
     "observed": true,
-    "latent": false
+    "latent": false,
+    "orphan": false
   },
   {
     "id": "loan_portfolio_kspi",
@@ -650,7 +691,8 @@ const NODES = [
     "unit": "log",
     "frequency": "quarterly",
     "observed": true,
-    "latent": false
+    "latent": false,
+    "orphan": false
   },
   {
     "id": "portfolio_mix_kspi",
@@ -659,7 +701,8 @@ const NODES = [
     "unit": "share",
     "frequency": "quarterly",
     "observed": true,
-    "latent": false
+    "latent": false,
+    "orphan": false
   },
   {
     "id": "deposits_kspi",
@@ -668,7 +711,8 @@ const NODES = [
     "unit": "log",
     "frequency": "quarterly",
     "observed": true,
-    "latent": false
+    "latent": false,
+    "orphan": true
   },
   {
     "id": "deposit_cost_kspi",
@@ -677,7 +721,8 @@ const NODES = [
     "unit": "pct",
     "frequency": "quarterly",
     "observed": true,
-    "latent": false
+    "latent": false,
+    "orphan": false
   },
   {
     "id": "rwa_kspi",
@@ -686,7 +731,8 @@ const NODES = [
     "unit": "log",
     "frequency": "quarterly",
     "observed": true,
-    "latent": false
+    "latent": false,
+    "orphan": false
   },
   {
     "id": "ppop_kspi",
@@ -695,7 +741,8 @@ const NODES = [
     "unit": "log",
     "frequency": "quarterly",
     "observed": true,
-    "latent": false
+    "latent": false,
+    "orphan": true
   },
   {
     "id": "total_capital_kspi",
@@ -704,7 +751,8 @@ const NODES = [
     "unit": "log",
     "frequency": "quarterly",
     "observed": true,
-    "latent": false
+    "latent": false,
+    "orphan": false
   },
   {
     "id": "k2_ratio_kspi",
@@ -713,7 +761,8 @@ const NODES = [
     "unit": "pct",
     "frequency": "quarterly",
     "observed": true,
-    "latent": false
+    "latent": false,
+    "orphan": false
   },
   {
     "id": "payments_revenue_kspi",
@@ -722,7 +771,8 @@ const NODES = [
     "unit": "log",
     "frequency": "quarterly",
     "observed": true,
-    "latent": false
+    "latent": false,
+    "orphan": false
   },
   {
     "id": "marketplace_revenue_kspi",
@@ -731,7 +781,8 @@ const NODES = [
     "unit": "log",
     "frequency": "quarterly",
     "observed": true,
-    "latent": false
+    "latent": false,
+    "orphan": true
   },
   {
     "id": "fintech_revenue_kspi",
@@ -740,7 +791,8 @@ const NODES = [
     "unit": "log",
     "frequency": "quarterly",
     "observed": true,
-    "latent": false
+    "latent": false,
+    "orphan": true
   }
 ];
 const EDGES = [
@@ -803,7 +855,7 @@ const EDGES = [
       }
     ],
     "has_critical_issue": true,
-    "llm_annotation": "An oil supply shock (e.g., an unexpected disruption or expansion in crude production) is associated with a movement in the Brent benchmark price, capturing how global supply news is reflected in spot/futures pricing. The key risk is that the \u201cexogenous\u201d shock series may still embed demand or risk-premium information (or be contaminated by measurement error and timing/anticipation), so the reduced-form association could partly reflect simultaneous macro news rather than pure supply shifts. A researcher should check robustness to alternative shock measures and timing (e.g., high-frequency windows around identified events), verify the sign/units and scaling of the shock so the negative estimate is interpretable, and test for predictability by pre-trends or other global demand indicators that would suggest the instrument is not orthogonal to demand shocks."
+    "llm_annotation": "An oil supply shock is associated with movements in the Brent price, capturing how unexpected changes in global oil availability translate into market pricing of crude. A key risk is that the \u201cexogenous\u201d shock series may still embed demand news, inventory/precautionary demand, or contemporaneous policy/geopolitical information that also affects Brent, which would confound the reduced-form mapping and potentially distort the sign or magnitude. Another concern is timing/aggregation (e.g., monthly identification vs. higher-frequency price adjustment) and measurement error in the shock that can attenuate estimates. Next, check robustness to alternative oil shock measures (e.g., Kilian-type decompositions), verify the dynamic response via local projections/VAR impulse responses, and test for sensitivity to controlling for global activity, inventories, and financial conditions to ensure the shock is not proxying for broader macro news."
   },
   {
     "id": "oil_supply_to_fx",
@@ -925,7 +977,7 @@ const EDGES = [
       }
     ],
     "has_critical_issue": false,
-    "llm_annotation": "An oil demand shock is associated with movements in the KZT/USD exchange rate, consistent with Kazakhstan\u2019s \u201ccommodity currency\u201d channel where stronger global oil demand tends to improve expected export revenues and the external balance, putting pressure on the tenge to strengthen (a lower KZT/USD). A key risk is that the oil-demand shock measure may still embed broader global risk-on/risk-off conditions or dollar strength that independently move EM exchange rates, and policy responses (FX intervention, rate changes, capital controls) could alter the mapping from oil demand to the exchange rate. Given the borderline significance (p\u22480.064), the next step is to probe robustness by controlling for global financial conditions (e.g., DXY, VIX, US rates) and checking timing/identification (event windows, alternative shock series), plus heterogeneity across regimes (pre/post major interventions or oil-price collapses)."
+    "llm_annotation": "This edge means that global oil demand shocks are associated with movements in the KZT/USD exchange rate, consistent with Kazakhstan behaving like a commodity currency whose terms of trade improve when oil demand strengthens. A key risk is that the \u201coil demand shock\u201d measure may still bundle global growth/financial risk shocks that simultaneously move capital flows and the dollar, creating omitted-variable bias or conflating demand with broader risk-on/risk-off dynamics; additionally, FX responses can reflect central bank intervention, capital controls, or anticipatory pricing that complicates timing. Next, a researcher should check identification of the oil-demand shock (e.g., alternative global demand instruments or sign/zero restrictions), test robustness to controlling for global dollar strength and risk sentiment (DXY, VIX, global rates), and verify the impulse timing (does KZT move after the shock rather than before) and stability across regimes (pre/post major policy changes or oil-price collapses)."
   },
   {
     "id": "vix_to_fx",
@@ -986,7 +1038,7 @@ const EDGES = [
       }
     ],
     "has_critical_issue": false,
-    "llm_annotation": "A VIX shock is associated with movements in the KZT/USD exchange rate, consistent with an EM \u201crisk-off\u201d channel where global volatility coincides with capital outflows and changes in demand for dollar liquidity. The main risk is that the VIX shock is not exogenous to Kazakhstan-relevant global news (e.g., oil or Russia/China shocks) so the estimate may mix multiple global factors; additionally, time-zone alignment, overlapping announcement windows, and contemporaneous policy reactions can attenuate or flip the sign. Next, check robustness to controlling for oil prices and broad USD strength (DXY), test alternative event windows/lags (including leads to diagnose anticipation), and verify the sign interpretation given the KZT/USD quote (whether a negative estimate corresponds to appreciation vs depreciation)."
+    "llm_annotation": "A VIX shock is associated with movements in KZT/USD through the EM \u201crisk-off\u201d channel: higher global risk aversion tends to trigger outflows from emerging markets and pressure local currencies, shifting the exchange rate. A key risk is that this reduced-form link may be confounded by concurrent global factors (oil price shocks, US rate surprises, global dollar strength) that move both VIX and KZT/USD, and by timing/market-hours issues that blur the direction of comovement\u2014especially given the imprecise estimate (large SE, high p-value). Next, check robustness to controlling for Brent/Urals oil, DXY, US Treasury yields/Fed surprises, and test alternative event windows/lags (and possibly local trading-hour-aligned changes) to see whether the association strengthens and whether the sign is stable across subsamples (e.g., crises vs calm periods)."
   },
   {
     "id": "fx_to_cpi_tradable",
@@ -1035,7 +1087,7 @@ const EDGES = [
       }
     ],
     "has_critical_issue": true,
-    "llm_annotation": "A depreciation of KZT against USD causes an increase in tradable CPI via import prices and pricing of tradables in foreign currency, capturing exchange-rate pass-through into consumer prices for goods exposed to international competition. Key threats to this causal interpretation are policy endogeneity (e.g., exchange-rate adjustments responding to inflation shocks), omitted global cost shocks (oil, shipping, partner-country inflation) that move both FX and tradable prices, and measurement issues in the tradable CPI basket or timing/mismatch in price collection. Next, a researcher should verify robustness to controlling for external price indices and commodity prices, check pre-trends and alternative lag structures to confirm timing of pass-through, and test stability of the 11.3% estimate across regimes (pegs/floats, crisis vs calm periods) and subsamples."
+    "llm_annotation": "A change in the KZT/USD exchange rate causes a change in tradable CPI by altering local-currency prices of imported consumption goods and imported inputs used in tradable production; the estimate implies about 11.3% pass-through from FX movements into tradable consumer prices over the study horizon. Key risks include violations of the identification assumptions\u2014e.g., exchange-rate moves coinciding with unobserved shocks to import prices, tariffs, subsidies, administered prices, or demand conditions that also affect tradable CPI\u2014plus measurement/aggregation issues in the tradable CPI basket and potential nonlinear or state-dependent pass-through during crises. Next, the researcher should scrutinize the identifying variation and timing (event-study/pre-trends, placebo outcomes), test robustness to controlling for global commodity prices and foreign inflation, and check heterogeneity by import intensity/category and asymmetry between depreciations and appreciations."
   },
   {
     "id": "fx_to_cpi_nontradable",
@@ -1077,7 +1129,7 @@ const EDGES = [
     "n_obs": 1200,
     "issues": [],
     "has_critical_issue": false,
-    "llm_annotation": "A causal effect from KZT/USD to non\u2011tradable CPI would represent exchange-rate pass\u2011through into prices of locally produced services and goods that rely little on imported inputs; the near-zero estimate suggests essentially no direct pass\u2011through into the non\u2011tradables basket over the horizon studied. Key risks are that the \u201cidentified\u201d variation in the exchange rate may still coincide with demand-management or price-admin measures that specifically target services, that non\u2011tradable CPI may be contaminated by tradable components or regulated prices, or that the effect is delayed/nonlinear (showing up only in large devaluations) and thus missed by a linear average estimate. Next, check robustness to alternative non\u2011tradable definitions and exclusions (administered/regulated prices), longer lags and distributed\u2011lag specifications, and state dependence (e.g., devaluation episodes vs normal times) to confirm the falsification holds outside the baseline window."
+    "llm_annotation": "This edge represents the causal effect of KZT/USD exchange-rate movements on prices of non-tradable goods and services, where theory would typically suggest little direct pass-through because these items are not imported and have limited foreign-input content. The near-zero estimate is consistent with non-tradables being insulated from exchange-rate shocks, making it a useful falsification check for broader pass-through claims. Key risks are misclassification of \u201cnon-tradable\u201d items (hidden imported inputs or regulated tariffs), CPI measurement/aggregation that masks sectoral effects, and identification failure if the exchange-rate variation used is endogenous to domestic inflation expectations or policy responses. Next, the researcher should verify the tradable/non-tradable basket construction and input import intensity, run event-study/lag specifications and subcomponents (services vs. shelter vs. administered prices), and test robustness to alternative instruments or shock definitions and to excluding periods with price controls or tax changes."
   },
   {
     "id": "cpi_to_nbk_rate",
@@ -1138,7 +1190,7 @@ const EDGES = [
       }
     ],
     "has_critical_issue": false,
-    "llm_annotation": "This edge represents the central bank reaction function: when headline CPI changes, the NBK may adjust its policy rate in response to inflation pressures relative to its objectives. A key risk is that the measured relationship can be distorted by simultaneous shocks (e.g., exchange-rate or commodity-price movements) that affect both inflation and policy decisions, as well as by expectation and information timing\u2014policy is set on forecasts, while CPI is observed with lags and revisions. Given the very imprecise estimate (large SE, high p-value), the next step is to verify timing/measurement (use real-time CPI and meeting dates, or forecast inflation), include major confounders (FX, output gap, oil/food prices, fiscal shocks), and check for regime changes or nonlinearity (e.g., different responses when inflation is above target or during crises)."
+    "llm_annotation": "This edge represents the NBK\u2019s reaction function: headline inflation may be related to subsequent policy-rate adjustments as the central bank leans against inflationary pressure. The main risk is that this relationship is blocked or confounded by omitted drivers (e.g., exchange rate movements, output gap, global commodity prices, fiscal shocks) or by reverse timing/measurement issues (policy affecting inflation with lags while inflation data reflect earlier conditions), which can wash out the apparent link\u2014consistent with the extremely imprecise estimate and near-zero statistical signal here. Next, verify timing and information sets (use real-time CPI releases and meeting dates), add key controls and lags typical of Taylor-type rules, and check robustness across regimes (e.g., pre/post policy framework changes) to see whether CPI predicts rate moves in subsamples or at specific horizons."
   },
   {
     "id": "fx_to_nbk_rate",
@@ -1255,7 +1307,7 @@ const EDGES = [
       }
     ],
     "has_critical_issue": true,
-    "llm_annotation": "A higher NBK policy rate is meant to transmit through the funding-cost channel, raising banks\u2019 marginal cost of funds and therefore increasing KSPI\u2019s deposit funding cost. A key risk is that the policy rate moves in response to the same macro/financial conditions that also affect deposit pricing (e.g., inflation expectations, liquidity stress, exchange-rate pressure), and incomplete pass-through or simultaneous changes in reserve requirements/FX regulations could break the assumed connector path. Next, a researcher should verify the \u201cboth connectors\u201d assumption by checking timing and pass-through (event-study around rate decisions, lag structure, and heterogeneity by deposit maturity/currency), and test robustness to controlling for macro conditions and liquidity measures that might jointly drive both the policy rate and deposit costs."
+    "llm_annotation": "A higher NBK policy rate is plausibly related to higher deposit funding costs at KSPI through the standard monetary transmission \u201cfunding cost channel,\u201d where banks must offer higher rates to retain/attract deposits. The main risk is that this edge is not identified: concurrent shocks (inflation expectations, FX pressure, liquidity stress, regulatory changes, or risk-premium shifts) can move the policy rate and KSPI\u2019s effective deposit cost together, and deposit-cost measurement/composition changes (term mix, retail vs corporate, promotional pricing) can mechanically generate the association. Next, verify the required connectors and timing by checking event-study dynamics around policy announcements, controlling for macro/market confounders (inflation, KZT/USD, sovereign spreads, system liquidity), and testing whether the pass-through differs by deposit type/maturity or by the share of sticky vs rate-sensitive deposits."
   },
   {
     "id": "nbk_rate_to_cor",
@@ -1318,7 +1370,7 @@ const EDGES = [
       }
     ],
     "has_critical_issue": true,
-    "llm_annotation": "A higher NBK policy rate may be related to subsequent movements in the corporate KSPI through the borrower-stress channel: tighter monetary conditions raise debt-service burdens and refinancing risk, which can worsen corporate credit quality and feed into equity pricing with about a two-quarter lag. The main risk is that this edge may not be identified because policy rates react to macro and financial conditions that also move the corporate index (reverse causality), and because omitted factors like oil prices, exchange-rate shocks, or global risk appetite could drive both rates and equities; additionally, the 2Q lag may still pick up anticipated policy paths rather than a clean shock. Next, the researcher should check whether the \u201crate change\u201d is an exogenous monetary policy shock (e.g., high-frequency surprise or narrative shock) and test robustness to controlling for inflation/output surprises, FX and oil shocks, and global factors, as well as alternative lag structures and pre-trends/event-study style dynamics."
+    "llm_annotation": "A higher NBK policy rate may be related to a subsequent rise in the KSPI corporate NPL (or distress) measure through the borrower-stress channel: higher debt-service costs and tighter financial conditions can worsen firms\u2019 repayment capacity, with a plausible two-quarter lag before deterioration is realized in bank portfolios. The main risk to a causal interpretation is endogeneity of policy: the NBK may raise rates in response to macro conditions (inflation, overheating, FX pressure, commodity shocks) that also independently affect corporate credit quality, plus omitted concurrent macroprudential actions or regulatory changes that shift measured impairment. Next, a researcher should check robustness to controlling for the NBK reaction function and common macro drivers (output gap, inflation, exchange rate, oil/commodity prices), test alternative lag structures and pre-trends, and verify that cor_kspi measurement/accounting rules and loan classification practices are stable over time."
   },
   {
     "id": "cpi_to_nominal_income",
@@ -1367,7 +1419,7 @@ const EDGES = [
       }
     ],
     "has_critical_issue": true,
-    "llm_annotation": "A rise in headline CPI causes an increase in nominal income, consistent with partial pass-through of inflation into wage growth, transfers, or other nominal earnings as households and firms adjust contracts. The main threats are violations of the imported-inflation IV exclusion restriction (e.g., import-price shocks affecting nominal income directly via trade exposure, sectoral demand, or firm profitability) and any differential macro policy responses to imported inflation that independently move income. Next, check instrument strength and robustness to alternative exposure measures, and run balance/placebo tests (e.g., pre-trends and outcomes that should not respond) plus heterogeneity by import intensity to ensure the channel is truly through domestic prices rather than direct trade-income effects."
+    "llm_annotation": "A rise in headline CPI causes an increase in nominal income, consistent with wage/earnings indexation, cost-of-living adjustments, and price passthrough into nominal pay and receipts. The main threat is that the imported-inflation instrument could still shift nominal income through channels other than domestic CPI (e.g., trade exposure affecting labor demand, sectoral composition, or terms-of-trade income), or that the LP specification is contaminated by anticipatory wage setting or differential measurement/timing of CPI versus income. Next, check exclusion and monotonicity more directly by testing balance on pre-trends and trade-exposure covariates, running sector/region heterogeneity and placebo outcomes (e.g., employment or hours), and verifying robustness to alternative CPI definitions (core vs headline) and income measures (wages vs total household/firm income)."
   },
   {
     "id": "fx_to_real_expenditure",
@@ -1416,7 +1468,7 @@ const EDGES = [
       }
     ],
     "has_critical_issue": true,
-    "llm_annotation": "A higher KZT/USD (a depreciation of the tenge) causes real expenditure to fall on impact, consistent with a contractionary expenditure response through reduced purchasing power for imports, higher inflation/real income compression, and tighter financial conditions for FX-exposed firms and households. Key risks to the causal interpretation include residual policy endogeneity (the exchange rate moving with unobserved monetary/fiscal actions), mismeasurement/deflation issues in \u201creal\u201d expenditure during high inflation or price controls, and compositional shifts (nominal spending reallocated toward higher prices rather than lower quantities). Next, the researcher should verify robustness to alternative deflators and expenditure definitions, test for pre-trends/anticipation and sensitivity to the identification scheme (e.g., alternative shock measures or ordering), and check heterogeneity by import intensity/FX debt exposure to see if the mechanism aligns with the estimated \u22120.10 IRF(0)."
+    "llm_annotation": "A rise in **kzt_usd** (a KZT depreciation against the USD) **causes** a decline in **real_expenditure**, consistent with exchange-rate pass-through raising the domestic price of imported consumption/investment goods and tightening real purchasing power; the IRF(0) of -0.10 suggests an immediate contraction. The main threats are violations of the identification assumptions\u2014e.g., contemporaneous monetary/fiscal or commodity-price shocks moving both the exchange rate and spending, anticipatory behavior (expenditure falling before the depreciation), or measurement/deflation issues that mechanically induce a negative response. Next, check pre-trends/placebo leads and sensitivity to alternative identification (e.g., different shock ordering/instruments), and verify robustness across deflators (CPI vs. PCE) and subsamples (oil-price regimes, crisis periods) to ensure the effect isn\u2019t driven by correlated external shocks or inflation mismeasurement."
   },
   {
     "id": "shock_to_npl_kspi",
@@ -1479,7 +1531,7 @@ const EDGES = [
       }
     ],
     "has_critical_issue": true,
-    "llm_annotation": "A rise in the imported-inflation instrument is associated with higher NPLs for KSPI, consistent with an external price shock deteriorating borrower repayment capacity and/or raising funding and operating costs that feed into credit quality. This reduced-form link could be invalidated if the instrument also loads on other concurrent macro shocks (e.g., exchange-rate stress, policy tightening, demand slowdown) that independently predict KSPI NPLs, or if KSPI\u2019s exposure differs systematically over time in ways correlated with the instrument. Next, check instrument relevance and timing (first stage strength, leads/lags, pre-trends), add controls for exchange rates, policy rates, and activity to probe robustness, and run placebo tests on outcomes that should not respond; to unpack channels, prioritize obtaining loan-level or sectoral exposure data to see whether NPL increases concentrate in import-intensive or price-sensitive borrower segments."
+    "llm_annotation": "An increase in the imported-inflation instrument is associated with higher NPLs in KSPI, consistent with a macro price shock that may squeeze real incomes, raise input costs, or tighten financial conditions and thereby worsen repayment capacity. The main risk to interpreting this as a clean reduced-form shock transmission is that the instrument could be correlated with other contemporaneous forces affecting NPLs (e.g., exchange-rate movements, policy responses, sectoral demand shocks) or that bank-level exposure/composition shifts mechanically change measured NPLs. Given the note that channels can\u2019t be decomposed without loan-level data, the next checks should focus on validating the instrument\u2019s exogeneity (placebo tests on pre-trends and unaffected outcomes, robustness to adding exchange rate/monetary policy controls) and exploring heterogeneity using available aggregates (e.g., by sectoral loan shares, maturity structure, or borrower type) to see whether the response aligns with plausible pass-through mechanisms."
   },
   {
     "id": "shock_to_cor_kspi",
@@ -1542,7 +1594,7 @@ const EDGES = [
       }
     ],
     "has_critical_issue": true,
-    "llm_annotation": "The edge from the imported inflation instrument to CoR (KSPI) captures how an external imported-inflation shock is associated with contemporaneous movements in banks\u2019 cost of risk, plausibly through macro stress on borrowers and collateral values. A key risk is that the instrument may pick up other global shocks (risk-off episodes, commodity/FX shocks, monetary tightening) that also predict CoR through channels unrelated to imported inflation, and the latent IFRS 9 overlay could induce measurement error or regime-dependent provisioning that changes the reduced-form sensitivity. You should next probe instrument validity and stability by testing for pre-trends/leads, adding controls for global financial conditions and domestic policy responses, and checking heterogeneity or breaks around periods when overlays or provisioning rules likely changed (e.g., pandemic-era overlays)."
+    "llm_annotation": ""
   },
   {
     "id": "expenditure_to_payments_revenue",
@@ -1605,7 +1657,7 @@ const EDGES = [
       }
     ],
     "has_critical_issue": true,
-    "llm_annotation": "Higher real expenditure is associated with higher payments_revenue_kspi, consistent with a channel where spending lifts GMV, which increases card payment volumes and interchange-like fees that flow through the KSPI connector into recorded revenue. A key risk is that expenditure may proxy for broader demand conditions or merchant mix changes that also affect take rates, connector adoption, routing, or pricing, so the estimate could reflect correlated shocks rather than incremental monetization from spending. Measurement and timing issues\u2014e.g., misalignment between when expenditure is recorded and when interchange/revenue is recognized, changes in KSPI coverage, or breaks in data pipelines\u2014could also bias the association. Next, check lead\u2013lag patterns and stability around KSPI integration/coverage changes (event-study or break tests), and validate the implied mechanism by verifying that expenditure predicts intermediate metrics (GMV, transaction counts, effective take rate) with consistent magnitudes."
+    "llm_annotation": "Higher real_expenditure is associated with higher payments_revenue_kspi, consistent with a channel where customer spending increases GMV that flows through the KSPI connector into interchange and fee-based payments revenue. A key risk is that expenditure may be proxying for broader demand or seasonality that also directly raises payments revenue (e.g., promotions, macro conditions, merchant mix), and connector availability/measurement issues could induce selection or attenuation if KSPI coverage changes over time. Next, check whether the relationship is stable across periods with constant KSPI integration (and across cohorts/markets), and validate the GMV\u2192interchange\u2192revenue linkage by testing intermediate outcomes (GMV, connected share, take rate) and ruling out concurrent pricing or tracking changes."
   },
   {
     "id": "cor_to_capital",
@@ -1652,7 +1704,7 @@ const EDGES = [
       }
     ],
     "has_critical_issue": true,
-    "llm_annotation": "Higher `cor_kspi` (loan-loss provisioning/credit risk expense) mechanically causes lower `total_capital_kspi` because provisions reduce current earnings and thus retained earnings, directly pulling down regulatory capital\u2014especially when capital is built through profits. The main threats to a clean causal interpretation are mismeasurement or definitional overlap between the provisioning variable and capital components, and any simultaneity where low capital triggers supervisory actions that change provisioning practices; failing to net out operating profitability (hence controlling for PPOP) can also confound the net mechanical effect through the income statement. Next, verify variable construction and accounting mapping (does `cor_kspi` flow through the same equity/capital items in `total_capital_kspi`), check timing (whether provisions hit capital in the same period or with lags), and run a decomposition showing how much of the estimated effect operates via net income versus other capital adjustments."
+    "llm_annotation": "Higher loan-loss provisioning (cor_kspi) mechanically causes lower total regulatory capital (total_capital_kspi) because provisions flow through earnings and reduce retained earnings/CET1 under standard accounting and capital rules. The main threat to interpreting the magnitude as causal is that provisioning is typically prompted by underlying credit deterioration that also affects capital through other channels (charge-offs, risk-weight changes, supervisory actions), and any \u201ccontrol for PPOP\u201d may not fully net out simultaneous income shocks or timing mismatches. Next, verify the exact capital definition and mapping (e.g., CET1 vs total capital, treatment of expected-loss reserves) and run timing/robustness checks (lags, event-study around provisioning spikes) to confirm the relationship is purely accounting-mechanical rather than driven by concurrent balance-sheet or regulatory adjustments."
   },
   {
     "id": "loan_portfolio_to_rwa",
@@ -1699,7 +1751,7 @@ const EDGES = [
       }
     ],
     "has_critical_issue": true,
-    "llm_annotation": "A larger loan portfolio mechanically causes higher RWA because RWA is constructed as exposure volume multiplied by (average) regulatory risk weights; holding average RW fixed, scaling up loans scales up RWA one-for-one in proportion. The main risk to treating the estimated coefficient as informative is that average risk weights may change with portfolio size (composition shifts, IRB model changes, securitizations, or measurement/definition mismatches between \u201cloan portfolio\u201d and the exposure base used in RWA), making the mapping non-constant even if the accounting identity holds in principle. Next, verify that the loan_portfolio measure aligns with the RWA exposure perimeter (on/off-balance-sheet, netting, credit conversion factors) and check stability of the implied average RW over time and across banks to confirm the coefficient reflects the intended mechanical identity rather than coincident reporting changes."
+    "llm_annotation": "This edge represents the accounting/regulatory mapping from loan portfolio volume into risk\u2011weighted assets: holding the average risk weight fixed, increasing loan exposures causes a proportional increase in RWA by construction (Volume \u00d7 avg RW), so the coefficient is essentially a scaling factor. The main risk to interpreting this as a stable causal effect is that \u201cavg RW\u201d is not actually fixed\u2014changes in portfolio composition, IRB model updates, regulatory parameter shifts, or RWA optimization can make RWA respond non-proportionally to volume and break the purely mechanical relationship. Next, verify that the definition of loan_portfolio_kspi matches the exposure measure used in RWA (EAD vs book value, netting, CRM, off\u2011balance sheet CCFs) and check whether the implied average risk weight (RWA/Volume) is constant over time or varies with composition/regime changes."
   },
   {
     "id": "portfolio_mix_to_rwa",
@@ -1802,7 +1854,7 @@ const EDGES = [
     "n_obs": null,
     "issues": [],
     "has_critical_issue": false,
-    "llm_annotation": "This edge reflects a mechanical accounting relationship: holding risk\u2011weighted assets (RWA) fixed, higher total regulatory capital increases the K2 capital ratio by construction because \\(K2 = \\text{Total Capital}/\\text{RWA}\\). The main risk to interpreting the estimate as a \u201ccausal effect\u201d is that the identity is conditional on the denominator and definitions\u2014changes in RWA, capital measurement (regulatory adjustments), consolidation scope, or timing mismatches can break the one-for-one mapping implied by the formula and make the coefficient look \u201cestimated\u201d rather than exact. Next, the researcher should verify that K2 is computed from the same total capital series and the same-period RWA used in the dataset, and check whether any regulatory regime changes, restatements, or data cleaning steps could introduce deviations from the identity."
+    "llm_annotation": "Higher total capital mechanically increases the K2 ratio because \\(K2 = \\frac{\\text{Total Capital}}{\\text{RWA}}\\); holding RWA fixed, a one-unit increase in capital raises K2 one-for-one scaled by \\(1/\\text{RWA}\\). The main risk to interpreting the 0.0625 as a stable \u201ccausal effect\u201d is that RWA is in the denominator and typically varies with portfolio risk, regulation, and measurement choices, so changes in capital may coincide with changes in RWA that alter the mapping from capital to K2. A researcher should verify the exact construction and units (e.g., whether K2 is in percentage points and capital/RWA in consistent currency terms), check for any smoothing/averaging or reporting lags, and confirm that RWA is treated consistently across time and banks so the implied derivative \\(dK2/dCapital \\approx 1/\\text{RWA}\\) matches the estimate."
   },
   {
     "id": "rwa_to_k2",
@@ -1842,7 +1894,7 @@ const EDGES = [
     "n_obs": null,
     "issues": [],
     "has_critical_issue": false,
-    "llm_annotation": ""
+    "llm_annotation": "Higher RWA mechanically lowers the K2 ratio because \\(K2=\\frac{\\text{Total Capital}}{\\text{RWA}}\\); holding capital fixed, an increase in the denominator reduces the ratio one-for-one in proportional terms. The main risk is not causal invalidity but measurement/definition mismatches (e.g., capital and RWA not aligned in time, consolidation scope, or regulatory definition changes) and any data construction that induces non-classical error, which can make the identity fail empirically. Next, verify unit consistency and timing (same reporting date), confirm the exact capital numerator used (e.g., total vs. Tier 2/total regulatory capital), and recompute K2 directly from the underlying components to ensure the estimated coefficient reflects the accounting identity rather than a coding artifact."
   }
 ];
 const LATENTS = [
@@ -2615,34 +2667,45 @@ const ACTIONS_BY_RULE = {
     ]
   }
 };
-const GENERATED_AT = "2026-02-09 06:12:10 UTC";
+const GENERATED_AT = "2026-02-09 06:31:58 UTC";
 const ISSUE_GUIDANCE = {
-  "SIGNIFICANT_BUT_NOT_IDENTIFIED:fx_to_cpi_tradable": "**Finding**: The edge **fx_to_cpi_tradable** has a positive estimated effect **0.113** (SE **0.028**) with **p=0.0001** (N=**1200**), yet it is flagged **SIGNIFICANT_BUT_NOT_IDENTIFIED** despite a current claim level of **IDENTIFIED_CAUSAL**.\n\n**Concern**: A very small p-value (**0.0001**) only establishes statistical association, and with **no failed diagnostics listed** plus a vague **IMMUTABLE_EVIDENCE** design label, there isn\u2019t documented identification evidence to justify upgrading the claim to **IDENTIFIED_CAUSAL** (critical risk of over-claiming causality from significance alone).\n\n**Recommendation**: **Downgrade the claim level to ASSOCIATIONAL (or at most \u201cSUPPORTED/PLAUSIBLE CAUSAL\u201d if your taxonomy allows it)** unless you can explicitly document a valid identification strategy (e.g., a credible instrument, policy/natural experiment, or design-based exogeneity argument) that connects the **0.113** estimate to causal variation rather than mere significance.",
-  "RATING_DIAGNOSTICS_CONFLICT:cpi_to_nbk_rate": "**Finding**: The edge `cpi_to_nbk_rate` is rated **A** even though its estimated coefficient is **-0.5353** with **p = 0.9694** (SE **13.9656**, **N = 67**) and it **fails the sign_consistency diagnostic**.\n\n**Concern**: An A-rating is not credible for causal interpretation here because the effect is statistically indistinguishable from zero (p \u2248 0.97) and the **failed sign_consistency** indicates the estimated sign is unstable across horizons/specifications in the **LOCAL_PROJECTIONS** design, undermining direction-of-effect claims.\n\n**Recommendation**: **Downgrade the rating (at least to C/D) and keep the claim level BLOCKED_ID**, treating this edge as non-informative unless you can (i) show sign stability under a pre-registered horizon window and key robustness checks and (ii) improve identification/power (N=67) so that the estimate is not dominated by noise (SE \u2248 14 relative to a coefficient near zero).",
-  "SIGNIFICANT_BUT_NOT_IDENTIFIED:shock_to_npl_kspi_annual": "**Finding**: The edge **shock_to_npl_kspi_annual** is highly statistically significant with **\u03b2 = 349.16** (SE **33.42**), **p = 1.51e-25**, but it is only claimed at **REDUCED_FORM** with **N = 8** and a failed diagnostic (**effective_obs**).\n\n**Concern**: With only **8 observations** and a failure in **effective_obs**, the very small **p-value (1.51e-25)** can reflect fragile inference (e.g., overstated precision/incorrect effective degrees of freedom), so treating **\u03b2 = 349.16** as causal is not justified despite significance, especially under a **LOCAL_PROJECTIONS_ANNUAL** design.\n\n**Recommendation**: Do **not** upgrade this to a causal/identified claim; either **(i)** treat it as descriptive reduced-form evidence and flag it as unstable due to **N = 8 + effective_obs failure**, or **(ii)** re-estimate with more effective observations (extend the sample/increase frequency/adjust horizons) and fix the effective sample/SE computation before using it for any policy or causal conclusion.",
-  "SIGNIFICANT_BUT_NOT_IDENTIFIED:shock_to_npl_sector": "**Finding**: The edge **shock_to_npl_sector** is statistically significant with a coefficient of **-46.55** (SE **13.42**), **p=0.00293** on **N=48** under **PANEL_LP_EXPOSURE_FE**, but it is only supported at **Claim level: REDUCED_FORM** (Rating **C**).\n\n**Concern**: Despite strong statistical significance, causal validity is weakened because the effect fails key robustness diagnostics (**leave_one_bank_out** and **regime_break**), indicating the estimate may be driven by a particular bank or by structural instability over time\u2014both of which directly undermine a causal interpretation even in a reduced-form panel LP.\n\n**Recommendation**: Treat this as **non-causal / fragile evidence**: re-estimate with (i) influence-robust checks (drop/high-leverage bank diagnostics; report min/max across leave-one-bank-out) and (ii) explicit break handling (split-sample pre/post suspected break, add time-varying controls or interacted time effects), and only retain the edge for decision-making if the sign/magnitude remains stable across these fixes; otherwise downgrade/remove it from causal claims and keep it as descriptive reduced-form correlation.",
-  "LOO_INSTABILITY:shock_to_npl_sector": "**Finding**: The edge **shock_to_npl_sector** is estimated at **-46.55** (SE **13.42**, **p = 0.00293**, **N = 48**) but is flagged **LOO_INSTABILITY (HIGH)** because leave-one-out causes a **sign flip or >50% magnitude change**, and it also fails **leave_one_bank_out** and **regime_break** diagnostics.  \n\n**Concern**: Despite statistical significance, the combination of **bank-level influence (leave_one_bank_out failure)** and **structural instability (regime_break failure)** implies the **-46.55** estimate is likely driven by one/few banks and/or a specific subperiod, undermining the causal credibility of the **PANEL_LP_EXPOSURE_FE** reduced-form claim (Rating **C**) and making the sign and magnitude unreliable for policy/interpretation.  \n\n**Recommendation**: Do **not** use this coefficient as a stable causal effect; instead **re-estimate** with (i) **explicit regime/time-split interactions or separate pre/post estimates** to address the regime break and (ii) **influence-robust inference** (report bank-jackknife range, winsorize/high-leverage trimming or weighted estimation) and only proceed if the effect\u2019s sign and magnitude remain consistent across these stability checks, otherwise downgrade to \u201cfragile/illustrative only\u201d and avoid directional conclusions.",
-  "SIGNIFICANT_BUT_NOT_IDENTIFIED:shock_to_cor_kspi_annual": "**Finding**: The edge **shock_to_cor_kspi_annual** shows a large, statistically significant reduced-form estimate (**\u03b2 = 360.12**, **SE = 45.44**, **p = 2.28e-15**, **N = 8**) under **LOCAL_PROJECTIONS_ANNUAL**, but it is flagged as **SIGNIFICANT_BUT_NOT_IDENTIFIED** with failed diagnostic **effective_obs**.\n\n**Concern**: With only **8** observations and a failure on **effective_obs**, the extremely small p-value is not reliable evidence of a causal effect because identification is not established (the reduced-form association may reflect confounding, insufficient independent variation, or over-optimistic inference from too few effective observations).\n\n**Recommendation**: Treat this estimate as **non-causal / descriptive only** (do not use it for causal claims or policy counterfactuals) until you can **restore identification by increasing effective sample/variation** (more years, alternative frequency/panel, or a clearly exogenous shock/IV design) and re-estimate with valid effective-obs and inference appropriate for small samples.",
-  "RATING_DIAGNOSTICS_CONFLICT:vix_to_fx": "**Finding**: The estimated effect on the edge **vix_to_fx** is **-0.0324** with **SE = 0.1099** and a **p-value = 0.7681** (N=190), yet it is rated **A** despite a failed **sign_consistency** diagnostic.  \n\n**Concern**: With **p=0.7681** the estimate is statistically indistinguishable from zero and the **sign_consistency** failure indicates instability in the direction of the effect across specifications/horizons, so an **A rating** overstates causal reliability for this reduced-form local projections result.  \n\n**Recommendation**: **Downgrade the rating (e.g., to C/D)** and treat the edge as **no robust evidence of an effect** unless sign consistency can be restored (e.g., by harmonizing horizon definitions/specifications or adding stability checks), because the current estimate provides neither significance nor directional robustness.",
-  "SIGNIFICANT_BUT_NOT_IDENTIFIED:oil_supply_to_income": "**Finding**: The oil_supply \u2192 income edge is flagged because it is statistically significant (**p = 0.0030**) while the supported claim level is only **REDUCED_FORM** (no identified causal effect), and no coefficient/SE/N/design details are provided.\n\n**Concern**: With only reduced-form evidence, **p = 0.0030** can reflect confounding, simultaneity, or general equilibrium/price effects rather than a causal impact of oil supply on income, and the absence of reported design/diagnostics means there\u2019s no demonstrated identification strategy to justify a causal interpretation.\n\n**Recommendation**: Do **not** report this edge as causal; either (i) **downgrade the claim** to \u201creduced-form association/predictive relationship with p = 0.0030\u201d or (ii) **upgrade identification** by specifying a credible design (e.g., valid instrument, exogenous shock, DiD/RD) and then re-estimate/report coefficient, SE, N, and identification diagnostics before making any causal claim.",
-  "SIGNIFICANT_BUT_NOT_IDENTIFIED:cpi_to_nominal_income": "**Finding**: The edge **cpi_to_nominal_income** has an estimated coefficient of **0.65** (SE **0.18**) with a highly significant **p=0.0003** in **N=80**, while the claim level is **IDENTIFIED_CAUSAL**.\n\n**Concern**: Despite **p=0.0003**, statistical significance alone does not justify an **IDENTIFIED_CAUSAL** claim\u2014especially under **IMMUTABLE_EVIDENCE**\u2014because a precise association (0.65) can still be driven by omitted variables, simultaneity, or common trends even when **no diagnostics failed**.\n\n**Recommendation**: **Downgrade the claim level from IDENTIFIED_CAUSAL to ASSOCIATIONAL (or \u201cNot identified\u201d) unless you can explicitly document the identification strategy implied by IMMUTABLE_EVIDENCE (e.g., a clearly exogenous CPI variation or quasi-experimental source)**; keep the coefficient **0.65** and **p=0.0003** as evidence of a strong relationship but not as causal proof.",
-  "SIGNIFICANT_BUT_NOT_IDENTIFIED:global_activity_to_income": "**Finding**: The edge **global_activity_to_income** is statistically significant (**p = 0.0030**) but is only supported at the **REDUCED_FORM** claim level (with no reported coefficient/SE/N/design details).\n\n**Concern**: With only a reduced-form association, **p = 0.0030** can reflect confounding, reverse causality, or correlated shocks rather than a causal effect\u2014so treating this edge as causal would be unjustified even though no diagnostics are flagged as failed (because identification diagnostics likely weren\u2019t applicable or weren\u2019t run given the claim level).\n\n**Recommendation**: Do **not** interpret or use this as a causal edge; either (i) **downgrade the claim explicitly to \u201cpredictive/associational\u201d** in downstream decisions, or (ii) **upgrade to an identified design** (e.g., credible instrument, panel FE with clear timing plus robustness, DiD/event study, RDD, or valid backdoor adjustment with measured confounders) and then re-estimate/report the **coefficient, SE, N, and identification checks** before making causal policy conclusions.",
-  "SIGNIFICANT_BUT_NOT_IDENTIFIED:portfolio_mix_to_rwa": "**Finding**: The edge **portfolio_mix \u2192 rwa** is statistically significant with a **coefficient = 18,195.963** (SE = 3,952.754) and **p = 4.16e-06** on **N = 16**, yet the claim is **BLOCKED_ID** and diagnostics flag **effective_obs**.\n\n**Concern**: Despite the very small p-value, the **failed effective_obs diagnostic with only 16 observations** indicates the LP estimate may rely on too little effective variation (or too few usable observations after lags/leads), so the large positive effect could be driven by small-sample artifacts, leverage/outliers, or weak identifying variation\u2014making the causal interpretation invalid under **BLOCKED_ID**.\n\n**Recommendation**: Treat this relationship as **non-causal and do not use it for policy/decision claims** until you **resolve effective_obs** (e.g., increase sample length, reduce horizons/lags, verify usable observations per horizon, and check sensitivity to influential points); if you must proceed descriptively, **downgrade it to correlational evidence** and require robustness checks (leave-one-out/influence diagnostics and alternative specifications) before unblocking identification.",
-  "SIGNIFICANT_BUT_NOT_IDENTIFIED:expenditure_to_payments_revenue": "**Finding**: The edge **expenditure_to_payments_revenue \u2192 payments_revenue** is highly statistically significant (\u03b2\u202f=\u202f333.41, SE\u202f=\u202f70.95, p\u202f=\u202f2.62e\u201106) but is only supported at **REDUCED_FORM** claim level with **N\u202f=\u202f7** and a failed **effective_obs** diagnostic.\n\n**Concern**: With only 7 observations and a failed effective sample-size diagnostic, the very small p-value does not reliably imply a causal effect\u2014standard errors and inference can be unstable in **LOCAL_PROJECTIONS**, so the estimated \u03b2\u202f=\u202f333.41 may reflect weak identification or overfit rather than a credible causal link.\n\n**Recommendation**: Treat this relationship as **associational/forecasting only** (do not use for causal decisions) unless you can (i) fix the **effective_obs** failure by increasing usable observations and/or simplifying lags/horizon so effective N is adequate, and (ii) upgrade identification beyond **REDUCED_FORM** (e.g., add a credible instrument or design-based variation); otherwise, downgrade severity to \u201cinformative but non-causal\u201d and avoid policy interpretation of the 333.41 estimate.",
-  "SIGNIFICANT_BUT_NOT_IDENTIFIED:nbk_rate_to_cor": "**Finding**: The edge **nbk_rate \u2192 cor** is statistically significant (**coef = 0.35596**, **SE = 0.11934**, **p = 0.00286**, **N = 18**), yet it is flagged **SIGNIFICANT_BUT_NOT_IDENTIFIED** with **claim level = BLOCKED_ID**.\n\n**Concern**: Despite the low p-value, the causal claim is not identified because the **effective_obs diagnostic failed** (with only **N = 18** in a **LOCAL_PROJECTIONS** design), meaning the \u201csignificance\u201d likely reflects sampling/estimation fragility or model-driven variation rather than a credibly exogenous change in nbk_rate.\n\n**Recommendation**: Treat this link as **non-causal and do not use it for causal decisions**; either **downgrade/remove the causal edge** or **re-estimate with a design that passes effective_obs (more observations and/or fewer horizons/lags/controls)** before reconsidering identification, keeping the effect size (**0.356**) as at most exploratory association evidence.",
-  "SIGNIFICANT_BUT_NOT_IDENTIFIED:shock_to_cor_kspi": "**Finding**: The edge **shock_to_cor_kspi** is highly statistically significant with **\u03b2 = 85.96** (SE = 7.40), **p = 3.57e-31** on **N = 26** under **LOCAL_PROJECTIONS**, despite only a **REDUCED_FORM** claim level.\n\n**Concern**: Even with no failed diagnostics reported, a **reduced-form** local-projection coefficient this large and precise does not by itself identify a causal effect of the shock on **cor_kspi** (it could still reflect omitted variables, anticipation/simultaneity, or shock endogeneity), and the small sample (**N=26**) heightens sensitivity to specification and inference choices.\n\n**Recommendation**: Treat this as **strong predictive/reduced-form evidence** rather than causal\u2014either **downgrade the claim language** (do not assert causation) or **add an explicit identification strategy** (e.g., credible exogeneity/IV or narrative shock validation plus robustness like pre-trend/lead tests and alternative controls) before promoting it beyond **REDUCED_FORM**.",
-  "SIGNIFICANT_BUT_NOT_IDENTIFIED:shock_to_npl_kspi": "**Finding**: The edge **shock_to_npl_kspi** has a large, precisely estimated coefficient (**72.797**) with **SE=10.297** and is highly statistically significant (**p=1.55e-12**, **N=26**) under **LOCAL_PROJECTIONS**, even though it is only claimed as **REDUCED_FORM**.\n\n**Concern**: Despite the extremely low p-value (**1.55e-12**), this does not by itself justify a causal interpretation\u2014especially with a small sample (**N=26**)\u2014because reduced-form local projections can still reflect confounding, reverse causality, or misspecification even when **no diagnostics failed**.\n\n**Recommendation**: Treat this result as strong **predictive/reduced-form evidence** rather than causal, and only upgrade to a causal claim if you can document a credible identification strategy for the shock (e.g., exogeneity/instrument or quasi-experimental variation) and run identification-focused checks (placebos/pre-trends, alternative controls/lag structures, robustness to influential observations) to show the **72.797** estimate is not driven by omitted variables or small-sample sensitivity.",
-  "SIGNIFICANT_BUT_NOT_IDENTIFIED:oil_supply_to_brent": "**Finding**: The edge **oil_supply \u2192 brent** is highly statistically significant with coefficient **\u22120.0517** (SE **0.00541**), **p = 1.22e\u221221** (N=**306**) under **LOCAL_PROJECTIONS**, but the current claim level is **REDUCED_FORM**.\n\n**Concern**: Despite the extremely small p-value, **REDUCED_FORM** significance alone does not identify a causal effect\u2014without an explicit identification strategy (e.g., exogenous oil-supply variation), the estimate **\u22120.0517** could reflect omitted variables, reverse causality, or contemporaneous global demand shocks even though **no diagnostics failed**.\n\n**Recommendation**: Keep this as a **predictive/reduced-form association** (do not label it causal) unless you can justify an identification approach\u2014e.g., move to an IV/structural design using plausibly exogenous oil-supply shocks (with instrument strength/exclusion evidence) or add credible controls/structure\u2014otherwise explicitly report it as \u201creduced-form response\u201d rather than a causal oil-supply effect on Brent.",
-  "SIGNIFICANT_BUT_NOT_IDENTIFIED:shock_to_cor_sector": "**Finding**: The estimated effect on the edge **shock_to_cor_sector** is large and precisely estimated (**\u03b2 = 36.1781**, **SE = 6.6946**, **p = 4.7475e-05**, **N = 48**) under **PANEL_LP_EXPOSURE_FE**, but the claim level is only **REDUCED_FORM** and the model carries a **Rating = C**.\n\n**Concern**: Despite the very small p-value (\u22480.00005), causal interpretation is not warranted because the key robustness check **leave_one_bank_out failed**, indicating the result may be driven by one influential bank/unit (especially problematic with **N = 48**) and thus not stable/identified.\n\n**Recommendation**: Treat this estimate as **descriptive reduced-form evidence only** (do not label it causal); rerun with and report **leave-one-bank-out** influence results (identify which bank drives the effect), and if the coefficient meaningfully changes or loses significance when that bank is excluded, downgrade the claim and consider redesigning the identification (e.g., alternative exposure construction, tighter fixed effects/controls, or an instrument) before using **\u03b2 = 36.18** for decisions.",
-  "LOO_INSTABILITY:shock_to_cor_sector": "**Finding**: The edge **shock_to_cor_sector** has a large positive estimate (**\u03b2 = 36.18**, **SE = 6.69**, **p = 4.75e-05**, **N = 48**), but it is flagged **LOO_INSTABILITY (HIGH)** because **leave-one-bank-out** produces a **sign flip and/or >50% magnitude change**.\n\n**Concern**: Despite the strong nominal significance (p = 4.75e-05), the failed **leave_one_bank_out** diagnostic indicates the result is **unduly driven by one (or a few) banks**, so the reduced-form causal interpretation is fragile and may not generalize across the panel units under **PANEL_LP_EXPOSURE_FE**.\n\n**Recommendation**: Treat this estimate as **non-robust (do not use as primary causal evidence)** unless you can show that the coefficient remains **same sign and within \u00b150% of 36.18** under unit-influence checks (report the min/max LOO estimates, drop the influential bank(s), and/or use influence-robust approaches like winsorizing exposures/outcomes or re-estimating with bank-level clustering/robust methods), and otherwise **downgrade the claim** or present it as **bank-driven sensitivity** rather than a stable average effect.",
-  "SIGNIFICANT_BUT_NOT_IDENTIFIED:fx_to_real_expenditure": "**Finding**: The edge **fx_to_real_expenditure** has an estimated coefficient of **-0.10** (SE **0.04**) with **p=0.012** in **N=60**, and it is currently labeled **IDENTIFIED_CAUSAL** (Rating **A**) despite the flag noting \u201csignificance does not establish causation.\u201d\n\n**Concern**: While the effect is statistically different from zero at conventional levels (**p=0.012**), that alone does not justify an **IDENTIFIED_CAUSAL** claim; with **no failed diagnostics reported**, the main causal-validity risk is **insufficient documented identification evidence** (the **IMMUTABLE_EVIDENCE** design label may be doing too much work without explicit support), meaning the causal label could be overstated relative to what the evidence actually demonstrates.\n\n**Recommendation**: **Keep the estimate (-0.10) as an association but downgrade the claim from IDENTIFIED_CAUSAL to a non-causal/associational level (or \u201ccausal under strong assumptions\u201d) unless you can explicitly document and justify the identification logic implied by IMMUTABLE_EVIDENCE (e.g., why FX variation is exogenous to real expenditure and not driven by omitted macro shocks), in which case retain IDENTIFIED_CAUSAL but add that justification to resolve the mismatch.**",
-  "LOO_INSTABILITY:nbk_rate_to_cor_sector": "**Finding**: The estimated effect on edge **nbk_rate_to_cor_sector** is **0.1349** with **SE = 1.3889** and **p = 0.9258** (N = 30), and the **leave_one_bank_out** diagnostic flags **LOO_INSTABILITY** with a **sign flip or >50% magnitude change**.  \n\n**Concern**: Because the estimate is already extremely imprecise (SE \u226b coefficient; p = 0.9258) and **fails leave-one-bank-out**, the reduced-form result is likely being driven by one bank (high leverage), undermining causal interpretability under **PANEL_LP_EXPOSURE_FE** since the effect is not stable to plausible sample perturbations.  \n\n**Recommendation**: Do **not** use this edge as decision-relevant causal evidence; instead, treat it as **non-robust** and either (i) re-estimate with influence/robustness steps (report bank-level influence, run leave-one-bank-out table, consider down-weighting/winsorizing exposure and using cluster-robust inference) or (ii) drop/flag the edge in downstream conclusions unless stability is restored and the estimate becomes meaningfully precise.",
-  "SIGNIFICANT_BUT_NOT_IDENTIFIED:nbk_rate_to_deposit_cost": "**Finding**: The edge **nbk_rate \u2192 deposit_cost** is statistically significant (**\u03b2 = 0.2227**, **SE = 0.0618**, **p = 0.00031**, **N = 18**) under **LOCAL_PROJECTIONS**, but it is explicitly **not identified (Claim level = BLOCKED_ID)** and has failed diagnostics (**effective_obs**, **residual_ac1**).\n\n**Concern**: Treating **p = 0.00031** as causal is invalid here because the relationship is **blocked at the identification stage** and the inference is additionally undermined by **insufficient effective observations** and **autocorrelated residuals (residual_ac1 failed)**, both of which can make the reported SE/p-value unreliable even as an association.\n\n**Recommendation**: **Do not use this estimate for causal claims**; either (i) **unblock identification** by introducing a credible exogenous source of variation (e.g., an instrument or a policy/meeting-time shock for **nbk_rate**) and re-estimate with time-series\u2013appropriate inference to address **residual_ac1**, or (ii) **downgrade the edge to descriptive/correlational** (keep \u03b2 = 0.2227 as an association only) until diagnostics and identification are fixed, especially given **N = 18** and failed **effective_obs**.",
-  "SIGNIFICANT_BUT_NOT_IDENTIFIED:oil_demand_to_income": "**Finding**: The edge `oil_demand_to_income` is statistically significant (p = 0.0030) but it is only supported at the **REDUCED_FORM** claim level (no structural/identified coefficient reported: Coefficient/SE/N/Design all N/A).\n\n**Concern**: With no identification/design information and no reported causal estimand (Coefficient/SE), the p = 0.0030 reflects association in the reduced form and does not validate a causal effect of oil demand on income; the absence of \u201cfailed diagnostics\u201d doesn\u2019t help here because the core problem is **unidentified causality**, not a failed assumption test.\n\n**Recommendation**: Do not label this edge as causal; either (i) downgrade the interpretation to \u201cpredictive/associational reduced-form relationship with p = 0.0030,\u201d or (ii) add an explicit identification strategy (e.g., valid instrument, quasi-experiment, or credible controls + design with N/SE/estimand reported) before making any causal claim.",
-  "SIGNIFICANT_BUT_NOT_IDENTIFIED:loan_portfolio_to_rwa": "**Finding**: The estimated effect on the edge *loan_portfolio \u2192 rwa* is **0.5714**, and the issue report cites **p=0.0000** while the edge metadata simultaneously shows **SE=0.0** and **p-value=None** (with **N=None**), creating an internal inconsistency in what \u201csignificant\u201d means here.\n\n**Concern**: With an **ACCOUNTING_BRIDGE** design and missing inferential inputs (**SE=0.0**, **p-value=None**, **N=None**), the reported \u201c**p=0.0000**\u201d cannot be relied upon to support the **IDENTIFIED_CAUSAL** claim level\u2014statistical significance (even if real) would not resolve identification, and here the diagnostics show **none failed** largely because key diagnostics/inference fields appear absent rather than passed.\n\n**Recommendation**: Treat this edge as **REDUCED_FORM / descriptive accounting identity** until you can (i) populate valid **N**, nonzero **SE**, and a reproducible **p-value** from an explicit estimation procedure, and (ii) document a concrete identification strategy beyond the accounting bridge (otherwise keep the coefficient **0.5714** as a mapping factor, not a causal effect, despite the \u201cp=0.0000\u201d flag).",
-  "SIGNIFICANT_BUT_NOT_IDENTIFIED:cor_to_capital": "**Finding**: The edge `cor_to_capital` shows a very large negative estimated effect (coefficient = **-22.4**) with an effectively zero standard error (**SE = 0.0**), while the issue flag reports **p = 0.0000** under a **BLOCKED_ID** claim, despite the edge metadata listing **Claim level = IDENTIFIED_CAUSAL** and **no failed diagnostics**.\n\n**Concern**: With **SE = 0.0** (and **p-value/N reported as None** in the edge data), the inference is internally inconsistent and likely numerically degenerate, so the \u201cp=0.0000\u201d significance signal is not credible evidence of causation and directly conflicts with the identification status (**BLOCKED_ID** vs **IDENTIFIED_CAUSAL**), creating a high risk of a false causal conclusion.\n\n**Recommendation**: Treat `cor_to_capital` as **not causally identified until reconciled**\u2014immediately re-estimate or audit the `ACCOUNTING_BRIDGE` design to obtain valid **N**, **non-zero SE**, and an actual **p-value**, and resolve the claim-level conflict (keep it **BLOCKED_ID** operationally until the estimation/ID metadata agree).",
-  "RATING_DIAGNOSTICS_CONFLICT:oil_supply_to_fx": "**Finding**: The oil_supply_to_fx edge has a near-zero estimated effect (coefficient\u202f=\u202f0.0004479) with very large uncertainty (SE\u202f=\u202f0.12765) and is overwhelmingly insignificant (p-value\u202f=\u202f0.9972, N\u202f=\u202f187), yet it is rated **A**.\n\n**Concern**: This is a rating/diagnostics conflict in substance because an **A** rating implies strong evidence, but the estimate provides essentially **no statistical support for an effect** (p\u202f=\u202f0.9972) and \u201cFailed diagnostics: none\u201d suggests the rating logic may be ignoring the null result rather than reflecting causal strength.\n\n**Recommendation**: Downgrade the edge rating (e.g., to **C/D or \u201cNo evidence of effect\u201d**) or gate the **A** rating on minimum evidentiary thresholds (e.g., require p\u202f<\u202f0.10 or |t|\u22651.64; here t\u22480.0004479/0.12765\u22480.0035), because with p\u202f=\u202f0.9972 the defensible decision is to treat this as **uninformative for causality** despite diagnostics passing.",
-  "RATING_DIAGNOSTICS_CONFLICT:oil_demand_to_fx": "**Finding**: The edge **oil_demand_to_fx** has an estimated coefficient of **-0.2983** (SE **0.1611**), with **p = 0.0641** (N = **187**) under **LOCAL_PROJECTIONS**, yet it is assigned an **A** rating.\n\n**Concern**: For a **REDUCED_FORM** local-projections estimate, **p = 0.0641** is only marginal (not < 0.05), and the message \u201cA-rating despite failed diagnostics\u201d conflicts with the provided metadata (\u201cFailed diagnostics: none\u201d), so the **A** rating is not well-supported by either statistical strength or documented diagnostic support\u2014creating a causal-validity and reporting-consistency risk.\n\n**Recommendation**: **Downgrade the rating (e.g., to B) or keep A only with explicit justification tied to pre-specified thresholds**, and reconcile the conflict by (i) verifying whether any diagnostics actually failed but weren\u2019t logged, and (ii) if none failed, updating the issue flag; in either case, label the estimate as **marginally significant (p = 0.0641)** rather than treating it as strong evidence."
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:fx_to_cpi_tradable": "**Finding**: The edge **fx_to_cpi_tradable** has a statistically significant estimated effect (**\u03b2 = 0.113**, **SE = 0.028**, **p = 0.0001**, **N = 1200**) while being labeled **IDENTIFIED_CAUSAL** under **IMMUTABLE_EVIDENCE**.\n\n**Concern**: Even with **p = 0.0001**, statistical significance alone does not justify a causal claim, and with **no failed diagnostics reported** there is still an identification gap: the evidence presented supports a precisely estimated association but does not document the specific quasi-experimental/exogeneity conditions required for **IDENTIFIED_CAUSAL**.\n\n**Recommendation**: **Downgrade the claim level from IDENTIFIED_CAUSAL to ASSOCIATIONAL (or \u201cNOT_IDENTIFIED\u201d) unless you can explicitly document the identification argument** tied to \u201cIMMUTABLE_EVIDENCE\u201d (e.g., a clearly exogenous FX shock/assignment mechanism), keeping **\u03b2 = 0.113 (p = 0.0001)** as strong evidence of association but not, by itself, causation.",
+  "RATING_DIAGNOSTICS_CONFLICT:cpi_to_nbk_rate": "**Finding**: The cpi_to_nbk_rate edge is rated **A** even though the estimated effect is essentially null (**coefficient = -0.5353**, **SE = 13.9656**, **p = 0.9694**, **N = 67**) and it **fails sign_consistency**.\n\n**Concern**: An **A-rating** is not credible here because **sign_consistency failed**, indicating the estimated direction is unstable across horizons/specifications in the local projections setup, and the extremely weak statistical signal (**p = 0.9694**) makes any causal directional claim at the **BLOCKED_ID** level highly unreliable.\n\n**Recommendation**: **Downgrade or block** this edge for causal interpretation (at minimum remove the **A** rating) unless you can resolve the **sign_consistency** failure (e.g., by tightening the LP specification/horizon set or addressing instability); with **p = 0.9694**, the practical default should be to treat this as **no evidence of an effect** rather than an A-rated causal link.",
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:shock_to_npl_kspi_annual": "**Finding**: The edge **shock_to_npl_kspi_annual** is highly statistically significant with a coefficient of **349.16** (SE **33.42**), **p = 1.51e-25**, but it is only claimed at **REDUCED_FORM** identification with **N = 8** and a failed diagnostic **effective_obs**.\n\n**Concern**: With only **8 observations** and a failed **effective_obs** diagnostic, the extremely small p-value is not credible evidence of a causal effect\u2014local projections can produce spuriously \u201cprecise\u201d inference when the effective sample size is too small, so causal validity is weak despite the large t-statistic implied by 349.16/33.42.\n\n**Recommendation**: Treat this result as **non-causal / exploratory** and **do not use it for causal claims or policy decisions** unless you can (i) raise effective sample size (e.g., longer time series / pooled panel), and (ii) re-estimate with inference robust to small samples (e.g., small-sample/HAC adjustments or bootstrap) and only then reconsider whether an identified design (beyond **REDUCED_FORM**) is defensible.",
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:shock_to_npl_sector": "**Finding**: The edge **shock_to_npl_sector** is statistically significant in the reduced form (**coef = -46.55**, **SE = 13.42**, **p = 0.0029**, **N = 48**) under **PANEL_LP_EXPOSURE_FE**, despite a **Rating = C**.\n\n**Concern**: Because the **claim level is REDUCED_FORM** and key robustness/validity checks failed (**leave_one_bank_out** suggests the estimate may be driven by one bank; **regime_break** indicates instability across time/regimes), the significant **-46.55** cannot be treated as a causal effect and is at high risk of being non-identified or non-generalizable.\n\n**Recommendation**: Treat this as **descriptive reduced-form evidence only** (do not use for causal claims or policy counterfactuals) and re-estimate with (i) bank-influence mitigation or diagnostics-based exclusion/weighting to address the **leave_one_bank_out** failure and (ii) explicit regime controls/splitting or break-robust specifications to resolve **regime_break**; if the magnitude/sign remains similar after passing both diagnostics, then you can consider upgrading identification strength, otherwise downgrade the result to \u201cunstable/fragile.\u201d",
+  "LOO_INSTABILITY:shock_to_npl_sector": "**Finding**: The edge **shock_to_npl_sector** has a large negative estimate (**\u03b2 = -46.55**, **SE = 13.42**, **p = 0.00293**, **N = 48**), but it is flagged **HIGH** severity because leave-one-out causes a **sign flip or >50% magnitude change**.\n\n**Concern**: Despite the low p-value, the **leave_one_bank_out** failure and **regime_break** failure indicate the estimate is likely being driven by one (or a few) banks and/or a structural break, so the reduced-form causal interpretation is fragile and may not generalize across units or time.\n\n**Recommendation**: Do not treat this as a stable causal effect as-is; re-estimate the **PANEL_LP_EXPOSURE_FE** specification with explicit break handling (e.g., split-sample or break dummies) and influence-robust inference (e.g., report leave-one-bank-out range and downweight/diagnose influential banks), and only keep the edge if the coefficient remains directionally consistent and within ~50% of **-46.55** across these checks (otherwise downgrade or exclude from the causal graph).",
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:shock_to_cor_kspi_annual": "**Finding**: The estimated effect on `shock_to_cor_kspi_annual` is **360.118** (SE **45.442**) with **p = 2.28e-15** using **N = 8** annual local projections, but the claim level is only **REDUCED_FORM** and diagnostics flag **effective_obs** as failed.\n\n**Concern**: Despite extreme statistical significance, the **failed effective_obs diagnostic** with only **8 observations** means the inference likely overstates precision (effective sample size/independent variation is insufficient), so the **360.118** coefficient cannot be treated as a credible causal effect\u2014at best it is a reduced-form association.\n\n**Recommendation**: Treat this edge as **not causally identified** and **downgrade or suppress causal claims** unless you can (i) fix the **effective_obs** failure (e.g., increase usable time periods/horizons, correct overlapping-horizon SEs, or adjust specification) and (ii) provide an identification strategy beyond reduced-form\u2014otherwise report it explicitly as **descriptive reduced-form** with **N = 8** and failed diagnostic.",
+  "RATING_DIAGNOSTICS_CONFLICT:vix_to_fx": "**Finding**: The vix_to_fx edge is rated **A** even though the estimated effect is **-0.0324** with **SE = 0.1099** and **p = 0.7681 (N = 190)**, alongside a **failed sign_consistency** diagnostic.\n\n**Concern**: With a highly insignificant coefficient (p = 0.7681) and **sign_consistency failing**, the direction of the effect is unstable across specifications/horizons, so treating this reduced-form LOCAL_PROJECTIONS result as \u201cA\u201d-quality causal evidence risks a false directional claim.\n\n**Recommendation**: **Downgrade the rating (at least to B/C) and treat the sign as indeterminate** unless you can resolve sign_consistency (e.g., pre-specify horizon/spec, report the full impulse-response path and robustness set); if you must keep it, restrict the claim to \u201cno detectable reduced-form effect\u201d given the wide uncertainty implied by SE = 0.1099 and p = 0.7681.",
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:oil_supply_to_income": "**Finding**: The oil_supply \u2192 income edge is being flagged because it is statistically significant (p = 0.0030) while the claim level is only **REDUCED_FORM** (no identified causal coefficient is reported: Coefficient/SE/N/Design all N/A).\n\n**Concern**: With no identification strategy or supporting diagnostics (failed diagnostics: none reported, but also no design information), the p = 0.0030 likely reflects correlation/reduced-form association and can be driven by confounding, simultaneity, or common shocks, so treating it as \u201coil supply causes income\u201d would be causally invalid.\n\n**Recommendation**: Do **not** interpret this as a causal effect; either (i) keep the edge explicitly labeled as reduced-form association, or (ii) upgrade to an identified design by specifying and estimating a causal estimand (e.g., an instrument for oil supply, a DiD/event-study around exogenous supply disruptions, or a structural time-series/VAR with credible exclusion restrictions) and then report the causal coefficient, SE, N, and identification diagnostics before making causal claims.",
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:cpi_to_nominal_income": "**Finding**: The edge **cpi_to_nominal_income** shows a statistically significant association (**\u03b2 = 0.65**, **SE = 0.18**, **p = 0.0003**, **N = 80**) while being labeled **IDENTIFIED_CAUSAL** under an **IMMUTABLE_EVIDENCE** design.\n\n**Concern**: Even with no failed diagnostics, a very small p-value (0.0003) only supports that the estimate differs from zero\u2014not that the **0.65** effect is causally identified\u2014so the \u201cIDENTIFIED_CAUSAL\u201d claim risks overstating causal validity given the design label \u201cIMMUTABLE_EVIDENCE.\u201d\n\n**Recommendation**: Downgrade the claim from **IDENTIFIED_CAUSAL** to an associational claim unless you can document an explicit identification argument (e.g., exogenous CPI variation or a valid design like IV/DiD/RDD); otherwise keep the estimate (**0.65**) but relabel it as correlational despite its strong significance (**p = 0.0003**).",
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:global_activity_to_income": "**Finding**: The reduced-form estimate for the edge **global_activity \u2192 income** is statistically significant (**p = 0.0030**) while the claim level is explicitly **REDUCED_FORM** (no identified causal coefficient/SE/N reported).\n\n**Concern**: Because no identification strategy is provided (no design, coefficient, SE, N, or diagnostics beyond \u201cnone\u201d), the **p = 0.0030** only supports correlation/predictive association and can still be driven by confounding, reverse causality, or simultaneity\u2014so treating it as causal would be invalid.\n\n**Recommendation**: Keep the relationship labeled **associational** unless you can upgrade to an identified design (e.g., IV with relevance/exclusion evidence, DiD with pre-trends, RDD with continuity tests, or panel with credible exogeneity); otherwise, use the result only for prediction/description and explicitly avoid causal language despite the strong significance (**p = 0.0030**).",
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:portfolio_mix_to_rwa": "**Finding**: The edge **portfolio_mix_to_rwa \u2192 rwa** is statistically significant (**coef = 18,195.96**, **SE = 3,952.75**, **p = 4.16e-06**, **N = 16**) despite a blocked identification claim (**claim_level = BLOCKED_ID**) under **LOCAL_PROJECTIONS**.\n\n**Concern**: With **N = 16** and a failed **effective_obs** diagnostic, the \u201csignificant\u201d estimate likely reflects weak/insufficient effective sample support and/or unstable inference, so the very small **p-value (4.16e-06)** does not resolve endogeneity (e.g., reverse causality, omitted variables) and threatens causal validity.\n\n**Recommendation**: Treat this relationship as **non-causal for decisioning** (keep **BLOCKED_ID** and do not act on the **18,195.96** effect) unless you can fix identification by increasing effective observations and strengthening design (e.g., add credible exogenous variation/instruments or tighter controls and re-run LP with checks that **effective_obs** passes).",
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:expenditure_to_payments_revenue": "**Finding**: The edge **expenditure_to_payments_revenue** is statistically significant (**coef = 333.41**, **SE = 70.95**, **p = 2.62e-06**, **N = 7**) under **LOCAL_PROJECTIONS**, but it is only supported at **claim_level = REDUCED_FORM** and has a failed diagnostic (**effective_obs**).\n\n**Concern**: Despite the very small p-value, causal validity is weak because **effective_obs failed** and the sample is extremely small (**N = 7**), so the estimate may be driven by low effective information (and reduced-form significance alone does not identify a causal channel).\n\n**Recommendation**: Treat this relationship as **associational/forecasting-only** and do **not** use it for causal decisions until you (i) fix the **effective_obs** issue (e.g., reduce horizons/lags or simplify the LP specification to increase usable observations) and (ii) add an identification strategy beyond reduced form (e.g., credible exogenous shock/instrument or stronger controls), otherwise the **333.41** estimate should be considered too fragile for causal interpretation.",
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:nbk_rate_to_cor": "**Finding**: The estimated effect on the edge **nbk_rate_to_cor** is **0.35596** (SE **0.11934**), statistically significant with **p=0.00286** using **N=18** under **LOCAL_PROJECTIONS**, despite a **BLOCKED_ID** claim level and a failed **effective_obs** diagnostic.\n\n**Concern**: The combination of **BLOCKED_ID** identification and a failed **effective_obs** check means the nominal significance (**p=0.00286**) is not credible evidence of a causal effect\u2014your effective sample/information content is likely too low or too correlated for the reported SE, so inference may be overstated and the coefficient **0.35596** may reflect confounding or small-sample artifacts.\n\n**Recommendation**: Do **not** treat this edge as causal; either **downgrade to descriptive/associational** reporting (keep the coefficient but remove causal language) or **re-estimate with stronger identification and sufficient effective observations** (e.g., expand the sample beyond **18**, reduce lag/horizon complexity, use robust small-sample inference, and add/justify an identification strategy) before unblocking the claim.",
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:shock_to_cor_kspi": "**Finding**: The edge **shock_to_cor_kspi** is highly statistically significant with **\u03b2 = 85.96**, **SE = 7.40**, **p = 3.57e-31** (N=26) under **LOCAL_PROJECTIONS**, despite the issue flag that \u201cp=0.0000 but claim_level=.\u201d  \n\n**Concern**: With **claim level = REDUCED_FORM** and **no failed diagnostics reported**, the result supports a strong reduced-form association but does not, by itself, justify a causal interpretation\u2014especially given the small sample (**N=26**) where identification assumptions (exogeneity of the shock, no omitted confounding, correct timing) are not verified by significance alone.  \n\n**Recommendation**: Keep the estimate as **reduced-form evidence** (do not upgrade to structural/causal language) and, if a causal claim is needed, add explicit identification support (e.g., document shock exogeneity, include robustness to alternative controls/specifications and pre-trend/lead tests in the local projections) before treating **\u03b2 = 85.96 (p = 3.57e-31)** as causal.",
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:shock_to_npl_kspi": "**Finding**: The edge **shock_to_npl_kspi** is highly statistically significant with **\u03b2 = 72.80**, **SE = 10.30**, and **p = 1.55e-12** (N = 26), but it is labeled **REDUCED_FORM** rather than identified causal.\n\n**Concern**: Despite the very small p-value, a **REDUCED_FORM** local-projections estimate (and **no failed diagnostics reported**) still does not rule out omitted variables, anticipation, or correlated shocks, so treating **\u03b2 = 72.80** as causal would overstate causal validity given the **B** rating and small sample (**N = 26**).\n\n**Recommendation**: Use this estimate as **descriptive/associational evidence** only (report it explicitly as reduced-form), and if a causal claim is required, **upgrade identification** by introducing an explicit exogenous shock/instrument or credible quasi-experimental variation and then re-estimate LP with robustness checks (otherwise keep the edge but **downgrade causal language/claim strength** while noting the large magnitude and **p = 1.55e-12**).",
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:oil_supply_to_brent": "**Finding**: The estimated effect on the edge **oil_supply_to_brent** is **-0.0517** (SE **0.00541**), which is highly statistically significant (**p = 1.22e-21**, N=306) under **LOCAL_PROJECTIONS**, even though the **claim_level is REDUCED_FORM**.\n\n**Concern**: Because this is explicitly **reduced-form**, the very strong significance (p\u22480) does **not** identify a causal oil-supply shock effect on Brent\u2014it's consistent with reverse causality, omitted variables, or anticipatory/expectations channels, and **no failed diagnostics** does not substitute for an identification strategy.\n\n**Recommendation**: Keep the result as **descriptive/predictive reduced-form evidence** (report **-0.0517** with p=1.22e-21) and **do not make causal claims** unless you upgrade identification (e.g., a clearly exogenous supply-shock instrument or narrative shock series with stated exogeneity and timing restrictions), in which case rerun LP with that identification and reassess.",
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:shock_to_cor_sector": "**Finding**: The edge **shock_to_cor_sector \u2192 cor_sector** is statistically significant with **\u03b2 = 36.18** (SE = **6.69**), **p = 4.75e-05** using **N = 48** under **PANEL_LP_EXPOSURE_FE**, but it is only labeled at **claim_level = REDUCED_FORM**.\n\n**Concern**: Despite the very small p-value (**4.75e-05**), causal validity is undermined because the key robustness check **leave_one_bank_out failed**, indicating the estimate may be driven by a single influential bank (or a small subset), so the significant reduced-form association may not generalize or identify a causal effect.\n\n**Recommendation**: Treat this as **non-identified/fragile** and **do not use it for causal claims** until you (i) diagnose influence by re-estimating after dropping each bank to identify which exclusion breaks the result and (ii) either adjust the design (e.g., reweight/trim influential exposure banks, redefine exposure, or use a specification that reduces single-bank leverage) or report it explicitly as **sensitive reduced-form evidence** with the leave-one-bank-out failure front-and-center.",
+  "LOO_INSTABILITY:shock_to_cor_sector": "**Finding**: The edge `shock_to_cor_sector` is large and statistically strong in-sample (coef = **36.18**, SE = **6.69**, p = **4.75e-05**, N = **48**), but it fails **leave_one_bank_out** with **LOO_INSTABILITY** (sign flip or >50% magnitude change when dropping a single bank).\n\n**Concern**: With **HIGH** LOO instability in a **PANEL_LP_EXPOSURE_FE** reduced-form, the estimated **36.18** effect is likely being driven by one (or a few) influential banks, so the causal claim is not robust and may not generalize\u2014especially given the overall **Rating: C** and small N (**48**).\n\n**Recommendation**: Do not use this edge for causal decision-making as-is; re-estimate and report bank-level influence (identify the bank(s) whose removal flips the sign/changes >50%), and either (i) pre-specify and justify exclusion/winsorization of the influential unit(s) or (ii) move to an estimator/inference that is less sensitive (e.g., robust to influential clusters) and downgrade the conclusion to \u201cfragile/unsupported\u201d unless the coefficient remains stable under these checks.",
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:fx_to_real_expenditure": "**Finding**: The edge **fx_to_real_expenditure** has an estimated coefficient of **-0.10** (SE **0.04**) with **p=0.012** (N=**60**), yet the issue flags it as \u201csignificant but not identified\u201d despite the current **Claim level = IDENTIFIED_CAUSAL**.\n\n**Concern**: With **no failed diagnostics reported**, the main causal-validity risk is a **mismatch between statistical significance (p=0.012) and the evidentiary basis needed for identification**, meaning the **IDENTIFIED_CAUSAL** label may be overstated if the \u201cIMMUTABLE_EVIDENCE\u201d design does not actually rule out confounding/reverse causality for this relationship.\n\n**Recommendation**: **Keep the estimate (-0.10, p=0.012) as an association but downgrade the claim from IDENTIFIED_CAUSAL to a weaker level (e.g., \u201cassociational\u201d/\u201csuggestive\u201d) unless you can explicitly document the identification argument implied by the IMMUTABLE_EVIDENCE design (e.g., why fx variation is exogenous to real expenditure), in which case retain IDENTIFIED_CAUSAL and add that justification to resolve the flag.**",
+  "LOO_INSTABILITY:nbk_rate_to_cor_sector": "**Finding**: The estimated effect on `nbk_rate_to_cor_sector` is 0.1349 with SE 1.3889 and p=0.9258 (N=30), and the leave-one-bank-out diagnostic shows a sign flip or >50% magnitude change.\n\n**Concern**: With p=0.9258 and an instability diagnostic failing (`leave_one_bank_out`), the estimate is both statistically uninformative and not robust to the removal of a single bank, implying the reduced-form association is likely driven by one influential unit and is not credible for causal interpretation under this PANEL_LP_EXPOSURE_FE design.\n\n**Recommendation**: Do not use this edge for causal claims; either (i) downgrade/omit it from the main results and report it only as unstable/noisy, or (ii) re-estimate with influence-robust strategies (identify the influential bank(s), report leave-one-out estimates, consider trimming/winsorizing exposures, and/or use robust methods like median/Huber M-estimation or reweighting) before reconsidering inclusion.",
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:nbk_rate_to_deposit_cost": "**Finding**: The edge **nbk_rate_to_deposit_cost** is statistically significant (**\u03b2 = 0.2227**, **SE = 0.0618**, **p = 0.0003135**, **N = 18**) under **LOCAL_PROJECTIONS**, but it is marked **Claim level = BLOCKED_ID** with failed diagnostics (**effective_obs**, **residual_ac1**).\n\n**Concern**: Despite the low p-value, causal validity is not supported because identification is explicitly blocked and the failed diagnostics indicate (i) too few effective observations given **N = 18** and (ii) autocorrelated residuals (failed **residual_ac1**), both of which can make the reported **p = 0.0003135** materially overstate evidence against the null and undermine the causal interpretation of **\u03b2 = 0.2227**.\n\n**Recommendation**: Treat this edge as **non-causal/associational only** (do not use it for causal claims or policy simulation) unless you can unblock identification (e.g., a defensible exogenous shock/instrument or design change) and re-estimate with inference robust to serial correlation (e.g., LP with HAC/Newey\u2013West or block bootstrap) while also addressing the **effective_obs** failure, because with **N = 18** the current \u201csignificant\u201d result is not decision-safe.",
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:oil_demand_to_income": "**Finding**: The edge **oil_demand_to_income** is flagged because it is statistically significant (**p = 0.0030**) but the current claim level is **REDUCED_FORM**, and there is **no identified causal effect estimate reported** (Coefficient/SE/N/Design are **N/A**).\n\n**Concern**: With only a reduced-form association (and no failed diagnostics reported), the **p = 0.0030** result can reflect confounding, reverse causality, or simultaneity, so treating this as causal would be invalid despite statistical significance.\n\n**Recommendation**: Keep the claim explicitly **associational/predictive** unless you can upgrade to an **identified design** (e.g., valid IV, DiD, RD, or controlled adjustment with justified ignorability) and then report an actual **coefficient, SE, N, and identification checks**; otherwise, downgrade interpretation and document that **p = 0.0030 supports correlation only, not causation**.",
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:loan_portfolio_to_rwa": "**Finding**: The edge `loan_portfolio_to_rwa \u2192 rwa` shows a positive estimated coefficient of **0.5714**, and the issue message reports **p=0.0000** (despite the edge table listing **SE=0.0** and **p-value=None**, with **N=None**).\n\n**Concern**: With **SE=0.0** and **N missing**, the reported **p=0.0000** is not interpretable as statistical evidence, and the tool\u2019s flag (\u201c**SIGNIFICANT_BUT_NOT_IDENTIFIED**\u201d / **claim_level=REDUCED_FORM**) indicates that\u2014even if significant\u2014this association may be **reduced-form** and not a defensible causal effect, though **no diagnostics failed**.\n\n**Recommendation**: Treat this edge as **non-identified / accounting-identity-driven** under the **ACCOUNTING_BRIDGE** design and **downgrade the claim to reduced-form unless you can supply valid uncertainty (nonzero SE, explicit N) and a clear identification argument**, because the current \u201csignificance\u201d signal (p=0.0000 with SE=0.0 and N=None) is effectively a computation/definition artifact rather than causal evidence.",
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:cor_to_capital": "**Finding**: The edge **cor_to_capital** shows a large estimated effect (**coefficient = -22.4**) but the uncertainty stats are internally inconsistent (**SE = 0.0**, **p-value = None**, **N = None**) while the issue flag reports \u201c**p=0.0000**\u201d alongside a blocked-identification condition.\n\n**Concern**: With **SE=0.0** and missing **N/p-value**, the apparent \u201c**p=0.0000**\u201d is not interpretable and can be a numerical/artifact-driven significance signal rather than evidence of a valid causal estimate\u2014so despite **Claim level: IDENTIFIED_CAUSAL** and **no failed diagnostics**, the estimate is not auditably identified and risks a false causal conclusion.\n\n**Recommendation**: **Block causal use and treat as non-identified until the inference metadata is corrected**\u2014specifically, recompute/verify **N**, a non-degenerate **SE**, and a consistent **p-value** under the **ACCOUNTING_BRIDGE** design (or rerun with robust/clustered SEs as appropriate), and only then decide whether **-22.4** is a stable identified causal effect or an accounting/estimation artifact.",
+  "RATING_DIAGNOSTICS_CONFLICT:oil_supply_to_fx": "**Finding**: The estimated effect on edge **oil_supply_to_fx** is essentially zero (**coef = 0.0004479**) and completely statistically insignificant (**p = 0.9972**, **SE = 0.1277**, **N = 187**) despite receiving an **A** rating.\n\n**Concern**: An **A** rating is not credible when the estimate provides no evidentiary support for an effect (p \u2248 1), so the rating likely reflects a scoring/logic conflict (even though \u201cFailed diagnostics: none\u201d) and could be misinterpreted as \u201chigh-confidence causal effect\u201d rather than \u201chigh-confidence null.\u201d\n\n**Recommendation**: Downgrade the rating from **A** to reflect \u201cno detectable effect\u201d (or split the rating into separate dimensions: **identification/diagnostics = A** but **evidence strength = D/F** given **p = 0.9972**), and treat this edge as **not supporting a causal impact** in decision-making unless the goal is explicitly to document a precisely estimated null.",
+  "RATING_DIAGNOSTICS_CONFLICT:oil_demand_to_fx": "**Finding**: The edge oil_demand_to_fx has a negative coefficient of **-0.2983** with **p = 0.0641** (SE **0.1611**, N **187**) but is assigned an **A rating** while the record shows **no failed diagnostics**.\n\n**Concern**: The stated issue (\u201cA-rating despite failed diagnostics\u201d) is not supported by the provided diagnostics (none failed), so the high-severity conflict likely reflects a **metadata/flagging error**; however, independently of that, the estimate is only **marginally significant at 10% (not at 5%)**, which weakens the evidential strength one would typically associate with an A-rated reduced-form local projection.\n\n**Recommendation**: **Resolve the conflict by correcting the diagnostic flag (since none failed) and downgrade or qualify the rating** (e.g., to reflect **p = 0.0641** as \u201csuggestive\u201d rather than \u201cstrong\u201d evidence) unless your rating policy explicitly permits A ratings for reduced-form LP results that are only significant at the 10% level."
+};
+const ORPHAN_EXPLANATIONS = {
+  "global_activity_shock": "**Role**: `global_activity_shock` is meant to capture exogenous swings in world real activity (IGREA innovations) that should propagate into Kazakhstan mainly through external demand and global risk/commodity channels.\n\n**Blocker (ESTIMATION)**: The DAG already routes \u201cglobal conditions\u201d through `oil_demand_shock -> kzt_usd` and `vix_shock -> kzt_usd` (and then into `brent_price`, CPI, and `nbk_policy_rate`), so while `global_activity_shock` conceptually affects `oil_demand_shock`, `brent_price`, and/or `vix_shock`, those additional edges have not been estimated/parameterized and would be partly duplicative given the existing global-factor nodes that are already wired.\n\n**Path forward**: Estimate and fix a single, identified linkage\u2014e.g., add and estimate `global_activity_shock -> oil_demand_shock` (and optionally test whether `global_activity_shock -> vix_shock` adds incremental explanatory power beyond `vix_shock`) using the same external IGREA series and then keep only the non-redundant edge(s); otherwise remove `global_activity_shock` if it does not add variation beyond the existing `oil_demand_shock`/`vix_shock` structure.",
+  "E_import_share": "**Role**: `E_import_share` is a *time-invariant exposure* node meant to capture cross-regional heterogeneity in how exchange-rate\u2013driven tradable inflation passes through to local prices, incomes, and ultimately bank credit risk.\n\n**Blocker (DESIGN)**: The current DAG is effectively a **single time-series macro \u2192 banking** structure (e.g., `oil_*_shock/vix_shock -> kzt_usd -> cpi_* -> nbk_policy_rate -> {deposit_cost_kspi, cor_kspi}` plus the IV path `imported_inflation_instrument -> {npl_kspi, cor_kspi}`), so there is **no region panel/outcome node or interaction structure** where a static regional share can enter\u2014without region-level outcomes, wiring `E_import_share` would be either non-identified (purely cross-sectional) or would implicitly require an unmodeled design like `kzt_usd \u00d7 E_import_share -> cpi_tradable` / `real_expenditure` that the DAG does not currently support.\n\n**Path forward**: Add a region (or bank-region) panel layer and encode heterogeneous pass-through by introducing interaction/shift-share edges such as `(kzt_usd, brent_price) -> imported_inflation_instrument` with `E_import_share` as the exposure (or explicitly `kzt_usd \u00d7 E_import_share -> cpi_tradable_region` / `real_expenditure_region -> payments_revenue_kspi_region`), then estimate with a Bartik/DiD-style specification using region fixed effects; otherwise remove `E_import_share` as redundant in a purely aggregate DAG.",
+  "wage_income": "**Role**: `wage_income` is the labor-market channel linking macro conditions (oil/FX/inflation/monetary policy) to households\u2019 ability to service debt and consume, which would in turn affect bank asset quality (e.g., `npl_kspi`, `cor_kspi`) and transaction activity (`payments_revenue_kspi`).\n\n**Blocker (REDUNDANT)**: In the current DAG, household income already enters through `nominal_income` with the edge `cpi_headline -> nominal_income` (and spending through `real_expenditure`, plus FX/inflation/IV routes into `npl_kspi`/`cor_kspi`), so adding `wage_income` without a distinct, separately identified path would duplicate the same household-income/consumption channel and create ambiguity about whether effects run via wages versus broader income components.\n\n**Path forward**: Either remove `wage_income` as redundant, or re-wire it only if you can make it non-overlapping with `nominal_income`\u2014e.g., redefine `nominal_income` as *non-wage income* and add edges like `nbk_policy_rate -> wage_income` (labor demand) and `wage_income -> real_expenditure` / `wage_income -> npl_kspi` / `wage_income -> cor_kspi`, then estimate/validate those links with a wage-specific series and an identification strategy that separates wage shocks from price-indexation already captured by `cpi_headline -> nominal_income`.",
+  "nominal_expenditure": "**Role**: `nominal_expenditure` is the nominal-spending counterpart to `real_expenditure`, intended to carry the price-level (CPI) channel from inflation/exchange-rate shocks into household demand and thus into banks\u2019 payments-related income.\n\n**Blocker (REDUNDANT)**: In the current DAG structure the demand-to-banks channel is already operationalized via `real_expenditure -> payments_revenue_kspi`, while the price-level channel is separately represented via `cpi_headline -> nominal_income` and the FX-to-inflation links (`kzt_usd -> cpi_tradable/nontradable`), so wiring `nominal_expenditure` would duplicate the same \u201cnominal vs real\u201d mapping unless you also specify how it differs from the existing real-spending node (e.g., via CPI deflation/identity).\n\n**Path forward**: Either (i) remove `nominal_expenditure` as truly redundant, or (ii) make it non-redundant by adding the missing structural links/identity\u2014e.g., `nominal_expenditure -> real_expenditure` (deflation) and/or `cpi_headline -> nominal_expenditure` plus `nominal_income -> nominal_expenditure` (budget constraint)\u2014and then decide whether `payments_revenue_kspi` should load on nominal rather than real spending (swap/add `nominal_expenditure -> payments_revenue_kspi`) to reflect how payments revenues scale with transaction values.",
+  "npl_aggregate": "**Role**: `npl_aggregate` is meant to capture system-wide asset quality (sector NPLs) as a macro-financial outcome that should move with external shocks (oil, FX, inflation) and monetary conditions, and potentially mediate their effect on bank-level balance-sheet variables.\n\n**Blocker (DATA)**: The current DAG already has an NPL outcome wired at the bank level (`imported_inflation_instrument -> npl_kspi`), but there is no ingested/compatible mapping between NBK\u2019s sector NPL definition and the KSPI NPL measure (coverage, methodology, breaks, frequency, and timing), so adding edges like `kzt_usd -> npl_aggregate`, `nbk_policy_rate -> npl_aggregate`, or linking `npl_aggregate <-> npl_kspi` would risk mixing non-comparable series and creating ambiguous, non-identified paths relative to the existing `shock_to_npl_kspi` edge.\n\n**Path forward**: Ingest and harmonize the NBK aggregate NPL series to the DAG\u2019s timing/frequency and definitions (document breaks, align to KSPI\u2019s perimeter or build a bridge/measurement model), then wire it as either (i) a separate macro outcome driven by existing macro nodes (e.g., `kzt_usd`, `cpi_headline`, `nbk_policy_rate`, oil shocks) or (ii) an aggregator/measurement node fed by `npl_kspi` (and other bank NPLs if available); if harmonization shows it is effectively the same signal as `npl_kspi`, remove it as redundant.",
+  "deposits_kspi": "**Role**: `deposits_kspi` is the funding-quantity state variable for Kaspi\u2014capturing how the liability base responds to macro conditions and pricing (`deposit_cost_kspi`) and, in turn, constrains balance-sheet expansion (e.g., `loan_portfolio_kspi`, `rwa_kspi`, and ultimately `k2_ratio_kspi`).\n\n**Blocker (DESIGN)**: In this DAG, the natural edges you\u2019d want\u2014most immediately `deposit_cost_kspi -> deposits_kspi` (price\u2013quantity of deposits) and `nominal_income/real_expenditure -> deposits_kspi` (household liquidity/savings channel), and then `deposits_kspi -> loan_portfolio_kspi` (funding constraint)\u2014are not wired because deposits and deposit rates are jointly determined by Kaspi\u2019s funding strategy and growth plans (e.g., expected loan growth/asset yields and risk, proxied by `loan_portfolio_kspi`, `cor_kspi`, `npl_kspi`), creating simultaneity and reverse causality with no existing exogenous shifter in the current graph beyond `nbk_policy_rate -> deposit_cost_kspi`.\n\n**Path forward**: Add an identification device for deposit supply (e.g., an exogenous \u201cdeposit competition/liquidity\u201d shifter such as systemwide deposit rate changes or competitor-specific funding shocks, regulatory liquidity events, or high-frequency policy surprises) and then wire the core triangle explicitly\u2014`nbk_policy_rate -> deposit_cost_kspi -> deposits_kspi` and `deposits_kspi -> loan_portfolio_kspi`\u2014while controlling/structuring feedback from `loan_portfolio_kspi` (and/or `cor_kspi`, `npl_kspi`) to `deposit_cost_kspi` to avoid backdoor paths.",
+  "ppop_kspi": "**Role**: `ppop_kspi` is the core profitability node that should aggregate KSPI\u2019s operating income channels (e.g., payments revenue) net of operating costs, and act as the upstream driver of internal capital generation alongside credit losses.\n\n**Blocker (ESTIMATION)**: Although the DAG already contains clear candidate parents\u2014most directly `payments_revenue_kspi -> ppop_kspi` (revenue component) and plausibly `deposit_cost_kspi -> ppop_kspi` (funding-cost pressure on net interest income), with downstream links like `ppop_kspi -> total_capital_kspi` (retained earnings)\u2014these links have not been wired because PPOP is a bank-internal accounting aggregate that is jointly determined with balance-sheet choices (`loan_portfolio_kspi`, `portfolio_mix_kspi`) and omitted opex dynamics, making a naive regression of PPOP on the existing connected nodes non-credible without a dedicated identification/measurement step.\n\n**Path forward**: Unblock by (i) decomposing PPOP into modeled subcomponents already in the DAG (e.g., add/ingest an opex proxy and NII drivers, then wire `real_expenditure -> payments_revenue_kspi -> ppop_kspi` and `nbk_policy_rate -> deposit_cost_kspi -> ppop_kspi`), and (ii) treating `ppop_kspi -> total_capital_kspi` as a mechanical/identity edge via retained earnings once dividend/payout assumptions (or data) are introduced.",
+  "marketplace_revenue_kspi": "**Role**: `marketplace_revenue_kspi` is meant to capture the non-banking (e-commerce marketplace) earnings channel through which Kazakhstan\u2019s macro conditions can affect KSPI\u2019s consolidated profitability and, indirectly, its balance-sheet strength.\n\n**Blocker (ESTIMATION)**: While the existing DAG already wires macro demand and inflation/exchange-rate forces into `payments_revenue_kspi` via `real_expenditure -> payments_revenue_kspi`, the analogous mapping from the current macro block (`kzt_usd`, `cpi_*`, `nominal_income`, `real_expenditure`, `nbk_policy_rate`) into *marketplace* revenue is not yet specified/estimated (i.e., candidate edges like `real_expenditure -> marketplace_revenue_kspi` and/or `nominal_income -> marketplace_revenue_kspi` are conceptually plausible but currently unquantified and could double-count the same consumption channel already used for payments without a separate identification).\n\n**Path forward**: Add and estimate a distinct demand-side link\u2014start with `real_expenditure -> marketplace_revenue_kspi` (and optionally `kzt_usd -> marketplace_revenue_kspi` if pass-through/import content is material)\u2014then validate that it is empirically separable from the already-modeled `real_expenditure -> payments_revenue_kspi` channel (e.g., using segment disclosures and a multivariate/VAR or local-projection setup with the existing exogenous shocks to avoid conflating common demand movements).",
+  "fintech_revenue_kspi": "**Role**: `fintech_revenue_kspi` is the outcome-side business-line node meant to capture Kaspi.kz\u2019s lending/fintech revenue response to macro conditions (rates, FX/inflation-driven demand) and to KSPI\u2019s balance-sheet/credit channel (loan growth and asset quality).\n\n**Blocker (ESTIMATION)**: In the current DAG, the obvious parent channels are already represented but only wired into other outcomes\u2014e.g., `nbk_policy_rate -> deposit_cost_kspi` and `nbk_policy_rate -> cor_kspi`, plus `loan_portfolio_kspi -> rwa_kspi` (mechanical) and `real_expenditure -> payments_revenue_kspi`; however, no edge has been estimated/validated that maps these existing drivers into `fintech_revenue_kspi` (and without that, adding links like `nbk_policy_rate -> fintech_revenue_kspi`, `loan_portfolio_kspi -> fintech_revenue_kspi`, or `npl_kspi/cor_kspi -> fintech_revenue_kspi` risks mis-specification and double-counting within the KSPI block).\n\n**Path forward**: Estimate and then wire a minimal, identified set of parents\u2014start with `loan_portfolio_kspi -> fintech_revenue_kspi` (scale effect) and `nbk_policy_rate -> fintech_revenue_kspi` (pricing/margin effect), using the already-modeled macro variation (`imported_inflation_instrument`, `oil_*_shock`, `vix_shock` feeding into `kzt_usd -> cpi_headline -> nbk_policy_rate`) as exogenous sources, and add `cor_kspi`/`npl_kspi` only if you can separately identify a credit-loss/constraint effect on lending revenue."
 };
 
 // ── Helpers ──────────────────────────────────────────────────────────────
@@ -3224,6 +3287,7 @@ node.append('circle')
     .attr('class', function(d) {
         var cls = '';
         if (d.latent) cls += ' latent';
+        if (d.orphan) cls += ' orphan';
         if (nodeIdRisks[d.id]) cls += ' id-risk';
         return cls;
     });
@@ -3265,6 +3329,37 @@ function showEdgeTooltip(e, d) {
     tooltip.html(html).style('left', (e.pageX + 15) + 'px').style('top', (e.pageY - 15) + 'px').classed('visible', true);
 }
 
+function renderOrphanSections(s) {
+    if (!s) return '';
+    // Match **Role**, **Blocker**, **Blocker (TYPE)**, **Path forward**
+    var sections = [
+        {key: 'role', re: /\*\*Role\*\*:\s*/i},
+        {key: 'blocker', re: /\*\*Blocker(?:\s*\([^)]*\))?\*\*:\s*/i},
+        {key: 'path-forward', re: /\*\*Path\s+forward\*\*:\s*/i}
+    ];
+    var indices = [];
+    sections.forEach(function(sec) {
+        var m = s.match(sec.re);
+        if (m) {
+            // Extract label from matched text (e.g. "Blocker (DATA)")
+            var raw = m[0].replace(/\*\*/g, '').replace(/:\s*$/, '').trim();
+            indices.push({key: sec.key, idx: s.indexOf(m[0]), len: m[0].length, label: raw});
+        }
+    });
+    indices.sort(function(a, b) { return a.idx - b.idx; });
+    if (indices.length === 0) return '<div style="font-size:10px;color:#555">' + escHtml(s) + '</div>';
+    var html = '';
+    for (var i = 0; i < indices.length; i++) {
+        var start = indices[i].idx + indices[i].len;
+        var end = (i + 1 < indices.length) ? indices[i + 1].idx : s.length;
+        var body = s.substring(start, end).trim();
+        html += '<div class="tooltip-orphan-section ' + indices[i].key + '">' +
+            '<div class="tooltip-orphan-label">' + escHtml(indices[i].label) + '</div>' +
+            '<div style="font-size:10px">' + escHtml(body) + '</div></div>';
+    }
+    return html;
+}
+
 function showNodeTooltip(e, d) {
     var html = '<h3>' + d.label + '</h3>';
     html += '<div class="tooltip-row"><span class="tooltip-label">ID</span><span class="tooltip-value">' + d.id + '</span></div>';
@@ -3272,6 +3367,17 @@ function showNodeTooltip(e, d) {
     if (d.unit) html += '<div class="tooltip-row"><span class="tooltip-label">Unit</span><span class="tooltip-value">' + d.unit + '</span></div>';
     if (d.frequency) html += '<div class="tooltip-row"><span class="tooltip-label">Frequency</span><span class="tooltip-value">' + d.frequency + '</span></div>';
     if (d.latent) html += '<div class="tooltip-row"><span class="tooltip-label">Observed</span><span class="tooltip-value null">Latent (unobserved)</span></div>';
+    if (d.orphan) {
+        var orphanText = ORPHAN_EXPLANATIONS[d.id] || '';
+        html += '<div class="tooltip-orphan">';
+        html += '<span class="tooltip-orphan-tag">UNWIRED</span>';
+        if (orphanText) {
+            html += renderOrphanSections(orphanText);
+        } else {
+            html += '<div style="font-size:10px;color:#999;font-style:italic">No edges connect this node. Run with --llm-annotate for analysis.</div>';
+        }
+        html += '</div>';
+    }
     tooltip.html(html).style('left', (e.pageX + 15) + 'px').style('top', (e.pageY - 15) + 'px').classed('visible', true);
 }
 

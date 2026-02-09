@@ -203,6 +203,93 @@ def _generate_edge_annotations(
     return annotations
 
 
+def _find_orphan_nodes(dag: dict) -> list[dict]:
+    """Return list of nodes with no edges connecting them."""
+    nodes = {n["id"]: n for n in dag.get("nodes", [])}
+    edge_nodes: set[str] = set()
+    for e in dag.get("edges", []):
+        edge_nodes.add(e.get("from", ""))
+        edge_nodes.add(e.get("to", ""))
+    for lat in dag.get("latents", []):
+        for a in lat.get("affects", []):
+            edge_nodes.add(a)
+    orphans = []
+    for nid, node in nodes.items():
+        if nid not in edge_nodes:
+            orphans.append(node)
+    return orphans
+
+
+def _generate_orphan_explanations(
+    dag: dict,
+) -> dict[str, str]:
+    """Generate LLM explanations for why orphan nodes are unwired.
+
+    Returns ``{node_id: explanation_text}``.
+    """
+    from shared.llm.client import get_llm_client
+    from shared.llm.prompts import ORPHAN_NODE_SYSTEM, ORPHAN_NODE_USER
+
+    orphans = _find_orphan_nodes(dag)
+    if not orphans:
+        return {}
+
+    # Build context strings
+    nodes = {n["id"]: n for n in dag.get("nodes", [])}
+    edge_nodes: set[str] = set()
+    for e in dag.get("edges", []):
+        edge_nodes.add(e.get("from", ""))
+        edge_nodes.add(e.get("to", ""))
+
+    connected_summary = "\n".join(
+        f"  {nid}: {nodes[nid].get('name', nid)}"
+        for nid in sorted(edge_nodes) if nid in nodes
+    )
+    edges_summary = "\n".join(
+        f"  {e.get('id', '?')}: {e.get('from', '?')} -> {e.get('to', '?')} ({e.get('edge_type', 'causal')})"
+        for e in dag.get("edges", [])
+    )
+
+    client = get_llm_client()
+    explanations: dict[str, str] = {}
+
+    for node in orphans:
+        nid = node.get("id", "")
+        user_msg = ORPHAN_NODE_USER.format(
+            node_id=nid,
+            node_name=node.get("name", nid),
+            node_description=node.get("description", ""),
+            node_unit=node.get("unit", ""),
+            connected_nodes=connected_summary,
+            existing_edges=edges_summary,
+        )
+
+        try:
+            result = client.complete(
+                system=ORPHAN_NODE_SYSTEM,
+                user=user_msg,
+                max_tokens=400,
+            )
+            text = result.strip()
+            if text:
+                explanations[nid] = text
+                print(f"  Orphan explained: {nid}")
+            else:
+                print(f"  Warning: empty response for {nid}, retrying...")
+                result2 = client.complete(
+                    system=ORPHAN_NODE_SYSTEM,
+                    user=user_msg + "\n\nPlease provide the Role, Blocker, and Path forward sections.",
+                    max_tokens=400,
+                )
+                text2 = result2.strip()
+                explanations[nid] = text2
+                print(f"  Orphan explained (retry): {nid}" if text2 else f"  Warning: still empty for {nid}")
+        except Exception as e:
+            logger.warning(f"Orphan explanation failed for {nid}: {e}")
+
+    return explanations
+
+
 def generate_and_cache(
     state_path: Path,
     cards_dir: Path,
@@ -256,12 +343,19 @@ def generate_and_cache(
     edge_annotations = _generate_edge_annotations(dag, edge_data)
     print(f"  {len(edge_annotations)} edge annotations generated")
 
+    print("  Generating orphan node explanations...")
+    orphan_explanations = _generate_orphan_explanations(dag)
+    print(f"  {len(orphan_explanations)} orphan explanations generated")
+
     # Save to cache
     with open(cache_dir / "issue_guidance.json", "w") as f:
         json.dump(issue_guidance, f, indent=2)
 
     with open(cache_dir / "edge_annotations.json", "w") as f:
         json.dump(edge_annotations, f, indent=2)
+
+    with open(cache_dir / "orphan_explanations.json", "w") as f:
+        json.dump(orphan_explanations, f, indent=2)
 
     metadata = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -274,6 +368,7 @@ def generate_and_cache(
     result = {
         "issue_guidance": issue_guidance,
         "edge_annotations": edge_annotations,
+        "orphan_explanations": orphan_explanations,
     }
     print(f"  Cache written to {cache_dir}")
     return result
@@ -282,7 +377,7 @@ def generate_and_cache(
 def load_cache(cache_dir: Path | None = None) -> dict[str, dict[str, str]] | None:
     """Load cached guidance from *cache_dir*.
 
-    Returns ``{"issue_guidance": {...}, "edge_annotations": {...}}``
+    Returns ``{"issue_guidance": {...}, "edge_annotations": {...}, "orphan_explanations": {...}}``
     or ``None`` if the cache is missing or incomplete.
     """
     if cache_dir is None:
@@ -290,6 +385,7 @@ def load_cache(cache_dir: Path | None = None) -> dict[str, dict[str, str]] | Non
 
     ig_path = cache_dir / "issue_guidance.json"
     ea_path = cache_dir / "edge_annotations.json"
+    oe_path = cache_dir / "orphan_explanations.json"
 
     if not ig_path.exists() or not ea_path.exists():
         return None
@@ -299,7 +395,13 @@ def load_cache(cache_dir: Path | None = None) -> dict[str, dict[str, str]] | Non
     with open(ea_path) as f:
         edge_annotations = json.load(f)
 
+    orphan_explanations: dict[str, str] = {}
+    if oe_path.exists():
+        with open(oe_path) as f:
+            orphan_explanations = json.load(f)
+
     return {
         "issue_guidance": issue_guidance,
         "edge_annotations": edge_annotations,
+        "orphan_explanations": orphan_explanations,
     }
