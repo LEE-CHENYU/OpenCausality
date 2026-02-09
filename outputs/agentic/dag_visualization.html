@@ -181,7 +181,6 @@
         .pitfall-item:last-child { border-bottom: none; }
         .pitfall-item:hover { background: #f8f8f8; }
         .pitfall-item.active {
-            border-left: 3px solid #2563eb;
             background: #f0f4ff;
         }
         .pitfall-item.resolved {
@@ -290,17 +289,14 @@
         }
         .pd-section.finding {
             background: #f8f8f8;
-            border-left: 3px solid #666;
         }
         .pd-section.finding .pd-section-label { color: #444; }
         .pd-section.concern {
             background: #fffbf0;
-            border-left: 3px solid #c8a000;
         }
         .pd-section.concern .pd-section-label { color: #7a6400; }
         .pd-section.recommendation {
             background: #f0f4ff;
-            border-left: 3px solid #2563eb;
         }
         .pd-section.recommendation .pd-section-label { color: #1e40af; }
         .pd-static-ref { font-size: 9px; color: #888; margin-bottom: 4px; }
@@ -2619,7 +2615,7 @@ const ACTIONS_BY_RULE = {
     ]
   }
 };
-const GENERATED_AT = "2026-02-09 06:08:19 UTC";
+const GENERATED_AT = "2026-02-09 06:12:10 UTC";
 const ISSUE_GUIDANCE = {
   "SIGNIFICANT_BUT_NOT_IDENTIFIED:fx_to_cpi_tradable": "**Finding**: The edge **fx_to_cpi_tradable** has a positive estimated effect **0.113** (SE **0.028**) with **p=0.0001** (N=**1200**), yet it is flagged **SIGNIFICANT_BUT_NOT_IDENTIFIED** despite a current claim level of **IDENTIFIED_CAUSAL**.\n\n**Concern**: A very small p-value (**0.0001**) only establishes statistical association, and with **no failed diagnostics listed** plus a vague **IMMUTABLE_EVIDENCE** design label, there isn\u2019t documented identification evidence to justify upgrading the claim to **IDENTIFIED_CAUSAL** (critical risk of over-claiming causality from significance alone).\n\n**Recommendation**: **Downgrade the claim level to ASSOCIATIONAL (or at most \u201cSUPPORTED/PLAUSIBLE CAUSAL\u201d if your taxonomy allows it)** unless you can explicitly document a valid identification strategy (e.g., a credible instrument, policy/natural experiment, or design-based exogeneity argument) that connects the **0.113** estimate to causal variation rather than mere significance.",
   "RATING_DIAGNOSTICS_CONFLICT:cpi_to_nbk_rate": "**Finding**: The edge `cpi_to_nbk_rate` is rated **A** even though its estimated coefficient is **-0.5353** with **p = 0.9694** (SE **13.9656**, **N = 67**) and it **fails the sign_consistency diagnostic**.\n\n**Concern**: An A-rating is not credible for causal interpretation here because the effect is statistically indistinguishable from zero (p \u2248 0.97) and the **failed sign_consistency** indicates the estimated sign is unstable across horizons/specifications in the **LOCAL_PROJECTIONS** design, undermining direction-of-effect claims.\n\n**Recommendation**: **Downgrade the rating (at least to C/D) and keep the claim level BLOCKED_ID**, treating this edge as non-informative unless you can (i) show sign stability under a pre-registered horizon window and key robustness checks and (ii) improve identification/power (N=67) so that the estimate is not dominated by noise (SE \u2248 14 relative to a coefficient near zero).",

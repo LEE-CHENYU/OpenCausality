@@ -441,7 +441,6 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
         .pitfall-item:last-child { border-bottom: none; }
         .pitfall-item:hover { background: #f8f8f8; }
         .pitfall-item.active {
-            border-left: 3px solid #2563eb;
             background: #f0f4ff;
         }
         .pitfall-item.resolved {
@@ -550,17 +549,14 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
         }
         .pd-section.finding {
             background: #f8f8f8;
-            border-left: 3px solid #666;
         }
         .pd-section.finding .pd-section-label { color: #444; }
         .pd-section.concern {
             background: #fffbf0;
-            border-left: 3px solid #c8a000;
         }
         .pd-section.concern .pd-section-label { color: #7a6400; }
         .pd-section.recommendation {
             background: #f0f4ff;
-            border-left: 3px solid #2563eb;
         }
         .pd-section.recommendation .pd-section-label { color: #1e40af; }
         .pd-static-ref { font-size: 9px; color: #888; margin-bottom: 4px; }
