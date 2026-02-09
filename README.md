@@ -951,10 +951,12 @@ the same rigor applied to source code.
    with literature-backed edge suggestions at each step.
    *(Builds on: Query REPL, PropagationEngine, PaperDAGExtractor.)*
 
-5. **Sensor & Intervention Interface.** Connect live data streams (IoT, admin
-   databases) to DAG nodes for real-time monitoring and automated intervention
-   triggering when causal thresholds are crossed.
-   *(Builds on: auto-ingest, data watch, edge shock eligibility.)*
+5. **Sensor & Intervention Interface.** Bind live data streams to DAG nodes for
+   real-time causal monitoring, then close the loop with randomized experiments
+   (A/B, RCT, stepped-wedge rollouts) and quasi-experimental designs (RDD, DiD
+   from detected natural experiments) that validate or revise causal claims.
+   *(Builds on: DataSource ABC, auto-ingest, data watch, edge shock eligibility,
+   CounterfactualBlock, TSGuard, IssueLedger.)*
 
 ### Ecosystem Integration
 

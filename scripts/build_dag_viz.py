@@ -170,6 +170,15 @@ def load_rule_info(registry_path: Path) -> dict:
 
 def build_nodes_data(dag: dict) -> list[dict]:
     """Build node data for D3."""
+    # Compute connected node IDs
+    edge_nodes: set[str] = set()
+    for e in dag.get("edges", []):
+        edge_nodes.add(e.get("from", ""))
+        edge_nodes.add(e.get("to", ""))
+    for lat in dag.get("latents", []):
+        for a in lat.get("affects", []):
+            edge_nodes.add(a)
+
     nodes = []
     for i, node in enumerate(dag.get("nodes", [])):
         nid = node.get("id", "")
@@ -181,6 +190,7 @@ def build_nodes_data(dag: dict) -> list[dict]:
             "frequency": node.get("frequency", ""),
             "observed": node.get("observed", True),
             "latent": node.get("latent", False),
+            "orphan": nid not in edge_nodes,
         })
     return nodes
 
@@ -256,119 +266,6 @@ def build_latents_data(dag: dict) -> list[dict]:
     return latents
 
 
-# ── LLM annotations ─────────────────────────────────────────────────────────
-
-
-def generate_llm_annotations(
-    dag: dict, cards_dir: Path | None,
-) -> dict[str, str]:
-    """Generate LLM annotations for each edge."""
-    try:
-        from shared.llm.client import get_llm_client
-        from shared.llm.prompts import EDGE_ANNOTATION_SYSTEM
-    except ImportError:
-        print("  Warning: LLM client not available, skipping annotations")
-        return {}
-
-    client = get_llm_client()
-    annotations: dict[str, str] = {}
-
-    for edge in dag.get("edges", []):
-        eid = edge.get("id", "")
-        from_node = edge.get("from", "")
-        to_node = edge.get("to", "")
-        edge_type = edge.get("edge_type", "causal")
-
-        card_context = ""
-        if cards_dir:
-            card = load_edge_card(cards_dir / f"{eid}.yaml")
-            if card:
-                card_context = (
-                    f"Estimate: {card.get('point')}, SE: {card.get('se')}, "
-                    f"p-value: {card.get('pvalue')}, "
-                    f"Claim level: {card.get('claim_level')}, "
-                    f"Rating: {card.get('rating')}"
-                )
-
-        user_msg = (
-            f"Edge: {from_node} -> {to_node} (id: {eid})\n"
-            f"Type: {edge_type}\n"
-            f"Notes: {edge.get('notes', '')}\n"
-            f"{card_context}"
-        )
-
-        try:
-            annotation = client.complete(
-                system=EDGE_ANNOTATION_SYSTEM,
-                user=user_msg,
-                max_tokens=200,
-            )
-            annotations[eid] = annotation.strip()
-            print(f"  Annotated: {eid}")
-        except Exception as e:
-            print(f"  Warning: LLM annotation failed for {eid}: {e}")
-
-    return annotations
-
-
-def generate_issue_guidance(
-    issues: dict[str, list[dict]],
-    edges: list[dict],
-) -> dict[str, str]:
-    """Generate LLM-powered per-issue decision guidance.
-
-    Returns dict keyed by issue_key -> guidance text (HTML-escaped).
-    """
-    try:
-        from shared.llm.client import get_llm_client
-        from shared.llm.prompts import DECISION_GUIDANCE_SYSTEM, DECISION_GUIDANCE_USER
-    except ImportError:
-        print("  Warning: LLM client not available, skipping issue guidance")
-        return {}
-
-    client = get_llm_client()
-    guidance: dict[str, str] = {}
-
-    # Build edge lookup
-    edge_lookup: dict[str, dict] = {e["id"]: e for e in edges}
-
-    for edge_id, edge_issues in issues.items():
-        edge = edge_lookup.get(edge_id, {})
-        failed_diags = [
-            d["name"] for d in edge.get("diagnostics", []) if not d.get("passed", True)
-        ]
-
-        for issue in edge_issues:
-            issue_key = issue.get("issue_key", "")
-            user_msg = DECISION_GUIDANCE_USER.format(
-                rule_id=issue.get("rule_id", ""),
-                edge_id=edge_id,
-                message=issue.get("message", ""),
-                severity=issue.get("severity", ""),
-                point=edge.get("point", "N/A"),
-                se=edge.get("se", "N/A"),
-                pvalue=edge.get("pvalue", "N/A"),
-                n_obs=edge.get("n_obs", "N/A"),
-                design=edge.get("design", "N/A"),
-                claim_level=edge.get("claim_level", "N/A"),
-                rating=edge.get("rating", "N/A"),
-                failed_diagnostics=", ".join(failed_diags) if failed_diags else "none",
-            )
-
-            try:
-                result = client.complete(
-                    system=DECISION_GUIDANCE_SYSTEM,
-                    user=user_msg,
-                    max_tokens=300,
-                )
-                guidance[issue_key] = result.strip()
-                print(f"    {issue_key}")
-            except Exception as e:
-                print(f"  Warning: LLM guidance failed for {issue_key}: {e}")
-
-    return guidance
-
-
 # ── HTML template ────────────────────────────────────────────────────────────
 
 HTML_TEMPLATE = r"""<!DOCTYPE html>
@@ -395,6 +292,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
         .node circle:hover { stroke-width: 2.5px; }
         .node circle.latent { stroke-dasharray: 4, 3; }
         .node circle.id-risk { stroke: #c00; stroke-width: 2.5px; }
+        .node circle.orphan { stroke: #999; stroke-dasharray: 2, 2; fill: #f8f8f8; }
         .node text {
             font-size: 9px;
             font-weight: 400;
@@ -443,6 +341,25 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
         .tooltip-issue { font-size: 10px; margin: 2px 0; }
         .tooltip-issue.critical { color: #c00; font-weight: 600; }
         .tooltip-issue.high { color: #a16207; }
+        .tooltip-orphan { margin-top: 8px; padding-top: 8px; border-top: 1px solid #eee; }
+        .tooltip-orphan-tag {
+            display: inline-block; font-size: 9px; font-weight: 600;
+            padding: 1px 5px; background: #f8f8f8; border: 1px solid #999;
+            color: #666; margin-bottom: 6px;
+        }
+        .tooltip-orphan-section {
+            padding: 4px 6px; margin-bottom: 3px; font-size: 10px; line-height: 1.5;
+        }
+        .tooltip-orphan-section.role { background: #f8f8f8; }
+        .tooltip-orphan-section.blocker { background: #fff5f5; }
+        .tooltip-orphan-section.path-forward { background: #f0f4ff; }
+        .tooltip-orphan-label {
+            font-weight: 600; font-size: 9px; text-transform: uppercase;
+            letter-spacing: 0.3px; margin-bottom: 1px;
+        }
+        .tooltip-orphan-section.role .tooltip-orphan-label { color: #444; }
+        .tooltip-orphan-section.blocker .tooltip-orphan-label { color: #c00; }
+        .tooltip-orphan-section.path-forward .tooltip-orphan-label { color: #1e40af; }
 
         /* Proposal banner */
         .proposal-banner {
@@ -554,7 +471,6 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
         .pitfall-item:last-child { border-bottom: none; }
         .pitfall-item:hover { background: #f8f8f8; }
         .pitfall-item.active {
-            border-left: 3px solid #2563eb;
             background: #f0f4ff;
         }
         .pitfall-item.resolved {
@@ -637,9 +553,6 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
             outline: none;
         }
         .pitfall-decision .pd-llm-guidance {
-            background: #f0f4ff;
-            border-left: 3px solid #2563eb;
-            padding: 6px 10px;
             margin-bottom: 6px;
             font-size: 10px;
             line-height: 1.6;
@@ -648,8 +561,36 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
         .pitfall-decision .pd-llm-guidance-title {
             font-weight: 600;
             color: #1e40af;
-            margin-bottom: 2px;
+            margin-bottom: 4px;
+            font-size: 10px;
         }
+        .pd-section {
+            padding: 5px 8px;
+            margin-bottom: 4px;
+            font-size: 10px;
+            line-height: 1.6;
+        }
+        .pd-section-label {
+            font-weight: 600;
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            margin-bottom: 1px;
+        }
+        .pd-section.finding {
+            background: #f8f8f8;
+        }
+        .pd-section.finding .pd-section-label { color: #444; }
+        .pd-section.concern {
+            background: #fffbf0;
+        }
+        .pd-section.concern .pd-section-label { color: #7a6400; }
+        .pd-section.recommendation {
+            background: #f0f4ff;
+        }
+        .pd-section.recommendation .pd-section-label { color: #1e40af; }
+        .pd-static-ref { font-size: 9px; color: #888; margin-bottom: 4px; }
+        .pd-static-ref summary { cursor: pointer; font-weight: 500; }
         .pitfall-decision .pd-buttons {
             display: flex;
             gap: 6px;
@@ -698,6 +639,29 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
             cursor: pointer;
         }
         .pitfall-footer .btn-export:hover { background: #333; }
+
+        /* Clean edge entries (no issues) */
+        .pitfall-divider {
+            padding: 8px 0 4px;
+            font-size: 10px;
+            font-weight: 600;
+            color: #999;
+            border-top: 1px solid #ddd;
+            margin-top: 4px;
+        }
+        .pitfall-item.clean-edge .pitfall-rating {
+            font-size: 9px;
+            font-weight: 600;
+            padding: 1px 5px;
+            border: 1px solid #059669;
+            color: #059669;
+            display: inline-block;
+        }
+        .pitfall-item.clean-edge .pitfall-stats {
+            font-size: 9px;
+            color: #888;
+            margin-bottom: 4px;
+        }
 
         /* Edge highlight animation */
         @keyframes edgeFlash {
@@ -789,6 +753,7 @@ const RULE_DESCRIPTIONS = __RULES_JSON__;
 const ACTIONS_BY_RULE = __ACTIONS_JSON__;
 const GENERATED_AT = "__GENERATED_AT__";
 const ISSUE_GUIDANCE = __ISSUE_GUIDANCE_JSON__;
+const ORPHAN_EXPLANATIONS = __ORPHAN_EXPLANATIONS_JSON__;
 
 // ── Helpers ──────────────────────────────────────────────────────────────
 function escHtml(s) {
@@ -817,6 +782,42 @@ function renderMarkdown(s) {
     h = h.replace(/\n/g, '<br>');
     h = '<p style="margin:4px 0;">' + h + '</p>';
     return h;
+}
+
+function renderGuidanceSections(s) {
+    if (!s) return '';
+    // Split into Finding / Concern / Recommendation sections
+    var sections = [
+        {key: 'finding', re: /\*\*Finding\*\*:\s*/i},
+        {key: 'concern', re: /\*\*Concern\*\*:\s*/i},
+        {key: 'recommendation', re: /\*\*Recommendation\*\*:\s*/i}
+    ];
+    // Find section boundaries
+    var parts = [];
+    var text = s;
+    var indices = [];
+    sections.forEach(function(sec) {
+        var m = text.match(sec.re);
+        if (m) indices.push({key: sec.key, idx: text.indexOf(m[0]), len: m[0].length, label: sec.key.charAt(0).toUpperCase() + sec.key.slice(1)});
+    });
+    indices.sort(function(a, b) { return a.idx - b.idx; });
+
+    if (indices.length === 0) {
+        // No structured sections found, fall back to plain markdown
+        return renderMarkdown(s);
+    }
+
+    var html = '';
+    for (var i = 0; i < indices.length; i++) {
+        var start = indices[i].idx + indices[i].len;
+        var end = (i + 1 < indices.length) ? indices[i + 1].idx : text.length;
+        var body = text.substring(start, end).trim();
+        html += '<div class="pd-section ' + indices[i].key + '">' +
+            '<div class="pd-section-label">' + escHtml(indices[i].label) + '</div>' +
+            renderMarkdown(body) +
+            '</div>';
+    }
+    return html;
 }
 
 function formatBeta(beta) {
@@ -968,7 +969,21 @@ if (allIssues.length === 0) {
         var llmText = ISSUE_GUIDANCE[issue.issue_key] || '';
         var llmHtml = llmText ?
             '<div class="pd-llm-guidance"><div class="pd-llm-guidance-title">AI Analysis</div>' +
-            renderMarkdown(llmText) + '</div>' : '';
+            renderGuidanceSections(llmText) + '</div>' : '';
+
+        // Build static text (Why it matters + Decision guidance)
+        var staticHtml = '';
+        if (ruleInfo.explanation || ruleInfo.guidance) {
+            var staticContent =
+                (ruleInfo.explanation ? '<div class="pd-label">Why it matters:</div><div class="pd-text">' + ruleInfo.explanation + '</div>' : '') +
+                (ruleInfo.guidance ? '<div class="pd-label">Decision guidance:</div><div class="pd-guidance">' + ruleInfo.guidance + '</div>' : '');
+            if (llmText) {
+                // Collapse when AI Analysis is present
+                staticHtml = '<details class="pd-static-ref"><summary>Reference</summary>' + staticContent + '</details>';
+            } else {
+                staticHtml = staticContent;
+            }
+        }
 
         div.innerHTML =
             '<div class="pitfall-item-header" data-header="1">' +
@@ -979,12 +994,7 @@ if (allIssues.length === 0) {
             '<div class="pitfall-msg">' + escHtml(issue.message) + '</div>' +
             '<div class="pitfall-decision" data-decision-key="' + escHtml(issue.issue_key) + '">' +
                 llmHtml +
-                (ruleInfo.explanation ?
-                    '<div class="pd-label">Why it matters:</div>' +
-                    '<div class="pd-text">' + (ruleInfo.explanation || '') + '</div>' : '') +
-                (ruleInfo.guidance ?
-                    '<div class="pd-label">Decision guidance:</div>' +
-                    '<div class="pd-guidance">' + (ruleInfo.guidance || '') + '</div>' : '') +
+                staticHtml +
                 '<div class="pd-label">Action:</div>' +
                 '<select data-key="' + escHtml(issue.issue_key) + '">' + optHtml + '</select>' +
                 '<div class="pd-tooltip-area" data-tip-for="' + escHtml(issue.issue_key) + '"></div>' +
@@ -993,6 +1003,51 @@ if (allIssues.length === 0) {
                     '<button class="pd-btn pd-btn-confirm" data-confirm="' + escHtml(issue.issue_key) + '">Confirm</button>' +
                     '<button class="pd-btn" data-defer="' + escHtml(issue.issue_key) + '">Defer</button>' +
                 '</div>' +
+            '</div>';
+
+        pitfallList.appendChild(div);
+    });
+}
+
+// ── Add clean-edge entries (edges without issues) ────────────────────────
+var edgesWithIssues = {};
+allIssues.forEach(function(i) { edgesWithIssues[i.edge_id] = true; });
+
+var cleanEdges = EDGES.filter(function(e) { return !edgesWithIssues[e.id]; });
+if (cleanEdges.length > 0) {
+    var divider = document.createElement('div');
+    divider.className = 'pitfall-divider';
+    divider.textContent = 'Assessed Edges (' + cleanEdges.length + ')';
+    pitfallList.appendChild(divider);
+
+    cleanEdges.forEach(function(edge) {
+        var div = document.createElement('div');
+        div.className = 'pitfall-item clean-edge';
+        div.setAttribute('data-edge-id', edge.id);
+
+        var ratingHtml = edge.rating ? '<span class="pitfall-rating">' + escHtml(edge.rating) + '</span>' : '';
+        var statsHtml = '';
+        if (edge.point !== null && edge.point !== undefined) {
+            statsHtml = '<div class="pitfall-stats">' +
+                '\u03B2=' + formatBeta(edge.point) +
+                (edge.pvalue !== null && edge.pvalue !== undefined ? '  p=' + fmtP(edge.pvalue) : '') +
+                (edge.design ? '  ' + escHtml(edge.design) : '') +
+                '</div>';
+        }
+
+        var annText = edge.llm_annotation || '';
+        var annHtml = annText ?
+            '<div class="pd-llm-guidance"><div class="pd-llm-guidance-title">AI Analysis</div>' +
+            renderMarkdown(annText) + '</div>' : '';
+
+        div.innerHTML =
+            '<div class="pitfall-item-header" data-header="1">' +
+                '<span class="pitfall-edge">' + escHtml(edge.id) + '</span>' +
+                ratingHtml +
+            '</div>' +
+            statsHtml +
+            '<div class="pitfall-decision" data-decision-key="edge:' + escHtml(edge.id) + '">' +
+                annHtml +
             '</div>';
 
         pitfallList.appendChild(div);
@@ -1279,6 +1334,7 @@ node.append('circle')
     .attr('class', function(d) {
         var cls = '';
         if (d.latent) cls += ' latent';
+        if (d.orphan) cls += ' orphan';
         if (nodeIdRisks[d.id]) cls += ' id-risk';
         return cls;
     });
@@ -1320,6 +1376,37 @@ function showEdgeTooltip(e, d) {
     tooltip.html(html).style('left', (e.pageX + 15) + 'px').style('top', (e.pageY - 15) + 'px').classed('visible', true);
 }
 
+function renderOrphanSections(s) {
+    if (!s) return '';
+    // Match **Role**, **Blocker**, **Blocker (TYPE)**, **Path forward**
+    var sections = [
+        {key: 'role', re: /\*\*Role\*\*:\s*/i},
+        {key: 'blocker', re: /\*\*Blocker(?:\s*\([^)]*\))?\*\*:\s*/i},
+        {key: 'path-forward', re: /\*\*Path\s+forward\*\*:\s*/i}
+    ];
+    var indices = [];
+    sections.forEach(function(sec) {
+        var m = s.match(sec.re);
+        if (m) {
+            // Extract label from matched text (e.g. "Blocker (DATA)")
+            var raw = m[0].replace(/\*\*/g, '').replace(/:\s*$/, '').trim();
+            indices.push({key: sec.key, idx: s.indexOf(m[0]), len: m[0].length, label: raw});
+        }
+    });
+    indices.sort(function(a, b) { return a.idx - b.idx; });
+    if (indices.length === 0) return '<div style="font-size:10px;color:#555">' + escHtml(s) + '</div>';
+    var html = '';
+    for (var i = 0; i < indices.length; i++) {
+        var start = indices[i].idx + indices[i].len;
+        var end = (i + 1 < indices.length) ? indices[i + 1].idx : s.length;
+        var body = s.substring(start, end).trim();
+        html += '<div class="tooltip-orphan-section ' + indices[i].key + '">' +
+            '<div class="tooltip-orphan-label">' + escHtml(indices[i].label) + '</div>' +
+            '<div style="font-size:10px">' + escHtml(body) + '</div></div>';
+    }
+    return html;
+}
+
 function showNodeTooltip(e, d) {
     var html = '<h3>' + d.label + '</h3>';
     html += '<div class="tooltip-row"><span class="tooltip-label">ID</span><span class="tooltip-value">' + d.id + '</span></div>';
@@ -1327,6 +1414,17 @@ function showNodeTooltip(e, d) {
     if (d.unit) html += '<div class="tooltip-row"><span class="tooltip-label">Unit</span><span class="tooltip-value">' + d.unit + '</span></div>';
     if (d.frequency) html += '<div class="tooltip-row"><span class="tooltip-label">Frequency</span><span class="tooltip-value">' + d.frequency + '</span></div>';
     if (d.latent) html += '<div class="tooltip-row"><span class="tooltip-label">Observed</span><span class="tooltip-value null">Latent (unobserved)</span></div>';
+    if (d.orphan) {
+        var orphanText = ORPHAN_EXPLANATIONS[d.id] || '';
+        html += '<div class="tooltip-orphan">';
+        html += '<span class="tooltip-orphan-tag">UNWIRED</span>';
+        if (orphanText) {
+            html += renderOrphanSections(orphanText);
+        } else {
+            html += '<div style="font-size:10px;color:#999;font-style:italic">No edges connect this node. Run with --llm-annotate for analysis.</div>';
+        }
+        html += '</div>';
+    }
     tooltip.html(html).style('left', (e.pageX + 15) + 'px').style('top', (e.pageY - 15) + 'px').classed('visible', true);
 }
 
@@ -1433,12 +1531,23 @@ def build(
     rules = load_rule_info(reg_path)
     print(f"  {len(actions)} action rules, {len(rules)} rule descriptions loaded")
 
-    # LLM annotations
-    annotations = None
-    if llm_annotate:
-        print("Generating LLM annotations...")
-        annotations = generate_llm_annotations(dag, cards_dir)
-        print(f"  {len(annotations)} annotations generated")
+    # LLM annotations via shared cache
+    from shared.llm.guidance_cache import load_cache, generate_and_cache
+
+    cache_dir = PROJECT_ROOT / "outputs" / "agentic" / "llm_cache"
+    cache = load_cache(cache_dir)
+    if cache is None and llm_annotate:
+        print("Generating LLM annotations (shared cache)...")
+        cache = generate_and_cache(
+            state_path or DEFAULT_STATE, cards_dir or DEFAULT_CARDS_DIR,
+            dag_path, cache_dir,
+        )
+    elif cache is not None:
+        print("  Loaded LLM annotations from cache")
+
+    annotations = cache["edge_annotations"] if cache else None
+    issue_guidance: dict[str, str] = cache["issue_guidance"] if cache else {}
+    orphan_explanations: dict[str, str] = cache.get("orphan_explanations", {}) if cache else {}
 
     # Build data arrays
     nodes = build_nodes_data(dag)
@@ -1448,13 +1557,6 @@ def build(
     print(f"  {len(nodes)} nodes, {len(edges)} edges, {len(latents)} latents")
     issue_count = sum(len(issues.get(e["id"], [])) for e in edges)
     print(f"  {issue_count} open issues across edges")
-
-    # Per-issue LLM decision guidance
-    issue_guidance: dict[str, str] = {}
-    if llm_annotate:
-        print("  Generating per-issue decision guidance...")
-        issue_guidance = generate_issue_guidance(issues, edges)
-        print(f"  {len(issue_guidance)} issue guidance entries generated")
 
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
 
@@ -1471,6 +1573,7 @@ def build(
     html = html.replace("__ACTIONS_JSON__", json.dumps(actions, indent=2))
     html = html.replace("__GENERATED_AT__", generated_at)
     html = html.replace("__ISSUE_GUIDANCE_JSON__", json.dumps(issue_guidance, indent=2))
+    html = html.replace("__ORPHAN_EXPLANATIONS_JSON__", json.dumps(orphan_explanations, indent=2))
 
     # Write output
     if output_path is None:
