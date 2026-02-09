@@ -839,6 +839,29 @@ function escHtml(s) {
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+function renderMarkdown(s) {
+    if (!s) return '';
+    var h = escHtml(s);
+    // Bold: **text** or __text__
+    h = h.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    h = h.replace(/__(.+?)__/g, '<strong>$1</strong>');
+    // Italic: *text* or _text_ (but not inside already-converted strong)
+    h = h.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, '<em>$1</em>');
+    h = h.replace(/(?<!_)_(?!_)(.+?)(?<!_)_(?!_)/g, '<em>$1</em>');
+    // Inline code: `text`
+    h = h.replace(/`([^`]+)`/g, '<code style="background:#e8e8e8;padding:1px 3px;font-size:9px;">$1</code>');
+    // Bullet lists: lines starting with - or *
+    h = h.replace(/^[\-\*]\s+(.+)$/gm, '<li>$1</li>');
+    h = h.replace(/((?:<li>.*<\/li>\s*)+)/g, '<ul style="margin:4px 0 4px 16px;padding:0;">$1</ul>');
+    // Numbered lists: lines starting with 1. 2. etc
+    h = h.replace(/^\d+\.\s+(.+)$/gm, '<li>$1</li>');
+    // Line breaks: double newline -> paragraph break, single newline -> <br>
+    h = h.replace(/\n\n+/g, '</p><p style="margin:4px 0;">');
+    h = h.replace(/\n/g, '<br>');
+    h = '<p style="margin:4px 0;">' + h + '</p>';
+    return h;
+}
+
 function signLabel(val) {
     if (val === null || val === undefined) return 'unknown';
     return val > 0 ? 'positive' : val < 0 ? 'negative' : 'zero';
@@ -1046,14 +1069,14 @@ function renderLLMGuidance(issueKey) {
     if (!text) return '';
     return '<div class="llm-guidance">' +
         '<div class="llm-guidance-title">AI Analysis</div>' +
-        '<div class="llm-guidance-text">' + escHtml(text) + '</div>' +
+        '<div class="llm-guidance-text">' + renderMarkdown(text) + '</div>' +
         '</div>';
 }
 
 function renderLLMEdgeAnnotation(edgeId) {
     var text = LLM_EDGE_ANNOTATIONS[edgeId];
     if (!text) return '';
-    return '<div class="llm-edge-annotation">' + escHtml(text) + '</div>';
+    return '<div class="llm-edge-annotation">' + renderMarkdown(text) + '</div>';
 }
 
 // ── State ─────────────────────────────────────────────────────────────
@@ -1436,114 +1459,6 @@ render();
 # ── Build ────────────────────────────────────────────────────────────────────
 
 
-def generate_llm_decision_guidance(
-    open_issues: dict, edges: dict,
-) -> dict[str, str]:
-    """Generate LLM-powered decision guidance for each open issue.
-
-    Returns dict keyed by issue_key (e.g. "RULE_ID:edge_id") -> guidance text.
-    """
-    try:
-        from shared.llm.client import get_llm_client
-        from shared.llm.prompts import DECISION_GUIDANCE_SYSTEM, DECISION_GUIDANCE_USER
-    except ImportError:
-        print("  Warning: LLM client not available, skipping guidance generation")
-        return {}
-
-    client = get_llm_client()
-    guidance: dict[str, str] = {}
-
-    for key, issue in open_issues.items():
-        edge_id = extract_edge_id(key)
-        edge = edges.get(edge_id, {})
-
-        failed_diags = [
-            d["name"] for d in edge.get("diagnostics", []) if not d.get("passed", True)
-        ]
-
-        user_msg = DECISION_GUIDANCE_USER.format(
-            rule_id=issue.get("rule_id", ""),
-            edge_id=edge_id,
-            message=issue.get("message", ""),
-            severity=issue.get("severity", ""),
-            point=edge.get("point", "N/A"),
-            se=edge.get("se", "N/A"),
-            pvalue=edge.get("pvalue", "N/A"),
-            n_obs=edge.get("n_obs", "N/A"),
-            design=edge.get("design", "N/A"),
-            claim_level=edge.get("claim_level", "N/A"),
-            rating=edge.get("rating", "N/A"),
-            failed_diagnostics=", ".join(failed_diags) if failed_diags else "none",
-        )
-
-        try:
-            result = client.complete(
-                system=DECISION_GUIDANCE_SYSTEM,
-                user=user_msg,
-                max_tokens=300,
-            )
-            guidance[key] = result.strip()
-            print(f"  LLM guidance: {key}")
-        except Exception as e:
-            print(f"  Warning: LLM guidance failed for {key}: {e}")
-
-    return guidance
-
-
-def generate_llm_edge_annotations(
-    edge_ids: set[str],
-    edges: dict,
-    dag_edges: dict,
-) -> dict[str, str]:
-    """Generate LLM-powered substantive annotations for each edge.
-
-    Returns dict keyed by edge_id -> annotation text.
-    """
-    try:
-        from shared.llm.client import get_llm_client
-        from shared.llm.prompts import EDGE_ANNOTATION_SYSTEM
-    except ImportError:
-        print("  Warning: LLM client not available, skipping edge annotations")
-        return {}
-
-    client = get_llm_client()
-    annotations: dict[str, str] = {}
-
-    for edge_id in sorted(edge_ids):
-        edge = edges.get(edge_id, {})
-        dag_edge = dag_edges.get(edge_id, {})
-
-        card_context = ""
-        if edge.get("point") is not None:
-            card_context = (
-                f"Estimate: {edge.get('point')}, SE: {edge.get('se')}, "
-                f"p-value: {edge.get('pvalue')}, "
-                f"Claim level: {edge.get('claim_level')}, "
-                f"Rating: {edge.get('rating')}"
-            )
-
-        user_msg = (
-            f"Edge: {dag_edge.get('from', '?')} -> {dag_edge.get('to', '?')} (id: {edge_id})\n"
-            f"Type: {dag_edge.get('edge_type', 'causal')}\n"
-            f"Interpretation: {dag_edge.get('interpretation', '')}\n"
-            f"Notes: {dag_edge.get('notes', '')}\n"
-            f"{card_context}"
-        )
-
-        try:
-            result = client.complete(
-                system=EDGE_ANNOTATION_SYSTEM,
-                user=user_msg,
-                max_tokens=200,
-            )
-            annotations[edge_id] = result.strip()
-            print(f"  Edge annotation: {edge_id}")
-        except Exception as e:
-            print(f"  Warning: Edge annotation failed for {edge_id}: {e}")
-
-    return annotations
-
-
 def build(
     state_path: Path,
     cards_dir: Path,
@@ -1602,17 +1517,19 @@ def build(
     dag_nodes = load_dag_nodes(dag_path)
     print(f"  {len(dag_edges)} DAG edges, {len(dag_nodes)} DAG nodes loaded")
 
-    # 6b. Optional LLM annotations
-    llm_guidance: dict[str, str] = {}
-    llm_edge_annotations: dict[str, str] = {}
-    if llm_annotate:
-        print("  Generating LLM decision guidance (per-issue)...")
-        llm_guidance = generate_llm_decision_guidance(open_issues, edges)
-        print(f"  {len(llm_guidance)} LLM guidance entries generated")
+    # 6b. LLM annotations via shared cache
+    from shared.llm.guidance_cache import load_cache, generate_and_cache
 
-        print("  Generating LLM edge annotations...")
-        llm_edge_annotations = generate_llm_edge_annotations(edge_ids, edges, dag_edges)
-        print(f"  {len(llm_edge_annotations)} LLM edge annotations generated")
+    cache_dir = PROJECT_ROOT / "outputs" / "agentic" / "llm_cache"
+    cache = load_cache(cache_dir)
+    if cache is None and llm_annotate:
+        print("  Generating LLM annotations (shared cache)...")
+        cache = generate_and_cache(state_path, cards_dir, dag_path, cache_dir)
+    elif cache is not None:
+        print("  Loaded LLM annotations from cache")
+
+    llm_guidance: dict[str, str] = cache["issue_guidance"] if cache else {}
+    llm_edge_annotations: dict[str, str] = cache["edge_annotations"] if cache else {}
 
     # 7. Build HTML via placeholder replacement
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")

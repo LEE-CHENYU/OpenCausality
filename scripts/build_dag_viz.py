@@ -256,119 +256,6 @@ def build_latents_data(dag: dict) -> list[dict]:
     return latents
 
 
-# ── LLM annotations ─────────────────────────────────────────────────────────
-
-
-def generate_llm_annotations(
-    dag: dict, cards_dir: Path | None,
-) -> dict[str, str]:
-    """Generate LLM annotations for each edge."""
-    try:
-        from shared.llm.client import get_llm_client
-        from shared.llm.prompts import EDGE_ANNOTATION_SYSTEM
-    except ImportError:
-        print("  Warning: LLM client not available, skipping annotations")
-        return {}
-
-    client = get_llm_client()
-    annotations: dict[str, str] = {}
-
-    for edge in dag.get("edges", []):
-        eid = edge.get("id", "")
-        from_node = edge.get("from", "")
-        to_node = edge.get("to", "")
-        edge_type = edge.get("edge_type", "causal")
-
-        card_context = ""
-        if cards_dir:
-            card = load_edge_card(cards_dir / f"{eid}.yaml")
-            if card:
-                card_context = (
-                    f"Estimate: {card.get('point')}, SE: {card.get('se')}, "
-                    f"p-value: {card.get('pvalue')}, "
-                    f"Claim level: {card.get('claim_level')}, "
-                    f"Rating: {card.get('rating')}"
-                )
-
-        user_msg = (
-            f"Edge: {from_node} -> {to_node} (id: {eid})\n"
-            f"Type: {edge_type}\n"
-            f"Notes: {edge.get('notes', '')}\n"
-            f"{card_context}"
-        )
-
-        try:
-            annotation = client.complete(
-                system=EDGE_ANNOTATION_SYSTEM,
-                user=user_msg,
-                max_tokens=200,
-            )
-            annotations[eid] = annotation.strip()
-            print(f"  Annotated: {eid}")
-        except Exception as e:
-            print(f"  Warning: LLM annotation failed for {eid}: {e}")
-
-    return annotations
-
-
-def generate_issue_guidance(
-    issues: dict[str, list[dict]],
-    edges: list[dict],
-) -> dict[str, str]:
-    """Generate LLM-powered per-issue decision guidance.
-
-    Returns dict keyed by issue_key -> guidance text (HTML-escaped).
-    """
-    try:
-        from shared.llm.client import get_llm_client
-        from shared.llm.prompts import DECISION_GUIDANCE_SYSTEM, DECISION_GUIDANCE_USER
-    except ImportError:
-        print("  Warning: LLM client not available, skipping issue guidance")
-        return {}
-
-    client = get_llm_client()
-    guidance: dict[str, str] = {}
-
-    # Build edge lookup
-    edge_lookup: dict[str, dict] = {e["id"]: e for e in edges}
-
-    for edge_id, edge_issues in issues.items():
-        edge = edge_lookup.get(edge_id, {})
-        failed_diags = [
-            d["name"] for d in edge.get("diagnostics", []) if not d.get("passed", True)
-        ]
-
-        for issue in edge_issues:
-            issue_key = issue.get("issue_key", "")
-            user_msg = DECISION_GUIDANCE_USER.format(
-                rule_id=issue.get("rule_id", ""),
-                edge_id=edge_id,
-                message=issue.get("message", ""),
-                severity=issue.get("severity", ""),
-                point=edge.get("point", "N/A"),
-                se=edge.get("se", "N/A"),
-                pvalue=edge.get("pvalue", "N/A"),
-                n_obs=edge.get("n_obs", "N/A"),
-                design=edge.get("design", "N/A"),
-                claim_level=edge.get("claim_level", "N/A"),
-                rating=edge.get("rating", "N/A"),
-                failed_diagnostics=", ".join(failed_diags) if failed_diags else "none",
-            )
-
-            try:
-                result = client.complete(
-                    system=DECISION_GUIDANCE_SYSTEM,
-                    user=user_msg,
-                    max_tokens=300,
-                )
-                guidance[issue_key] = result.strip()
-                print(f"    {issue_key}")
-            except Exception as e:
-                print(f"  Warning: LLM guidance failed for {issue_key}: {e}")
-
-    return guidance
-
-
 # ── HTML template ────────────────────────────────────────────────────────────
 
 HTML_TEMPLATE = r"""<!DOCTYPE html>
@@ -650,6 +537,8 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
             color: #1e40af;
             margin-bottom: 2px;
         }
+        .pd-static-ref { font-size: 9px; color: #888; margin-bottom: 4px; }
+        .pd-static-ref summary { cursor: pointer; font-weight: 500; }
         .pitfall-decision .pd-buttons {
             display: flex;
             gap: 6px;
@@ -698,6 +587,29 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
             cursor: pointer;
         }
         .pitfall-footer .btn-export:hover { background: #333; }
+
+        /* Clean edge entries (no issues) */
+        .pitfall-divider {
+            padding: 8px 0 4px;
+            font-size: 10px;
+            font-weight: 600;
+            color: #999;
+            border-top: 1px solid #ddd;
+            margin-top: 4px;
+        }
+        .pitfall-item.clean-edge .pitfall-rating {
+            font-size: 9px;
+            font-weight: 600;
+            padding: 1px 5px;
+            border: 1px solid #059669;
+            color: #059669;
+            display: inline-block;
+        }
+        .pitfall-item.clean-edge .pitfall-stats {
+            font-size: 9px;
+            color: #888;
+            margin-bottom: 4px;
+        }
 
         /* Edge highlight animation */
         @keyframes edgeFlash {
@@ -970,6 +882,20 @@ if (allIssues.length === 0) {
             '<div class="pd-llm-guidance"><div class="pd-llm-guidance-title">AI Analysis</div>' +
             renderMarkdown(llmText) + '</div>' : '';
 
+        // Build static text (Why it matters + Decision guidance)
+        var staticHtml = '';
+        if (ruleInfo.explanation || ruleInfo.guidance) {
+            var staticContent =
+                (ruleInfo.explanation ? '<div class="pd-label">Why it matters:</div><div class="pd-text">' + ruleInfo.explanation + '</div>' : '') +
+                (ruleInfo.guidance ? '<div class="pd-label">Decision guidance:</div><div class="pd-guidance">' + ruleInfo.guidance + '</div>' : '');
+            if (llmText) {
+                // Collapse when AI Analysis is present
+                staticHtml = '<details class="pd-static-ref"><summary>Reference</summary>' + staticContent + '</details>';
+            } else {
+                staticHtml = staticContent;
+            }
+        }
+
         div.innerHTML =
             '<div class="pitfall-item-header" data-header="1">' +
                 '<span class="pitfall-edge">' + escHtml(issue.edge_id) + '</span>' +
@@ -979,12 +905,7 @@ if (allIssues.length === 0) {
             '<div class="pitfall-msg">' + escHtml(issue.message) + '</div>' +
             '<div class="pitfall-decision" data-decision-key="' + escHtml(issue.issue_key) + '">' +
                 llmHtml +
-                (ruleInfo.explanation ?
-                    '<div class="pd-label">Why it matters:</div>' +
-                    '<div class="pd-text">' + (ruleInfo.explanation || '') + '</div>' : '') +
-                (ruleInfo.guidance ?
-                    '<div class="pd-label">Decision guidance:</div>' +
-                    '<div class="pd-guidance">' + (ruleInfo.guidance || '') + '</div>' : '') +
+                staticHtml +
                 '<div class="pd-label">Action:</div>' +
                 '<select data-key="' + escHtml(issue.issue_key) + '">' + optHtml + '</select>' +
                 '<div class="pd-tooltip-area" data-tip-for="' + escHtml(issue.issue_key) + '"></div>' +
@@ -993,6 +914,51 @@ if (allIssues.length === 0) {
                     '<button class="pd-btn pd-btn-confirm" data-confirm="' + escHtml(issue.issue_key) + '">Confirm</button>' +
                     '<button class="pd-btn" data-defer="' + escHtml(issue.issue_key) + '">Defer</button>' +
                 '</div>' +
+            '</div>';
+
+        pitfallList.appendChild(div);
+    });
+}
+
+// ── Add clean-edge entries (edges without issues) ────────────────────────
+var edgesWithIssues = {};
+allIssues.forEach(function(i) { edgesWithIssues[i.edge_id] = true; });
+
+var cleanEdges = EDGES.filter(function(e) { return !edgesWithIssues[e.id]; });
+if (cleanEdges.length > 0) {
+    var divider = document.createElement('div');
+    divider.className = 'pitfall-divider';
+    divider.textContent = 'Assessed Edges (' + cleanEdges.length + ')';
+    pitfallList.appendChild(divider);
+
+    cleanEdges.forEach(function(edge) {
+        var div = document.createElement('div');
+        div.className = 'pitfall-item clean-edge';
+        div.setAttribute('data-edge-id', edge.id);
+
+        var ratingHtml = edge.rating ? '<span class="pitfall-rating">' + escHtml(edge.rating) + '</span>' : '';
+        var statsHtml = '';
+        if (edge.point !== null && edge.point !== undefined) {
+            statsHtml = '<div class="pitfall-stats">' +
+                '\u03B2=' + formatBeta(edge.point) +
+                (edge.pvalue !== null && edge.pvalue !== undefined ? '  p=' + fmtP(edge.pvalue) : '') +
+                (edge.design ? '  ' + escHtml(edge.design) : '') +
+                '</div>';
+        }
+
+        var annText = edge.llm_annotation || '';
+        var annHtml = annText ?
+            '<div class="pd-llm-guidance"><div class="pd-llm-guidance-title">AI Analysis</div>' +
+            renderMarkdown(annText) + '</div>' : '';
+
+        div.innerHTML =
+            '<div class="pitfall-item-header" data-header="1">' +
+                '<span class="pitfall-edge">' + escHtml(edge.id) + '</span>' +
+                ratingHtml +
+            '</div>' +
+            statsHtml +
+            '<div class="pitfall-decision" data-decision-key="edge:' + escHtml(edge.id) + '">' +
+                annHtml +
             '</div>';
 
         pitfallList.appendChild(div);
@@ -1433,12 +1399,22 @@ def build(
     rules = load_rule_info(reg_path)
     print(f"  {len(actions)} action rules, {len(rules)} rule descriptions loaded")
 
-    # LLM annotations
-    annotations = None
-    if llm_annotate:
-        print("Generating LLM annotations...")
-        annotations = generate_llm_annotations(dag, cards_dir)
-        print(f"  {len(annotations)} annotations generated")
+    # LLM annotations via shared cache
+    from shared.llm.guidance_cache import load_cache, generate_and_cache
+
+    cache_dir = PROJECT_ROOT / "outputs" / "agentic" / "llm_cache"
+    cache = load_cache(cache_dir)
+    if cache is None and llm_annotate:
+        print("Generating LLM annotations (shared cache)...")
+        cache = generate_and_cache(
+            state_path or DEFAULT_STATE, cards_dir or DEFAULT_CARDS_DIR,
+            dag_path, cache_dir,
+        )
+    elif cache is not None:
+        print("  Loaded LLM annotations from cache")
+
+    annotations = cache["edge_annotations"] if cache else None
+    issue_guidance: dict[str, str] = cache["issue_guidance"] if cache else {}
 
     # Build data arrays
     nodes = build_nodes_data(dag)
@@ -1448,13 +1424,6 @@ def build(
     print(f"  {len(nodes)} nodes, {len(edges)} edges, {len(latents)} latents")
     issue_count = sum(len(issues.get(e["id"], [])) for e in edges)
     print(f"  {issue_count} open issues across edges")
-
-    # Per-issue LLM decision guidance
-    issue_guidance: dict[str, str] = {}
-    if llm_annotate:
-        print("  Generating per-issue decision guidance...")
-        issue_guidance = generate_issue_guidance(issues, edges)
-        print(f"  {len(issue_guidance)} issue guidance entries generated")
 
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
 
