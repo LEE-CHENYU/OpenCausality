@@ -524,9 +524,6 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
             outline: none;
         }
         .pitfall-decision .pd-llm-guidance {
-            background: #f0f4ff;
-            border-left: 3px solid #2563eb;
-            padding: 6px 10px;
             margin-bottom: 6px;
             font-size: 10px;
             line-height: 1.6;
@@ -535,8 +532,37 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
         .pitfall-decision .pd-llm-guidance-title {
             font-weight: 600;
             color: #1e40af;
-            margin-bottom: 2px;
+            margin-bottom: 4px;
+            font-size: 10px;
         }
+        .pd-section {
+            padding: 5px 8px;
+            margin-bottom: 4px;
+            font-size: 10px;
+            line-height: 1.6;
+        }
+        .pd-section-label {
+            font-weight: 600;
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            margin-bottom: 1px;
+        }
+        .pd-section.finding {
+            background: #f8f8f8;
+            border-left: 3px solid #666;
+        }
+        .pd-section.finding .pd-section-label { color: #444; }
+        .pd-section.concern {
+            background: #fffbf0;
+            border-left: 3px solid #c8a000;
+        }
+        .pd-section.concern .pd-section-label { color: #7a6400; }
+        .pd-section.recommendation {
+            background: #f0f4ff;
+            border-left: 3px solid #2563eb;
+        }
+        .pd-section.recommendation .pd-section-label { color: #1e40af; }
         .pd-static-ref { font-size: 9px; color: #888; margin-bottom: 4px; }
         .pd-static-ref summary { cursor: pointer; font-weight: 500; }
         .pitfall-decision .pd-buttons {
@@ -731,6 +757,42 @@ function renderMarkdown(s) {
     return h;
 }
 
+function renderGuidanceSections(s) {
+    if (!s) return '';
+    // Split into Finding / Concern / Recommendation sections
+    var sections = [
+        {key: 'finding', re: /\*\*Finding\*\*:\s*/i},
+        {key: 'concern', re: /\*\*Concern\*\*:\s*/i},
+        {key: 'recommendation', re: /\*\*Recommendation\*\*:\s*/i}
+    ];
+    // Find section boundaries
+    var parts = [];
+    var text = s;
+    var indices = [];
+    sections.forEach(function(sec) {
+        var m = text.match(sec.re);
+        if (m) indices.push({key: sec.key, idx: text.indexOf(m[0]), len: m[0].length, label: sec.key.charAt(0).toUpperCase() + sec.key.slice(1)});
+    });
+    indices.sort(function(a, b) { return a.idx - b.idx; });
+
+    if (indices.length === 0) {
+        // No structured sections found, fall back to plain markdown
+        return renderMarkdown(s);
+    }
+
+    var html = '';
+    for (var i = 0; i < indices.length; i++) {
+        var start = indices[i].idx + indices[i].len;
+        var end = (i + 1 < indices.length) ? indices[i + 1].idx : text.length;
+        var body = text.substring(start, end).trim();
+        html += '<div class="pd-section ' + indices[i].key + '">' +
+            '<div class="pd-section-label">' + escHtml(indices[i].label) + '</div>' +
+            renderMarkdown(body) +
+            '</div>';
+    }
+    return html;
+}
+
 function formatBeta(beta) {
     if (beta === null || beta === undefined) return '--';
     if (beta === 0) return '0';
@@ -880,7 +942,7 @@ if (allIssues.length === 0) {
         var llmText = ISSUE_GUIDANCE[issue.issue_key] || '';
         var llmHtml = llmText ?
             '<div class="pd-llm-guidance"><div class="pd-llm-guidance-title">AI Analysis</div>' +
-            renderMarkdown(llmText) + '</div>' : '';
+            renderGuidanceSections(llmText) + '</div>' : '';
 
         // Build static text (Why it matters + Decision guidance)
         var staticHtml = '';
