@@ -224,34 +224,6 @@ with confidence scores, then a matching step aligns extracted variables against 
 DAG or variable catalog. This means the system can both extend an existing DAG and
 build one from scratch.
 
-> **Methodological warning: LLM confidence is not identification.** The NL-to-DAG
-> pipeline and narrative-based DAG generation are *scaffolding tools* — they accelerate
-> the construction of candidate DAGs, but they do not establish causal identification.
-> Two risks require explicit analyst discipline:
->
-> 1. **LLM-extracted edges are proposals, not findings.** An LLM reporting high
->    confidence that "X causes Y" based on a paper's text reflects the strength of
->    the textual claim, not the strength of the paper's identification strategy.
->    Accepting proposed edges uncritically — treating LLM extraction confidence as a
->    substitute for a valid research design — collapses the distinction between
->    claimed and identified relationships that the entire governance framework is
->    built to enforce.
->
-> 2. **Narratives must precede data, not follow it.** The narrative-to-DAG workflow
->    is valid when the narrative encodes prior domain knowledge and economic theory —
->    the researcher's causal model of the world *before* seeing estimation results.
->    It is invalid if the narrative is written or revised *after* seeing preliminary
->    results, because the DAG then encodes the data rather than constraining it.
->    This is the specification-searching problem repackaged in natural language: if
->    you write the story after seeing which regressions are significant, the
->    one-way ratchet on claim levels provides no protection because the structure
->    itself is contaminated.
->
-> Both risks are mitigated by treating NL-extracted DAGs as hypothesis-generation
-> artifacts subject to the same pre-registration discipline as expert-built DAGs:
-> freeze the DAG before estimation, run in `CONFIRMATION` mode, and never modify
-> structure based on results.
-
 ### Comparison
 
 | Metric                         | Expert DAG | NL-Extracted DAG |
@@ -612,23 +584,7 @@ A DAG extracted from literature represents claimed causal relationships, not ide
 ones. The presence of an edge in the DAG means someone published a paper asserting that
 relationship; it does not mean the relationship has been credibly identified with a
 valid research design. Users should treat NL-extracted DAGs as hypotheses to be tested,
-not as established facts. In particular, LLM extraction confidence reflects the
-strength of the textual claim, not the strength of the underlying identification
-strategy — a paper that confidently asserts "X causes Y" based on OLS with no
-instrument produces a high-confidence extraction but a `DESCRIPTIVE`-ceiling edge.
-
-### Narrative Contamination Risk
-
-The narrative-to-DAG pipeline assumes the input narrative encodes prior domain knowledge
-— the researcher's causal model *before* seeing data. If the narrative is instead
-written or revised after seeing preliminary estimation results, the DAG structure itself
-becomes data-dependent, and the one-way ratchet on claim levels provides no protection:
-the ratchet constrains what you can conclude *given* a fixed structure, but it cannot
-detect that the structure was chosen to fit the data. This is the classic specification-
-searching problem repackaged in natural language. Users should treat narrative-generated
-DAGs with the same pre-registration discipline applied to expert-built DAGs: write the
-narrative before any estimation, freeze the resulting DAG, and run in `CONFIRMATION`
-mode.
+not as established facts.
 
 ### Example Coverage
 

@@ -398,18 +398,6 @@ The pipeline proceeds in three stages:
     \item \textbf{Edge proposal}: Matched claims become \texttt{ProposedEdge} objects. Edges with the same $(from, to)$ pair combine evidence and take the maximum confidence level.
 \end{enumerate}
 
-\subsection{Scaffolding, Not Identification}
-
-A critical design principle: \textbf{LLM extraction confidence is not identification strength.} The pipeline produces \emph{candidate edges}---scaffolding for DAG construction---not identified causal relationships. An LLM reporting high confidence that ``$X$ causes $Y$'' reflects the strength of the textual claim in the source paper, not the validity of its research design. A paper that confidently asserts a causal effect based on OLS with no instrument produces a high-confidence extraction but, once estimated, receives at most a \texttt{DESCRIPTIVE} claim ceiling.
-
-Two risks require explicit analyst discipline:
-
-\begin{enumerate}[leftmargin=*, itemsep=1pt]
-    \item \textbf{Uncritical acceptance of LLM proposals.} If users treat extraction confidence as a proxy for identification, the distinction between claimed and identified relationships---the foundation of the governance framework (Section~\ref{sec:governance})---collapses. All proposed edges must pass through HITL review; the system enforces this by routing proposals through \texttt{ProposedEdge} objects that require explicit analyst approval before entering the DAG.
-
-    \item \textbf{Post-hoc narrative contamination.} The narrative-to-DAG workflow is valid when the input narrative encodes prior domain knowledge and theory---the researcher's causal model \emph{before} seeing estimation results. It is invalid if the narrative is written or revised \emph{after} seeing preliminary results, because the DAG structure then encodes the data rather than constraining it. This is the specification-searching problem repackaged in natural language: the one-way ratchet on claim levels (Section~\ref{sec:identification}) constrains what can be concluded \emph{given} a fixed structure, but it cannot detect that the structure was chosen to fit the data. Narrative-generated DAGs should be treated with the same pre-registration discipline as expert-built DAGs: freeze the DAG before estimation and run in \texttt{CONFIRMATION} mode.
-\end{enumerate}
-
 \subsection{LLM Abstraction}
 
 \oc{} provides a multi-backend LLM client supporting Anthropic (direct API), LiteLLM (multi-provider), and CLI fallbacks (\texttt{claude} or \texttt{codex}) that require no API key. Structured extraction uses tool-use (Anthropic) or function-calling (LiteLLM) to produce typed outputs without parsing.
@@ -692,10 +680,7 @@ The dominant open issue type is \texttt{SIGNIFICANT\_BUT\_NOT\_IDENTIFIED} (492 
 Qualifying language is collapsed to binary decisions, effect magnitudes are not reliably extracted from text, and the pipeline cannot distinguish between claims made by the authors and claims they merely cite.
 
 \paragraph{Claims are not identification.}
-A DAG extracted from the literature represents \emph{claimed} causal relationships, not identified ones. LLM extraction confidence reflects the strength of the textual assertion, not the validity of the underlying research design---a paper that confidently asserts ``$X$ causes $Y$'' based on OLS produces a high-confidence extraction but a \texttt{DESCRIPTIVE}-ceiling edge. \oc{}'s identifiability screen partially addresses this by capping claim levels to the estimation design, but users who accept LLM proposals uncritically risk treating the LLM as an identification oracle.
-
-\paragraph{Narrative contamination.}
-The narrative-to-DAG pipeline assumes the input text encodes prior domain knowledge---the researcher's causal model \emph{before} seeing data. If the narrative is written or revised after seeing preliminary results, the DAG structure becomes data-dependent, and the one-way claim-level ratchet provides no protection: it constrains conclusions given a fixed structure, but cannot detect that the structure was chosen to fit the data. This is specification searching repackaged in natural language. Narrative-generated DAGs should be frozen before estimation and run in \texttt{CONFIRMATION} mode.
+A DAG extracted from the literature represents \emph{claimed} causal relationships, not identified ones. \oc{}'s identifiability screen partially addresses this, but the initial DAG structure reflects community beliefs rather than proven mechanisms.
 
 \paragraph{Single-country evaluation.}
 Our primary case study is Kazakhstan bank stress testing. While the platform is domain-agnostic, the data clients and variable catalogs are currently specific to this use case.
