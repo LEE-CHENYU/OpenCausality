@@ -123,6 +123,29 @@ screen_pre_design()  →  screen_post_design()  →  screen_post_estimation()
 No screening function may be called out of sequence. Post-estimation screening
 cannot override post-design results upward. Each stage narrows the claim; none widens it.
 
+### 3.1 Five Risk Assessment Dimensions (Fixed Set)
+
+Every `IdentifiabilityResult` reports five risk dimensions:
+
+```
+unmeasured_confounding | simultaneity | weak_variation | measurement_error | selection
+```
+
+Each dimension is rated `low`, `medium`, or `high`. This set is fixed — adding, removing,
+or renaming risk dimensions requires explicit justification. Credibility scoring and
+issue detection depend on this closed set.
+
+### 3.2 Testable vs. Untestable Assumptions
+
+Each screening result separates:
+- **`testable_threats_passed`**: Diagnostics that verified assumptions
+- **`testable_threats_failed`**: Diagnostics that violated assumptions
+- **`untestable_assumptions`**: Assumptions that cannot be tested with available data
+
+**Invariant:** Claims cannot be upgraded based on untestable assumptions. Only testable
+assumption failures trigger downgrades. Untestable assumptions are documented for
+researcher awareness — they are never silently dropped.
+
 ---
 
 ## 4. Seven Propagation Guardrails (Immutable Sequence)
@@ -216,7 +239,10 @@ Before transitioning from EXPLORATION to CONFIRMATION, the `FreezeValidator` che
 1. **DAG hash** matches frozen manifest (no structural changes).
 2. **Design assignments hash** matches (no design swaps).
 3. **Data hash** matches (no new data added).
-4. **Sample window overlap** is forbidden (exploration and confirmation windows must not overlap).
+4. **Sample window overlap** is forbidden (exploration and confirmation windows must not
+   overlap). "Window" is defined as the date range [start_date, end_date] of the estimation
+   sample. Any observation-level overlap (shared dates in panel or time-series data)
+   constitutes a violation, not just matching start/end dates.
 5. **Frozen timestamp** is in the past (no future-dated freezes).
 
 Any violation blocks the transition. These checks are non-negotiable.
@@ -254,9 +280,16 @@ whitelist entry can override it.
 
 ### 7.3 Null Acceptance
 
-A precisely null effect (|β| < equivalence bound AND tight SE) is a valid finding,
-not a failure. The system must never treat null results as errors that trigger
-specification searching. This prevents the file-drawer problem at the pipeline level.
+A precisely null effect is a valid finding, not a failure. The system must never treat
+null results as errors that trigger specification searching. This prevents the
+file-drawer problem at the pipeline level.
+
+The null acceptance criterion requires **both** conditions:
+1. `|β| < equivalence_bound` (default: 0.1 in natural units)
+2. `CI_width < 2 × equivalence_bound` (confidence interval must be tight)
+
+When both are met, the result is "precisely null" — a valid, publishable finding.
+The equivalence bound is configurable but must always have a finite, positive value.
 
 ### 7.4 Iteration Counter
 
@@ -325,7 +358,7 @@ Phase 1:  DataScout (data availability, download)
 Phase 1.5: PaperScout (literature search)
 ─── ITERATION LOOP (max_iterations) ───
   Phase 2: Estimate/re-estimate ready tasks
-  Phase 3: Post-run issue detection (29 rules)
+  Phase 3: Post-run issue detection (30 rules)
   Phase 4: Gate evaluation (issue gates)
   Phase 5: HITL check → stop if human required
   Phase 6: PatchBot auto-fixes → re-queue affected edges
@@ -335,8 +368,21 @@ Post-loop: Final HITL gate evaluation + checklist
 Output:    System report, EdgeCards, panels
 ```
 
+### 10.1 Agent-to-Phase Binding
+
+| Agent | Pipeline Phase | Contract |
+|-------|---------------|----------|
+| **DataScout** | Phase 1 | Catalog data availability; download within budget; 2-pass cycle (catalog-first, then download) |
+| **PaperScout** | Phase 1.5 | Literature search; informational only; does not modify DAG or claims |
+| **ModelSmith** | Pre-Phase 2 (design selection) | Select designs from registry; write ModelSpecs with identification assumptions; must complete **before** estimation |
+| **Estimator** | Phase 2 | Execute ModelSpecs; run diagnostics; produce EdgeCards |
+| **Judge** | Phase 3–4 | Score credibility; flag weak links; propose refinements within RefinementWhitelist bounds |
+| **PatchBot** | Phase 6 | Apply auto-fixes within PatchPolicy; re-queue affected edges |
+
 **Invariants:**
 - Phases must not be reordered.
+- Design selection (ModelSmith) must complete before estimation (Phase 2). Selecting
+  designs after seeing results would violate the one-way ratchet.
 - Data must be available before estimation (Phase 1 before Phase 2).
 - Issue detection must follow estimation (Phase 3 after Phase 2).
 - HITL check must precede PatchBot (Phase 5 before Phase 6).
@@ -438,7 +484,15 @@ Causal discovery results (PC, GES, FCI, NOTEARS) and LLM-extracted edges are
 **never auto-merged** into the DAG. All discovery outputs must pass through HITL
 review as `ProposedEdge` objects requiring explicit analyst approval.
 
-### 14.2 LLM Confidence Is Not Identification
+### 14.2 Discovery Hyperparameters in Audit Trail
+
+Discovery algorithm runs must log their hyperparameters (significance level α for PC,
+score function for GES, independence test for FCI, λ for NOTEARS) in the audit trail.
+Without this, an analyst could re-run discovery with different parameters until the
+desired graph emerges — a form of p-hacking at the graph structure level. The anti-
+p-hacking constraints (§7) extend to discovery, not just estimation.
+
+### 14.3 LLM Confidence Is Not Identification
 
 LLM extraction confidence reflects the strength of the textual claim in the source
 material, not the validity of the underlying research design. A high-confidence
@@ -446,7 +500,7 @@ LLM extraction paired with an OLS design still receives at most a `DESCRIPTIVE`
 ceiling. The system must never treat LLM confidence as a proxy for identification
 strength.
 
-### 14.3 Narratives Must Precede Data
+### 14.4 Narratives Must Precede Data
 
 The narrative-to-DAG pipeline is valid only when the input narrative encodes prior
 domain knowledge — the researcher's causal model before seeing estimation results.
@@ -470,7 +524,9 @@ Var(τ̂) = Σᵢ (∏ⱼ≠ᵢ βⱼ)² · SEᵢ²
 - When > 1 estimated edge exists in a path, a warning about the independence
   assumption is emitted.
 - Multi-path results are shown separately by default; never auto-summed without
-  edge-disjointness verification.
+  edge-disjointness verification. When paths share edges, the system **must refuse
+  to sum** and present paths individually with a warning about double-counting.
+  The aggregation policy `"sum_disjoint"` only activates when no edges overlap.
 
 ---
 
@@ -485,6 +541,37 @@ Var(τ̂) = Σᵢ (∏ⱼ≠ᵢ βⱼ)² · SEᵢ²
 
 **Invariant:** No open `CRITICAL` issue may exist when entering CONFIRMATION mode.
 The `block_confirmation` gate is non-negotiable.
+
+### 16.1 Critical Issue Rules (Must Always Be Present)
+
+The issue registry (currently 30 rules) is the governance layer's detection capability.
+The following seven `CRITICAL`-severity rules are architecturally essential — removing
+any of them silently degrades the system's correctness guarantees:
+
+| Rule ID | What It Guards |
+|---------|---------------|
+| `FREQUENCY_ALIGNMENT_ERROR` | Blocks estimation on mixed frequencies without explicit aggregation |
+| `REACTION_FUNCTION_EDGE` | Prevents policy reaction edges from entering shock propagation |
+| `TIME_FE_ABSORBS_SHOCK` | Detects when time FE absorbs the treatment; requires exposure interaction |
+| `EXPOSURE_NOT_PREDETERMINED` | Ensures exposure variable is measured pre-treatment |
+| `SIGNIFICANT_BUT_NOT_IDENTIFIED` | Prevents overclaiming: significance without valid identification |
+| `LEADS_SIGNIFICANT_TIMING_FAIL` | Catches reversed temporal ordering in causal claims |
+| `UNIT_MISSING_IN_EDGECARD` | Blocks uninterpretable coefficients lacking unit specs |
+
+The total rule count may grow but must never shrink below these seven critical rules.
+Adding rules is allowed; removing or disabling any rule listed above is a bug.
+
+**Note:** The anti-p-hacking concerns (null dropping, control shopping, specification
+drift) are enforced through dedicated mechanisms — `StoppingCriteria.check_null_acceptance`
+(§7.3), `RefinementWhitelist` (§7.1), and the hash-chained audit log (§8) — rather than
+through issue registry rules.
+
+### 16.2 Auto-Fixability and HITL Requirement Are Orthogonal
+
+Each rule declares `auto_fixable` and `requires_human` independently. An issue can be
+both auto-fixable AND require human review — PatchBot applies the fix, but the issue
+still triggers HITL pause. No implicit assumption that "fixable" means "doesn't need
+review."
 
 ---
 
@@ -684,6 +771,12 @@ unless the entire path is `IDENTIFIED_CAUSAL`. For mixed or non-identified paths
 
 This is a hard rule, not a suggestion. The LLM prompt and regex fallback both enforce it.
 
+**Forbidden causal language for non-identified paths:** The following terms (and their
+inflections) must **never** appear in REPL output for paths below `IDENTIFIED_CAUSAL`:
+`causes`, `causal effect`, `drives`, `leads to`, `results in`, `produces`, `generates`,
+`brings about`. These carry causal connotations and must be reserved exclusively for
+fully identified paths. This is a closed forbidden set, not an open suggestion.
+
 ### 23.2 Mode-Aware Query Gating
 
 The REPL respects the active query mode (§5). If the user asks a policy counterfactual
@@ -738,9 +831,9 @@ or "approve as causal" action. This mirrors the one-way ratchet (§2.2) at the U
 
 ## 25. DoWhy Refutation Engine
 
-### 25.1 Four Robustness Checks
+### 25.1 Four Robustness Checks (Mandatory and Complete)
 
-After DoWhy adapter estimation, the refutation engine runs four tests:
+After DoWhy adapter estimation, the refutation engine runs **all four** tests:
 
 | Refutation | What It Tests |
 |-----------|--------------|
@@ -748,6 +841,10 @@ After DoWhy adapter estimation, the refutation engine runs four tests:
 | Placebo Treatment | Shuffling the treatment should destroy the effect |
 | Data Subset | Estimate should be stable across random subsets |
 | Unobserved Common Cause | Estimate should survive simulated unobserved confounding |
+
+**Invariant:** All four refutations must run for every DoWhy estimation. No DoWhy result
+is valid without the complete battery. Skipping any refutation (e.g., for performance)
+is a bug — it removes the stress test that validates the `IDENTIFIED_CAUSAL` ceiling.
 
 ### 25.2 Refutation Failure → Downgrade
 
@@ -888,6 +985,13 @@ with the same numpy/scipy versions.
 Benchmarks run across multiple seeds (default: 10). Single-seed results are insufficient
 for adapter validation. Reports include mean RMSE and CI coverage across all seeds.
 
+### 30.4 Minimum CI Coverage Threshold
+
+An adapter benchmark is considered **passing** when 90% CI coverage ≥ 80% across seeds.
+Below this threshold, the adapter's SE computation or model specification is suspect.
+Benchmark failures do not automatically block adapter registration but must be documented
+as a known limitation in the adapter's output.
+
 ---
 
 ## 31. Domain Agnosticism
@@ -959,14 +1063,16 @@ node specs, dependency mismatches).
 
 ## 33. Unit-Aware Propagation
 
-### 33.1 Nine Recognized Unit Types
+### 33.1 Eight Named Unit Types Plus Unknown Fallback
 
 ```
-pp, pct, log_point, bn_kzt, ratio, index, sd, bps, count
+pp, pct, log_point, bn_kzt, ratio, index, sd, bps   (8 named types)
+unknown                                                (fallback for unparseable units)
 ```
 
-The `UnitSpec` regex parser validates that every edge declares compatible treatment and
-outcome units from this set.
+The `UnitSpec` regex parser matches free-text unit specifications against 8 named
+patterns. Anything unparseable falls back to `unknown`. The `UNIT_KINDS` type is the
+closed set of valid values.
 
 ### 33.2 Dimensional Analysis on Multi-Edge Paths
 
@@ -977,9 +1083,12 @@ block propagation in `STRUCTURAL` and `REDUCED_FORM` modes; they emit warnings i
 
 ### 33.3 UnitSpec Regex Rules
 
-- The `pp` pattern must **not** use `\b` prefix (would fail on "1pp").
-- The `%` pattern must **not** use `\b` (similar reason).
-- Unknown or unparseable units block propagation by default (conservative).
+- The `pp` pattern uses `pp\b` (suffix boundary only). A `\b` prefix (`\bpp`) must
+  **never** be added — it would fail on "1pp" since "1" is a word character.
+- The `%` literal in the `pct` pattern has no `\b` wrapper — `%` is not a word character
+  so `\b` would fail to match it.
+- Unknown or unparseable units fall back to `"unknown"` and block propagation in
+  `STRUCTURAL` and `REDUCED_FORM` modes (conservative default).
 
 ---
 
@@ -1029,24 +1138,30 @@ Before merging any change, verify:
 - [ ] Claim levels never move upward after design selection
 - [ ] `cap_to()` remains monotone (downgrade only)
 - [ ] DESIGN_CLAIM_MAP covers all registered adapters
+- [ ] Five risk assessment dimensions unchanged (§3.1)
+- [ ] Testable/untestable assumption separation preserved (§3.2)
 - [ ] Reaction functions remain unconditionally blocked from propagation
 - [ ] All seven propagation guardrails are applied in order
 - [ ] Mode can only restrict, never expand permissions
 
 **Governance & Anti-P-Hacking (§§6-9)**
 - [ ] CONFIRMATION mode remains frozen (zero iterations, no patches)
+- [ ] Sample window non-overlap check covers observation-level overlap (§6.3)
 - [ ] Default pipeline mode is EXPLORATION
 - [ ] PatchBot prohibited actions list is unchanged
 - [ ] Refinement whitelist bounds are respected
 - [ ] Hash chain append-only property is preserved
-- [ ] Null results are accepted as valid findings, not triggers for re-specification
+- [ ] Null acceptance uses both |β| and CI_width criteria (§7.3)
 
 **Pipeline & Agents (§§10-19)**
-- [ ] Agent loop phase ordering is maintained
+- [ ] Agent loop phase ordering is maintained; design selection before estimation (§10.1)
 - [ ] Adapter interface contract (EstimationRequest → EstimationResult) is preserved
 - [ ] Credibility scoring excludes statistical significance
 - [ ] No open CRITICAL issues in CONFIRMATION mode
+- [ ] Critical issue rules (§16.1) all present in registry — none removed
+- [ ] Auto-fixable ≠ doesn't-need-review (§16.2 orthogonality)
 - [ ] Discovery/NL outputs remain proposals requiring HITL approval
+- [ ] Discovery hyperparameters logged in audit trail (§14.2)
 - [ ] Issue lifecycle is append-only (no reopen, only new issue)
 - [ ] LLM repairs limited to schema validity — never causal semantics
 - [ ] Task queue transitions are forward-only (no backward from terminal states)
@@ -1061,7 +1176,7 @@ Before merging any change, verify:
 **LLM & Query (§§22-23)**
 - [ ] All LLM calls go through `LLMClient` ABC — no direct provider API calls in core
 - [ ] Provider fallback emits a visible warning, never silent
-- [ ] Query REPL never uses causal language for non-identified paths
+- [ ] Forbidden causal language list enforced for non-identified paths (§23.1)
 - [ ] Query mode gating cannot be bypassed by the LLM parser
 
 **Panels & Output (§§24, 29)**
@@ -1070,6 +1185,10 @@ Before merging any change, verify:
 - [ ] Panel actions never include an "upgrade" or "approve as causal" option
 - [ ] Both panels remain self-contained single-file HTML
 - [ ] EdgeCards remain the primary output artifact; all others derive from them
+
+**Refutation & Propagation (§§15, 25)**
+- [ ] All four DoWhy refutations run for every DoWhy estimation — no subset (§25.1)
+- [ ] Multi-path aggregation refused when paths share edges (§15)
 
 **Serialization & Dependencies (§§27-28)**
 - [ ] No new heavy dependencies without explicit justification
