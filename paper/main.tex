@@ -806,7 +806,14 @@ The \texttt{EdgeCard} is the primary output artifact---one per estimated edge, b
 \section{Query REPL Example Session}
 \label{app:repl}
 
-The following annotated session illustrates the \oc{} Query REPL with natural-language query parsing, guardrail enforcement, and hedged narration.
+The following annotated session illustrates the \oc{} Query REPL with natural-language query parsing, guardrail enforcement, and hedged narration. Figure~\ref{fig:query-repl} shows the literature edge-proposal workflow.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth, trim=0 0 0 0, clip]{fig_query_repl.png}
+    \caption{Query REPL --- Literature Edge Proposal. The REPL searches academic papers via Semantic Scholar, OpenAlex, and arXiv, extracts causal claims using the LLM, and presents proposed edges with confidence scores, edge types, and evidence counts. The analyst reviews each proposal interactively (accept/reject).}
+    \label{fig:query-repl}
+\end{figure}
 
 \begin{lstlisting}[basicstyle=\ttfamily\scriptsize, breaklines=true, frame=single]
 $ opencausality query --dag config/agentic/dags/kspi_narrative.yaml \
