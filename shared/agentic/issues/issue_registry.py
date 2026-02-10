@@ -164,6 +164,58 @@ class IssueRegistry:
                     if issue:
                         detected.append(ledger.add(issue))
 
+        # ORPHAN_NODE_UNCONNECTED
+        edge_nodes: set[str] = set()
+        for e in dag_config.get("edges", []):
+            edge_nodes.add(e.get("from", ""))
+            edge_nodes.add(e.get("to", ""))
+        for lat in dag_config.get("latents", []):
+            for a in lat.get("affects", []):
+                edge_nodes.add(a)
+
+        nodes = dag_config.get("nodes", [])
+        all_node_ids = {n.get("id", "") for n in nodes}
+        for node in nodes:
+            nid = node.get("id", "")
+            if nid and nid not in edge_nodes:
+                # Check if identity-resolvable
+                identity = node.get("identity")
+                depends_on = node.get("depends_on", [])
+                is_identity_resolvable = bool(
+                    identity and depends_on and all(
+                        d in edge_nodes or d in all_node_ids
+                        for d in depends_on
+                    )
+                )
+
+                suggested_fix = None
+                if is_identity_resolvable:
+                    suggested_fix = {
+                        "action": "fix_orphan_identity_edge",
+                        "node_id": nid,
+                        "identity_formula": identity.get("formula", "") if identity else "",
+                        "depends_on": depends_on,
+                    }
+
+                issue = self.create_issue(
+                    "ORPHAN_NODE_UNCONNECTED",
+                    f"Node '{nid}' is not connected to any edge.",
+                    scope="node",
+                    node_id=nid,
+                    evidence={
+                        "has_identity": bool(identity),
+                        "depends_on": depends_on,
+                        "is_identity_resolvable": is_identity_resolvable,
+                    },
+                    suggested_fix=suggested_fix,
+                )
+                if issue:
+                    # Override for non-identity-resolvable cases
+                    if not is_identity_resolvable:
+                        issue.requires_human = True
+                        issue.auto_fixable = False
+                    detected.append(ledger.add(issue))
+
         return detected
 
     def detect_post_run_issues(

@@ -137,6 +137,7 @@ class PatchPolicy:
     _LLM_DAG_REPAIRS: set[str] = {
         "fix_dag_identity_deps",
         "fix_dag_missing_reaction",
+        "fix_orphan_identity_edge",
     }
 
     def is_llm_repair_allowed(
