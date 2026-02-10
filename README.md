@@ -24,14 +24,14 @@
 
 Open-source platform for transparent, auditable causal inference. Combines DAG-based causal reasoning with agentic estimation, human-in-the-loop governance, LLM-assisted literature extraction, and an always-on sentinel loop that continuously validates, heals, and surfaces results.
 
-> **Paper:** [OpenCausality: Auditable Agentic Causal Inference with DAG-Based Reasoning and LLM-Assisted Discovery](paper/main.pdf) (Li, 2025)
+> **Paper:** [OpenCausality: Auditable Agentic Causal Inference with DAG-Based Reasoning and LLM-Assisted Discovery](paper/main.pdf) (Li, 2026)
 
 Causal inference across the sciences — economics, epidemiology, public policy, social
 science, marketing, and beyond — is fragile. Automated pipelines scale but hide
 methodological choices; manual analysis is transparent but slow. OpenCausality resolves
 this by treating every estimation decision as an auditable event. You specify a causal
 DAG in YAML, the system dispatches to the appropriate estimation engine (from local
-projections to double ML to synthetic control), and a 29-rule issue detection engine
+projections to double ML to synthetic control), and a 30-rule issue detection engine
 flags problems — overclaiming, control shopping, null dropping, specification drift,
 timing failures — before results reach your paper, report, or dashboard. A
 human-in-the-loop panel ensures no statistical claim passes without explicit analyst
@@ -120,7 +120,7 @@ Data assembly, control set construction from DAG conditional independence struct
 and impulse response functions at multiple horizons are handled upstream; every
 estimation call is logged with its full specification so that no result is an orphan.
 
-After estimation, 29 issue detection rules scan for common methodological failures:
+After estimation, 30 issue detection rules scan for common methodological failures:
 significant results without valid identification, p-hacking through control selection,
 silent dropping of null results, and temporal ordering violations. Issues requiring
 human judgment are routed to the HITL panel rather than silently resolved.
@@ -147,14 +147,16 @@ report with credibility ratings, and a hash-chained JSONL audit log.
    Citations attached to EdgeCards with relevance scores.
 6. **Design Selection** -- Check back-door/front-door criteria for each edge; flag
    edges where identification is absent.
-7. **Estimation** -- Adapter registry dispatches to the appropriate estimator
-   (LP, Panel LP, Panel FE Backdoor, IV 2SLS, DID, RDD, Regression Kink,
-   Synthetic Control, Immutable, Accounting Bridge, Identity).
+7. **Estimation** -- Adapter registry dispatches to one of 19 adapters:
+   econometric (LP, Panel LP, Panel FE Backdoor, IV 2SLS, DID, RDD, Regression
+   Kink, Synthetic Control), ML-based (DoWhy Backdoor/IV/Frontdoor, DoubleML
+   PLR/IRM/PLIV, EconML CATE, CausalML Uplift), and deterministic (Immutable,
+   Accounting Bridge, Identity).
    Controls derived from DAG structure. HAC standard errors at multiple horizons.
 8. **DAG Auto-Repair** -- LLM-assisted validation loop that detects and fixes DAG
    errors (invalid edge IDs, missing dependencies) up to 3 attempts before
    falling back to human review. Governed by PatchPolicy.
-9. **Issue Detection** -- 29 rules flag overclaiming, control shopping, null dropping,
+9. **Issue Detection** -- 30 rules flag overclaiming, control shopping, null dropping,
    specification drift, timing failures. Each produces a typed issue with severity.
 10. **PatchBot Auto-Fix** -- Auto-fixable issues (e.g., missing edge units) are
     repaired by PatchBot within policy constraints. Fixes are logged in the audit trail.
@@ -355,7 +357,7 @@ surfacing interactive panels to analysts without manual intervention.
 ### What It Does
 
 1. **Continuous DAG Validation** -- After every pipeline step, the sentinel re-runs
-   the full 40-rule validation suite against the active DAG. If a code change or manual
+   the full validation suite against the active DAG. If a code change or manual
    edit introduces a schema error (missing `unit_specification`, malformed edge IDs,
    orphan nodes), the sentinel catches it within one polling cycle.
 
@@ -635,7 +637,7 @@ shared/
 │   ├── agents/           # DAGScout, PaperScout, ModelSmithCritic, PatchBot,
 │   │                     #   PaperDAGExtractor
 │   ├── governance/       # HITL gate, audit log, patch policy, notifier
-│   ├── issues/           # Issue ledger, registry (29 rules), gates
+│   ├── issues/           # Issue ledger, registry (30 rules), gates
 │   ├── identification/   # Identifiability screen (back-door, front-door)
 │   ├── output/           # EdgeCard writer, system report generator
 │   ├── validation.py     # Unit spec validation, regex matching
@@ -643,9 +645,9 @@ shared/
 │   ├── ts_guard.py       # Time-series validator (stationarity, cointegration)
 │   └── agent_loop.py     # Main orchestrator
 ├── engine/               # Estimation engine
-│   ├── adapters/         #   Adapter registry (LP, Panel LP, Panel FE Backdoor,
-│   │                     #     IV 2SLS, DID, RDD, Regression Kink, Synthetic Control,
-│   │                     #     Immutable, Identity, Accounting Bridge)
+│   ├── adapters/         #   Adapter registry: 19 adapters (LP, Panel LP,
+│   │                     #     Panel FE, IV, DID, RDD, RKD, Synth Control,
+│   │                     #     DoWhy, DoubleML, EconML, CausalML, + deterministic)
 │   ├── ts_estimator.py   #   LP estimator, HAC SE, accounting bridge
 │   ├── panel_estimator.py #  Panel LP with exposure-shift FE
 │   └── data_assembler.py #   Edge data assembly, node loaders
@@ -661,7 +663,7 @@ config/
 │   ├── dags/             # DAG YAML specifications
 │   │   ├── kspi_k2_full.yaml
 │   │   └── ...
-│   ├── issue_registry.yaml   # 29 issue type definitions
+│   ├── issue_registry.yaml   # 30 issue type definitions
 │   └── hitl_actions.yaml     # Action definitions for HITL panel
 └── settings.py           # Global settings (API keys, paths, defaults)
 
@@ -692,10 +694,12 @@ examples/                     # Example narratives and tutorial data
 ### Key Design Decisions
 
 **Adapter registry for estimation.** All estimation flows through
-`EstimationRequest → Adapter.estimate() → EstimationResult`. Eleven adapters cover
-LP, Panel LP, Panel FE Backdoor, IV 2SLS, DID, RDD, Regression Kink, Synthetic
-Control, Immutable, Accounting Bridge, and Identity designs. New estimators plug in
-by subclassing `EstimatorAdapter` and registering.
+`EstimationRequest → Adapter.estimate() → EstimationResult`. 19 adapters span
+classical econometrics (LP, Panel LP, Panel FE Backdoor, IV 2SLS, DID, RDD,
+Regression Kink, Synthetic Control), ML-based causal inference (DoubleML, EconML,
+CausalML), graph-verified methods (DoWhy Backdoor/IV/Frontdoor), and deterministic
+designs (Immutable, Accounting Bridge, Identity). New estimators plug in by
+subclassing `EstimatorAdapter` and registering.
 
 **Dataclasses over Pydantic.** Avoids heavy dependencies; serialization is explicit
 via dedicated reader/writer functions.
@@ -756,7 +760,7 @@ If `anthropic` is selected but no key is found, auto-falls back to `codex`.
 
 All agents reference the governance framework:
 - **validation.py**: Pre/post-estimation validation rules
-- **issue_registry.yaml**: 29-rule issue detection engine
+- **issue_registry.yaml**: 30-rule issue detection engine
 - **TSGuard**: Time-series stationarity and diagnostic checks
 - **IdentifiabilityScreen**: Causal identification verification
 - **HITL gates**: Human-in-the-loop blocking for critical issues
@@ -899,10 +903,14 @@ Overall path: NOT FULLY IDENTIFIED
 The REPL uses the LLM to parse natural language queries into DAG operations, with a
 regex fallback for common patterns. Results are rendered with Rich formatting.
 
-The PropagationEngine applies seven guardrails: cycle detection, temporal ordering
-validation, maximum path length cap, minimum per-link significance, mixed
-identification flagging, collider conditioning warnings, and delta-method confidence
-intervals for propagated effects.
+The PropagationEngine applies seven guardrails to every path, in strict order: mode
+gating (edge role allowed for the active query mode), counterfactual gating (shock/policy
+permissions), TSGuard gating (time-series diagnostic flags), IssueLedger gating (open
+CRITICAL issues block propagation), reaction-function blocking (unconditional),
+unit compatibility (outcome unit of edge _i_ must match treatment unit of edge _i+1_),
+and frequency alignment (mixed frequencies blocked without explicit bridge). Blocking a
+single edge blocks the entire path. Delta-method standard errors are computed for
+propagated effects with an independence assumption caveat.
 
 ---
 
@@ -965,7 +973,7 @@ the same rigor applied to source code.
    metadata, edge-level citations, and hash-chained audit logs. Every claim traces
    back to a specific graph version.
 
-2. **Assumption audit by design.** 29 issue-detection rules, front-door/back-door
+2. **Assumption audit by design.** 30 issue-detection rules, front-door/back-door
    identification screening, and an immutable ledger run before any result is
    surfaced — not as an afterthought.
 
@@ -978,18 +986,19 @@ the same rigor applied to source code.
    says "causes" unless the path is identified-causal.
 
 5. **Unit-aware propagation.** The PropagationEngine performs dimensional analysis
-   across nine unit types (pp, pct, log_point, bn_kzt, ratio, index, sd, bps,
-   count) during multi-edge effect propagation — catching unit mismatches before
-   they become wrong conclusions.
+   across eight named unit types (pp, pct, log_point, bn_kzt, ratio, index, sd, bps)
+   during multi-edge effect propagation — catching unit mismatches before they become
+   wrong conclusions. Unparseable units fall back to `unknown` and block propagation
+   by default.
 
 6. **Counterfactual gating.** Each edge declares shock/policy eligibility with
    explicit blocking reasons. Three query modes (STRUCTURAL, REDUCED_FORM,
    DESCRIPTIVE) gate which edges participate at runtime, preventing misuse of
    correlational paths in causal claims.
 
-7. **Time-series diagnostics.** TSGuard runs seven checks (leads test, regime
-   stability, HAC sensitivity, Granger pre-test, stationarity, seasonal residuals,
-   structural breaks) and automatically caps claim levels when diagnostics fail.
+7. **Time-series diagnostics.** TSGuard runs seven checks (leads test, residual
+   autocorrelation, HAC sensitivity, lag sensitivity, regime stability, placebo
+   time shift, shock support) and automatically caps claim levels when diagnostics fail.
 
 8. **Always-on sentinel loop.** A background process continuously validates the DAG,
    auto-fixes schema regressions (missing unit specs, malformed IDs), and pops up
@@ -1005,7 +1014,7 @@ the same rigor applied to source code.
 2. **Threats-to-Validity Registry.** A structured, extensible database of known
    threats to causal identification — indexed by design type, with automated
    matching to user DAGs.
-   *(Builds on: issue_registry.yaml, 29 detection rules.)*
+   *(Builds on: issue_registry.yaml, 30 detection rules.)*
 
 3. **Composable Causal World Model.** Merge compatible sub-DAGs into larger causal
    graphs with conflict detection and provenance tracking across research teams.
@@ -1135,4 +1144,4 @@ example DAGs (clinical, social science, marketing, etc.) are especially welcome.
 
 MIT License. See [LICENSE](LICENSE) for the full text.
 
-Copyright (c) 2025 OpenCausality Contributors.
+Copyright (c) 2026 OpenCausality Contributors.
