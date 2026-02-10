@@ -29,7 +29,7 @@ with DAG-Based Reasoning and LLM-Assisted Discovery}
 %% ABSTRACT
 %% ============================================================
 \begin{abstract}
-We introduce \oc{}, an open-source platform that resolves the automation--transparency tradeoff in applied causal inference. \oc{} combines DAG-based causal reasoning with agentic estimation pipelines, where every modeling decision---from identification strategy selection to effect propagation---is logged in a hash-chained audit trail. An always-on \emph{sentinel loop} runs continuously in the background, re-validating the DAG after every change, auto-fixing schema regressions, and surfacing interactive review panels---so analysts never have to hunt for results or wonder whether the specification is still valid. The platform enforces 30 issue-detection rules that catch overclaiming, control shopping, and specification drift; a 7-guardrail propagation engine that performs unit-aware dimensional analysis across multi-edge causal paths; and a 3-stage identifiability screen that downgrades claims based on diagnostic evidence rather than statistical significance alone. A 4-agent agentic loop (DataScout, ModelSmith, Estimator, Judge) iterates between estimation, issue detection, and auto-repair under LLM guidance, while an LLM-assisted pipeline extracts causal claims from the literature and proposes DAG edges---achieving 100\% estimate precision on matched edges in our Kazakhstan bank stress-testing case study while discovering 3 edges absent from the expert-built DAG. All governance decisions---including human-in-the-loop gates and automated patch policies that explicitly prohibit p-hacking---are recorded with cryptographic integrity. \oc{} ships with 19 estimation adapters spanning econometric and ML-based methods, a data-driven causal discovery agent (PC, GES, FCI, NOTEARS), a DoWhy refutation engine for post-estimation robustness, a natural-language query interface, and 204 passing tests across 49{,}743 lines of code.
+We introduce \oc{}, an open-source platform that resolves the automation--transparency tradeoff in applied causal inference. \oc{} combines DAG-based causal reasoning with agentic estimation pipelines, where every modeling decision---from identification strategy selection to effect propagation---is logged in a hash-chained audit trail. An always-on \emph{sentinel loop} runs continuously in the background, re-validating the DAG after every change, auto-fixing schema regressions, and surfacing interactive review panels---so analysts never have to hunt for results or wonder whether the specification is still valid. The platform enforces 30 issue-detection rules that catch overclaiming, control shopping, and specification drift; a 7-guardrail propagation engine that performs unit-aware dimensional analysis across multi-edge causal paths; and a 3-stage identifiability screen that downgrades claims based on diagnostic evidence rather than statistical significance alone. A 4-agent agentic loop (DataScout, ModelSmith, Estimator, Judge) iterates between estimation, issue detection, and auto-repair under LLM guidance, while an LLM-assisted pipeline extracts causal claims from the literature and proposes DAG edges---achieving 100\% estimate precision on matched edges in our Kazakhstan bank stress-testing case study while discovering 9 novel edges absent from the expert-built DAG. All governance decisions---including human-in-the-loop gates and automated patch policies that explicitly prohibit p-hacking---are recorded with cryptographic integrity. \oc{} ships with 19 estimation adapters spanning econometric and ML-based methods, a data-driven causal discovery agent (PC, GES, FCI, NOTEARS), a DoWhy refutation engine for post-estimation robustness, a natural-language query interface, and 204 passing tests across 49{,}743 lines of code.
 \end{abstract}
 
 %% ============================================================
@@ -60,7 +60,7 @@ We introduce \oc{},\footnote{Code and data: \url{https://github.com/LEE-CHENYU/O
     \item An \textbf{always-on sentinel loop} that continuously validates the DAG, auto-heals schema regressions via PatchBot, and surfaces interactive panels (DAG visualization, HITL review board) without manual intervention; and a \textbf{4-agent agentic pipeline} (DataScout, ModelSmith, Estimator, Judge) with LLM-assisted DAG auto-repair (Section~\ref{sec:sentinel}).
 \end{enumerate}
 
-We evaluate \oc{} on a Kazakhstan bank stress-testing case study involving 32 nodes and 20 causal edges, comparing expert-built DAGs against both LLM-extracted and data-driven discovery DAGs, and verifying pipeline reproducibility across 204 tests (Section~\ref{sec:experiments}).
+We evaluate \oc{} on a Kazakhstan bank stress-testing case study involving 32 nodes and 23 causal edges, comparing expert-built DAGs against both LLM-extracted and data-driven discovery DAGs, and verifying pipeline reproducibility across 204 tests (Section~\ref{sec:experiments}).
 
 %% ============================================================
 %% 2  RELATED WORK
@@ -570,7 +570,7 @@ All adapters achieve nominal or above-nominal coverage. IV-2SLS shows the lowest
 
 \subsection{NL-to-DAG Extraction: Kazakhstan Case Study}
 
-We compare an expert-built DAG (32~nodes, 20~edges, approximately 40~hours of construction time) against an LLM-extracted DAG from a single descriptive paragraph about Kazakhstan bank stress testing.
+We compare an expert-built DAG (32~nodes, 23~edges, approximately 40~hours of construction time) against an LLM-extracted DAG from a single descriptive paragraph about Kazakhstan bank stress testing.
 
 \begin{table}[t]
 \centering
@@ -581,12 +581,11 @@ We compare an expert-built DAG (32~nodes, 20~edges, approximately 40~hours of co
 \toprule
 \textbf{Metric} & \textbf{Expert DAG} & \textbf{NL-Extracted DAG} \\
 \midrule
-Nodes & 32 & 17 \\
-Edges & 20 & 13 \\
-Structural matches & --- & 4/20 (20\%) \\
-Estimate match (common edges) & --- & 4/4 (100\%) \\
+Nodes & 32 & 18 \\
+Edges & 23 & 12 \\
+Structural matches & --- & 3/23 (13\%) \\
+Estimate match (common edges) & --- & 3/3 (100\%) \\
 NL-only edges & --- & 9 \\
-Novel edges (lit.-supported) & --- & 3 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -607,33 +606,33 @@ Figure~\ref{fig:nl2dag} illustrates the overlap between expert and NL-extracted 
     \node[font=\small\bfseries, red!70] at (2.8, 1.2) {NL-Extracted};
 
     % Expert only
-    \node[font=\footnotesize, text width=2cm, align=center] at (-2.5, 0) {16 edges\\{\scriptsize (FX intervention,\\deposit insurance,\\loan policy, ...)}};
+    \node[font=\footnotesize, text width=2cm, align=center] at (-2.5, 0) {20 edges\\{\scriptsize (oil shocks, policy\\rate, IV construct,\\balance sheet, ...)}};
 
     % Overlap
-    \node[font=\footnotesize, text width=1.8cm, align=center] at (0, 0) {\textbf{4 matched}\\{\scriptsize 100\% estimate\\precision}};
+    \node[font=\footnotesize, text width=1.8cm, align=center] at (0, 0) {\textbf{3 matched}\\{\scriptsize 100\% estimate\\precision}};
 
     % NL only
-    \node[font=\footnotesize, text width=2.2cm, align=center] at (2.6, 0) {3 novel\\{\scriptsize oil$\to$dollariz.,\\lending$\to$GDP,\\risk$\to$interbank}};
+    \node[font=\footnotesize, text width=2.2cm, align=center] at (2.6, 0) {9 novel\\{\scriptsize VIX$\to$funding,\\income$\to$CoR,\\PPOP$\to$capital}};
 
     % Counts
-    \node[font=\scriptsize, gray] at (-1.2, -2.2) {32 nodes, 20 edges};
-    \node[font=\scriptsize, gray] at (1.2, -2.2) {17 nodes, 13 edges};
+    \node[font=\scriptsize, gray] at (-1.2, -2.2) {32 nodes, 23 edges};
+    \node[font=\scriptsize, gray] at (1.2, -2.2) {18 nodes, 12 edges};
     \end{tikzpicture}
-    \caption{Comparison of expert-built and NL-extracted DAGs for the Kazakhstan case study. The 4~matched edges achieve 100\% estimate precision. The NL pipeline discovers 3~novel edges with literature support, while missing 16~edges encoding country-specific regulatory details.}
+    \caption{Comparison of expert-built and NL-extracted DAGs for the Kazakhstan case study. The 3~matched edges achieve 100\% estimate precision. The NL pipeline discovers 9~novel edges, while missing 20~edges encoding upstream shock transmission and banking balance sheet mechanics.}
     \label{fig:nl2dag}
 \end{figure}
 
-The NL pipeline achieves 20\% structural recall---unsurprising given that a single paragraph cannot encode country-specific regulatory details (central bank FX intervention rules, deposit insurance thresholds, loan classification policy changes). However, all 4~matched edges produce statistically equivalent estimates, and the pipeline discovers 3~novel edges with literature support:
+The NL pipeline achieves 13\% structural recall---unsurprising given that a single paragraph cannot encode upstream shock transmission (oil supply/demand shocks to exchange rate), monetary policy mechanics, or banking balance sheet identities. However, all 3~matched edges produce statistically equivalent estimates, and the pipeline discovers 9~novel edges. Three are particularly notable:
 
 \begin{itemize}[leftmargin=*, itemsep=1pt]
-    \item Oil price volatility $\to$ deposit dollarization~\citep{dalgic2024dollarization}
-    \item Bank lending standards $\to$ GDP growth (bank lending channel)
-    \item Global risk appetite $\to$ domestic interbank rates
+    \item Global risk appetite (VIX) $\to$ bank funding costs (risk-taking channel)
+    \item Household real income $\to$ cost of risk (bank lending channel)
+    \item Pre-provision operating profit $\to$ total capital (fundamental banking relationship)
 \end{itemize}
 
 \subsection{End-to-End Reproducibility}
 
-We run the full agentic pipeline on the KSPI K2 DAG (20~edges) and compare against the expert manual baseline. The pipeline achieves 100\% estimate match (20/20~edges), confirming reproducibility across pipeline modes and adapter dispatch.
+We run the full agentic pipeline on the KSPI K2 DAG (23~edges) and compare against the expert manual baseline. The pipeline achieves 100\% estimate match (23/23~edges), confirming reproducibility across pipeline modes and adapter dispatch.
 
 \subsection{Issue Detection Effectiveness}
 

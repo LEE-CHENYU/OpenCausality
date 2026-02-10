@@ -194,7 +194,7 @@ estimating each edge independently while enforcing consistency across the full D
 
 ### Approach 1: Manual DAG Construction
 
-The expert-built DAG contains 32 nodes and 20 directed edges spanning macroeconomic
+The expert-built DAG contains 32 nodes and 23 directed edges spanning macroeconomic
 variables (exchange rate, CPI, GDP, policy rate), banking variables (capital adequacy,
 NPLs, loan growth, deposit dollarization), and external variables (oil price, global
 risk appetite). Building it required ~40 hours of literature review and consultation
@@ -252,35 +252,36 @@ build one from scratch.
 
 | Metric                         | Expert DAG | NL-Extracted DAG |
 |--------------------------------|------------|------------------|
-| Nodes                          | 32         | 17               |
-| Edges                          | 20         | 13               |
-| Structural matches             | --         | 4 / 20 (20%)     |
+| Nodes                          | 32         | 18               |
+| Edges                          | 23         | 12               |
+| Structural matches             | --         | 3 / 23 (13%)     |
 | Novel edges (not in expert)    | --         | 9                |
-| Missing edges (expert only)    | --         | 16               |
-| Edges estimated                | 26         | 9                |
-| Estimate match (common edges)  | --         | 4/4 (100%)       |
+| Missing edges (expert only)    | --         | 20               |
+| Estimate match (common edges)  | --         | 3/3 (100%)       |
 
 The NL pipeline extracts causal claims from a single paragraph; recall improves
-with longer or multi-document input. All 4 overlapping edges produce identical
+with longer or multi-document input. All 3 overlapping edges produce identical
 estimates to the expert manual pipeline.
 
 ### What NL Found That Experts Missed
 
-The NL extraction pipeline identified three edges absent from the expert-built DAG:
-a direct link from oil price volatility to deposit dollarization (supported by
-Kose et al., 2019), a feedback edge from bank lending standards to GDP growth
-(consistent with the bank lending channel literature), and a link from global risk
-appetite to domestic interbank rates. These edges are plausible and supported by
-citations in the source literature. They represent the kind of cross-domain connections
+The NL extraction pipeline identified nine edges absent from the expert-built DAG.
+Three are particularly notable: a link from global risk appetite (VIX) to bank
+funding costs (consistent with the risk-taking channel literature), a household
+income squeeze channel from real income to cost of risk (the bank lending channel),
+and a direct link from pre-provision operating profit to total capital (a fundamental
+banking relationship). These edges represent the kind of cross-domain connections
 that domain specialists may overlook when focused on a specific transmission channel.
 
 ### What Experts Built That NL Missed
 
-Six edges in the expert DAG were absent from NL extraction. These involved institutional
-mechanisms: the central bank's FX intervention rule, deposit insurance threshold
-effects, and the 2016 loan classification policy change. Literature-based extraction
-cannot capture country-specific regulatory details that are rarely stated as explicit
-causal claims in papers.
+Twenty edges in the expert DAG were absent from NL extraction. These span upstream
+shock transmission (oil supply/demand shocks to exchange rate, VIX to exchange rate),
+monetary policy mechanics (CPI and FX to policy rate), banking balance sheet mechanics
+(loan portfolio and portfolio mix to RWA, total capital to K2 ratio), and
+country-specific institutional details (the IV instrument construction, nominal-to-real
+deflation identities). Literature-based extraction from a single paragraph cannot
+capture the full chain from global shocks to bank capital.
 
 ### Generated Panels
 
@@ -957,7 +958,7 @@ propagated effects with an independence assumption caveat.
   LLM providers (9), Panel FE adapter (3), Regression Kink adapter (4),
   PDF parser (3).
 - Full test suite: 165 passing tests.
-- End-to-end pipeline verified: 100% estimate match (20/20 edges) between agentic
+- End-to-end pipeline verified: 100% estimate match (23/23 edges) between agentic
   pipeline and expert manual baseline on KSPI K2 DAG.
 
 ---
