@@ -43,6 +43,11 @@ allowed_auto_fixes:
     modes: ["EXPLORATION"]
     requires_logging: true
 
+  - action: "fix_orphan_identity_edge"
+    description: "Create identity edges for orphan nodes with known formulas"
+    modes: ["EXPLORATION"]
+    requires_logging: true
+
 disallowed_auto_fixes:
   - action: "change_sample_window"
     reason: "Risk of chasing significance"
