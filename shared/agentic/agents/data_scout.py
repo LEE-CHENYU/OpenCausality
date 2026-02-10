@@ -65,6 +65,12 @@ class DataCard:
             "row_count": self.row_count,
             "date_range": list(self.date_range) if self.date_range else None,
             "quality_notes": self.quality_notes,
+            "provenance": {
+                "source": "data_scout",
+                "added_at": self.download_time.strftime("%Y-%m-%d"),
+                "connector": self.connector,
+                "dataset": self.dataset,
+            },
         }
 
     def save(self, output_dir: Path) -> Path:

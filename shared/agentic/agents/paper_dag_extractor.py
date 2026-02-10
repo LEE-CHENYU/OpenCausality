@@ -20,6 +20,7 @@ from __future__ import annotations
 import json
 import logging
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -60,6 +61,15 @@ class ProposedEdge:
     is_existing: bool = False  # True if matched to existing DAG edge
 
     def to_dict(self) -> dict[str, Any]:
+        provenance: dict[str, Any] = {
+            "source": "paper_scout",
+            "added_at": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+        }
+        if self.evidence:
+            provenance["paper_doi"] = self.evidence[0].paper_doi
+            provenance["paper_title"] = self.evidence[0].paper_title
+        provenance["match_confidence"] = self.match_confidence
+
         return {
             "from_node": self.from_node,
             "to_node": self.to_node,
@@ -69,6 +79,7 @@ class ProposedEdge:
             "requires_new_nodes": self.requires_new_nodes,
             "match_confidence": self.match_confidence,
             "is_existing": self.is_existing,
+            "provenance": provenance,
         }
 
 

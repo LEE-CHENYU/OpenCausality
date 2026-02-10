@@ -435,6 +435,22 @@
             margin-left: 4px;
             vertical-align: middle;
         }
+        /* Provenance badges */
+        .provenance-badge {
+            display: inline-block;
+            font-size: 8px;
+            font-weight: 600;
+            padding: 1px 5px;
+            border-radius: 2px;
+            letter-spacing: 0.3px;
+            margin-left: 4px;
+            vertical-align: middle;
+            color: #fff;
+        }
+        .provenance-badge.manual { background: #6b7280; }
+        .provenance-badge.paper_scout { background: #0d9488; }
+        .provenance-badge.data_scout { background: #4f46e5; }
+        .provenance-badge.discovery_agent { background: #ea580c; }
         /* Causal assessment section in sidebar */
         .causal-assessment {
             margin-top: 6px;
@@ -523,7 +539,8 @@ const NODES = [
     "frequency": "monthly",
     "observed": true,
     "latent": false,
-    "orphan": false
+    "orphan": false,
+    "provenance_source": "manual"
   },
   {
     "id": "oil_demand_shock",
@@ -533,7 +550,8 @@ const NODES = [
     "frequency": "monthly",
     "observed": true,
     "latent": false,
-    "orphan": false
+    "orphan": false,
+    "provenance_source": "manual"
   },
   {
     "id": "global_activity_shock",
@@ -543,7 +561,8 @@ const NODES = [
     "frequency": "monthly",
     "observed": true,
     "latent": false,
-    "orphan": true
+    "orphan": true,
+    "provenance_source": "manual"
   },
   {
     "id": "vix_shock",
@@ -553,7 +572,8 @@ const NODES = [
     "frequency": "daily",
     "observed": true,
     "latent": false,
-    "orphan": false
+    "orphan": false,
+    "provenance_source": "manual"
   },
   {
     "id": "kzt_usd",
@@ -563,7 +583,8 @@ const NODES = [
     "frequency": "daily",
     "observed": true,
     "latent": false,
-    "orphan": false
+    "orphan": false,
+    "provenance_source": "manual"
   },
   {
     "id": "brent_price",
@@ -573,7 +594,8 @@ const NODES = [
     "frequency": "daily",
     "observed": true,
     "latent": false,
-    "orphan": false
+    "orphan": false,
+    "provenance_source": "manual"
   },
   {
     "id": "nbk_policy_rate",
@@ -583,7 +605,8 @@ const NODES = [
     "frequency": "event",
     "observed": true,
     "latent": false,
-    "orphan": false
+    "orphan": false,
+    "provenance_source": "manual"
   },
   {
     "id": "cpi_headline",
@@ -593,7 +616,8 @@ const NODES = [
     "frequency": "monthly",
     "observed": true,
     "latent": false,
-    "orphan": false
+    "orphan": false,
+    "provenance_source": "manual"
   },
   {
     "id": "cpi_tradable",
@@ -603,7 +627,8 @@ const NODES = [
     "frequency": "monthly",
     "observed": true,
     "latent": false,
-    "orphan": false
+    "orphan": false,
+    "provenance_source": "manual"
   },
   {
     "id": "cpi_nontradable",
@@ -613,7 +638,8 @@ const NODES = [
     "frequency": "monthly",
     "observed": true,
     "latent": false,
-    "orphan": false
+    "orphan": false,
+    "provenance_source": "manual"
   },
   {
     "id": "imported_inflation_instrument",
@@ -623,7 +649,8 @@ const NODES = [
     "frequency": "monthly",
     "observed": true,
     "latent": false,
-    "orphan": false
+    "orphan": false,
+    "provenance_source": "manual"
   },
   {
     "id": "E_import_share",
@@ -633,7 +660,8 @@ const NODES = [
     "frequency": "static",
     "observed": true,
     "latent": false,
-    "orphan": true
+    "orphan": true,
+    "provenance_source": "manual"
   },
   {
     "id": "nominal_income",
@@ -643,7 +671,8 @@ const NODES = [
     "frequency": "quarterly",
     "observed": true,
     "latent": false,
-    "orphan": false
+    "orphan": false,
+    "provenance_source": "manual"
   },
   {
     "id": "real_income",
@@ -653,7 +682,8 @@ const NODES = [
     "frequency": "quarterly",
     "observed": true,
     "latent": false,
-    "orphan": false
+    "orphan": false,
+    "provenance_source": "manual"
   },
   {
     "id": "wage_income",
@@ -663,7 +693,8 @@ const NODES = [
     "frequency": "quarterly",
     "observed": true,
     "latent": false,
-    "orphan": true
+    "orphan": true,
+    "provenance_source": "manual"
   },
   {
     "id": "transfer_income",
@@ -673,7 +704,8 @@ const NODES = [
     "frequency": "quarterly",
     "observed": true,
     "latent": false,
-    "orphan": false
+    "orphan": false,
+    "provenance_source": "manual"
   },
   {
     "id": "nominal_expenditure",
@@ -683,7 +715,8 @@ const NODES = [
     "frequency": "quarterly",
     "observed": true,
     "latent": false,
-    "orphan": true
+    "orphan": true,
+    "provenance_source": "manual"
   },
   {
     "id": "real_expenditure",
@@ -693,7 +726,8 @@ const NODES = [
     "frequency": "quarterly",
     "observed": true,
     "latent": false,
-    "orphan": false
+    "orphan": false,
+    "provenance_source": "manual"
   },
   {
     "id": "npl_aggregate",
@@ -703,7 +737,8 @@ const NODES = [
     "frequency": "monthly",
     "observed": true,
     "latent": false,
-    "orphan": true
+    "orphan": true,
+    "provenance_source": "manual"
   },
   {
     "id": "npl_kspi",
@@ -713,7 +748,8 @@ const NODES = [
     "frequency": "quarterly",
     "observed": true,
     "latent": false,
-    "orphan": false
+    "orphan": false,
+    "provenance_source": "manual"
   },
   {
     "id": "cor_kspi",
@@ -723,7 +759,8 @@ const NODES = [
     "frequency": "quarterly",
     "observed": true,
     "latent": false,
-    "orphan": false
+    "orphan": false,
+    "provenance_source": "manual"
   },
   {
     "id": "loan_portfolio_kspi",
@@ -733,7 +770,8 @@ const NODES = [
     "frequency": "quarterly",
     "observed": true,
     "latent": false,
-    "orphan": false
+    "orphan": false,
+    "provenance_source": "manual"
   },
   {
     "id": "portfolio_mix_kspi",
@@ -743,7 +781,8 @@ const NODES = [
     "frequency": "quarterly",
     "observed": true,
     "latent": false,
-    "orphan": false
+    "orphan": false,
+    "provenance_source": "manual"
   },
   {
     "id": "deposits_kspi",
@@ -753,7 +792,8 @@ const NODES = [
     "frequency": "quarterly",
     "observed": true,
     "latent": false,
-    "orphan": true
+    "orphan": true,
+    "provenance_source": "manual"
   },
   {
     "id": "deposit_cost_kspi",
@@ -763,7 +803,8 @@ const NODES = [
     "frequency": "quarterly",
     "observed": true,
     "latent": false,
-    "orphan": false
+    "orphan": false,
+    "provenance_source": "manual"
   },
   {
     "id": "rwa_kspi",
@@ -773,7 +814,8 @@ const NODES = [
     "frequency": "quarterly",
     "observed": true,
     "latent": false,
-    "orphan": false
+    "orphan": false,
+    "provenance_source": "manual"
   },
   {
     "id": "ppop_kspi",
@@ -783,7 +825,8 @@ const NODES = [
     "frequency": "quarterly",
     "observed": true,
     "latent": false,
-    "orphan": true
+    "orphan": true,
+    "provenance_source": "manual"
   },
   {
     "id": "total_capital_kspi",
@@ -793,7 +836,8 @@ const NODES = [
     "frequency": "quarterly",
     "observed": true,
     "latent": false,
-    "orphan": false
+    "orphan": false,
+    "provenance_source": "manual"
   },
   {
     "id": "k2_ratio_kspi",
@@ -803,7 +847,8 @@ const NODES = [
     "frequency": "quarterly",
     "observed": true,
     "latent": false,
-    "orphan": false
+    "orphan": false,
+    "provenance_source": "manual"
   },
   {
     "id": "payments_revenue_kspi",
@@ -813,7 +858,8 @@ const NODES = [
     "frequency": "quarterly",
     "observed": true,
     "latent": false,
-    "orphan": false
+    "orphan": false,
+    "provenance_source": "manual"
   },
   {
     "id": "marketplace_revenue_kspi",
@@ -823,7 +869,8 @@ const NODES = [
     "frequency": "quarterly",
     "observed": true,
     "latent": false,
-    "orphan": true
+    "orphan": true,
+    "provenance_source": "manual"
   },
   {
     "id": "fintech_revenue_kspi",
@@ -833,7 +880,8 @@ const NODES = [
     "frequency": "quarterly",
     "observed": true,
     "latent": false,
-    "orphan": true
+    "orphan": true,
+    "provenance_source": "manual"
   }
 ];
 const EDGES = [
@@ -845,6 +893,8 @@ const EDGES = [
     "expected_sign": "negative",
     "interpretation": "Oil price response to supply shock",
     "notes": "Exogenous supply shock identification from Baumeister.",
+    "provenance_source": "manual",
+    "provenance_detail": "",
     "strategy_type": "exogenous_shock",
     "strategy_argument": "Baumeister oil supply shocks are exogenous to KZ demand via SVAR restrictions.",
     "strategy_key_assumption": "SVAR identifying restrictions correctly separate supply from demand shocks.",
@@ -909,6 +959,8 @@ const EDGES = [
     "expected_sign": "positive",
     "interpretation": "KZT response to oil supply shock",
     "notes": "Oil exporter commodity currency dynamics.",
+    "provenance_source": "manual",
+    "provenance_detail": "",
     "strategy_type": "exogenous_shock",
     "strategy_argument": "Baumeister oil supply shocks are exogenous to Kazakhstan via SVAR restrictions.",
     "strategy_key_assumption": "Small open economy cannot influence global oil supply.",
@@ -973,6 +1025,8 @@ const EDGES = [
     "expected_sign": "negative",
     "interpretation": "KZT response to oil demand shock",
     "notes": "Commodity currency responds to global demand.",
+    "provenance_source": "manual",
+    "provenance_detail": "",
     "strategy_type": "exogenous_shock",
     "strategy_argument": "Baumeister oil demand shocks are exogenous to Kazakhstan via SVAR restrictions.",
     "strategy_key_assumption": "Kazakhstan is too small to drive global oil demand.",
@@ -1037,6 +1091,8 @@ const EDGES = [
     "expected_sign": "positive",
     "interpretation": "KZT response to global risk aversion",
     "notes": "EM risk-off channel.",
+    "provenance_source": "manual",
+    "provenance_detail": "",
     "strategy_type": "small_open_economy",
     "strategy_argument": "VIX innovations reflect global risk aversion, exogenous to Kazakhstan-specific factors.",
     "strategy_key_assumption": "Kazakhstan financial markets do not influence global risk sentiment.",
@@ -1101,6 +1157,8 @@ const EDGES = [
     "expected_sign": "positive",
     "interpretation": "Differential inflation response by import intensity",
     "notes": "Block A validated result: 11.3% FX pass-through to tradable CPI.",
+    "provenance_source": "manual",
+    "provenance_detail": "",
     "strategy_type": "validated_prior",
     "strategy_argument": "Block A LP-IV estimate using regional import-share exposure variation.",
     "strategy_key_assumption": "Pre-period import shares are exogenous to post-period inflation trends.",
@@ -1153,6 +1211,8 @@ const EDGES = [
     "expected_sign": "any",
     "interpretation": "Falsification test for FX pass-through",
     "notes": "Block A falsification: Near-zero pass-through to non-tradable CPI.",
+    "provenance_source": "manual",
+    "provenance_detail": "",
     "strategy_type": "validated_prior",
     "strategy_argument": "Block A falsification test using non-tradable goods as placebo.",
     "strategy_key_assumption": "Non-tradable CPI should not respond to FX if pass-through is import-driven.",
@@ -1198,6 +1258,8 @@ const EDGES = [
     "expected_sign": "positive",
     "interpretation": "NBK reaction function to inflation",
     "notes": "NBK responds to inflation. Requires nbk_policy_rate connector.",
+    "provenance_source": "manual",
+    "provenance_detail": "",
     "strategy_type": "none",
     "strategy_argument": "Reaction function \u2014 endogenous policy response, no identification strategy.",
     "strategy_key_assumption": "N/A \u2014 this edge documents correlation, not causal effect.",
@@ -1262,6 +1324,8 @@ const EDGES = [
     "expected_sign": "positive",
     "interpretation": "NBK reaction function to FX depreciation",
     "notes": "NBK responds to FX conditions. Requires nbk_policy_rate connector.",
+    "provenance_source": "manual",
+    "provenance_detail": "",
     "strategy_type": "none",
     "strategy_argument": "Reaction function \u2014 endogenous policy response, no identification strategy.",
     "strategy_key_assumption": "N/A \u2014 this edge documents correlation, not causal effect.",
@@ -1319,6 +1383,8 @@ const EDGES = [
     "expected_sign": "positive",
     "interpretation": "Association between policy rate and KSPI funding cost",
     "notes": "Funding cost channel. Requires both connectors.",
+    "provenance_source": "manual",
+    "provenance_detail": "",
     "strategy_type": "institutional_passthrough",
     "strategy_argument": "NBK base rate mechanically feeds into regulated deposit rate corridors.",
     "strategy_key_assumption": "Deposit rate corridor regulation ensures mechanical pass-through.",
@@ -1385,6 +1451,8 @@ const EDGES = [
     "expected_sign": "positive",
     "interpretation": "Association between policy rate and KSPI credit losses",
     "notes": "Borrower stress channel. Lagged 2Q for credit deterioration.",
+    "provenance_source": "manual",
+    "provenance_detail": "",
     "strategy_type": "institutional_passthrough",
     "strategy_argument": "Higher policy rate increases borrower debt service costs, raising default risk.",
     "strategy_key_assumption": "Rate pass-through to lending rates is near-complete in KZ banking.",
@@ -1451,6 +1519,8 @@ const EDGES = [
     "expected_sign": "positive",
     "interpretation": "Nominal income response to external inflation (IV)",
     "notes": "Block B validated: LP-IV estimate using imported inflation IV.",
+    "provenance_source": "manual",
+    "provenance_detail": "",
     "strategy_type": "validated_prior",
     "strategy_argument": "Block B LP-IV using imported inflation instrument (FX x pre-period import share).",
     "strategy_key_assumption": "Exclusion restriction: imported inflation IV affects income only through prices.",
@@ -1503,6 +1573,8 @@ const EDGES = [
     "expected_sign": "negative",
     "interpretation": "MPC-like ratio to FX shocks",
     "notes": "Block F validated: IRF(0) = -0.10 for real expenditure.",
+    "provenance_source": "manual",
+    "provenance_detail": "",
     "strategy_type": "validated_prior",
     "strategy_argument": "Block F LP estimate using regional panel variation in FX exposure.",
     "strategy_key_assumption": "Regional FX exposure variation is exogenous to expenditure trends.",
@@ -1555,6 +1627,8 @@ const EDGES = [
     "expected_sign": "positive",
     "interpretation": "Aggregate NPL response to imported inflation shock",
     "notes": "Reduced-form NPL response. Cannot decompose channels without loan-level data.",
+    "provenance_source": "manual",
+    "provenance_detail": "",
     "strategy_type": "iv",
     "strategy_argument": "Imported inflation instrument (FX x pre-period import share) provides exogenous variation.",
     "strategy_key_assumption": "Exclusion: imported inflation affects NPL only through household income channel.",
@@ -1621,6 +1695,8 @@ const EDGES = [
     "expected_sign": "positive",
     "interpretation": "Total provisioning response to imported inflation shock",
     "notes": "Reduced-form CoR response. IFRS 9 overlay is latent.",
+    "provenance_source": "manual",
+    "provenance_detail": "",
     "strategy_type": "iv",
     "strategy_argument": "Imported inflation instrument (FX x pre-period import share) provides exogenous variation.",
     "strategy_key_assumption": "Exclusion: imported inflation affects CoR only through household income/default channel.",
@@ -1687,6 +1763,8 @@ const EDGES = [
     "expected_sign": "positive",
     "interpretation": "Association between spending and KSPI payments revenue",
     "notes": "Spending -&gt; GMV -&gt; Interchange -&gt; Revenue. Requires KSPI connector.",
+    "provenance_source": "manual",
+    "provenance_detail": "",
     "strategy_type": "none",
     "strategy_argument": "No identification strategy \u2014 confounded by KSPI market share growth and platform dynamics.",
     "strategy_key_assumption": "N/A \u2014 association only.",
@@ -1753,6 +1831,8 @@ const EDGES = [
     "expected_sign": "negative",
     "interpretation": "Capital impact from provisioning",
     "notes": "Provisioning reduces capital. Control for PPOP.",
+    "provenance_source": "manual",
+    "provenance_detail": "",
     "strategy_type": "accounting_identity",
     "strategy_argument": "Provisions directly reduce retained earnings and thus regulatory capital.",
     "strategy_key_assumption": "IFRS accounting rules mechanically link provisions to capital.",
@@ -1803,6 +1883,8 @@ const EDGES = [
     "expected_sign": "positive",
     "interpretation": "Mechanical volume effect on RWA",
     "notes": "Volume \u00d7 avg RW. Mechanical relationship.",
+    "provenance_source": "manual",
+    "provenance_detail": "",
     "strategy_type": "accounting_identity",
     "strategy_argument": "RWA = Loan volume x average risk weight. Volume effect is mechanical.",
     "strategy_key_assumption": "Average risk weight is approximately constant over the sample period.",
@@ -1853,6 +1935,8 @@ const EDGES = [
     "expected_sign": "any",
     "interpretation": "RWA composition effect from product mix shifts",
     "notes": "Product mix shifts risk weights. NBK uses 150%+ for unsecured.",
+    "provenance_source": "manual",
+    "provenance_detail": "",
     "strategy_type": "none",
     "strategy_argument": "No identification strategy \u2014 portfolio mix changes are endogenous to KSPI business decisions.",
     "strategy_key_assumption": "N/A \u2014 association only.",
@@ -1919,6 +2003,8 @@ const EDGES = [
     "expected_sign": "",
     "interpretation": "K2 identity: Capital / RWA",
     "notes": "K2 = Total Capital / RWA. Mechanical identity.",
+    "provenance_source": "manual",
+    "provenance_detail": "",
     "strategy_type": "accounting_identity",
     "strategy_argument": "K2 = Total Capital / RWA is a regulatory definition.",
     "strategy_key_assumption": "Regulatory definition is stable over the sample period.",
@@ -1962,6 +2048,8 @@ const EDGES = [
     "expected_sign": "",
     "interpretation": "K2 identity: Capital / RWA",
     "notes": "K2 = Total Capital / RWA. Mechanical identity.",
+    "provenance_source": "manual",
+    "provenance_detail": "",
     "strategy_type": "accounting_identity",
     "strategy_argument": "K2 = Total Capital / RWA is a regulatory definition.",
     "strategy_key_assumption": "Regulatory definition is stable over the sample period.",
@@ -2768,7 +2856,7 @@ const ACTIONS_BY_RULE = {
     ]
   }
 };
-const GENERATED_AT = "2026-02-10 04:15:03 UTC";
+const GENERATED_AT = "2026-02-10 04:25:21 UTC";
 const ISSUE_GUIDANCE = {
   "SIGNIFICANT_BUT_NOT_IDENTIFIED:fx_to_cpi_tradable": "**Finding**: The edge **fx_to_cpi_tradable** has a statistically significant estimated effect (**\u03b2 = 0.113**, **SE = 0.028**, **p = 0.0001**, **N = 1200**) while being labeled **IDENTIFIED_CAUSAL** under **IMMUTABLE_EVIDENCE**.\n\n**Concern**: Even with **p = 0.0001**, statistical significance alone does not justify a causal claim, and with **no failed diagnostics reported** there is still an identification gap: the evidence presented supports a precisely estimated association but does not document the specific quasi-experimental/exogeneity conditions required for **IDENTIFIED_CAUSAL**.\n\n**Recommendation**: **Downgrade the claim level from IDENTIFIED_CAUSAL to ASSOCIATIONAL (or \u201cNOT_IDENTIFIED\u201d) unless you can explicitly document the identification argument** tied to \u201cIMMUTABLE_EVIDENCE\u201d (e.g., a clearly exogenous FX shock/assignment mechanism), keeping **\u03b2 = 0.113 (p = 0.0001)** as strong evidence of association but not, by itself, causation.",
   "RATING_DIAGNOSTICS_CONFLICT:cpi_to_nbk_rate": "**Finding**: The cpi_to_nbk_rate edge is rated **A** even though the estimated effect is essentially null (**coefficient = -0.5353**, **SE = 13.9656**, **p = 0.9694**, **N = 67**) and it **fails sign_consistency**.\n\n**Concern**: An **A-rating** is not credible here because **sign_consistency failed**, indicating the estimated direction is unstable across horizons/specifications in the local projections setup, and the extremely weak statistical signal (**p = 0.9694**) makes any causal directional claim at the **BLOCKED_ID** level highly unreliable.\n\n**Recommendation**: **Downgrade or block** this edge for causal interpretation (at minimum remove the **A** rating) unless you can resolve the **sign_consistency** failure (e.g., by tightening the LP specification/horizon set or addressing instability); with **p = 0.9694**, the practical default should be to treat this as **no evidence of an effect** rather than an A-rated causal link.",
@@ -2814,6 +2902,19 @@ const CAUSAL_ASSESSMENTS = {};
 function escHtml(s) {
     if (!s) return '';
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+var PROVENANCE_LABELS = {
+    'manual': 'Manual',
+    'paper_scout': 'PaperScout',
+    'data_scout': 'DataScout',
+    'discovery_agent': 'Discovery'
+};
+
+function provenanceBadge(src) {
+    if (!src) return '';
+    var label = PROVENANCE_LABELS[src] || src;
+    return '<span class="provenance-badge ' + escHtml(src) + '">' + escHtml(label) + '</span>';
 }
 
 function renderMarkdown(s) {
@@ -3044,6 +3145,7 @@ if (allIssues.length === 0) {
         var edgeObj = EDGES.find(function(e2) { return e2.id === issue.edge_id; });
         var stratTag = (edgeObj && edgeObj.strategy_type) ?
             '<span class="strategy-tag">' + escHtml(edgeObj.strategy_type.replace(/_/g, ' ')) + '</span>' : '';
+        var provBadge = (edgeObj && edgeObj.provenance_source) ? provenanceBadge(edgeObj.provenance_source) : '';
         var caText = (edgeObj && edgeObj.causal_assessment) ? edgeObj.causal_assessment :
             (CAUSAL_ASSESSMENTS[issue.edge_id] || '');
         var verdict = extractVerdict(caText);
@@ -3057,7 +3159,7 @@ if (allIssues.length === 0) {
             '<div class="pitfall-item-header" data-header="1">' +
                 '<span class="pitfall-edge">' + escHtml(issue.edge_id) + '</span>' +
                 '<span class="pitfall-severity ' + issue.severity + '">' + issue.severity + '</span>' +
-                verdictBadge + stratTag +
+                verdictBadge + provBadge + stratTag +
                 '<span class="pitfall-resolved-check">&#10003;</span>' +
             '</div>' +
             '<div class="pitfall-msg">' + escHtml(issue.message) + '</div>' +
@@ -3110,9 +3212,10 @@ if (cleanEdges.length > 0) {
             '<div class="pd-llm-guidance"><div class="pd-llm-guidance-title">AI Analysis</div>' +
             renderMarkdown(annText) + '</div>' : '';
 
-        // Strategy tag and verdict badge for clean edges
+        // Strategy tag, provenance badge, and verdict badge for clean edges
         var cleanStratTag = edge.strategy_type ?
             '<span class="strategy-tag">' + escHtml(edge.strategy_type.replace(/_/g, ' ')) + '</span>' : '';
+        var cleanProvBadge = edge.provenance_source ? provenanceBadge(edge.provenance_source) : '';
         var cleanCaText = edge.causal_assessment || CAUSAL_ASSESSMENTS[edge.id] || '';
         var cleanVerdict = extractVerdict(cleanCaText);
         var cleanVerdictBadge = cleanVerdict ?
@@ -3124,7 +3227,7 @@ if (cleanEdges.length > 0) {
         div.innerHTML =
             '<div class="pitfall-item-header" data-header="1">' +
                 '<span class="pitfall-edge">' + escHtml(edge.id) + '</span>' +
-                ratingHtml + cleanVerdictBadge + cleanStratTag +
+                ratingHtml + cleanVerdictBadge + cleanProvBadge + cleanStratTag +
             '</div>' +
             statsHtml +
             '<div class="pitfall-decision" data-decision-key="edge:' + escHtml(edge.id) + '">' +
@@ -3442,6 +3545,11 @@ function showEdgeTooltip(e, d) {
     if (d.design) html += '<div class="tooltip-row"><span class="tooltip-label">Design</span><span class="tooltip-value">' + d.design + '</span></div>';
     if (d.strategy_type) html += '<div class="tooltip-row"><span class="tooltip-label">ID Strategy</span><span class="tooltip-value">' + d.strategy_type.replace(/_/g, ' ') + '</span></div>';
     if (d.strategy_argument) html += '<div class="tooltip-row"><span class="tooltip-label">Argument</span><span class="tooltip-value" style="text-align:left;font-weight:400;font-size:10px">' + d.strategy_argument + '</span></div>';
+    if (d.provenance_source) {
+        var srcLabel = PROVENANCE_LABELS[d.provenance_source] || d.provenance_source;
+        var srcExtra = d.provenance_detail ? ' (' + escHtml(d.provenance_detail) + ')' : '';
+        html += '<div class="tooltip-row"><span class="tooltip-label">Source</span><span class="tooltip-value">' + escHtml(srcLabel) + srcExtra + '</span></div>';
+    }
     if (d.diagnostics && d.diagnostics.length > 0) {
         var passed = d.diagnostics.filter(function(x) { return x.passed; }).length;
         html += '<div class="tooltip-row"><span class="tooltip-label">Diagnostics</span><span class="tooltip-value">' + passed + '/' + d.diagnostics.length + ' pass</span></div>';
@@ -3534,10 +3642,15 @@ function showNodeTooltip(e, d) {
     if (d.unit) html += '<div class="tooltip-row"><span class="tooltip-label">Unit</span><span class="tooltip-value">' + d.unit + '</span></div>';
     if (d.frequency) html += '<div class="tooltip-row"><span class="tooltip-label">Frequency</span><span class="tooltip-value">' + d.frequency + '</span></div>';
     if (d.latent) html += '<div class="tooltip-row"><span class="tooltip-label">Observed</span><span class="tooltip-value null">Latent (unobserved)</span></div>';
+    if (d.provenance_source) {
+        var nodeSrcLabel = PROVENANCE_LABELS[d.provenance_source] || d.provenance_source;
+        html += '<div class="tooltip-row"><span class="tooltip-label">Source</span><span class="tooltip-value">' + escHtml(nodeSrcLabel) + '</span></div>';
+    }
     if (d.orphan) {
         var orphanText = ORPHAN_EXPLANATIONS[d.id] || '';
         html += '<div class="tooltip-orphan">';
         html += '<span class="tooltip-orphan-tag">UNWIRED</span>';
+        if (d.provenance_source) html += provenanceBadge(d.provenance_source);
         if (orphanText) {
             html += renderOrphanSections(orphanText);
         } else {

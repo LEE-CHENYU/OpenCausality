@@ -185,6 +185,7 @@ def build_nodes_data(dag: dict) -> list[dict]:
     nodes = []
     for i, node in enumerate(dag.get("nodes", [])):
         nid = node.get("id", "")
+        prov = node.get("provenance") or {}
         nodes.append({
             "id": nid,
             "label": _html.escape(node.get("name", nid)),
@@ -194,6 +195,7 @@ def build_nodes_data(dag: dict) -> list[dict]:
             "observed": node.get("observed", True),
             "latent": node.get("latent", False),
             "orphan": nid not in edge_nodes,
+            "provenance_source": prov.get("source", ""),
         })
     return nodes
 
@@ -230,6 +232,11 @@ def build_edges_data(
         # Extract identification strategy from DAG YAML
         strategy = edge.get("identification_strategy") or {}
 
+        # Extract provenance
+        prov = edge.get("provenance") or {}
+        prov_source = prov.get("source", "")
+        prov_detail = prov.get("paper_doi") or prov.get("connector") or ""
+
         edge_data: dict[str, Any] = {
             "id": eid,
             "source": from_node,
@@ -238,6 +245,8 @@ def build_edges_data(
             "expected_sign": plaus.get("expected_sign", ""),
             "interpretation": _html.escape(str(interp.get("is", ""))),
             "notes": _html.escape(str(edge.get("notes", ""))),
+            "provenance_source": prov_source,
+            "provenance_detail": _html.escape(str(prov_detail)),
         }
 
         # Inject strategy from DAG YAML as defaults (card data may override)
@@ -731,6 +740,22 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
             margin-left: 4px;
             vertical-align: middle;
         }
+        /* Provenance badges */
+        .provenance-badge {
+            display: inline-block;
+            font-size: 8px;
+            font-weight: 600;
+            padding: 1px 5px;
+            border-radius: 2px;
+            letter-spacing: 0.3px;
+            margin-left: 4px;
+            vertical-align: middle;
+            color: #fff;
+        }
+        .provenance-badge.manual { background: #6b7280; }
+        .provenance-badge.paper_scout { background: #0d9488; }
+        .provenance-badge.data_scout { background: #4f46e5; }
+        .provenance-badge.discovery_agent { background: #ea580c; }
         /* Causal assessment section in sidebar */
         .causal-assessment {
             margin-top: 6px;
@@ -827,6 +852,19 @@ const CAUSAL_ASSESSMENTS = __CAUSAL_ASSESSMENTS_JSON__;
 function escHtml(s) {
     if (!s) return '';
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+var PROVENANCE_LABELS = {
+    'manual': 'Manual',
+    'paper_scout': 'PaperScout',
+    'data_scout': 'DataScout',
+    'discovery_agent': 'Discovery'
+};
+
+function provenanceBadge(src) {
+    if (!src) return '';
+    var label = PROVENANCE_LABELS[src] || src;
+    return '<span class="provenance-badge ' + escHtml(src) + '">' + escHtml(label) + '</span>';
 }
 
 function renderMarkdown(s) {
@@ -1057,6 +1095,7 @@ if (allIssues.length === 0) {
         var edgeObj = EDGES.find(function(e2) { return e2.id === issue.edge_id; });
         var stratTag = (edgeObj && edgeObj.strategy_type) ?
             '<span class="strategy-tag">' + escHtml(edgeObj.strategy_type.replace(/_/g, ' ')) + '</span>' : '';
+        var provBadge = (edgeObj && edgeObj.provenance_source) ? provenanceBadge(edgeObj.provenance_source) : '';
         var caText = (edgeObj && edgeObj.causal_assessment) ? edgeObj.causal_assessment :
             (CAUSAL_ASSESSMENTS[issue.edge_id] || '');
         var verdict = extractVerdict(caText);
@@ -1070,7 +1109,7 @@ if (allIssues.length === 0) {
             '<div class="pitfall-item-header" data-header="1">' +
                 '<span class="pitfall-edge">' + escHtml(issue.edge_id) + '</span>' +
                 '<span class="pitfall-severity ' + issue.severity + '">' + issue.severity + '</span>' +
-                verdictBadge + stratTag +
+                verdictBadge + provBadge + stratTag +
                 '<span class="pitfall-resolved-check">&#10003;</span>' +
             '</div>' +
             '<div class="pitfall-msg">' + escHtml(issue.message) + '</div>' +
@@ -1123,9 +1162,10 @@ if (cleanEdges.length > 0) {
             '<div class="pd-llm-guidance"><div class="pd-llm-guidance-title">AI Analysis</div>' +
             renderMarkdown(annText) + '</div>' : '';
 
-        // Strategy tag and verdict badge for clean edges
+        // Strategy tag, provenance badge, and verdict badge for clean edges
         var cleanStratTag = edge.strategy_type ?
             '<span class="strategy-tag">' + escHtml(edge.strategy_type.replace(/_/g, ' ')) + '</span>' : '';
+        var cleanProvBadge = edge.provenance_source ? provenanceBadge(edge.provenance_source) : '';
         var cleanCaText = edge.causal_assessment || CAUSAL_ASSESSMENTS[edge.id] || '';
         var cleanVerdict = extractVerdict(cleanCaText);
         var cleanVerdictBadge = cleanVerdict ?
@@ -1137,7 +1177,7 @@ if (cleanEdges.length > 0) {
         div.innerHTML =
             '<div class="pitfall-item-header" data-header="1">' +
                 '<span class="pitfall-edge">' + escHtml(edge.id) + '</span>' +
-                ratingHtml + cleanVerdictBadge + cleanStratTag +
+                ratingHtml + cleanVerdictBadge + cleanProvBadge + cleanStratTag +
             '</div>' +
             statsHtml +
             '<div class="pitfall-decision" data-decision-key="edge:' + escHtml(edge.id) + '">' +
@@ -1455,6 +1495,11 @@ function showEdgeTooltip(e, d) {
     if (d.design) html += '<div class="tooltip-row"><span class="tooltip-label">Design</span><span class="tooltip-value">' + d.design + '</span></div>';
     if (d.strategy_type) html += '<div class="tooltip-row"><span class="tooltip-label">ID Strategy</span><span class="tooltip-value">' + d.strategy_type.replace(/_/g, ' ') + '</span></div>';
     if (d.strategy_argument) html += '<div class="tooltip-row"><span class="tooltip-label">Argument</span><span class="tooltip-value" style="text-align:left;font-weight:400;font-size:10px">' + d.strategy_argument + '</span></div>';
+    if (d.provenance_source) {
+        var srcLabel = PROVENANCE_LABELS[d.provenance_source] || d.provenance_source;
+        var srcExtra = d.provenance_detail ? ' (' + escHtml(d.provenance_detail) + ')' : '';
+        html += '<div class="tooltip-row"><span class="tooltip-label">Source</span><span class="tooltip-value">' + escHtml(srcLabel) + srcExtra + '</span></div>';
+    }
     if (d.diagnostics && d.diagnostics.length > 0) {
         var passed = d.diagnostics.filter(function(x) { return x.passed; }).length;
         html += '<div class="tooltip-row"><span class="tooltip-label">Diagnostics</span><span class="tooltip-value">' + passed + '/' + d.diagnostics.length + ' pass</span></div>';
@@ -1547,10 +1592,15 @@ function showNodeTooltip(e, d) {
     if (d.unit) html += '<div class="tooltip-row"><span class="tooltip-label">Unit</span><span class="tooltip-value">' + d.unit + '</span></div>';
     if (d.frequency) html += '<div class="tooltip-row"><span class="tooltip-label">Frequency</span><span class="tooltip-value">' + d.frequency + '</span></div>';
     if (d.latent) html += '<div class="tooltip-row"><span class="tooltip-label">Observed</span><span class="tooltip-value null">Latent (unobserved)</span></div>';
+    if (d.provenance_source) {
+        var nodeSrcLabel = PROVENANCE_LABELS[d.provenance_source] || d.provenance_source;
+        html += '<div class="tooltip-row"><span class="tooltip-label">Source</span><span class="tooltip-value">' + escHtml(nodeSrcLabel) + '</span></div>';
+    }
     if (d.orphan) {
         var orphanText = ORPHAN_EXPLANATIONS[d.id] || '';
         html += '<div class="tooltip-orphan">';
         html += '<span class="tooltip-orphan-tag">UNWIRED</span>';
+        if (d.provenance_source) html += provenanceBadge(d.provenance_source);
         if (orphanText) {
             html += renderOrphanSections(orphanText);
         } else {
