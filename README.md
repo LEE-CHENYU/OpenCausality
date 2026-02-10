@@ -878,6 +878,8 @@ expected magnitude in natural language (validated via regex-based unit matching)
 The interactive query REPL (`opencausality query`) allows natural language questions
 about causal structure in any domain:
 
+![Query REPL — Literature Edge Proposal](paper/fig_query_repl.png)
+
 ```
 > What happens to bank capital if the exchange rate depreciates by 10%?
 
