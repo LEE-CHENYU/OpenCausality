@@ -47,10 +47,15 @@ The mechanism has three stages:
 
    | Design | Maximum Claim |
    |--------|--------------|
-   | IV, RCT, DID, RDD, Event Study | `IDENTIFIED_CAUSAL` |
-   | Local Projections, Panel FE, VAR | `REDUCED_FORM` |
+   | IV_2SLS, RCT, DID_EVENT_STUDY, RDD, PANEL_LP_EXPOSURE_FE | `IDENTIFIED_CAUSAL` |
+   | DOWHY_BACKDOOR, DOWHY_IV, DOWHY_FRONTDOOR | `IDENTIFIED_CAUSAL` |
+   | SYNTHETIC_CONTROL, REGRESSION_KINK | `IDENTIFIED_CAUSAL` |
+   | LOCAL_PROJECTIONS, VAR, TS_LOCAL_PROJECTION | `REDUCED_FORM` |
+   | DML_PLR, DML_IRM, DML_PLIV | `REDUCED_FORM` (ML nuisance does not confer identification) |
+   | ECONML_CATE, CAUSALML_UPLIFT | `REDUCED_FORM` (HTE estimation, not identification) |
+   | PANEL_FE_BACKDOOR | `REDUCED_FORM` |
    | OLS | `DESCRIPTIVE` |
-   | Identity, Bridge, Accounting, Immutable | `IDENTIFIED_CAUSAL` |
+   | IDENTITY, ACCOUNTING_BRIDGE, IMMUTABLE_EVIDENCE | `IDENTIFIED_CAUSAL` (mechanical) |
 
 2. **Diagnostics can only cap downward.** The `cap_to()` function is monotone:
    ```
@@ -65,10 +70,16 @@ The mechanism has three stages:
    - Leave-one-out instability → `REDUCED_FORM`
    - Nonstationarity (non-ECM) → `DESCRIPTIVE`
 
-3. **Human review can only confirm or downgrade.** The HITL panel actions — accept
-   (with caveat), reject, revise, escalate — all maintain or reduce the claim. There
-   is no "approve as causal" action. The "revise" action resets the ratchet by
-   triggering re-specification and re-estimation from scratch.
+3. **Human review can only confirm or downgrade.** The HITL panel actions all maintain
+   or reduce the claim. There is no "approve as causal" action. Each action has fixed
+   pipeline semantics:
+
+   | Action | Pipeline Effect |
+   |--------|----------------|
+   | **accept** | Acknowledges issue; downgrades credibility rating; edge enters report with caveat. Does **not** restore or elevate claim level. |
+   | **reject** | Suppresses the edge entirely from the final report. |
+   | **revise** | Triggers re-specification and re-estimation from scratch. The new design determines the new ceiling — starts the ratchet fresh. |
+   | **escalate** | Halts the pipeline until a senior reviewer intervenes. |
 
 **Invariant:** No function, handler, agent, or patch may ever increase a claim level
 after `screen_post_design()` has been called. Any code path that would do so is a bug.
@@ -175,6 +186,9 @@ current claim level.
 
 ## 6. EXPLORATION vs. CONFIRMATION Mode
 
+The default pipeline mode is `EXPLORATION`. The `--mode CONFIRMATION` flag must be
+explicitly requested.
+
 ### 6.1 CONFIRMATION Mode Is Frozen
 
 When `mode == "CONFIRMATION"`:
@@ -191,7 +205,9 @@ edges in CONFIRMATION mode is a bug. This is the system's pre-registration enfor
 Even in EXPLORATION mode, iteration is bounded:
 - **Maximum 3 iterations** (configurable, but must have a finite bound).
 - **Improvement threshold:** Iteration stops if credibility improvement < 5%.
+- **Credibility threshold:** Iteration stops when all critical-path edges reach ≥ 0.60 credibility.
 - **Convergence:** Stops when no re-queued tasks AND no auto-fixable issues remain.
+- **HITL pause:** Iteration stops when any issue with `requires_human = True` is open.
 
 ### 6.3 Freeze Validation
 
@@ -394,7 +410,8 @@ If `EdgeSpec.validated_evidence.immutable = True`:
 
 1. **Acyclicity:** DFS-based, including temporal expansion for contemporaneous edges.
 2. **Unit presence:** Every edge must have treatment and outcome units.
-3. **Edge type labeling:** Every edge must declare its type.
+3. **Edge type labeling:** Every edge must declare its type from the closed set:
+   `{causal, reaction_function, bridge, identity}`. Unknown edge types are rejected.
 4. **Node-source bindings:** Observed nodes must have data source specifications.
 5. **Endpoint existence:** All edge endpoints must exist as nodes.
 
@@ -471,15 +488,96 @@ The `block_confirmation` gate is non-negotiable.
 
 ---
 
-## 17. Sentinel Loop Invariants
+## 17. Issue Lifecycle Invariants
 
-### 17.1 Always-On Background Monitor
+### 17.1 Issue Identity
+
+Each issue has a unique key: `"{rule_id}:{edge_id or node_id or 'global'}"`. This key
+is used for deduplication across runs. Only one open issue per key is permitted.
+
+### 17.2 Status Transitions
+
+```
+OPEN  →  CLOSED (with reason + closer identity)
+OPEN  →  WONT_FIX
+```
+
+Issues start as `OPEN`. There is no reopen path — if the same problem resurfaces, a new
+issue is created. This keeps the ledger append-only and the audit trail linear.
+
+### 17.3 Trigger Timing
+
+| Trigger | When |
+|---------|------|
+| `pre_run` | Before estimation (DAG-level structural issues) |
+| `post_run` | After each edge estimation completes (EdgeCard-level) |
+| `cross_run` | After full run, comparing against previous runs via `state.json` |
+
+---
+
+## 18. PatchPolicy LLM Repair Levels
+
+### 18.1 Two Repair Categories
+
+| Category | Actions | Approval |
+|----------|---------|----------|
+| **Metadata repairs** | `fix_edge_id_syntax`, `fix_missing_source_spec` | Always allowed, audit-logged |
+| **DAG repairs** | `fix_dag_identity_deps`, `fix_dag_missing_reaction`, `fix_orphan_identity_edge` | Auto-approved in EXPLORATION; require HITL in CONFIRMATION |
+
+### 18.2 Repair Scope Constraint
+
+LLM repairs target **schema validity** only. The following are permanently out of scope
+for automated repair:
+- Identification strategies or design selection
+- Expected signs
+- Causal edge direction
+- Control set composition (beyond syntax fixes)
+
+**Invariant:** `is_llm_repair_allowed(action, mode)` returns True only when the action
+is a known metadata repair, OR is a DAG repair in EXPLORATION mode (or explicitly
+HITL-approved in CONFIRMATION mode). Unknown actions always return False.
+
+---
+
+## 19. Task Queue State Machine
+
+### 19.1 Task Status Transitions
+
+```
+NEW → WAITING_DATA | WAITING_ARTIFACT
+WAITING_DATA → READY (when data becomes available)
+WAITING_ARTIFACT → READY (when upstream task completes)
+READY → RUNNING → DONE | DONE_SUGGESTIVE | BLOCKED_ID | FAILED
+```
+
+There is no backward transition from terminal states (`DONE`, `BLOCKED_ID`, `FAILED`).
+A failed task is not retried unless explicitly re-queued by PatchBot (which creates a
+new task, preserving the original's audit trail).
+
+### 19.2 Task Priority Ordering
+
+| Priority | Level | Use |
+|----------|-------|-----|
+| 1 | CRITICAL | On critical path to analysis target |
+| 2 | HIGH | Provides instrument or required artifact |
+| 3 | MEDIUM | Reusable intermediate artifact |
+| 4 | LOW | Supporting/supplementary |
+| 5 | BACKGROUND | Opportunistic (e.g., "download everything") |
+
+Scheduling processes tasks in priority order. Within the same priority, FIFO ordering
+applies. Priority is set at task creation and does not change.
+
+---
+
+## 20. Sentinel Loop Invariants
+
+### 20.1 Always-On Background Monitor
 
 The sentinel loop runs continuously alongside estimation. It is **not** a batch job
 triggered at the end — it polls on a fixed interval (default: 5 minutes) and catches
 regressions between any two pipeline steps.
 
-### 17.2 Validation → Heal → Build → Open
+### 20.2 Validation → Heal → Build → Open
 
 The sentinel's cycle is strictly ordered:
 
@@ -497,7 +595,7 @@ The sentinel's cycle is strictly ordered:
 - If a sentinel instance is already running (PID detected), the pipeline skips re-launch.
   There is never more than one active sentinel per workspace.
 
-### 17.3 Sentinel Is Non-Destructive
+### 20.3 Sentinel Is Non-Destructive
 
 The sentinel may fix schema issues (missing unit specs, malformed edge IDs, orphan node
 references). It must **never**:
@@ -508,9 +606,9 @@ references). It must **never**:
 
 ---
 
-## 18. Data Pipeline Invariants
+## 21. Data Pipeline Invariants
 
-### 18.1 Auto-Ingest Convention
+### 21.1 Auto-Ingest Convention
 
 Any file dropped in `data/raw/` is automatically profiled, standardized to Parquet, and
 registered as a node loader before estimation begins. The convention is:
@@ -525,13 +623,13 @@ data/raw/*.parquet                →  (copy + profile)           →  node_load
 - Every ingested dataset gets a profile (row count, column types, date range, frequency detection).
 - Node loader registration is idempotent — re-ingesting the same file updates metadata but does not duplicate.
 
-### 18.2 DataScout Actionable Guidance
+### 21.2 DataScout Actionable Guidance
 
 When DataScout cannot auto-fetch data for a DAG node, it must log actionable guidance:
 expected file format, required columns, and the exact CLI command (`opencausality data ingest`)
 the user should run after dropping files. Silent failure is a bug.
 
-### 18.3 Data Must Precede Estimation
+### 21.3 Data Must Precede Estimation
 
 The agent loop phase ordering (§10) requires Phase 0a (auto-ingest) and Phase 1 (DataScout)
 to complete before Phase 2 (estimation). Estimation must never run against unregistered or
@@ -539,15 +637,15 @@ unprofiled data sources.
 
 ---
 
-## 19. LLM Abstraction Layer Invariants
+## 22. LLM Abstraction Layer Invariants
 
-### 19.1 Provider Agnosticism
+### 22.1 Provider Agnosticism
 
 All LLM calls flow through the `LLMClient` ABC. The system must never contain direct API
 calls to any specific LLM provider outside the client implementations. Switching providers
 requires changing one environment variable (`LLM_PROVIDER`), not code changes.
 
-### 19.2 Four Provider Implementations
+### 22.2 Four Provider Implementations
 
 | Provider | Backend | Key Required |
 |----------|---------|-------------|
@@ -556,7 +654,7 @@ requires changing one environment variable (`LLM_PROVIDER`), not code changes.
 | `codex` | Shells out to `codex exec` | No |
 | `claude_cli` | Shells out to `claude -p` | No |
 
-### 19.3 Auto-Fallback Hierarchy
+### 22.3 Auto-Fallback Hierarchy
 
 If the configured provider fails to initialize (e.g., `anthropic` selected but no API key):
 
@@ -571,9 +669,9 @@ anthropic (no key) → auto-fallback to codex CLI → warning emitted
 
 ---
 
-## 20. Query REPL Invariants
+## 23. Query REPL Invariants
 
-### 20.1 Hedged Language Enforcement
+### 23.1 Hedged Language Enforcement
 
 The Query REPL must **never** say "causes", "causal effect", or other causal language
 unless the entire path is `IDENTIFIED_CAUSAL`. For mixed or non-identified paths:
@@ -586,13 +684,13 @@ unless the entire path is `IDENTIFIED_CAUSAL`. For mixed or non-identified paths
 
 This is a hard rule, not a suggestion. The LLM prompt and regex fallback both enforce it.
 
-### 20.2 Mode-Aware Query Gating
+### 23.2 Mode-Aware Query Gating
 
 The REPL respects the active query mode (§5). If the user asks a policy counterfactual
 question in `REDUCED_FORM` mode, the REPL must refuse with an explanation, not silently
 downgrade the query.
 
-### 20.3 Dual Parse Path
+### 23.3 Dual Parse Path
 
 ```
 User query → LLM parser → structured intent
@@ -606,21 +704,21 @@ code path.
 
 ---
 
-## 21. Interactive Panel Contracts
+## 24. Interactive Panel Contracts
 
-### 21.1 "DRAFT PROPOSAL" Framing
+### 24.1 "DRAFT PROPOSAL" Framing
 
 The DAG visualization panel must display a prominent "DRAFT PROPOSAL" banner. All
 estimation outputs are framed as requiring analyst sign-off. This framing is non-optional
 and must not be removed or softened (e.g., to "Results" or "Report").
 
-### 21.2 Self-Contained HTML
+### 24.2 Self-Contained HTML
 
 Both panels (DAG visualization and HITL resolution) are single-file HTML documents with
 no external dependencies except D3.js CDN for visualization. They must remain openable
 by double-clicking the file — no build step, no server, no additional assets required.
 
-### 21.3 JSON Export Format
+### 24.3 JSON Export Format
 
 Both panels export decisions as JSON with:
 - `issue_id`: Links to the issue ledger
@@ -631,16 +729,16 @@ Both panels export decisions as JSON with:
 
 Exported JSON is ingestible by the pipeline for automated re-processing.
 
-### 21.4 Decision Actions Are Downgrade-Compatible
+### 24.4 Decision Actions Are Downgrade-Compatible
 
 The panel action set (accept, reject, revise, escalate) must never include an "upgrade"
 or "approve as causal" action. This mirrors the one-way ratchet (§2.2) at the UI level.
 
 ---
 
-## 22. DoWhy Refutation Engine
+## 25. DoWhy Refutation Engine
 
-### 22.1 Four Robustness Checks
+### 25.1 Four Robustness Checks
 
 After DoWhy adapter estimation, the refutation engine runs four tests:
 
@@ -651,7 +749,7 @@ After DoWhy adapter estimation, the refutation engine runs four tests:
 | Data Subset | Estimate should be stable across random subsets |
 | Unobserved Common Cause | Estimate should survive simulated unobserved confounding |
 
-### 22.2 Refutation Failure → Downgrade
+### 25.2 Refutation Failure → Downgrade
 
 Refutation failures feed into `screen_post_estimation()` via `cap_to()`. A failed
 placebo test or a sensitive-to-confounding result caps the claim downward. Refutation
@@ -660,14 +758,14 @@ level is warranted.
 
 ---
 
-## 23. Graph Format Interoperability
+## 26. Graph Format Interoperability
 
-### 23.1 Canonical Internal Format
+### 26.1 Canonical Internal Format
 
 Internally, DAGs are represented as `networkx.DiGraph` objects with node/edge attribute
 dictionaries following the YAML schema. This is the single canonical representation.
 
-### 23.2 Conversion Layer
+### 26.2 Conversion Layer
 
 | Target Format | Converter | Use Case |
 |--------------|-----------|----------|
@@ -682,16 +780,16 @@ dictionaries following the YAML schema. This is the single canonical representat
 
 ---
 
-## 24. Serialization Conventions
+## 27. Serialization Conventions
 
-### 24.1 Dataclasses Over Pydantic
+### 27.1 Dataclasses Over Pydantic
 
 All domain objects use Python `dataclasses`. Pydantic is not a dependency. Serialization
 is explicit via dedicated reader/writer functions, not implicit magic methods.
 
 **Rationale:** Minimal dependency footprint; explicit serialization boundaries.
 
-### 24.2 Format Assignments (Fixed)
+### 27.2 Format Assignments (Fixed)
 
 | Artifact | Format | Rationale |
 |----------|--------|-----------|
@@ -705,7 +803,7 @@ is explicit via dedicated reader/writer functions, not implicit magic methods.
 These format assignments are fixed. Changing the format of any artifact type requires
 explicit justification in the audit trail.
 
-### 24.3 No Silent Schema Migration
+### 27.3 No Silent Schema Migration
 
 If the schema of any serialized artifact changes, the system must either:
 1. Support reading the old format with a documented migration path, or
@@ -715,21 +813,21 @@ Silent schema drift (old files parse incorrectly without error) is a bug.
 
 ---
 
-## 25. Dependency Philosophy
+## 28. Dependency Philosophy
 
-### 25.1 Lazy Imports for ML Backends
+### 28.1 Lazy Imports for ML Backends
 
 Heavy ML dependencies (DoWhy, EconML, CausalML, DoubleML, causal-learn, gCastle) are
 imported lazily — only when the corresponding adapter is actually invoked. A user who
 only runs Local Projections should never need to install TensorFlow or PyTorch.
 
-### 25.2 GPL Isolation
+### 28.2 GPL Isolation
 
 GPL-licensed tools (Tetrad, Tigramite, DAGitty) are supported as **optional external
 executors** — they are never bundled as dependencies, never imported, and never linked.
 Interaction is via subprocess calls or file-based interchange.
 
-### 25.3 Core Dependencies Are Minimal
+### 28.3 Core Dependencies Are Minimal
 
 The core installation (`pip install -e .`) requires only:
 - Standard scientific Python (numpy, pandas, scipy, statsmodels)
@@ -741,9 +839,9 @@ Everything else is optional extras.
 
 ---
 
-## 26. Output Artifact Structure
+## 29. Output Artifact Structure
 
-### 26.1 Fixed Output Directory Layout
+### 29.1 Fixed Output Directory Layout
 
 ```
 outputs/agentic/
@@ -766,15 +864,15 @@ outputs/agentic/
 
 ---
 
-## 27. Benchmark Framework Contracts
+## 30. Benchmark Framework Contracts
 
-### 27.1 Ground Truth Requirement
+### 30.1 Ground Truth Requirement
 
 Every benchmark must have a known true treatment effect. The framework computes RMSE and
 CI coverage against this ground truth. Benchmarks without known effects are not benchmarks
 — they are case studies.
 
-### 27.2 DGP Contract
+### 30.2 DGP Contract
 
 ```python
 class DGPBenchmark:
@@ -785,16 +883,16 @@ class DGPBenchmark:
 DGP benchmarks are deterministic given a seed. Results must be reproducible across machines
 with the same numpy/scipy versions.
 
-### 27.3 Multi-Seed Evaluation
+### 30.3 Multi-Seed Evaluation
 
 Benchmarks run across multiple seeds (default: 10). Single-seed results are insufficient
 for adapter validation. Reports include mean RMSE and CI coverage across all seeds.
 
 ---
 
-## 28. Domain Agnosticism
+## 31. Domain Agnosticism
 
-### 28.1 The Platform vs. The Case Study
+### 31.1 The Platform vs. The Case Study
 
 OpenCausality is domain-agnostic. The Kazakhstan bank stress testing example is a **case
 study**, not a platform constraint. All domain-specific components are isolated to:
@@ -807,7 +905,7 @@ The estimation adapters, issue detection engine, governance layer, propagation e
 query REPL, and sentinel loop work with **any** domain where causal relationships can be
 expressed as a directed graph.
 
-### 28.2 Extension Point: Data Clients
+### 31.2 Extension Point: Data Clients
 
 Adding a new domain requires:
 1. A data client in `shared/data/` (or files in `data/raw/` for auto-ingest)
@@ -819,9 +917,9 @@ If domain assumptions leak into the core, that is a bug.
 
 ---
 
-## 29. Agent Contracts (PaperScout, DataScout, DAG Auto-Repair)
+## 32. Agent Contracts (PaperScout, DataScout, DAG Auto-Repair)
 
-### 29.1 PaperScout
+### 32.1 PaperScout
 
 PaperScout searches four APIs (Semantic Scholar, OpenAlex, CORE, arXiv) for literature
 supporting or challenging each edge.
@@ -834,17 +932,17 @@ supporting or challenging each edge.
 - PaperScout results are **informational** — they do not modify claim levels, designs,
   or identification status.
 
-### 29.2 DataScout
+### 32.2 DataScout
 
 DataScout catalogs data availability for each DAG node and attempts automated download
 from configured connectors.
 
 **Invariants:**
 - Downloads are budget-bounded (configurable max per run).
-- When auto-download fails, actionable guidance is logged (§18.2).
+- When auto-download fails, actionable guidance is logged (§21.2).
 - DataScout never modifies the DAG structure. It populates data availability metadata only.
 
-### 29.3 DAG Auto-Repair
+### 32.3 DAG Auto-Repair
 
 LLM-assisted validation detects and fixes DAG schema errors (invalid edge IDs, missing
 node specs, dependency mismatches).
@@ -859,9 +957,9 @@ node specs, dependency mismatches).
 
 ---
 
-## 30. Unit-Aware Propagation
+## 33. Unit-Aware Propagation
 
-### 30.1 Nine Recognized Unit Types
+### 33.1 Nine Recognized Unit Types
 
 ```
 pp, pct, log_point, bn_kzt, ratio, index, sd, bps, count
@@ -870,14 +968,14 @@ pp, pct, log_point, bn_kzt, ratio, index, sd, bps, count
 The `UnitSpec` regex parser validates that every edge declares compatible treatment and
 outcome units from this set.
 
-### 30.2 Dimensional Analysis on Multi-Edge Paths
+### 33.2 Dimensional Analysis on Multi-Edge Paths
 
 When propagating effects across a path, the PropagationEngine performs dimensional analysis:
 the outcome unit of edge _i_ must equal the treatment unit of edge _i+1_. Mismatches
 block propagation in `STRUCTURAL` and `REDUCED_FORM` modes; they emit warnings in
 `DESCRIPTIVE` mode (see §4, guardrail 6).
 
-### 30.3 UnitSpec Regex Rules
+### 33.3 UnitSpec Regex Rules
 
 - The `pp` pattern must **not** use `\b` prefix (would fail on "1pp").
 - The `%` pattern must **not** use `\b` (similar reason).
@@ -885,9 +983,9 @@ block propagation in `STRUCTURAL` and `REDUCED_FORM` modes; they emit warnings i
 
 ---
 
-## 31. Cross-Cutting Principles
+## 34. Cross-Cutting Principles
 
-### 17.1 Conservative by Default
+### 34.1 Conservative by Default
 
 Every gate, permission, and allowance defaults to the restrictive option:
 - Unknown edge types → `BLOCKED_ID`
@@ -895,20 +993,26 @@ Every gate, permission, and allowance defaults to the restrictive option:
 - Missing counterfactual flags → CF not allowed
 - Unknown PatchBot actions → `applied = False`
 
-### 17.2 Explicit Over Implicit
+### 34.2 Explicit Over Implicit
 
 - No implicit permissions. Every allowance must be explicitly declared.
 - No silent upgrades. Every claim level change must be traceable.
 - No hidden state. All decisions flow through the audit log.
 
-### 17.3 Separation of Concerns
+### 34.3 Separation of Concerns
 
 - **Claim level** (what can be asserted) is separate from **credibility score** (how reliable the estimate is).
 - **Propagation role** (can the edge participate?) is separate from **counterfactual eligibility** (can we do "what if?").
 - **Estimation** (fitting models) is separate from **identification** (whether the design supports causal claims).
 - **Issue detection** (finding problems) is separate from **issue resolution** (deciding what to do).
 
-### 17.4 Auditability as First-Class Output
+### 34.4 Domain Agnosticism (see §31)
+
+OpenCausality is a platform, not a Kazakhstan-specific tool. Domain logic must be
+confined to data clients, DAG specs, and example directories. Core modules must never
+contain hardcoded domain assumptions.
+
+### 34.5 Auditability as First-Class Output
 
 The audit trail is not a byproduct — it is a primary output artifact. Every
 specification change, estimation decision, diagnostic result, issue flag, patch
@@ -921,18 +1025,59 @@ The entire history can be committed to version control and independently verifie
 
 Before merging any change, verify:
 
+**Identification & Claims (§§1-5)**
 - [ ] Claim levels never move upward after design selection
 - [ ] `cap_to()` remains monotone (downgrade only)
+- [ ] DESIGN_CLAIM_MAP covers all registered adapters
 - [ ] Reaction functions remain unconditionally blocked from propagation
-- [ ] CONFIRMATION mode remains frozen (zero iterations, no patches)
-- [ ] PatchBot prohibited actions list is unchanged
-- [ ] Refinement whitelist bounds are respected
 - [ ] All seven propagation guardrails are applied in order
 - [ ] Mode can only restrict, never expand permissions
+
+**Governance & Anti-P-Hacking (§§6-9)**
+- [ ] CONFIRMATION mode remains frozen (zero iterations, no patches)
+- [ ] Default pipeline mode is EXPLORATION
+- [ ] PatchBot prohibited actions list is unchanged
+- [ ] Refinement whitelist bounds are respected
 - [ ] Hash chain append-only property is preserved
-- [ ] Discovery/NL outputs remain proposals requiring HITL approval
+- [ ] Null results are accepted as valid findings, not triggers for re-specification
+
+**Pipeline & Agents (§§10-19)**
+- [ ] Agent loop phase ordering is maintained
+- [ ] Adapter interface contract (EstimationRequest → EstimationResult) is preserved
 - [ ] Credibility scoring excludes statistical significance
 - [ ] No open CRITICAL issues in CONFIRMATION mode
-- [ ] Adapter interface contract (EstimationRequest → EstimationResult) is preserved
-- [ ] Agent loop phase ordering is maintained
-- [ ] Null results are accepted as valid findings, not triggers for re-specification
+- [ ] Discovery/NL outputs remain proposals requiring HITL approval
+- [ ] Issue lifecycle is append-only (no reopen, only new issue)
+- [ ] LLM repairs limited to schema validity — never causal semantics
+- [ ] Task queue transitions are forward-only (no backward from terminal states)
+- [ ] Edge types restricted to closed set: {causal, reaction_function, bridge, identity}
+
+**Sentinel & Data (§§20-21)**
+- [ ] Sentinel repairs are logged with `source: "sentinel"` and governed by PatchPolicy
+- [ ] Sentinel never modifies estimation results, designs, or claim levels
+- [ ] Raw files in `data/raw/` are never modified in-place
+- [ ] Data availability precedes estimation (Phase 0a/1 before Phase 2)
+
+**LLM & Query (§§22-23)**
+- [ ] All LLM calls go through `LLMClient` ABC — no direct provider API calls in core
+- [ ] Provider fallback emits a visible warning, never silent
+- [ ] Query REPL never uses causal language for non-identified paths
+- [ ] Query mode gating cannot be bypassed by the LLM parser
+
+**Panels & Output (§§24, 29)**
+- [ ] "DRAFT PROPOSAL" banner is present on DAG visualization
+- [ ] HITL actions match fixed semantics (accept/reject/revise/escalate — see §2.2)
+- [ ] Panel actions never include an "upgrade" or "approve as causal" option
+- [ ] Both panels remain self-contained single-file HTML
+- [ ] EdgeCards remain the primary output artifact; all others derive from them
+
+**Serialization & Dependencies (§§27-28)**
+- [ ] No new heavy dependencies without explicit justification
+- [ ] ML backends remain lazily imported
+- [ ] GPL tools remain external executors (never bundled)
+- [ ] Serialization format assignments unchanged (YAML DAGs, JSONL logs, etc.)
+
+**Domain & Scope (§§31-33)**
+- [ ] No domain-specific logic in core modules (estimation, governance, propagation)
+- [ ] Unit type set changes are deliberate and documented
+- [ ] DAG auto-repair targets schema only, never causal semantics
