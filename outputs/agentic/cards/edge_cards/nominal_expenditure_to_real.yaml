@@ -1,0 +1,116 @@
+edge_id: nominal_expenditure_to_real
+dag_version_hash: null
+created_at: '2026-02-09T20:00:00.000000'
+data_provenance:
+  treatment_source: null
+  outcome_source: null
+  control_sources: {}
+  instrument_sources: {}
+  combined_row_count: null
+  combined_date_range: null
+  missing_rate: null
+  panel_dimensions: null
+  entity_boundary_note: null
+  kpi_definitions: null
+spec_hash: null
+spec_details:
+  design: IDENTITY
+  controls: []
+  instruments: []
+  fixed_effects: []
+  se_method: deterministic
+  sample_filter: null
+  horizon: null
+  bandwidth: null
+estimates:
+  point: 1.0
+  se: 0.0
+  ci_95:
+  - 1.0
+  - 1.0
+  pvalue: null
+  treatment_unit: 1% increase in nominal expenditure
+  outcome_unit: 1% increase in real expenditure (holding CPI constant)
+  n_calendar_periods: 1
+  n_effective_obs_h0: 1
+diagnostics:
+  identity_check:
+    name: identity_check
+    passed: true
+    value: 1.0
+    threshold: null
+    pvalue: null
+    message: 'Deterministic: real_expenditure = log(nominal_expenditure) - log(cpi_headline).
+      Unit elasticity in nominal expenditure.'
+all_diagnostics_pass: true
+interpretation:
+  estimand: 'Identity: real expenditure = nominal expenditure / CPI deflator'
+  is_not: Causal effect; this is a deflation identity
+  channels:
+  - mechanical/accounting
+  population: ''
+  conditions: CPI is the appropriate deflator for household consumption
+  allowed_uses: []
+  forbidden_uses: []
+failure_flags:
+  weak_identification: false
+  potential_bad_control: false
+  mechanical_identity_risk: true
+  regime_break_detected: false
+  small_sample: false
+  high_missing_rate: false
+  entity_boundary_change: false
+  definition_inconsistency: false
+counterfactual:
+  supports_shock_path: true
+  supports_policy_intervention: false
+  intervention_note: Deflation identity; always holds by definition
+  external_validity: ''
+credibility_rating: A
+credibility_score: 0.94
+identification:
+  claim_level: IDENTIFIED_CAUSAL
+  risks:
+    unmeasured_confounding: low
+    simultaneity: low
+    weak_variation: low
+    measurement_error: low
+    selection: low
+  untestable_assumptions: []
+  testable_threats_passed: []
+  testable_threats_failed: []
+counterfactual_block:
+  shock_scenario_allowed: true
+  policy_intervention_allowed: false
+  reason_shock_blocked: null
+  reason_policy_blocked: Identity edge — no policy interpretation
+  allowed: true
+  reason_blocked: null
+propagation_role:
+  role: identity
+  overlapping_paths: []
+  selected_for_counterfactual: true
+  mode_propagation_allowed:
+    STRUCTURAL: true
+    REDUCED_FORM: true
+    DESCRIPTIVE: true
+  mode_shock_cf_allowed:
+    STRUCTURAL: true
+    REDUCED_FORM: true
+    DESCRIPTIVE: false
+  mode_policy_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: false
+    DESCRIPTIVE: false
+literature:
+  supporting: []
+  challenging: []
+  methodological: []
+  search_status: PENDING
+  search_timestamp: null
+  search_query: ''
+  total_results: 0
+companion_edge_id: null
+variant_of: null
+is_precisely_null: false
+null_equivalence_bound: null

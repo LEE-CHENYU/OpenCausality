@@ -482,6 +482,23 @@ rules:
       designs are equally credible, report the conflict as a limitation and consider
       averaging with appropriate uncertainty.
 
+  - rule_id: ORPHAN_NODE_UNCONNECTED
+    severity: MEDIUM
+    trigger: pre_run
+    auto_fixable: true
+    requires_human: false
+    description: "Node not connected to any edge; unreachable in propagation"
+    explanation: >
+      A node exists in the DAG but does not appear in any edge's from/to
+      or latent's affects list. If the node has an identity formula whose
+      components are all present in the DAG, an identity edge can be
+      auto-created. Otherwise, human intervention is required to either
+      add a causal edge with estimation backing or remove the node.
+    guidance: >
+      For identity-resolvable orphans, the system creates a deterministic
+      identity edge and edge card. For others, add an edge with proper
+      estimation or remove the orphan node from the DAG.
+
   - rule_id: UNIT_MISSING_IN_EDGECARD
     severity: CRITICAL
     trigger: post_run

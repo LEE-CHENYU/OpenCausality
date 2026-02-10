@@ -124,6 +124,7 @@ class PatchBot:
             "fix_dag_missing_reaction": self._fix_dag_missing_reaction,
             "fix_edge_id_syntax": self._fix_edge_id_syntax,
             "fix_missing_source_spec": self._fix_missing_source_spec,
+            "fix_orphan_identity_edge": self._fix_orphan_identity_edge,
         }
 
         handler = handlers.get(action)
@@ -454,4 +455,118 @@ class PatchBot:
             },
             affected_edges=[edge_id] if edge_id else [],
             requires_reestimation=True,
+        )
+
+    def _fix_orphan_identity_edge(self, issue: Issue, fix: dict) -> PatchResult:
+        """Create identity edge + deterministic edge card for orphan nodes.
+
+        When a node has an identity formula whose dependencies are all in the
+        DAG, creates a new edge from each dependency to the orphan node and
+        generates a deterministic edge card (point=weight, se=0, rating=A).
+        """
+        node_id = fix.get("node_id", "")
+        formula = fix.get("identity_formula", "")
+        depends_on = fix.get("depends_on", [])
+
+        if not node_id or not depends_on:
+            return PatchResult(
+                issue_key=issue.issue_key,
+                action="fix_orphan_identity_edge",
+                applied=False,
+                message="Missing node_id or depends_on",
+            )
+
+        created_edges = []
+        for dep in depends_on:
+            edge_id = f"{dep}_to_{node_id}"
+            created_edges.append(edge_id)
+
+            # Create edge card via artifact_store
+            if self.artifact_store:
+                from shared.agentic.output.edge_card import (
+                    EdgeCard, Estimates, DiagnosticResult, Interpretation,
+                    FailureFlags, CounterfactualApplicability,
+                    IdentificationBlock, CounterfactualBlock, PropagationRole,
+                )
+                from shared.agentic.output.provenance import SpecDetails
+
+                estimates = Estimates(
+                    point=1.0, se=0.0, ci_95=(1.0, 1.0), pvalue=None,
+                    treatment_unit=f"1% increase in {dep}",
+                    outcome_unit=f"corresponding change in {node_id}",
+                    n_calendar_periods=1, n_effective_obs_h0=1,
+                )
+                diagnostics = {
+                    "identity_check": DiagnosticResult(
+                        name="identity_check", passed=True, value=1.0,
+                        message=f"Deterministic: {formula}",
+                    ),
+                }
+                failure_flags = FailureFlags(mechanical_identity_risk=True)
+                spec_details = SpecDetails(design="IDENTITY", se_method="deterministic")
+                score, rating = compute_credibility_score(
+                    diagnostics=diagnostics, failure_flags=failure_flags,
+                    design_weight=1.0, data_coverage=1.0,
+                )
+                card = EdgeCard(
+                    edge_id=edge_id,
+                    dag_version_hash="",
+                    spec_hash=spec_details.compute_hash(),
+                    spec_details=spec_details,
+                    estimates=estimates,
+                    diagnostics=diagnostics,
+                    interpretation=Interpretation(
+                        estimand=f"Identity: {formula}",
+                        is_not="Causal effect; this is a mechanical identity",
+                        channels=["mechanical/accounting"],
+                    ),
+                    failure_flags=failure_flags,
+                    counterfactual=CounterfactualApplicability(
+                        supports_shock_path=True,
+                        supports_policy_intervention=False,
+                        intervention_note="Identity edge; always holds by definition",
+                    ),
+                    identification=IdentificationBlock(
+                        claim_level="IDENTIFIED_CAUSAL",
+                        risks={k: "low" for k in [
+                            "unmeasured_confounding", "simultaneity",
+                            "weak_variation", "measurement_error", "selection",
+                        ]},
+                    ),
+                    counterfactual_block=CounterfactualBlock(
+                        shock_scenario_allowed=True,
+                        policy_intervention_allowed=False,
+                        reason_policy_blocked="Identity edge — no policy interpretation",
+                    ),
+                    propagation_role=PropagationRole(
+                        role="identity",
+                        selected_for_counterfactual=True,
+                        mode_propagation_allowed={"STRUCTURAL": True, "REDUCED_FORM": True, "DESCRIPTIVE": True},
+                        mode_shock_cf_allowed={"STRUCTURAL": True, "REDUCED_FORM": True, "DESCRIPTIVE": False},
+                        mode_policy_cf_allowed={"STRUCTURAL": False, "REDUCED_FORM": False, "DESCRIPTIVE": False},
+                    ),
+                    credibility_rating=rating,
+                    credibility_score=score,
+                )
+                self.artifact_store.save_edge_card(card)
+
+        prompt = f"Create identity edges for orphan node '{node_id}' from formula: {formula}"
+        self._log_llm_repair(
+            edge_id=node_id,
+            field="dag_orphan_identity",
+            old_value=None,
+            new_value=created_edges,
+            reason=f"Auto-created identity edges for orphan node {node_id}",
+            prompt=prompt,
+            structural=True,
+        )
+
+        return PatchResult(
+            issue_key=issue.issue_key,
+            action="fix_orphan_identity_edge",
+            applied=True,
+            message=f"Created {len(created_edges)} identity edges for orphan '{node_id}': {created_edges}",
+            changes={"node_id": node_id, "created_edges": created_edges, "formula": formula},
+            affected_edges=created_edges,
+            requires_reestimation=False,
         )

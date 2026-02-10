@@ -603,6 +603,7 @@ class AgentLoop:
         "missing_reaction_edge": "fix_dag_missing_reaction",
         "invalid_edge_id": "fix_edge_id_syntax",
         "missing_source_spec": "fix_missing_source_spec",
+        "orphan_node_unconnected": "fix_orphan_identity_edge",
     }
 
     def _attempt_dag_auto_repair(
