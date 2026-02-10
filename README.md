@@ -1,3 +1,25 @@
+```
+    ___                    ____                        _ _ _
+   / _ \ _ __   ___ _ __  / ___|__ _ _   _ ___  __ _ | (_) |_ _   _
+  | | | | '_ \ / _ \ '_ \| |   / _` | | | / __|/ _` || | | __| | | |
+  | |_| | |_) |  __/ | | | |__| (_| | |_| \__ \ (_| || | | |_| |_| |
+   \___/| .__/ \___|_| |_|\____\__,_|\__,_|___/\__,_||_|_|\__|\__, |
+        |_|                                                    |___/
+
+  ~  sketch your causal story  ~  we find the papers, collect the
+  data, pick the estimator, run the regressions, and tell you
+  what's wrong before you publish something you'll regret  ~
+
+       dag.yaml                         edge cards
+     .----------.    +-----------+    .-----------.
+    / A -------> B   | estimate  |   | point: 0.3 |
+   |   \       / |   | diagnose  |   | se:  0.08  |
+   |    v     v  |-->| flag      |-->| rating: B+ |
+   |     C---/   |   | literature|   | issues: 2  |
+    \   dag    ./    +-----------+    '-----------'
+     '--------'     agentic engine     your results
+```
+
 # OpenCausality
 
 Open-source platform for transparent, auditable causal inference. Combines DAG-based causal reasoning with agentic estimation, human-in-the-loop governance, LLM-assisted literature extraction, and an always-on sentinel loop that continuously validates, heals, and surfaces results.
