@@ -108,6 +108,19 @@ def _classify_intent_regex(text: str, node_ids: list[str]) -> dict:
     if "propose" in text_lower and ("edge" in text_lower or "literature" in text_lower):
         return {"intent": "propose_edges"}
 
+    # Summary / ranking / contributor queries
+    if any(w in text_lower for w in [
+        "biggest", "largest", "most", "contributor", "driver", "dominant",
+        "rank", "summary", "overview", "status", "weakest", "strongest",
+    ]):
+        target = _fuzzy_match_node(text_lower, node_ids)
+        return {"intent": "path_query", "target_node": target or ""}
+
+    # Node-level queries (mentions a known node)
+    matched_node = _fuzzy_match_node(text_lower, node_ids)
+    if matched_node:
+        return {"intent": "edge_inspect", "node_id": matched_node}
+
     return {"intent": "unknown"}
 
 
@@ -214,8 +227,11 @@ class QueryREPL:
         settings = get_settings()
 
         # Resolve DAG path
+        from scripts.cli import resolve_path
         if dag_path is None:
-            dag_path = Path(settings.default_dag_path)
+            dag_path = resolve_path(settings.default_dag_path)
+        else:
+            dag_path = resolve_path(dag_path)
         if not dag_path.exists():
             console.print(f"[red]DAG not found: {dag_path}[/red]")
             raise SystemExit(1)
@@ -482,6 +498,8 @@ class QueryREPL:
             '  "What if oil drops 30%?"\n'
             '  "Which edges are weakly identified?"\n'
             '  "Compare modes for this DAG"\n'
+            '  "What\'s the biggest contributor to k2?"\n'
+            '  "Summary of inflation"\n'
             '  "Search papers for oil price to inflation"\n'
             '  "Propose new edges from literature"',
             title="Help",
@@ -588,9 +606,17 @@ class QueryREPL:
                     found.append(nid)
             if len(found) >= 2:
                 source, target = found[0], found[1]
-            elif not source or not target:
-                console.print("[yellow]Specify /path <source> <target>[/yellow]")
-                return
+            elif len(found) == 1 and not target:
+                target = found[0]
+
+        # Target-only query: show all paths leading to that node
+        if target and not source:
+            self._handle_target_summary(target, raw)
+            return
+
+        if not source or not target:
+            console.print("[yellow]Specify /path <source> <target>[/yellow]")
+            return
 
         result = self.engine.find_all_paths(
             source=source, target=target, mode=self.mode,
@@ -627,8 +653,77 @@ class QueryREPL:
             for w in path.warnings:
                 console.print(f"  [yellow]WARNING: {w}[/yellow]")
 
+    def _handle_target_summary(self, target: str, raw: str) -> None:
+        """Show all paths leading to a target node, ranked by effect size."""
+        node_ids = self.engine.get_all_node_ids()
+
+        # Find all source nodes that have paths to target
+        all_paths = []
+        for src in node_ids:
+            if src == target:
+                continue
+            try:
+                result = self.engine.find_all_paths(
+                    source=src, target=target, mode=self.mode,
+                )
+                for path in result.paths:
+                    if not path.is_blocked:
+                        all_paths.append((src, path))
+            except Exception:
+                continue
+
+        if not all_paths:
+            console.print(f"[dim]No active paths leading to {target}[/dim]")
+            return
+
+        # Sort by absolute effect size (biggest contributor first)
+        all_paths.sort(key=lambda x: abs(x[1].total_effect), reverse=True)
+
+        table = Table(title=f"Contributors to [cyan]{target}[/cyan] (mode={self.mode})")
+        table.add_column("#", style="dim")
+        table.add_column("Source", style="cyan")
+        table.add_column("Effect", style="white", justify="right")
+        table.add_column("SE", style="white", justify="right")
+        table.add_column("95% CI", style="white")
+        table.add_column("Path", style="dim")
+
+        for i, (src, path) in enumerate(all_paths, 1):
+            edge_str = " -> ".join(e.edge_id for e in path.edges)
+            table.add_row(
+                str(i),
+                src,
+                f"{path.total_effect:.4f}",
+                f"{path.total_se:.4f}",
+                f"[{path.ci_95[0]:.4f}, {path.ci_95[1]:.4f}]",
+                edge_str,
+            )
+
+        console.print(table)
+
     def _handle_edge_inspect(self, intent: dict, raw: str) -> None:
         edge_id = intent.get("edge_id", "")
+        node_id = intent.get("node_id", "")
+
+        # If we have a node_id but no edge_id, show edges connected to that node
+        if not edge_id and node_id:
+            matching = [
+                e.id for e in self.dag.edges
+                if e.from_node == node_id or e.to_node == node_id
+            ]
+            if len(matching) == 1:
+                edge_id = matching[0]
+            elif matching:
+                console.print(f"[bold]Edges connected to [cyan]{node_id}[/cyan]:[/bold]")
+                for eid in matching:
+                    card = self.edge_cards.get(eid)
+                    rating = f" ({card.credibility_rating})" if card else ""
+                    console.print(f"  [cyan]{eid}[/cyan]{rating}")
+                console.print(f"\n[dim]Use /card <edge_id> to inspect a specific edge.[/dim]")
+                return
+            else:
+                console.print(f"[dim]No edges connected to node '{node_id}'[/dim]")
+                return
+
         if not edge_id:
             console.print("[yellow]Specify edge ID: /card <edge_id>[/yellow]")
             return

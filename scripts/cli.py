@@ -3,8 +3,7 @@ OpenCausality Platform — Unified CLI.
 
 Usage:
     opencausality list-studies
-    opencausality welfare <command>
-    opencausality credit <command>
+    opencausality example [study]
     opencausality dag run <path>
     opencausality query --dag <path>
     opencausality init
@@ -20,6 +19,30 @@ import typer
 from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
+
+
+def _find_project_root() -> Path:
+    """Walk up from this file to find the directory containing pyproject.toml."""
+    anchor = Path(__file__).resolve().parent  # scripts/
+    for candidate in (anchor.parent, anchor, *anchor.parent.parents):
+        if (candidate / "pyproject.toml").exists():
+            return candidate
+    return Path.cwd()
+
+
+PROJECT_ROOT = _find_project_root()
+
+
+def resolve_path(p: str | Path) -> Path:
+    """Resolve a path: if absolute or exists as-is, use it; otherwise resolve
+    relative to the project root so the CLI works from any working directory."""
+    p = Path(p)
+    if p.is_absolute() or p.exists():
+        return p
+    rooted = PROJECT_ROOT / p
+    if rooted.exists():
+        return rooted
+    return p  # fall back to original for error messages
 
 BANNER = r"""[dim]    ___                    ____                        _ _ _
    / _ \ _ __   ___ _ __  / ___|__ _ _   _ ___  __ _ | (_) |_ _   _
@@ -91,24 +114,75 @@ def main_callback(ctx: typer.Context):
 console = Console()
 
 
-# Import study-specific apps
-try:
-    from studies.household_welfare.src.cli import app as welfare_app
-    app.add_typer(welfare_app, name="welfare", help="Household welfare study commands")
-except ImportError:
-    pass
+# ============================================================================
+# Built-in Example Studies
+# ============================================================================
 
-try:
-    from studies.credit_default.src.cli import app as credit_app
-    app.add_typer(credit_app, name="credit", help="Credit default study commands")
-except ImportError:
-    pass
+EXAMPLE_STUDIES = {
+    "welfare": {
+        "module": "studies.household_welfare.src.cli",
+        "name": "Household Welfare",
+        "description": "Oil price shocks -> household income",
+    },
+    "credit": {
+        "module": "studies.credit_default.src.cli",
+        "name": "Credit Default",
+        "description": "Income changes -> credit default risk",
+    },
+    "passthrough": {
+        "module": "studies.fx_passthrough.src.cli",
+        "name": "FX Passthrough",
+        "description": "FX -> inflation -> income -> expenditure",
+    },
+}
 
-try:
-    from studies.fx_passthrough.src.cli import app as passthrough_app
-    app.add_typer(passthrough_app, name="passthrough", help="FX passthrough study commands")
-except ImportError:
-    pass
+
+@app.command("example")
+def example_study(
+    study: Optional[str] = typer.Argument(None, help="Study name: welfare, credit, passthrough"),
+):
+    """Run a built-in example study."""
+    import importlib
+
+    selected = study
+
+    if selected is None:
+        # Interactive picker
+        console.print(BANNER)
+        console.print("[bold cyan]Available Example Studies[/bold cyan]\n")
+        for i, (key, info) in enumerate(EXAMPLE_STUDIES.items(), 1):
+            console.print(f"  [green]{i}[/green]. [cyan]{info['name']}[/cyan] — {info['description']}")
+        console.print()
+        choice = typer.prompt("Select a study (number or name)", default="1")
+
+        # Resolve choice
+        if choice.isdigit():
+            idx = int(choice) - 1
+            keys = list(EXAMPLE_STUDIES.keys())
+            if 0 <= idx < len(keys):
+                selected = keys[idx]
+        if selected is None or selected not in EXAMPLE_STUDIES:
+            # Try fuzzy match on name
+            for key in EXAMPLE_STUDIES:
+                if choice.lower() in key:
+                    selected = key
+                    break
+        if selected is None or selected not in EXAMPLE_STUDIES:
+            console.print(f"[red]Unknown study: {choice}[/red]")
+            raise typer.Exit(1)
+
+    if selected not in EXAMPLE_STUDIES:
+        console.print(f"[red]Unknown study: {selected}. Choose from: {', '.join(EXAMPLE_STUDIES)}[/red]")
+        raise typer.Exit(1)
+
+    info = EXAMPLE_STUDIES[selected]
+    try:
+        mod = importlib.import_module(info["module"])
+        console.print(f"\n[bold cyan]Entering: {info['name']}[/bold cyan]\n")
+        mod.app(standalone_mode=False)
+    except ImportError:
+        console.print(f"[red]Study module not found: {info['module']}[/red]")
+        raise typer.Exit(1)
 
 
 @app.command("list-studies")
@@ -121,24 +195,13 @@ def list_studies():
     table.add_column("Status", style="green")
     table.add_column("CLI", style="yellow")
 
-    table.add_row(
-        "household_welfare",
-        "Oil price shocks -> household income",
-        "Active",
-        "opencausality welfare",
-    )
-    table.add_row(
-        "credit_default",
-        "Income changes -> credit default risk",
-        "Active",
-        "opencausality credit",
-    )
-    table.add_row(
-        "fx_passthrough",
-        "FX -> inflation -> income -> expenditure",
-        "Active",
-        "opencausality passthrough",
-    )
+    for key, info in EXAMPLE_STUDIES.items():
+        table.add_row(
+            key,
+            info["description"],
+            "Active",
+            f"opencausality example {key}",
+        )
 
     console.print(table)
 
@@ -148,10 +211,10 @@ def info():
     """Show information about the research platform."""
     console.print(BANNER)
     console.print("Version: 0.3.0")
-    console.print("\n[bold]Studies:[/bold]")
-    console.print("  1. [cyan]household_welfare[/cyan] - Oil shocks -> household income")
-    console.print("  2. [cyan]credit_default[/cyan] - Income -> credit default")
-    console.print("  3. [cyan]fx_passthrough[/cyan] - FX -> inflation -> expenditure\n")
+    console.print("\n[bold]Example Studies:[/bold]")
+    for i, (key, study_info) in enumerate(EXAMPLE_STUDIES.items(), 1):
+        console.print(f"  {i}. [cyan]{key}[/cyan] - {study_info['description']}")
+    console.print()
     console.print("[bold]Shared Infrastructure:[/bold]")
     console.print("  - shared/data/ - Data clients (BNS, FRED, exchange rate, CPI)")
     console.print("  - shared/model/ - Inference, event study, small-N methods")
@@ -160,12 +223,11 @@ def info():
     console.print("  - shared/llm/ - LLM abstraction layer\n")
     console.print("[bold]Usage:[/bold]")
     console.print("  opencausality list-studies       List all studies")
-    console.print("  opencausality welfare --help     Household welfare commands")
-    console.print("  opencausality credit --help      Credit default commands")
-    console.print("  opencausality passthrough --help FX passthrough commands")
+    console.print("  opencausality example            Interactive study picker")
+    console.print("  opencausality example welfare    Run welfare study directly")
     console.print("  opencausality dag run <path>     Run a DAG specification")
     console.print("  opencausality query              Interactive query REPL")
-    console.print("  opencausality init               Setup wizard")
+    console.print("  opencausality init               Setup wizard + new study scaffold")
     console.print("  opencausality config show        Show configuration\n")
 
 
@@ -231,6 +293,99 @@ def init_project():
     env_path.write_text("\n".join(lines) + "\n")
     console.print(f"\n[green]Wrote {env_path}[/green]")
     console.print("[dim]Run 'opencausality config doctor' to verify.[/dim]")
+
+    create_study = typer.confirm("\nCreate a new study?", default=False)
+    if create_study:
+        _scaffold_new_study()
+
+
+def _scaffold_new_study() -> None:
+    """Interactively scaffold a new study directory."""
+    name = typer.prompt("Study name (snake_case, e.g. trade_balance)")
+    description = typer.prompt("Short description", default=f"{name} causal study")
+
+    # Sanitize name
+    slug = re.sub(r"[^a-z0-9_]", "_", name.lower()).strip("_")
+    study_dir = PROJECT_ROOT / "studies" / slug
+
+    if study_dir.exists():
+        console.print(f"[yellow]Directory already exists: {study_dir}[/yellow]")
+        return
+
+    # Create directory structure
+    (study_dir / "src").mkdir(parents=True)
+    (study_dir / "config").mkdir()
+    (study_dir / "data").mkdir()
+    (study_dir / "outputs").mkdir()
+
+    # __init__.py
+    (study_dir / "src" / "__init__.py").write_text("")
+
+    # cli.py stub
+    cli_content = f'''"""CLI for {slug} study."""
+
+import typer
+from rich.console import Console
+
+app = typer.Typer(help="{description}")
+console = Console()
+
+
+@app.command("fetch-data")
+def fetch_data():
+    """Fetch data for this study."""
+    console.print("[dim]TODO: implement data fetching[/dim]")
+
+
+@app.command("estimate")
+def estimate():
+    """Run estimation pipeline."""
+    console.print("[dim]TODO: implement estimation[/dim]")
+
+
+@app.command("simulate")
+def simulate():
+    """Run scenario simulation."""
+    console.print("[dim]TODO: implement simulation[/dim]")
+'''
+    (study_dir / "src" / "cli.py").write_text(cli_content)
+
+    # dag.yaml template
+    dag_content = f"""# {description}
+# DAG specification — see INVARIANTS.md for schema rules
+
+metadata:
+  name: {slug}
+  description: "{description}"
+  target_node: outcome
+  frequency: M
+
+nodes:
+  - id: treatment
+    name: Treatment Variable
+    type: observed
+    frequency: M
+
+  - id: outcome
+    name: Outcome Variable
+    type: observed
+    frequency: M
+
+edges:
+  - id: treatment_to_outcome
+    from: treatment
+    to: outcome
+    type: directed
+    lag: 0
+"""
+    (study_dir / "config" / "dag.yaml").write_text(dag_content)
+
+    console.print(f"\n[green]Scaffolded new study:[/green] {study_dir}")
+    console.print(f"  src/cli.py       — Typer app with fetch-data, estimate, simulate stubs")
+    console.print(f"  config/dag.yaml  — Minimal DAG template")
+    console.print(f"  data/            — Data directory")
+    console.print(f"  outputs/         — Output directory")
+    console.print(f"\n[dim]Run 'opencausality example {slug}' after registering in EXAMPLE_STUDIES.[/dim]")
 
 
 # ============================================================================
@@ -329,7 +484,7 @@ def config_doctor():
         issues.append("SEMANTIC_SCHOLAR_API_KEY not set (literature search may be rate-limited)")
 
     # Check default DAG file
-    dag_path = Path(settings.default_dag_path)
+    dag_path = resolve_path(settings.default_dag_path)
     if dag_path.exists():
         ok.append(f"Default DAG exists: {dag_path}")
     else:
@@ -371,9 +526,6 @@ def dag_run(
     dag_path: Path = typer.Argument(
         ...,
         help="Path to DAG YAML specification file",
-        exists=True,
-        dir_okay=False,
-        readable=True,
     ),
     output_dir: Optional[Path] = typer.Option(
         None,
@@ -420,6 +572,11 @@ def dag_run(
         logging.basicConfig(level=logging.INFO)
     else:
         logging.basicConfig(level=logging.WARNING)
+
+    dag_path = resolve_path(dag_path)
+    if not dag_path.exists():
+        console.print(f"[red]DAG file not found: {dag_path}[/red]")
+        raise typer.Exit(1)
 
     console.print(f"\n[bold cyan]Running DAG: {dag_path}[/bold cyan]\n")
 
@@ -664,9 +821,11 @@ def dag_viz(
     if dag_path is None:
         try:
             from config.settings import get_settings
-            dag_path = Path(get_settings().default_dag_path)
+            dag_path = resolve_path(get_settings().default_dag_path)
         except Exception:
-            dag_path = Path("config/agentic/dags/kspi_k2_full.yaml")
+            dag_path = resolve_path("config/agentic/dags/kspi_k2_full.yaml")
+    else:
+        dag_path = resolve_path(dag_path)
 
     if not dag_path.exists():
         console.print(f"[red]DAG file not found: {dag_path}[/red]")
