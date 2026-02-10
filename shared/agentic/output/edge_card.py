@@ -63,6 +63,9 @@ class IdentificationBlock:
     untestable_assumptions: list[str] = field(default_factory=list)
     testable_threats_passed: list[str] = field(default_factory=list)
     testable_threats_failed: list[str] = field(default_factory=list)
+    strategy_type: str = ""
+    strategy_argument: str = ""
+    strategy_key_assumption: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -71,6 +74,9 @@ class IdentificationBlock:
             "untestable_assumptions": self.untestable_assumptions,
             "testable_threats_passed": self.testable_threats_passed,
             "testable_threats_failed": self.testable_threats_failed,
+            "strategy_type": self.strategy_type,
+            "strategy_argument": self.strategy_argument,
+            "strategy_key_assumption": self.strategy_key_assumption,
         }
 
 

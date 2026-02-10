@@ -976,6 +976,7 @@ def attach_identification(
     card: EdgeCard,
     id_result: IdentifiabilityResult,
     query_mode: str = "REDUCED_FORM",
+    strategy: dict | None = None,
 ) -> None:
     """Attach identification block and propagation role to EdgeCard."""
     from shared.agentic.query_mode import (
@@ -992,6 +993,9 @@ def attach_identification(
         untestable_assumptions=id_result.untestable_assumptions,
         testable_threats_passed=id_result.testable_threats_passed,
         testable_threats_failed=id_result.testable_threats_failed,
+        strategy_type=strategy.get("type", "") if strategy else "",
+        strategy_argument=strategy.get("argument", "") if strategy else "",
+        strategy_key_assumption=strategy.get("key_assumption", "") if strategy else "",
     )
 
     # Load mode config
@@ -1614,6 +1618,17 @@ def main(output_dir: Path | None = None, query_mode: str = "REDUCED_FORM"):
     id_results: dict[str, IdentifiabilityResult] = {}
     ts_results: dict[str, TSGuardResult] = {}
 
+    # Load DAG YAML for identification strategies
+    dag_path = Path("config/agentic/dags/kspi_k2_full.yaml")
+    with open(dag_path) as _f:
+        _dag = yaml.safe_load(_f) or {}
+    edge_strategies: dict[str, dict] = {}
+    for _edge in _dag.get("edges", []):
+        _eid = _edge.get("id", "")
+        _strat = _edge.get("identification_strategy")
+        if _eid and _strat:
+            edge_strategies[_eid] = _strat
+
     # ===================================================================
     # Group A: Monthly LP (6 edges)
     # ===================================================================
@@ -1657,9 +1672,11 @@ def main(output_dir: Path | None = None, query_mode: str = "REDUCED_FORM"):
                 id_result = id_screen.screen_post_estimation(
                     edge_id=edge_id, design="LOCAL_PROJECTIONS",
                     diagnostics=card.diagnostics, ts_guard_result=ts_result,
+                    strategy=edge_strategies.get(edge_id),
                 )
                 id_results[edge_id] = id_result
-                attach_identification(card, id_result, query_mode=query_mode)
+                attach_identification(card, id_result, query_mode=query_mode,
+                                      strategy=edge_strategies.get(edge_id))
                 print_edge_risk_block(edge_id, card, id_result, ts_result)
             except Exception as e:
                 logger.warning(f"  ID/TSGuard for {edge_id}: {e}")
@@ -1690,9 +1707,13 @@ def main(output_dir: Path | None = None, query_mode: str = "REDUCED_FORM"):
 
             # Immutable edges get IDENTIFIED_CAUSAL
             try:
-                id_result = id_screen.screen_post_design(edge_id, "IMMUTABLE_EVIDENCE")
+                id_result = id_screen.screen_post_design(
+                    edge_id, "IMMUTABLE_EVIDENCE",
+                    strategy=edge_strategies.get(edge_id),
+                )
                 id_results[edge_id] = id_result
-                attach_identification(card, id_result, query_mode=query_mode)
+                attach_identification(card, id_result, query_mode=query_mode,
+                                      strategy=edge_strategies.get(edge_id))
             except Exception as e:
                 logger.warning(f"  ID screen for {edge_id}: {e}")
 
@@ -1762,9 +1783,11 @@ def main(output_dir: Path | None = None, query_mode: str = "REDUCED_FORM"):
                 id_result = id_screen.screen_post_estimation(
                     edge_id=edge_id, design="LOCAL_PROJECTIONS",
                     diagnostics=card.diagnostics, ts_guard_result=ts_result,
+                    strategy=edge_strategies.get(edge_id),
                 )
                 id_results[edge_id] = id_result
-                attach_identification(card, id_result, query_mode=query_mode)
+                attach_identification(card, id_result, query_mode=query_mode,
+                                      strategy=edge_strategies.get(edge_id))
                 print_edge_risk_block(edge_id, card, id_result, ts_result)
             except Exception as e:
                 logger.warning(f"  ID/TSGuard for {edge_id}: {e}")
@@ -1870,9 +1893,11 @@ def main(output_dir: Path | None = None, query_mode: str = "REDUCED_FORM"):
                     id_result = id_screen.screen_post_estimation(
                         edge_id=edge_id + "_annual", design="LOCAL_PROJECTIONS",
                         diagnostics=card.diagnostics, ts_guard_result=ts_result,
+                        strategy=edge_strategies.get(edge_id),
                     )
                     id_results[edge_id + "_annual"] = id_result
-                    attach_identification(card, id_result, query_mode=query_mode)
+                    attach_identification(card, id_result, query_mode=query_mode,
+                                          strategy=edge_strategies.get(edge_id))
                     print_edge_risk_block(edge_id + "_annual", card, id_result, ts_result)
                 except Exception as e:
                     logger.warning(f"  ID/TSGuard for {edge_id}_annual: {e}")
@@ -1959,12 +1984,16 @@ def main(output_dir: Path | None = None, query_mode: str = "REDUCED_FORM"):
 
                 # Run identification screen for panel edges
                 try:
+                    # Panel companions inherit strategy from KSPI companion
+                    _kspi_eid = kspi_companion
                     id_result = id_screen.screen_post_estimation(
                         edge_id=edge_id, design="PANEL_LP_EXPOSURE_FE",
                         diagnostics=card.diagnostics,
+                        strategy=edge_strategies.get(_kspi_eid),
                     )
                     id_results[edge_id] = id_result
-                    attach_identification(card, id_result, query_mode=query_mode)
+                    attach_identification(card, id_result, query_mode=query_mode,
+                                          strategy=edge_strategies.get(_kspi_eid))
                     print_edge_risk_block(edge_id, card, id_result)
                 except Exception as e:
                     logger.warning(f"  ID screen for {edge_id}: {e}")
@@ -2020,9 +2049,11 @@ def main(output_dir: Path | None = None, query_mode: str = "REDUCED_FORM"):
                 id_result = id_screen.screen_post_estimation(
                     edge_id=edge_id, design="LOCAL_PROJECTIONS",
                     diagnostics=card.diagnostics, ts_guard_result=ts_result,
+                    strategy=edge_strategies.get(edge_id),
                 )
                 id_results[edge_id] = id_result
-                attach_identification(card, id_result, query_mode=query_mode)
+                attach_identification(card, id_result, query_mode=query_mode,
+                                      strategy=edge_strategies.get(edge_id))
                 print_edge_risk_block(edge_id, card, id_result, ts_result)
             except Exception as e:
                 logger.warning(f"  ID/TSGuard for {edge_id}: {e}")
@@ -2067,9 +2098,13 @@ def main(output_dir: Path | None = None, query_mode: str = "REDUCED_FORM"):
 
                 # Bridge edges are mechanical - screen as such
                 try:
-                    id_result = id_screen.screen_post_design(edge_id, "ACCOUNTING_BRIDGE")
+                    id_result = id_screen.screen_post_design(
+                        edge_id, "ACCOUNTING_BRIDGE",
+                        strategy=edge_strategies.get(edge_id),
+                    )
                     id_results[edge_id] = id_result
-                    attach_identification(card, id_result, query_mode=query_mode)
+                    attach_identification(card, id_result, query_mode=query_mode,
+                                          strategy=edge_strategies.get(edge_id))
                     print_edge_risk_block(edge_id, card, id_result)
                 except Exception as e:
                     logger.warning(f"  ID screen for {edge_id}: {e}")
@@ -2109,9 +2144,13 @@ def main(output_dir: Path | None = None, query_mode: str = "REDUCED_FORM"):
 
             # Identity edges are mechanical - screen as such
             try:
-                id_result = id_screen.screen_post_design(edge_id, "IDENTITY")
+                id_result = id_screen.screen_post_design(
+                    edge_id, "IDENTITY",
+                    strategy=edge_strategies.get(edge_id),
+                )
                 id_results[edge_id] = id_result
-                attach_identification(card, id_result, query_mode=query_mode)
+                attach_identification(card, id_result, query_mode=query_mode,
+                                      strategy=edge_strategies.get(edge_id))
                 print_edge_risk_block(edge_id, card, id_result)
             except Exception as e:
                 logger.warning(f"  ID screen for {edge_id}: {e}")

@@ -911,6 +911,10 @@ edges:
       is_not: ["Demand-driven price movements"]
       allowed_uses: ["shock_counterfactual"]
       forbidden_uses: ["policy_counterfactual"]
+    identification_strategy:
+      type: "exogenous_shock"
+      argument: "Baumeister oil supply shocks are exogenous to KZ demand via SVAR restrictions."
+      key_assumption: "SVAR identifying restrictions correctly separate supply from demand shocks."
     notes: "Exogenous supply shock identification from Baumeister."
 
   - id: "oil_supply_to_fx"
@@ -953,6 +957,10 @@ edges:
       is_not: ["Response to domestic factors"]
       allowed_uses: ["shock_counterfactual"]
       forbidden_uses: ["policy_counterfactual"]
+    identification_strategy:
+      type: "exogenous_shock"
+      argument: "Baumeister oil supply shocks are exogenous to Kazakhstan via SVAR restrictions."
+      key_assumption: "Small open economy cannot influence global oil supply."
     edge_status: "ESTIMABLE_REDUCED_FORM"
     notes: "Oil exporter commodity currency dynamics."
 
@@ -996,6 +1004,10 @@ edges:
       is_not: ["Response to domestic factors"]
       allowed_uses: ["shock_counterfactual"]
       forbidden_uses: ["policy_counterfactual"]
+    identification_strategy:
+      type: "exogenous_shock"
+      argument: "Baumeister oil demand shocks are exogenous to Kazakhstan via SVAR restrictions."
+      key_assumption: "Kazakhstan is too small to drive global oil demand."
     edge_status: "ESTIMABLE_REDUCED_FORM"
     notes: "Commodity currency responds to global demand."
 
@@ -1039,6 +1051,10 @@ edges:
       is_not: ["Response to Kazakhstan-specific risk"]
       allowed_uses: ["shock_counterfactual"]
       forbidden_uses: ["policy_counterfactual"]
+    identification_strategy:
+      type: "small_open_economy"
+      argument: "VIX innovations reflect global risk aversion, exogenous to Kazakhstan-specific factors."
+      key_assumption: "Kazakhstan financial markets do not influence global risk sentiment."
     edge_status: "ESTIMABLE_REDUCED_FORM"
     notes: "EM risk-off channel."
 
@@ -1095,6 +1111,10 @@ edges:
       estimate: 0.113
       se: null
       immutable: true
+    identification_strategy:
+      type: "validated_prior"
+      argument: "Block A LP-IV estimate using regional import-share exposure variation."
+      key_assumption: "Pre-period import shares are exogenous to post-period inflation trends."
     edge_status: "IMMUTABLE"
     notes: "Block A validated result: 11.3% FX pass-through to tradable CPI."
 
@@ -1144,6 +1164,10 @@ edges:
       estimate: 0.0
       se: null
       immutable: true
+    identification_strategy:
+      type: "validated_prior"
+      argument: "Block A falsification test using non-tradable goods as placebo."
+      key_assumption: "Non-tradable CPI should not respond to FX if pass-through is import-driven."
     edge_status: "IMMUTABLE"
     notes: "Block A falsification: Near-zero pass-through to non-tradable CPI."
 
@@ -1192,6 +1216,10 @@ edges:
         - "Taylor rule structural parameter"
       allowed_uses: ["scenario_only"]
       forbidden_uses: ["policy_counterfactual"]
+    identification_strategy:
+      type: "none"
+      argument: "Reaction function — endogenous policy response, no identification strategy."
+      key_assumption: "N/A — this edge documents correlation, not causal effect."
     edge_status: "NEEDS_CONNECTOR"
     notes: "NBK responds to inflation. Requires nbk_policy_rate connector."
 
@@ -1235,6 +1263,10 @@ edges:
         - "Causal effect of policy on FX"
       allowed_uses: ["scenario_only"]
       forbidden_uses: ["policy_counterfactual"]
+    identification_strategy:
+      type: "none"
+      argument: "Reaction function — endogenous policy response, no identification strategy."
+      key_assumption: "N/A — this edge documents correlation, not causal effect."
     edge_status: "NEEDS_CONNECTOR"
     notes: "NBK responds to FX conditions. Requires nbk_policy_rate connector."
 
@@ -1280,6 +1312,10 @@ edges:
         - "Structural transmission coefficient"
       allowed_uses: ["scenario_only"]
       forbidden_uses: ["policy_counterfactual"]
+    identification_strategy:
+      type: "institutional_passthrough"
+      argument: "NBK base rate mechanically feeds into regulated deposit rate corridors."
+      key_assumption: "Deposit rate corridor regulation ensures mechanical pass-through."
     edge_status: "NEEDS_CONNECTOR"
     notes: "Funding cost channel. Requires both connectors."
 
@@ -1324,6 +1360,10 @@ edges:
         - "Counterfactual policy simulation"
       allowed_uses: ["scenario_only"]
       forbidden_uses: ["policy_counterfactual"]
+    identification_strategy:
+      type: "institutional_passthrough"
+      argument: "Higher policy rate increases borrower debt service costs, raising default risk."
+      key_assumption: "Rate pass-through to lending rates is near-complete in KZ banking."
     edge_status: "NEEDS_CONNECTOR"
     notes: "Borrower stress channel. Lagged 2Q for credit deterioration."
 
@@ -1380,6 +1420,10 @@ edges:
     validated_evidence:
       block_id: "block_b_income_response"
       immutable: true
+    identification_strategy:
+      type: "validated_prior"
+      argument: "Block B LP-IV using imported inflation instrument (FX x pre-period import share)."
+      key_assumption: "Exclusion restriction: imported inflation IV affects income only through prices."
     edge_status: "IMMUTABLE"
     notes: "Block B validated: LP-IV estimate using imported inflation IV."
 
@@ -1433,6 +1477,10 @@ edges:
       estimate: -0.10
       se: null
       immutable: true
+    identification_strategy:
+      type: "validated_prior"
+      argument: "Block F LP estimate using regional panel variation in FX exposure."
+      key_assumption: "Regional FX exposure variation is exogenous to expenditure trends."
     edge_status: "IMMUTABLE"
     notes: "Block F validated: IRF(0) = -0.10 for real expenditure."
 
@@ -1480,6 +1528,10 @@ edges:
         - "IFRS 9 overlay component"
       allowed_uses: ["shock_counterfactual", "scenario_only"]
       forbidden_uses: ["policy_counterfactual"]
+    identification_strategy:
+      type: "iv"
+      argument: "Imported inflation instrument (FX x pre-period import share) provides exogenous variation."
+      key_assumption: "Exclusion: imported inflation affects NPL only through household income channel."
     edge_status: "ESTIMABLE_REDUCED_FORM"
     notes: "Reduced-form NPL response. Cannot decompose channels without loan-level data."
 
@@ -1524,6 +1576,10 @@ edges:
         - "Realized credit loss component"
       allowed_uses: ["shock_counterfactual", "scenario_only"]
       forbidden_uses: ["policy_counterfactual"]
+    identification_strategy:
+      type: "iv"
+      argument: "Imported inflation instrument (FX x pre-period import share) provides exogenous variation."
+      key_assumption: "Exclusion: imported inflation affects CoR only through household income/default channel."
     edge_status: "ESTIMABLE_REDUCED_FORM"
     notes: "Reduced-form CoR response. IFRS 9 overlay is latent."
 
@@ -1571,6 +1627,10 @@ edges:
         - "KSPI market share dynamics"
       allowed_uses: ["scenario_only"]
       forbidden_uses: ["shock_counterfactual", "policy_counterfactual"]
+    identification_strategy:
+      type: "none"
+      argument: "No identification strategy — confounded by KSPI market share growth and platform dynamics."
+      key_assumption: "N/A — association only."
     edge_status: "NEEDS_CONNECTOR"
     notes: "Spending -> GMV -> Interchange -> Revenue. Requires KSPI connector."
 
@@ -1617,6 +1677,10 @@ edges:
         - "Net income effect (ignores PPOP)"
       allowed_uses: ["scenario_only"]
       forbidden_uses: ["shock_counterfactual", "policy_counterfactual"]
+    identification_strategy:
+      type: "accounting_identity"
+      argument: "Provisions directly reduce retained earnings and thus regulatory capital."
+      key_assumption: "IFRS accounting rules mechanically link provisions to capital."
     edge_status: "NEEDS_CONNECTOR"
     notes: "Provisioning reduces capital. Control for PPOP."
 
@@ -1659,6 +1723,10 @@ edges:
         - "Risk-weight changes"
       allowed_uses: ["scenario_only"]
       forbidden_uses: []
+    identification_strategy:
+      type: "accounting_identity"
+      argument: "RWA = Loan volume x average risk weight. Volume effect is mechanical."
+      key_assumption: "Average risk weight is approximately constant over the sample period."
     edge_status: "NEEDS_CONNECTOR"
     notes: "Volume × avg RW. Mechanical relationship."
 
@@ -1700,6 +1768,10 @@ edges:
         - "Regulatory changes"
       allowed_uses: ["scenario_only"]
       forbidden_uses: []
+    identification_strategy:
+      type: "none"
+      argument: "No identification strategy — portfolio mix changes are endogenous to KSPI business decisions."
+      key_assumption: "N/A — association only."
     edge_status: "NEEDS_CONNECTOR"
     notes: "Product mix shifts risk weights. NBK uses 150%+ for unsecured."
 
@@ -1729,6 +1801,10 @@ edges:
         - "Causal relationship"
       allowed_uses: ["scenario_only"]
       forbidden_uses: []
+    identification_strategy:
+      type: "accounting_identity"
+      argument: "K2 = Total Capital / RWA is a regulatory definition."
+      key_assumption: "Regulatory definition is stable over the sample period."
     edge_status: "IDENTITY"
     notes: "K2 = Total Capital / RWA. Mechanical identity."
 
@@ -1755,6 +1831,10 @@ edges:
         - "Causal relationship"
       allowed_uses: ["scenario_only"]
       forbidden_uses: []
+    identification_strategy:
+      type: "accounting_identity"
+      argument: "K2 = Total Capital / RWA is a regulatory definition."
+      key_assumption: "Regulatory definition is stable over the sample period."
     edge_status: "IDENTITY"
     notes: "K2 = Total Capital / RWA. Mechanical identity."
 

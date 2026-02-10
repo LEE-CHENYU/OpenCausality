@@ -290,6 +290,79 @@ def _generate_orphan_explanations(
     return explanations
 
 
+def _generate_causal_assessments(
+    dag: dict,
+    edge_data: dict[str, dict],
+) -> dict[str, str]:
+    """Generate LLM causal identification assessments for each edge.
+
+    Parameters
+    ----------
+    dag : dict
+        Parsed DAG YAML.
+    edge_data : dict
+        Keyed by edge_id, values are edge card summaries.
+
+    Returns
+    -------
+    dict
+        ``{edge_id: assessment_text}``
+    """
+    from shared.llm.client import get_llm_client
+    from shared.llm.prompts import CAUSAL_ASSESSMENT_SYSTEM, CAUSAL_ASSESSMENT_USER
+
+    client = get_llm_client()
+    assessments: dict[str, str] = {}
+
+    for edge in dag.get("edges", []):
+        eid = edge.get("id", "")
+        from_node = edge.get("from", "")
+        to_node = edge.get("to", "")
+        edge_type = edge.get("edge_type", "causal")
+        strategy = edge.get("identification_strategy", {}) or {}
+
+        card = edge_data.get(eid, {})
+
+        failed_diags = [
+            d["name"] for d in card.get("diagnostics", []) if not d.get("passed", True)
+        ]
+        passed_diags = [
+            d["name"] for d in card.get("diagnostics", []) if d.get("passed", True)
+        ]
+
+        user_msg = CAUSAL_ASSESSMENT_USER.format(
+            from_node=from_node,
+            to_node=to_node,
+            edge_id=eid,
+            edge_type=edge_type,
+            design=card.get("design", "N/A"),
+            claim_level=card.get("claim_level", "N/A"),
+            rating=card.get("rating", "N/A"),
+            strategy_type=strategy.get("type", "none"),
+            strategy_argument=strategy.get("argument", "N/A"),
+            strategy_key_assumption=strategy.get("key_assumption", "N/A"),
+            point=card.get("point", "N/A"),
+            se=card.get("se", "N/A"),
+            pvalue=card.get("pvalue", "N/A"),
+            diags_passed=", ".join(passed_diags) if passed_diags else "none",
+            diags_failed=", ".join(failed_diags) if failed_diags else "none",
+            notes=edge.get("notes", ""),
+        )
+
+        try:
+            result = client.complete(
+                system=CAUSAL_ASSESSMENT_SYSTEM,
+                user=user_msg,
+                max_tokens=300,
+            )
+            assessments[eid] = result.strip()
+            print(f"  Assessed: {eid}")
+        except Exception as e:
+            logger.warning(f"Causal assessment failed for {eid}: {e}")
+
+    return assessments
+
+
 def generate_and_cache(
     state_path: Path,
     cards_dir: Path,
@@ -347,6 +420,10 @@ def generate_and_cache(
     orphan_explanations = _generate_orphan_explanations(dag)
     print(f"  {len(orphan_explanations)} orphan explanations generated")
 
+    print("  Generating causal assessments...")
+    causal_assessments = _generate_causal_assessments(dag, edge_data)
+    print(f"  {len(causal_assessments)} causal assessments generated")
+
     # Save to cache
     with open(cache_dir / "issue_guidance.json", "w") as f:
         json.dump(issue_guidance, f, indent=2)
@@ -356,6 +433,9 @@ def generate_and_cache(
 
     with open(cache_dir / "orphan_explanations.json", "w") as f:
         json.dump(orphan_explanations, f, indent=2)
+
+    with open(cache_dir / "causal_assessments.json", "w") as f:
+        json.dump(causal_assessments, f, indent=2)
 
     metadata = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -369,6 +449,7 @@ def generate_and_cache(
         "issue_guidance": issue_guidance,
         "edge_annotations": edge_annotations,
         "orphan_explanations": orphan_explanations,
+        "causal_assessments": causal_assessments,
     }
     print(f"  Cache written to {cache_dir}")
     return result
@@ -386,6 +467,7 @@ def load_cache(cache_dir: Path | None = None) -> dict[str, dict[str, str]] | Non
     ig_path = cache_dir / "issue_guidance.json"
     ea_path = cache_dir / "edge_annotations.json"
     oe_path = cache_dir / "orphan_explanations.json"
+    ca_path = cache_dir / "causal_assessments.json"
 
     if not ig_path.exists() or not ea_path.exists():
         return None
@@ -400,8 +482,14 @@ def load_cache(cache_dir: Path | None = None) -> dict[str, dict[str, str]] | Non
         with open(oe_path) as f:
             orphan_explanations = json.load(f)
 
+    causal_assessments: dict[str, str] = {}
+    if ca_path.exists():
+        with open(ca_path) as f:
+            causal_assessments = json.load(f)
+
     return {
         "issue_guidance": issue_guidance,
         "edge_annotations": edge_annotations,
         "orphan_explanations": orphan_explanations,
+        "causal_assessments": causal_assessments,
     }

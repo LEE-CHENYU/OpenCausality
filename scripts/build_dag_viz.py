@@ -111,6 +111,9 @@ def load_edge_card(card_path: Path) -> dict | None:
         "cf_policy_allowed": cf.get("policy_intervention_allowed"),
         "cf_reason_blocked": cf.get("reason_blocked", ""),
         "n_obs": n_obs,
+        "strategy_type": identification.get("strategy_type", ""),
+        "strategy_argument": identification.get("strategy_argument", ""),
+        "strategy_key_assumption": identification.get("strategy_key_assumption", ""),
     }
 
 
@@ -200,6 +203,7 @@ def build_edges_data(
     cards_dir: Path | None,
     issues: dict[str, list[dict]],
     annotations: dict[str, str] | None = None,
+    causal_assessments: dict[str, str] | None = None,
 ) -> list[dict]:
     """Build edge data for D3, enriched with edge card info."""
     edges = []
@@ -223,6 +227,9 @@ def build_edges_data(
         interp = edge.get("interpretation") or {}
         plaus = (edge.get("acceptance_criteria") or {}).get("plausibility") or {}
 
+        # Extract identification strategy from DAG YAML
+        strategy = edge.get("identification_strategy") or {}
+
         edge_data: dict[str, Any] = {
             "id": eid,
             "source": from_node,
@@ -232,6 +239,12 @@ def build_edges_data(
             "interpretation": _html.escape(str(interp.get("is", ""))),
             "notes": _html.escape(str(edge.get("notes", ""))),
         }
+
+        # Inject strategy from DAG YAML as defaults (card data may override)
+        if strategy:
+            edge_data["strategy_type"] = strategy.get("type", "")
+            edge_data["strategy_argument"] = _html.escape(strategy.get("argument", ""))
+            edge_data["strategy_key_assumption"] = _html.escape(strategy.get("key_assumption", ""))
 
         # Enrich with edge card data
         if cards_dir:
@@ -249,6 +262,10 @@ def build_edges_data(
         # LLM annotation
         if annotations and eid in annotations:
             edge_data["llm_annotation"] = _html.escape(annotations[eid])
+
+        # Causal assessment
+        if causal_assessments and eid in causal_assessments:
+            edge_data["causal_assessment"] = _html.escape(causal_assessments[eid])
 
         edges.append(edge_data)
     return edges
@@ -679,6 +696,46 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
             stroke-opacity: 0.3;
             stroke-width: 1px !important;
         }
+
+        /* Identification badges */
+        .id-badge {
+            display: inline-block;
+            font-size: 8px;
+            font-weight: 700;
+            padding: 1px 4px;
+            border-radius: 2px;
+            letter-spacing: 0.3px;
+            margin-left: 4px;
+            vertical-align: middle;
+        }
+        .id-badge.STRONG { background: #059669; color: #fff; }
+        .id-badge.MODERATE { background: #2563eb; color: #fff; }
+        .id-badge.WEAK { background: #d97706; color: #fff; }
+        .id-badge.ABSENT { background: #dc2626; color: #fff; }
+        .strategy-tag {
+            display: inline-block;
+            font-size: 8px;
+            font-weight: 500;
+            padding: 1px 4px;
+            border: 1px solid #ccc;
+            color: #555;
+            margin-left: 4px;
+            vertical-align: middle;
+        }
+        /* Causal assessment section in sidebar */
+        .causal-assessment {
+            margin-top: 6px;
+            padding-top: 6px;
+            border-top: 1px solid #eee;
+            font-size: 10px;
+            line-height: 1.6;
+        }
+        .causal-assessment-title {
+            font-weight: 600;
+            color: #059669;
+            margin-bottom: 4px;
+            font-size: 10px;
+        }
     </style>
 </head>
 <body>
@@ -723,6 +780,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
         <span>B: <strong id="statB">0</strong></span>
         <span>C: <strong id="statC">0</strong></span>
         <span>Issues: <strong id="statIssues">0</strong></span>
+        <span>Identified: <strong id="statIdentified">0</strong></span>
     </div>
     <div class="pitfall-sidebar" id="pitfallSidebar">
         <div class="pitfall-header">
@@ -754,6 +812,7 @@ const ACTIONS_BY_RULE = __ACTIONS_JSON__;
 const GENERATED_AT = "__GENERATED_AT__";
 const ISSUE_GUIDANCE = __ISSUE_GUIDANCE_JSON__;
 const ORPHAN_EXPLANATIONS = __ORPHAN_EXPLANATIONS_JSON__;
+const CAUSAL_ASSESSMENTS = __CAUSAL_ASSESSMENTS_JSON__;
 
 // ── Helpers ──────────────────────────────────────────────────────────────
 function escHtml(s) {
@@ -985,15 +1044,30 @@ if (allIssues.length === 0) {
             }
         }
 
+        // Strategy tag and verdict badge for pitfall items
+        var edgeObj = EDGES.find(function(e2) { return e2.id === issue.edge_id; });
+        var stratTag = (edgeObj && edgeObj.strategy_type) ?
+            '<span class="strategy-tag">' + escHtml(edgeObj.strategy_type.replace(/_/g, ' ')) + '</span>' : '';
+        var caText = (edgeObj && edgeObj.causal_assessment) ? edgeObj.causal_assessment :
+            (CAUSAL_ASSESSMENTS[issue.edge_id] || '');
+        var verdict = extractVerdict(caText);
+        var verdictBadge = verdict ?
+            '<span class="id-badge ' + verdict + '">' + verdict + '</span>' : '';
+        var caHtml = caText ?
+            '<div class="causal-assessment"><div class="causal-assessment-title">Causal Assessment</div>' +
+            renderCausalAssessment(caText) + '</div>' : '';
+
         div.innerHTML =
             '<div class="pitfall-item-header" data-header="1">' +
                 '<span class="pitfall-edge">' + escHtml(issue.edge_id) + '</span>' +
                 '<span class="pitfall-severity ' + issue.severity + '">' + issue.severity + '</span>' +
+                verdictBadge + stratTag +
                 '<span class="pitfall-resolved-check">&#10003;</span>' +
             '</div>' +
             '<div class="pitfall-msg">' + escHtml(issue.message) + '</div>' +
             '<div class="pitfall-decision" data-decision-key="' + escHtml(issue.issue_key) + '">' +
                 llmHtml +
+                caHtml +
                 staticHtml +
                 '<div class="pd-label">Action:</div>' +
                 '<select data-key="' + escHtml(issue.issue_key) + '">' + optHtml + '</select>' +
@@ -1040,14 +1114,26 @@ if (cleanEdges.length > 0) {
             '<div class="pd-llm-guidance"><div class="pd-llm-guidance-title">AI Analysis</div>' +
             renderMarkdown(annText) + '</div>' : '';
 
+        // Strategy tag and verdict badge for clean edges
+        var cleanStratTag = edge.strategy_type ?
+            '<span class="strategy-tag">' + escHtml(edge.strategy_type.replace(/_/g, ' ')) + '</span>' : '';
+        var cleanCaText = edge.causal_assessment || CAUSAL_ASSESSMENTS[edge.id] || '';
+        var cleanVerdict = extractVerdict(cleanCaText);
+        var cleanVerdictBadge = cleanVerdict ?
+            '<span class="id-badge ' + cleanVerdict + '">' + cleanVerdict + '</span>' : '';
+        var cleanCaHtml = cleanCaText ?
+            '<div class="causal-assessment"><div class="causal-assessment-title">Causal Assessment</div>' +
+            renderCausalAssessment(cleanCaText) + '</div>' : '';
+
         div.innerHTML =
             '<div class="pitfall-item-header" data-header="1">' +
                 '<span class="pitfall-edge">' + escHtml(edge.id) + '</span>' +
-                ratingHtml +
+                ratingHtml + cleanVerdictBadge + cleanStratTag +
             '</div>' +
             statsHtml +
             '<div class="pitfall-decision" data-decision-key="edge:' + escHtml(edge.id) + '">' +
                 annHtml +
+                cleanCaHtml +
             '</div>';
 
         pitfallList.appendChild(div);
@@ -1358,6 +1444,8 @@ function showEdgeTooltip(e, d) {
     if (d.claim_level) html += '<div class="tooltip-row"><span class="tooltip-label">Claim</span><span class="tooltip-value">' + d.claim_level + '</span></div>';
     if (d.rating) html += '<div class="tooltip-row"><span class="tooltip-label">Rating</span><span class="tooltip-value">' + d.rating + '</span></div>';
     if (d.design) html += '<div class="tooltip-row"><span class="tooltip-label">Design</span><span class="tooltip-value">' + d.design + '</span></div>';
+    if (d.strategy_type) html += '<div class="tooltip-row"><span class="tooltip-label">ID Strategy</span><span class="tooltip-value">' + d.strategy_type.replace(/_/g, ' ') + '</span></div>';
+    if (d.strategy_argument) html += '<div class="tooltip-row"><span class="tooltip-label">Argument</span><span class="tooltip-value" style="text-align:left;font-weight:400;font-size:10px">' + d.strategy_argument + '</span></div>';
     if (d.diagnostics && d.diagnostics.length > 0) {
         var passed = d.diagnostics.filter(function(x) { return x.passed; }).length;
         html += '<div class="tooltip-row"><span class="tooltip-label">Diagnostics</span><span class="tooltip-value">' + passed + '/' + d.diagnostics.length + ' pass</span></div>';
@@ -1403,6 +1491,42 @@ function renderOrphanSections(s) {
         html += '<div class="tooltip-orphan-section ' + indices[i].key + '">' +
             '<div class="tooltip-orphan-label">' + escHtml(indices[i].label) + '</div>' +
             '<div style="font-size:10px">' + escHtml(body) + '</div></div>';
+    }
+    return html;
+}
+
+function extractVerdict(s) {
+    if (!s) return '';
+    var m = s.match(/\*\*Verdict\*\*:\s*(STRONG|MODERATE|WEAK|ABSENT)/i);
+    return m ? m[1].toUpperCase() : '';
+}
+
+function renderCausalAssessment(s) {
+    if (!s) return '';
+    var sections = [
+        {key: 'finding', re: /\*\*Strategy\*\*:\s*/i, label: 'Strategy'},
+        {key: 'concern', re: /\*\*Strengths\*\*:\s*/i, label: 'Strengths'},
+        {key: 'recommendation', re: /\*\*Vulnerabilities\*\*:\s*/i, label: 'Vulnerabilities'},
+        {key: 'finding', re: /\*\*Verdict\*\*:\s*/i, label: 'Verdict'}
+    ];
+    var indices = [];
+    sections.forEach(function(sec) {
+        var m = s.match(sec.re);
+        if (m) indices.push({key: sec.key, idx: s.indexOf(m[0]), len: m[0].length, label: sec.label});
+    });
+    indices.sort(function(a, b) { return a.idx - b.idx; });
+    if (indices.length === 0) return renderMarkdown(s);
+    var html = '';
+    for (var i = 0; i < indices.length; i++) {
+        var start = indices[i].idx + indices[i].len;
+        var end = (i + 1 < indices.length) ? indices[i + 1].idx : s.length;
+        var body = s.substring(start, end).trim();
+        var cls = indices[i].key;
+        if (indices[i].label === 'Strengths') cls = 'recommendation';
+        if (indices[i].label === 'Vulnerabilities') cls = 'concern';
+        html += '<div class="pd-section ' + cls + '">' +
+            '<div class="pd-section-label">' + escHtml(indices[i].label) + '</div>' +
+            renderMarkdown(body) + '</div>';
     }
     return html;
 }
@@ -1491,6 +1615,8 @@ function applyFilters() {
     document.getElementById('statC').textContent = visible.filter(function(e) { return e.rating === 'C'; }).length;
     var visibleIssues = visible.reduce(function(s, e) { return s + (e.issues ? e.issues.length : 0); }, 0);
     document.getElementById('statIssues').textContent = visibleIssues;
+    var identified = visible.filter(function(e) { return e.claim_level === 'IDENTIFIED_CAUSAL'; }).length;
+    document.getElementById('statIdentified').textContent = identified;
 }
 
 document.getElementById('typeFilter').addEventListener('change', applyFilters);
@@ -1548,10 +1674,11 @@ def build(
     annotations = cache["edge_annotations"] if cache else None
     issue_guidance: dict[str, str] = cache["issue_guidance"] if cache else {}
     orphan_explanations: dict[str, str] = cache.get("orphan_explanations", {}) if cache else {}
+    causal_assessments: dict[str, str] = cache.get("causal_assessments", {}) if cache else {}
 
     # Build data arrays
     nodes = build_nodes_data(dag)
-    edges = build_edges_data(dag, cards_dir, issues, annotations)
+    edges = build_edges_data(dag, cards_dir, issues, annotations, causal_assessments)
     latents = build_latents_data(dag)
 
     print(f"  {len(nodes)} nodes, {len(edges)} edges, {len(latents)} latents")
@@ -1574,6 +1701,7 @@ def build(
     html = html.replace("__GENERATED_AT__", generated_at)
     html = html.replace("__ISSUE_GUIDANCE_JSON__", json.dumps(issue_guidance, indent=2))
     html = html.replace("__ORPHAN_EXPLANATIONS_JSON__", json.dumps(orphan_explanations, indent=2))
+    html = html.replace("__CAUSAL_ASSESSMENTS_JSON__", json.dumps(causal_assessments, indent=2))
 
     # Write output
     if output_path is None:

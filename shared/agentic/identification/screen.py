@@ -129,6 +129,19 @@ class IdentifiabilityScreen:
         "IMMUTABLE_EVIDENCE": "IDENTIFIED_CAUSAL",  # Validated
     }
 
+    # Strategy type -> base claim level mapping (overrides design when present)
+    STRATEGY_CLAIM_MAP: dict[str, str] = {
+        "exogenous_shock": "IDENTIFIED_CAUSAL",
+        "iv": "IDENTIFIED_CAUSAL",
+        "did": "IDENTIFIED_CAUSAL",
+        "rdd": "IDENTIFIED_CAUSAL",
+        "small_open_economy": "IDENTIFIED_CAUSAL",
+        "validated_prior": "IDENTIFIED_CAUSAL",
+        "accounting_identity": "IDENTIFIED_CAUSAL",
+        "institutional_passthrough": "REDUCED_FORM",
+        "none": "DESCRIPTIVE",
+    }
+
     def screen_pre_design(
         self,
         edge_id: str,
@@ -214,13 +227,19 @@ class IdentifiabilityScreen:
         edge_id: str,
         design: str,
         diagnostics_available: list[str] | None = None,
+        strategy: dict | None = None,
     ) -> IdentifiabilityResult:
         """
         Screen 2: Post-design, before estimation.
 
         Checks whether the chosen design achieves identification.
+        When *strategy* is provided, uses STRATEGY_CLAIM_MAP as
+        the base claim instead of DESIGN_CLAIM_MAP.
         """
-        base_claim = self.DESIGN_CLAIM_MAP.get(design, "DESCRIPTIVE")
+        if strategy and strategy.get("type") in self.STRATEGY_CLAIM_MAP:
+            base_claim = self.STRATEGY_CLAIM_MAP[strategy["type"]]
+        else:
+            base_claim = self.DESIGN_CLAIM_MAP.get(design, "DESCRIPTIVE")
 
         risks = {
             "unmeasured_confounding": "low" if base_claim == "IDENTIFIED_CAUSAL" else "medium",
@@ -257,13 +276,15 @@ class IdentifiabilityScreen:
         diagnostics: dict[str, Any],
         ts_guard_result: Any | None = None,
         query_mode: str | None = None,
+        strategy: dict | None = None,
     ) -> IdentifiabilityResult:
         """
         Screen 3: Post-estimation. Given diagnostics, what's the final claim?
 
         This is where diagnostic failures can downgrade the claim level.
+        When *strategy* is provided, it overrides the design-only mapping.
         """
-        result = self.screen_post_design(edge_id, design)
+        result = self.screen_post_design(edge_id, design, strategy=strategy)
 
         passed = []
         failed = []

@@ -286,3 +286,47 @@ Domain: {domain}
 Existing connectors used in DAG: {existing_connectors}
 
 Suggest data source specification."""
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Causal Assessment (DAG Visualization)
+# ──────────────────────────────────────────────────────────────────────
+
+CAUSAL_ASSESSMENT_SYSTEM = """\
+You are an econometrics expert assessing the causal identification strength of DAG edges.
+
+For each edge, evaluate the identification strategy and provide a structured assessment.
+
+Format your response with these labeled sections:
+**Strategy**: One sentence summarizing the identification approach.
+**Strengths**: 1-2 sentences on what supports the causal claim.
+**Vulnerabilities**: 1-2 sentences on what could invalidate the causal claim.
+**Verdict**: Exactly one of: STRONG, MODERATE, WEAK, ABSENT
+
+Verdict criteria:
+- STRONG: Credible exogenous variation with passed diagnostics (exogenous shocks, validated IV, RCT)
+- MODERATE: Arguable identification with some residual concerns (institutional passthrough, validated priors with caveats)
+- WEAK: Identification attempted but unconvincing (weak instruments, questionable exclusion)
+- ABSENT: No identification strategy; pure association
+
+Be specific and data-driven. Reference the actual strategy type and diagnostics."""
+
+CAUSAL_ASSESSMENT_USER = """\
+Edge: {from_node} -> {to_node} (id: {edge_id})
+Type: {edge_type}
+Design: {design}
+Claim level: {claim_level}
+Rating: {rating}
+
+Identification strategy:
+  Type: {strategy_type}
+  Argument: {strategy_argument}
+  Key assumption: {strategy_key_assumption}
+
+Estimate: {point} (SE: {se}, p={pvalue})
+Diagnostics passed: {diags_passed}
+Diagnostics failed: {diags_failed}
+
+Notes: {notes}
+
+Provide a causal identification assessment."""
