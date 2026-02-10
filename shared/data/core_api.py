@@ -77,13 +77,16 @@ class COREClient:
 
         return works
 
-    def _request(self, url: str, params: dict[str, Any]) -> dict | None:
-        """Make a GET request with rate limiting and Bearer auth."""
+    def _request(
+        self, url: str, params: dict[str, Any], *, _retries: int = 0
+    ) -> dict | None:
+        """Make a GET request with rate limiting, Bearer auth, and retry."""
         elapsed = time.monotonic() - self._last_request_time
         if elapsed < self._min_interval:
             time.sleep(self._min_interval - elapsed)
 
         headers = {"Authorization": f"Bearer {self._api_key}"}
+        max_retries = 2
 
         try:
             self._last_request_time = time.monotonic()
@@ -92,7 +95,16 @@ class COREClient:
             if resp.status_code == 429:
                 logger.warning("CORE rate limit hit; backing off 10s")
                 time.sleep(10.0)
-                return self._request(url, params)
+                return self._request(url, params, _retries=_retries)
+
+            if resp.status_code >= 500 and _retries < max_retries:
+                wait = 5.0 * (_retries + 1)
+                logger.warning(
+                    f"CORE server error {resp.status_code}; "
+                    f"retry {_retries + 1}/{max_retries} after {wait:.0f}s"
+                )
+                time.sleep(wait)
+                return self._request(url, params, _retries=_retries + 1)
 
             resp.raise_for_status()
             return resp.json()

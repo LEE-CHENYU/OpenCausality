@@ -910,7 +910,7 @@ class QueryREPL:
                     f"  [{i+1}] {edge.from_node} -> {edge.to_node} "
                     f"(conf={edge.match_confidence:.2f}, "
                     f"evidence={len(edge.evidence)}) "
-                    f"[bold][a]ccept / [r]eject?[/bold] "
+                    f"[bold]\[a]ccept / \[r]eject?[/bold] "
                 ).strip().lower()
                 if accept.startswith("a"):
                     console.print(f"    [green]Accepted: {edge.edge_id}[/green]")
