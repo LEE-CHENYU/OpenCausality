@@ -289,7 +289,9 @@ $\mathcal{V} \gets \emptyset$\;
 \section{3-Stage Identifiability Screening}
 \label{sec:identification}
 
-\oc{} assigns each edge a \emph{claim level} from a 4-tier hierarchy: \texttt{IDENTIFIED\_CAUSAL} $>$ \texttt{REDUCED\_FORM} $>$ \texttt{DESCRIPTIVE} $>$ \texttt{BLOCKED\_ID}. The key design principle is that \emph{significance is never a promotion criterion; only identification strength and diagnostic stability determine claim levels}.
+\oc{} assigns each edge a \emph{claim level} from a 4-tier hierarchy: \texttt{IDENTIFIED\_CAUSAL} $>$ \texttt{REDUCED\_FORM} $>$ \texttt{DESCRIPTIVE} $>$ \texttt{BLOCKED\_ID}. The central design principle is that \textbf{claim levels are a one-way ratchet: they can only be maintained or downgraded, never upgraded, after estimation begins.} This reflects the foundational insight that identification comes from the research design, not from the data~\citep{angrist2010credibility}. Good standard errors do not make an OLS estimate causal; a large $t$-statistic does not substitute for an instrument.
+
+Concretely, the ratchet works as follows. First, the estimation \emph{design} sets a ceiling: IV and RCT designs permit \texttt{IDENTIFIED\_CAUSAL}; local projections and panel FE permit at most \texttt{REDUCED\_FORM}; OLS permits only \texttt{DESCRIPTIVE}. Second, post-estimation diagnostics can only \emph{cap downward} via a monotone \texttt{cap\_to()} operator---a failed leads test forces \texttt{BLOCKED\_ID}, a weak first-stage $F$ forces \texttt{REDUCED\_FORM}, but no diagnostic success ever triggers an upgrade. Third, human-in-the-loop review (Section~\ref{sec:governance}) can confirm or further downgrade the claim, but the HITL panel offers no mechanism to promote a claim level beyond its design-determined ceiling. Upgrading a claim requires changing the research design itself---introducing an instrument, adding an exclusion restriction---which means re-specifying the DAG and re-running estimation from scratch: a deliberate, auditable act recorded in the hash-chained ledger, not a post-hoc checkbox.
 
 \subsection{Three Screening Points}
 
@@ -396,6 +398,18 @@ The pipeline proceeds in three stages:
     \item \textbf{Edge proposal}: Matched claims become \texttt{ProposedEdge} objects. Edges with the same $(from, to)$ pair combine evidence and take the maximum confidence level.
 \end{enumerate}
 
+\subsection{Scaffolding, Not Identification}
+
+A critical design principle: \textbf{LLM extraction confidence is not identification strength.} The pipeline produces \emph{candidate edges}---scaffolding for DAG construction---not identified causal relationships. An LLM reporting high confidence that ``$X$ causes $Y$'' reflects the strength of the textual claim in the source paper, not the validity of its research design. A paper that confidently asserts a causal effect based on OLS with no instrument produces a high-confidence extraction but, once estimated, receives at most a \texttt{DESCRIPTIVE} claim ceiling.
+
+Two risks require explicit analyst discipline:
+
+\begin{enumerate}[leftmargin=*, itemsep=1pt]
+    \item \textbf{Uncritical acceptance of LLM proposals.} If users treat extraction confidence as a proxy for identification, the distinction between claimed and identified relationships---the foundation of the governance framework (Section~\ref{sec:governance})---collapses. All proposed edges must pass through HITL review; the system enforces this by routing proposals through \texttt{ProposedEdge} objects that require explicit analyst approval before entering the DAG.
+
+    \item \textbf{Post-hoc narrative contamination.} The narrative-to-DAG workflow is valid when the input narrative encodes prior domain knowledge and theory---the researcher's causal model \emph{before} seeing estimation results. It is invalid if the narrative is written or revised \emph{after} seeing preliminary results, because the DAG structure then encodes the data rather than constraining it. This is the specification-searching problem repackaged in natural language: the one-way ratchet on claim levels (Section~\ref{sec:identification}) constrains what can be concluded \emph{given} a fixed structure, but it cannot detect that the structure was chosen to fit the data. Narrative-generated DAGs should be treated with the same pre-registration discipline as expert-built DAGs: freeze the DAG before estimation and run in \texttt{CONFIRMATION} mode.
+\end{enumerate}
+
 \subsection{LLM Abstraction}
 
 \oc{} provides a multi-backend LLM client supporting Anthropic (direct API), LiteLLM (multi-provider), and CLI fallbacks (\texttt{claude} or \texttt{codex}) that require no API key. Structured extraction uses tool-use (Anthropic) or function-calling (LiteLLM) to produce typed outputs without parsing.
@@ -451,6 +465,8 @@ For LLM-assisted repairs, the log additionally records the model identifier and 
 \subsection{Human-in-the-Loop Gates}
 
 The \texttt{HITLGate} detects conditions requiring human decisions from three sources: unspecified DAG parameters (\eg edge type, expected sign), TSGuard flags (regime instability), and issues marked \texttt{requires\_human = True}. When triggered, it generates a structured Markdown checklist and pauses the agent loop until all decisions are recorded. Decisions are exported as JSON and appended to the audit log.
+
+\paragraph{Downgrade-only review.} A critical property of the HITL gate is that it enforces the one-way ratchet described in Section~\ref{sec:identification}. The available analyst actions---\emph{accept} (acknowledge with caveat), \emph{reject} (suppress edge), \emph{revise} (re-specify and re-estimate), \emph{escalate} (defer to senior reviewer)---all either maintain or reduce the edge's effective claim level. There is no ``approve as causal'' action. An analyst reviewing a \texttt{REDUCED\_FORM} edge cannot promote it to \texttt{IDENTIFIED\_CAUSAL}, regardless of how strong the point estimate appears. The ``revise'' action triggers re-estimation with a modified specification, and the \emph{new} design determines the new ceiling---the ratchet resets to the design's maximum, not to the analyst's preference. This ensures that post-hoc rationalization (running models first, then retrofitting a causal story) is structurally impossible within the governed workflow.
 
 The governance framework catches five categories of methodological loopholes:
 
@@ -676,7 +692,10 @@ The dominant open issue type is \texttt{SIGNIFICANT\_BUT\_NOT\_IDENTIFIED} (492 
 Qualifying language is collapsed to binary decisions, effect magnitudes are not reliably extracted from text, and the pipeline cannot distinguish between claims made by the authors and claims they merely cite.
 
 \paragraph{Claims are not identification.}
-A DAG extracted from the literature represents \emph{claimed} causal relationships, not identified ones. \oc{}'s identifiability screen partially addresses this, but the initial DAG structure reflects community beliefs rather than proven mechanisms.
+A DAG extracted from the literature represents \emph{claimed} causal relationships, not identified ones. LLM extraction confidence reflects the strength of the textual assertion, not the validity of the underlying research design---a paper that confidently asserts ``$X$ causes $Y$'' based on OLS produces a high-confidence extraction but a \texttt{DESCRIPTIVE}-ceiling edge. \oc{}'s identifiability screen partially addresses this by capping claim levels to the estimation design, but users who accept LLM proposals uncritically risk treating the LLM as an identification oracle.
+
+\paragraph{Narrative contamination.}
+The narrative-to-DAG pipeline assumes the input text encodes prior domain knowledge---the researcher's causal model \emph{before} seeing data. If the narrative is written or revised after seeing preliminary results, the DAG structure becomes data-dependent, and the one-way claim-level ratchet provides no protection: it constrains conclusions given a fixed structure, but cannot detect that the structure was chosen to fit the data. This is specification searching repackaged in natural language. Narrative-generated DAGs should be frozen before estimation and run in \texttt{CONFIRMATION} mode.
 
 \paragraph{Single-country evaluation.}
 Our primary case study is Kazakhstan bank stress testing. While the platform is domain-agnostic, the data clients and variable catalogs are currently specific to this use case.

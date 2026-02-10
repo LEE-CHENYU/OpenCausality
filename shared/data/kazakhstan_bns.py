@@ -43,6 +43,11 @@ class BNSDataType(Enum):
     MINING_SHARES = "mining_shares"
     GRP_BY_REGION = "grp_by_region"
     EMPLOYMENT = "employment"
+    # DAG node dataset mappings
+    HOUSEHOLD_INCOME = "household_income"
+    HOUSEHOLD_BUDGET = "household_budget"
+    REGIONAL_ACCOUNTS = "regional_accounts"
+    PRICES = "prices"
 
 
 @dataclass
@@ -91,6 +96,31 @@ KNOWN_ENDPOINTS: dict[BNSDataType, BNSEndpoint] = {
         discovery_url="/en/industries/labor-and-income/stat-occupancy/",
         file_pattern=r"employment.*region|labor.*force|employed",
         description="Employment by region (quarterly)",
+    ),
+    # DAG node dataset mappings
+    BNSDataType.HOUSEHOLD_INCOME: BNSEndpoint(
+        data_type=BNSDataType.HOUSEHOLD_INCOME,
+        discovery_url="/en/industries/labor-and-income/stat-life/",
+        file_pattern=r"wage.*income|transfer.*income|monetary.*income|household.*income",
+        description="Household income by source (wages, transfers) by region (quarterly)",
+    ),
+    BNSDataType.HOUSEHOLD_BUDGET: BNSEndpoint(
+        data_type=BNSDataType.HOUSEHOLD_BUDGET,
+        discovery_url="/en/industries/labor-and-income/stat-life/",
+        file_pattern=r"consumption.*expenditure|household.*budget|household.*expense",
+        description="Household consumption expenditure by region (quarterly)",
+    ),
+    BNSDataType.REGIONAL_ACCOUNTS: BNSEndpoint(
+        data_type=BNSDataType.REGIONAL_ACCOUNTS,
+        discovery_url="/en/industries/economy/national-accounts/",
+        file_pattern=r"import.*share|regional.*account|trade.*region",
+        description="Regional accounts including import shares (annual)",
+    ),
+    BNSDataType.PRICES: BNSEndpoint(
+        data_type=BNSDataType.PRICES,
+        discovery_url="/en/industries/prices/stat-consumer-prices/",
+        file_pattern=r"consumer.*price|cpi|price.*index",
+        description="Consumer price indices by category (monthly)",
     ),
 }
 

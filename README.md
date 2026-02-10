@@ -224,6 +224,34 @@ with confidence scores, then a matching step aligns extracted variables against 
 DAG or variable catalog. This means the system can both extend an existing DAG and
 build one from scratch.
 
+> **Methodological warning: LLM confidence is not identification.** The NL-to-DAG
+> pipeline and narrative-based DAG generation are *scaffolding tools* — they accelerate
+> the construction of candidate DAGs, but they do not establish causal identification.
+> Two risks require explicit analyst discipline:
+>
+> 1. **LLM-extracted edges are proposals, not findings.** An LLM reporting high
+>    confidence that "X causes Y" based on a paper's text reflects the strength of
+>    the textual claim, not the strength of the paper's identification strategy.
+>    Accepting proposed edges uncritically — treating LLM extraction confidence as a
+>    substitute for a valid research design — collapses the distinction between
+>    claimed and identified relationships that the entire governance framework is
+>    built to enforce.
+>
+> 2. **Narratives must precede data, not follow it.** The narrative-to-DAG workflow
+>    is valid when the narrative encodes prior domain knowledge and economic theory —
+>    the researcher's causal model of the world *before* seeing estimation results.
+>    It is invalid if the narrative is written or revised *after* seeing preliminary
+>    results, because the DAG then encodes the data rather than constraining it.
+>    This is the specification-searching problem repackaged in natural language: if
+>    you write the story after seeing which regressions are significant, the
+>    one-way ratchet on claim levels provides no protection because the structure
+>    itself is contaminated.
+>
+> Both risks are mitigated by treating NL-extracted DAGs as hypothesis-generation
+> artifacts subject to the same pre-registration discipline as expert-built DAGs:
+> freeze the DAG before estimation, run in `CONFIRMATION` mode, and never modify
+> structure based on results.
+
 ### Comparison
 
 | Metric                         | Expert DAG | NL-Extracted DAG |
@@ -404,6 +432,43 @@ shows significance but lacks valid identification, the system flags the issue an
 until an analyst decides. Every published result carries an auditable record of the
 judgment calls that produced it.
 
+### Core Principle: Claim Levels Are a One-Way Ratchet
+
+A common methodological error is to run models first and then decide what is causal
+based on which results look good. OpenCausality enforces the opposite: **identification
+claims are determined by research design before estimation and can only be maintained
+or downgraded — never upgraded — after seeing results.** This is the system's central
+design philosophy.
+
+The mechanism works in three stages:
+
+1. **Design sets the ceiling.** Each edge's maximum claim level is fixed by the
+   estimation design chosen *before* data are examined. IV and RCT designs permit
+   `IDENTIFIED_CAUSAL`; Local Projections and Panel FE permit `REDUCED_FORM`; OLS
+   permits only `DESCRIPTIVE`. No amount of good results can exceed this ceiling.
+
+2. **Diagnostics can only push down.** Post-estimation checks (leads test, first-stage
+   F-statistic, leave-one-out stability, TSGuard flags) apply `cap_to()` — a
+   unidirectional function that moves the claim level toward weaker categories.
+   A failed leads test forces `BLOCKED_ID`. A weak first-stage F-stat forces
+   `REDUCED_FORM`. No diagnostic *success* ever triggers an upgrade.
+
+3. **Human review can only push down.** The HITL panel and DAG visualization present
+   flagged issues for analyst review. The available actions — accept (with caveat),
+   reject, revise, escalate — all either maintain or reduce the edge's effective
+   claim. There is no "approve as causal" button. An analyst reviewing a
+   `REDUCED_FORM` edge cannot promote it to `IDENTIFIED_CAUSAL`, regardless of how
+   strong the estimate looks. Promotion would require changing the research design
+   itself (e.g., introducing an instrument), which means re-specifying the DAG and
+   re-running estimation from scratch — a deliberate, auditable act, not a post-hoc
+   checkbox.
+
+This design reflects a foundational principle in causal inference: **identification
+comes from the research design, not from the data.** Good standard errors do not make
+an OLS estimate causal. A large t-statistic does not substitute for an instrument.
+The system encodes this by making the claim-level ceiling a structural property of
+the design choice, immutable to downstream evidence.
+
 ### How OpenCausality Catches Loopholes
 
 #### Overclaiming (SIGNIFICANT_BUT_NOT_IDENTIFIED)
@@ -451,7 +516,9 @@ Supports bulk actions and exports decisions as JSON for pipeline re-ingestion.
 
 ### The Review and Approval Process
 
-The workflow follows a **proposal → review → approval** pattern:
+The workflow follows a **proposal → review → downgrade-or-confirm** pattern. Crucially,
+"approval" in this system means confirming that the pre-specified claim level is
+warranted — it never means upgrading a weaker claim to a stronger one.
 
 1. Estimation runs and issues are flagged automatically by the governance system.
 2. The **DAG visualization** is built as a "Draft Proposal" — the primary entry point
@@ -464,9 +531,13 @@ The workflow follows a **proposal → review → approval** pattern:
 5. The audit log records each decision with a hash-chain link, creating an immutable
    record.
 
-Decisions affect pipeline behavior: "accept" downgrades credibility but allows the edge
-into the report with a caveat; "reject" suppresses the edge; "revise" triggers
-re-estimation with modified specs; "escalate" halts until a senior reviewer intervenes.
+Decisions affect pipeline behavior: **"accept"** acknowledges a flagged issue and
+downgrades the edge's credibility rating while allowing it into the report with an
+explicit caveat — it does not restore or elevate the claim level; **"reject"**
+suppresses the edge entirely; **"revise"** triggers re-estimation with modified specs
+(the new design determines the new ceiling, starting the ratchet fresh); **"escalate"**
+halts the pipeline until a senior reviewer intervenes. No action path permits an analyst
+to override the design-determined claim ceiling after seeing estimation results.
 
 ---
 
@@ -541,7 +612,23 @@ A DAG extracted from literature represents claimed causal relationships, not ide
 ones. The presence of an edge in the DAG means someone published a paper asserting that
 relationship; it does not mean the relationship has been credibly identified with a
 valid research design. Users should treat NL-extracted DAGs as hypotheses to be tested,
-not as established facts.
+not as established facts. In particular, LLM extraction confidence reflects the
+strength of the textual claim, not the strength of the underlying identification
+strategy — a paper that confidently asserts "X causes Y" based on OLS with no
+instrument produces a high-confidence extraction but a `DESCRIPTIVE`-ceiling edge.
+
+### Narrative Contamination Risk
+
+The narrative-to-DAG pipeline assumes the input narrative encodes prior domain knowledge
+— the researcher's causal model *before* seeing data. If the narrative is instead
+written or revised after seeing preliminary estimation results, the DAG structure itself
+becomes data-dependent, and the one-way ratchet on claim levels provides no protection:
+the ratchet constrains what you can conclude *given* a fixed structure, but it cannot
+detect that the structure was chosen to fit the data. This is the classic specification-
+searching problem repackaged in natural language. Users should treat narrative-generated
+DAGs with the same pre-registration discipline applied to expert-built DAGs: write the
+narrative before any estimation, freeze the resulting DAG, and run in `CONFIRMATION`
+mode.
 
 ### Example Coverage
 

@@ -1,0 +1,17 @@
+node_id: global_activity_shock
+connector: fred
+dataset: global_activity
+series: IGREA
+download_time: '2026-02-09T20:38:56.149761'
+file_path: data/raw/fred/IGREA.parquet
+size_bytes: 8398
+row_count: 311
+date_range:
+- '2000-01-01 00:00:00'
+- '2025-11-01 00:00:00'
+quality_notes: []
+provenance:
+  source: data_scout
+  added_at: '2026-02-09'
+  connector: fred
+  dataset: global_activity
