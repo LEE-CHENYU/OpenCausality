@@ -246,11 +246,20 @@ def build_edges_data(
             edge_data["strategy_argument"] = _html.escape(strategy.get("argument", ""))
             edge_data["strategy_key_assumption"] = _html.escape(strategy.get("key_assumption", ""))
 
-        # Enrich with edge card data
+        # Enrich with edge card data (card values override YAML, but
+        # empty strategy fields in old cards should NOT clobber YAML source)
         if cards_dir:
             card = load_edge_card(cards_dir / f"{eid}.yaml")
             if card:
+                # Preserve YAML-sourced strategy if card has empty values
+                yaml_strategy = {
+                    k: edge_data[k] for k in ("strategy_type", "strategy_argument", "strategy_key_assumption")
+                    if k in edge_data and edge_data[k]
+                }
                 edge_data.update(card)
+                for k, v in yaml_strategy.items():
+                    if not edge_data.get(k):
+                        edge_data[k] = v
 
         # Enrich with issues
         edge_issues = issues.get(eid, [])
