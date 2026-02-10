@@ -1,0 +1,140 @@
+\begin{thebibliography}{17}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Angrist and Pischke(2010)]{angrist2010credibility}
+Joshua~D. Angrist and J{\"o}rn-Steffen Pischke.
+\newblock The credibility revolution in empirical economics: How better
+  research design is taking the con out of econometrics.
+\newblock \emph{Journal of Economic Perspectives}, 24\penalty0 (2):\penalty0
+  3--30, 2010.
+\newblock \doi{10.1257/jep.24.2.3}.
+
+\bibitem[Bach et~al.(2022)Bach, Chernozhukov, Kurz, and
+  Spindler]{bach2022doubleml}
+Philipp Bach, Victor Chernozhukov, Malte~S. Kurz, and Martin Spindler.
+\newblock {DoubleML} -- an object-oriented implementation of double machine
+  learning in {Python}.
+\newblock \emph{Journal of Machine Learning Research}, 23\penalty0
+  (53):\penalty0 1--6, 2022.
+\newblock URL \url{https://www.jmlr.org/papers/v23/21-0862.html}.
+
+\bibitem[Battocchi et~al.(2019)Battocchi, Dillon, Hei, Lewis, Oka, Oprescu, and
+  Syrgkanis]{battocchi2019econml}
+Keith Battocchi, Eleanor Dillon, Maggie Hei, Greg Lewis, Paul Oka, Miruna
+  Oprescu, and Vasilis Syrgkanis.
+\newblock {EconML}: A {Python} package for {ML}-based heterogeneous treatment
+  effects estimation.
+\newblock \url{https://github.com/py-why/EconML}, 2019.
+\newblock Microsoft Research.
+
+\bibitem[Chen et~al.(2020)Chen, Harinen, Lee, Yung, and Zhao]{chen2020causalml}
+Huigang Chen, Totte Harinen, Jeong-Yoon Lee, Mike Yung, and Zhenyu Zhao.
+\newblock {CausalML}: {Python} package for causal machine learning.
+\newblock \emph{arXiv preprint arXiv:2002.11631}, 2020.
+\newblock URL \url{https://arxiv.org/abs/2002.11631}.
+
+\bibitem[Chickering(2002)]{chickering2002optimal}
+David~Maxwell Chickering.
+\newblock Optimal structure identification with greedy search.
+\newblock \emph{Journal of Machine Learning Research}, 3:\penalty0 507--554,
+  2002.
+\newblock \doi{10.1162/153244303321897717}.
+\newblock URL \url{https://jmlr.org/papers/v3/chickering02b.html}.
+
+\bibitem[Dalgic(2024)]{dalgic2024dollarization}
+Husnu~C. Dalgic.
+\newblock Financial dollarization in emerging markets: An insurance
+  arrangement.
+\newblock \emph{International Economic Review}, 65\penalty0 (3):\penalty0
+  1189--1219, 2024.
+\newblock \doi{10.1111/iere.12686}.
+
+\bibitem[Ioannidis(2005)]{ioannidis2005why}
+John P.~A. Ioannidis.
+\newblock Why most published research findings are false.
+\newblock \emph{PLOS Medicine}, 2\penalty0 (8):\penalty0 e124, 2005.
+\newblock \doi{10.1371/journal.pmed.0020124}.
+
+\bibitem[K{\i}c{\i}man et~al.(2023)K{\i}c{\i}man, Ness, Sharma, and
+  Tan]{kiciman2023causal}
+Emre K{\i}c{\i}man, Robert Ness, Amit Sharma, and Chenhao Tan.
+\newblock Causal reasoning and large language models: Opening a new frontier
+  for causality.
+\newblock \emph{Transactions on Machine Learning Research}, 2023.
+\newblock URL \url{https://arxiv.org/abs/2305.00050}.
+
+\bibitem[Long et~al.(2023)Long, Schuster, and Pich{\'e}]{long2023can}
+Stephanie Long, Tibor Schuster, and Alexandre Pich{\'e}.
+\newblock Can large language models build causal graphs?
+\newblock \emph{arXiv preprint arXiv:2303.05279}, 2023.
+\newblock URL \url{https://arxiv.org/abs/2303.05279}.
+
+\bibitem[Nosek et~al.(2018)Nosek, Ebersole, DeHaven, and
+  Mellor]{nosek2018preregistration}
+Brian~A. Nosek, Charles~R. Ebersole, Alexander~C. DeHaven, and David~T. Mellor.
+\newblock The preregistration revolution.
+\newblock \emph{Proceedings of the National Academy of Sciences}, 115\penalty0
+  (11):\penalty0 2600--2606, 2018.
+\newblock \doi{10.1073/pnas.1708274114}.
+
+\bibitem[Sharma and Kiciman(2020)]{sharma2020dowhy}
+Amit Sharma and Emre Kiciman.
+\newblock {DoWhy}: An end-to-end library for causal inference.
+\newblock \emph{arXiv preprint arXiv:2011.04216}, 2020.
+\newblock URL \url{https://arxiv.org/abs/2011.04216}.
+
+\bibitem[Simmons et~al.(2011)Simmons, Nelson, and Simonsohn]{simmons2011false}
+Joseph~P. Simmons, Leif~D. Nelson, and Uri Simonsohn.
+\newblock False-positive psychology: Undisclosed flexibility in data collection
+  and analysis allows presenting anything as significant.
+\newblock \emph{Psychological Science}, 22\penalty0 (11):\penalty0 1359--1366,
+  2011.
+\newblock \doi{10.1177/0956797611417632}.
+
+\bibitem[Simonsohn et~al.(2020)Simonsohn, Simmons, and
+  Nelson]{simonsohn2020specification}
+Uri Simonsohn, Joseph~P. Simmons, and Leif~D. Nelson.
+\newblock Specification curve analysis.
+\newblock \emph{Nature Human Behaviour}, 4\penalty0 (11):\penalty0 1208--1214,
+  2020.
+\newblock \doi{10.1038/s41562-020-0912-z}.
+
+\bibitem[Spirtes et~al.(2000)Spirtes, Glymour, and
+  Scheines]{spirtes2000causation}
+Peter Spirtes, Clark Glymour, and Richard Scheines.
+\newblock \emph{Causation, Prediction, and Search}.
+\newblock Adaptive Computation and Machine Learning. MIT Press, 2nd edition,
+  2000.
+\newblock ISBN 978-0-262-19440-2.
+
+\bibitem[Zhang et~al.(2021)Zhang, Zhu, Kalander, Ng, Ye, Chen, and
+  Pan]{zhang2021gcastle}
+Keli Zhang, Shengyu Zhu, Marcus Kalander, Ignavier Ng, Junjian Ye, Zhitang
+  Chen, and Lujia Pan.
+\newblock {gCastle}: A {Python} toolbox for causal discovery.
+\newblock \emph{arXiv preprint arXiv:2111.15155}, 2021.
+\newblock URL \url{https://arxiv.org/abs/2111.15155}.
+
+\bibitem[Zheng et~al.(2018)Zheng, Aragam, Ravikumar, and Xing]{zheng2018dags}
+Xun Zheng, Bryon Aragam, Pradeep Ravikumar, and Eric~P. Xing.
+\newblock {DAGs} with {NO TEARS}: Continuous optimization for structure
+  learning.
+\newblock In \emph{Advances in Neural Information Processing Systems 31
+  (NeurIPS 2018)}, pages 9472--9483, 2018.
+\newblock URL
+  \url{https://proceedings.neurips.cc/paper/2018/hash/e347c51419ffb23ca3fd5050202f9c3d-Abstract.html}.
+
+\bibitem[Zheng et~al.(2024)Zheng, Huang, Chen, Ramsey, Gong, Cai, Shimizu,
+  Spirtes, and Zhang]{zheng2024causallearn}
+Yujia Zheng, Biwei Huang, Wei Chen, Joseph Ramsey, Mingming Gong, Ruichu Cai,
+  Shohei Shimizu, Peter Spirtes, and Kun Zhang.
+\newblock Causal-learn: Causal discovery in {Python}.
+\newblock \emph{Journal of Machine Learning Research}, 25\penalty0
+  (60):\penalty0 1--8, 2024.
+\newblock URL \url{https://jmlr.org/papers/v25/23-0970.html}.
+
+\end{thebibliography}

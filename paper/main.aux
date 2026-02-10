@@ -1,0 +1,179 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyperFirstAtBeginDocument{\AtBeginDocument}
+\HyperFirstAtBeginDocument{\ifx\hyper@anchor\@undefined
+\global\let\oldcontentsline\contentsline
+\gdef\contentsline#1#2#3#4{\oldcontentsline{#1}{#2}{#3}}
+\global\let\oldnewlabel\newlabel
+\gdef\newlabel#1#2{\newlabelxx{#1}#2}
+\gdef\newlabelxx#1#2#3#4#5#6{\oldnewlabel{#1}{{#2}{#3}}}
+\AtEndDocument{\ifx\hyper@anchor\@undefined
+\let\contentsline\oldcontentsline
+\let\newlabel\oldnewlabel
+\fi}
+\fi}
+\global\let\hyper@last\relax 
+\gdef\HyperFirstAtBeginDocument#1{#1}
+\providecommand*\HyPL@Entry[1]{}
+\citation{simmons2011false}
+\citation{sharma2020dowhy}
+\citation{battocchi2019econml}
+\citation{chen2020causalml}
+\HyPL@Entry{0<</S/D>>}
+\providecommand \oddpage@label [2]{}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.1}\protected@file@percent }
+\newlabel{sec:intro}{{1}{1}{Introduction}{section.1}{}}
+\citation{sharma2020dowhy}
+\citation{battocchi2019econml}
+\citation{bach2022doubleml}
+\citation{chen2020causalml}
+\citation{spirtes2000causation}
+\citation{chickering2002optimal}
+\citation{zheng2018dags}
+\citation{zheng2024causallearn}
+\citation{zhang2021gcastle}
+\@writefile{toc}{\contentsline {paragraph}{Contributions.}{2}{section*.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {2}Related Work}{2}{section.2}\protected@file@percent }
+\newlabel{sec:related}{{2}{2}{Related Work}{section.2}{}}
+\@writefile{toc}{\contentsline {paragraph}{Causal inference frameworks.}{2}{section*.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Causal discovery.}{2}{section*.4}\protected@file@percent }
+\citation{kiciman2023causal}
+\citation{long2023can}
+\citation{ioannidis2005why}
+\citation{nosek2018preregistration}
+\citation{simonsohn2020specification}
+\@writefile{toc}{\contentsline {paragraph}{LLMs for causal reasoning.}{3}{section*.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Reproducibility and auditing.}{3}{section*.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3}System Architecture}{3}{section.3}\protected@file@percent }
+\newlabel{sec:architecture}{{3}{3}{System Architecture}{section.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}DAG Specification}{3}{subsection.3.1}\protected@file@percent }
+\newlabel{sec:dag}{{3.1}{3}{DAG Specification}{subsection.3.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Adapter Registry}{3}{subsection.3.2}\protected@file@percent }
+\newlabel{sec:adapters}{{3.2}{3}{Adapter Registry}{subsection.3.2}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Architecture of \textsc  {OpenCausality}{}. Four functional layers---DAG, Estimation (19 adapters), Inference (identifiability, refutation, issues, propagation), and Governance (hash-chained audit, HITL)---are wrapped by the \textbf  {sentinel loop}, an always-on background monitor that continuously validates, auto-heals, and surfaces interactive panels. Purple dashed arrow shows the sentinel's validate--heal--surface cycle.\relax }}{4}{figure.caption.7}\protected@file@percent }
+\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
+\newlabel{fig:architecture}{{1}{4}{Architecture of \oc {}. Four functional layers---DAG, Estimation (19 adapters), Inference (identifiability, refutation, issues, propagation), and Governance (hash-chained audit, HITL)---are wrapped by the \textbf {sentinel loop}, an always-on background monitor that continuously validates, auto-heals, and surfaces interactive panels. Purple dashed arrow shows the sentinel's validate--heal--surface cycle.\relax }{figure.caption.7}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Estimation adapters in \textsc  {OpenCausality}{}. The registry supports 19 adapters spanning econometric and ML-based methods. All share a unified \texttt  {EstimationRequest}\nobreakspace  {}$\to $\nobreakspace  {}\texttt  {EstimationResult} interface.\relax }}{4}{table.caption.8}\protected@file@percent }
+\newlabel{tab:adapters}{{1}{4}{Estimation adapters in \oc {}. The registry supports 19 adapters spanning econometric and ML-based methods. All share a unified \texttt {EstimationRequest}~$\to $~\texttt {EstimationResult} interface.\relax }{table.caption.8}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4}Effect Propagation with 7 Guardrails}{4}{section.4}\protected@file@percent }
+\newlabel{sec:propagation}{{4}{4}{Effect Propagation with 7 Guardrails}{section.4}{}}
+\citation{angrist2010credibility}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Chain Effect Computation}{5}{subsection.4.1}\protected@file@percent }
+\newlabel{eq:delta}{{2}{5}{Chain Effect Computation}{equation.4.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}The 7 Guardrails}{5}{subsection.4.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5}3-Stage Identifiability Screening}{5}{section.5}\protected@file@percent }
+\newlabel{sec:identification}{{5}{5}{3-Stage Identifiability Screening}{section.5}{}}
+\@writefile{loa}{\contentsline {algocf}{\numberline {1}{\ignorespaces Guarded Effect Propagation\relax }}{6}{algocf.1}\protected@file@percent }
+\newlabel{alg:propagation}{{1}{6}{The 7 Guardrails}{algocf.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Three Screening Points}{6}{subsection.5.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}TSGuard: Time-Series Diagnostics}{6}{subsection.5.2}\protected@file@percent }
+\newlabel{sec:tsguard}{{5.2}{6}{TSGuard: Time-Series Diagnostics}{subsection.5.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.3}Refutation Engine}{6}{subsection.5.3}\protected@file@percent }
+\newlabel{sec:refutation}{{5.3}{6}{Refutation Engine}{subsection.5.3}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Representative issue-detection rules. Severity determines propagation eligibility: \texttt  {CRITICAL} issues block all paths.\relax }}{7}{table.caption.10}\protected@file@percent }
+\newlabel{tab:rules}{{2}{7}{Representative issue-detection rules. Severity determines propagation eligibility: \texttt {CRITICAL} issues block all paths.\relax }{table.caption.10}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6}Issue Detection Engine}{7}{section.6}\protected@file@percent }
+\newlabel{sec:issues}{{6}{7}{Issue Detection Engine}{section.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}Representative Rules}{7}{subsection.6.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}PatchPolicy: Preventing Automated P-Hacking}{7}{subsection.6.2}\protected@file@percent }
+\newlabel{sec:patchpolicy}{{6.2}{7}{PatchPolicy: Preventing Automated P-Hacking}{subsection.6.2}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {7}LLM-Assisted Causal Discovery from Literature}{7}{section.7}\protected@file@percent }
+\newlabel{sec:llm}{{7}{7}{LLM-Assisted Causal Discovery from Literature}{section.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.1}Pipeline}{7}{subsection.7.1}\protected@file@percent }
+\citation{spirtes2000causation}
+\citation{chickering2002optimal}
+\citation{zheng2018dags}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.2}LLM Abstraction}{8}{subsection.7.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {8}Data-Driven Causal Discovery}{8}{section.8}\protected@file@percent }
+\newlabel{sec:discovery}{{8}{8}{Data-Driven Causal Discovery}{section.8}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.1}Algorithms}{8}{subsection.8.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.2}DAG Comparison}{8}{subsection.8.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.3}Graph Format Interoperability}{8}{subsection.8.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {9}Governance Framework}{9}{section.9}\protected@file@percent }
+\newlabel{sec:governance}{{9}{9}{Governance Framework}{section.9}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.1}Hash-Chained Audit Log}{9}{subsection.9.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.2}Human-in-the-Loop Gates}{9}{subsection.9.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Downgrade-only review.}{9}{section*.11}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.3}Interactive Panels}{9}{subsection.9.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{DAG Visualization Panel}{9}{section*.12}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces DAG Visualization Panel. The force-directed graph displays the full causal DAG with color-coded edges (by identification type), severity badges on the issue sidebar, and a ``DRAFT PROPOSAL'' banner framing the output as requiring analyst sign-off. Clicking a sidebar issue highlights and pans to the corresponding edge.\relax }}{10}{figure.caption.13}\protected@file@percent }
+\newlabel{fig:dag-panel}{{2}{10}{DAG Visualization Panel. The force-directed graph displays the full causal DAG with color-coded edges (by identification type), severity badges on the issue sidebar, and a ``DRAFT PROPOSAL'' banner framing the output as requiring analyst sign-off. Clicking a sidebar issue highlights and pans to the corresponding edge.\relax }{figure.caption.13}{}}
+\@writefile{toc}{\contentsline {paragraph}{HITL Resolution Panel}{10}{section*.14}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.4}EdgeCard: The Primary Output Artifact}{10}{subsection.9.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {10}Sentinel Loop and Agentic Pipeline}{10}{section.10}\protected@file@percent }
+\newlabel{sec:sentinel}{{10}{10}{Sentinel Loop and Agentic Pipeline}{section.10}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.1}The Sentinel Loop}{10}{subsection.10.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces HITL Resolution Panel. The review board shows detected issues grouped by rule type and severity. Each issue card displays edge estimates, credibility rating, and action dropdown with justification field. Bulk actions and JSON export support the governance workflow.\relax }}{11}{figure.caption.15}\protected@file@percent }
+\newlabel{fig:hitl-panel}{{3}{11}{HITL Resolution Panel. The review board shows detected issues grouped by rule type and severity. Each issue card displays edge estimates, credibility rating, and action dropdown with justification field. Bulk actions and JSON export support the governance workflow.\relax }{figure.caption.15}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.2}The 4-Agent Agentic Pipeline}{11}{subsection.10.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Estimation accuracy on synthetic DGP benchmarks ($n=500$, 50 seeds). Coverage is the fraction of 90\% confidence intervals containing the true effect.\relax }}{12}{table.caption.16}\protected@file@percent }
+\newlabel{tab:benchmarks}{{3}{12}{Estimation accuracy on synthetic DGP benchmarks ($n=500$, 50 seeds). Coverage is the fraction of 90\% confidence intervals containing the true effect.\relax }{table.caption.16}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces NL-to-DAG extraction results on the Kazakhstan bank stress-testing case study. Estimate match measures whether common edges produce statistically equivalent point estimates.\relax }}{12}{table.caption.17}\protected@file@percent }
+\newlabel{tab:nl2dag}{{4}{12}{NL-to-DAG extraction results on the Kazakhstan bank stress-testing case study. Estimate match measures whether common edges produce statistically equivalent point estimates.\relax }{table.caption.17}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.3}DAG Auto-Repair}{12}{subsection.10.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {11}Experiments}{12}{section.11}\protected@file@percent }
+\newlabel{sec:experiments}{{11}{12}{Experiments}{section.11}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.1}Synthetic Benchmarks}{12}{subsection.11.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.2}NL-to-DAG Extraction: Kazakhstan Case Study}{12}{subsection.11.2}\protected@file@percent }
+\citation{dalgic2024dollarization}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Comparison of expert-built and NL-extracted DAGs for the Kazakhstan case study. The 4\nobreakspace  {}matched edges achieve 100\% estimate precision. The NL pipeline discovers 3\nobreakspace  {}novel edges with literature support, while missing 16\nobreakspace  {}edges encoding country-specific regulatory details.\relax }}{13}{figure.caption.18}\protected@file@percent }
+\newlabel{fig:nl2dag}{{4}{13}{Comparison of expert-built and NL-extracted DAGs for the Kazakhstan case study. The 4~matched edges achieve 100\% estimate precision. The NL pipeline discovers 3~novel edges with literature support, while missing 16~edges encoding country-specific regulatory details.\relax }{figure.caption.18}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Issue triage across 13 pipeline runs. PatchBot auto-fixes 54.9\% of issues (primarily missing units). Only 1.3\% require human-in-the-loop review, demonstrating effective automation of the governance burden.\relax }}{13}{figure.caption.19}\protected@file@percent }
+\newlabel{fig:issues}{{5}{13}{Issue triage across 13 pipeline runs. PatchBot auto-fixes 54.9\% of issues (primarily missing units). Only 1.3\% require human-in-the-loop review, demonstrating effective automation of the governance burden.\relax }{figure.caption.19}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.3}End-to-End Reproducibility}{13}{subsection.11.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.4}Issue Detection Effectiveness}{13}{subsection.11.4}\protected@file@percent }
+\bibstyle{plainnat}
+\bibdata{references}
+\bibcite{angrist2010credibility}{{1}{2010}{{Angrist and Pischke}}{{}}}
+\bibcite{bach2022doubleml}{{2}{2022}{{Bach et~al.}}{{Bach, Chernozhukov, Kurz, and Spindler}}}
+\bibcite{battocchi2019econml}{{3}{2019}{{Battocchi et~al.}}{{Battocchi, Dillon, Hei, Lewis, Oka, Oprescu, and Syrgkanis}}}
+\bibcite{chen2020causalml}{{4}{2020}{{Chen et~al.}}{{Chen, Harinen, Lee, Yung, and Zhao}}}
+\bibcite{chickering2002optimal}{{5}{2002}{{Chickering}}{{}}}
+\bibcite{dalgic2024dollarization}{{6}{2024}{{Dalgic}}{{}}}
+\@writefile{toc}{\contentsline {section}{\numberline {12}Limitations}{14}{section.12}\protected@file@percent }
+\newlabel{sec:limitations}{{12}{14}{Limitations}{section.12}{}}
+\@writefile{toc}{\contentsline {paragraph}{NL-to-DAG is lossy.}{14}{section*.20}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Claims are not identification.}{14}{section*.21}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Single-country evaluation.}{14}{section*.22}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{LLM hallucination risk.}{14}{section*.23}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Independence assumption in propagation.}{14}{section*.24}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {13}Conclusion}{14}{section.13}\protected@file@percent }
+\newlabel{sec:conclusion}{{13}{14}{Conclusion}{section.13}{}}
+\bibcite{ioannidis2005why}{{7}{2005}{{Ioannidis}}{{}}}
+\bibcite{kiciman2023causal}{{8}{2023}{{K{\i }c{\i }man et~al.}}{{K{\i }c{\i }man, Ness, Sharma, and Tan}}}
+\bibcite{long2023can}{{9}{2023}{{Long et~al.}}{{Long, Schuster, and Pich{\'e}}}}
+\bibcite{nosek2018preregistration}{{10}{2018}{{Nosek et~al.}}{{Nosek, Ebersole, DeHaven, and Mellor}}}
+\bibcite{sharma2020dowhy}{{11}{2020}{{Sharma and Kiciman}}{{}}}
+\bibcite{simmons2011false}{{12}{2011}{{Simmons et~al.}}{{Simmons, Nelson, and Simonsohn}}}
+\bibcite{simonsohn2020specification}{{13}{2020}{{Simonsohn et~al.}}{{Simonsohn, Simmons, and Nelson}}}
+\bibcite{spirtes2000causation}{{14}{2000}{{Spirtes et~al.}}{{Spirtes, Glymour, and Scheines}}}
+\bibcite{zhang2021gcastle}{{15}{2021}{{Zhang et~al.}}{{Zhang, Zhu, Kalander, Ng, Ye, Chen, and Pan}}}
+\bibcite{zheng2018dags}{{16}{2018}{{Zheng et~al.}}{{Zheng, Aragam, Ravikumar, and Xing}}}
+\bibcite{zheng2024causallearn}{{17}{2024}{{Zheng et~al.}}{{Zheng, Huang, Chen, Ramsey, Gong, Cai, Shimizu, Spirtes, and Zhang}}}
+\@writefile{toc}{\contentsline {section}{\numberline {A}Full Issue Registry}{15}{appendix.A}\protected@file@percent }
+\newlabel{app:issues}{{A}{15}{Full Issue Registry}{appendix.A}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {B}EdgeCard Schema}{15}{appendix.B}\protected@file@percent }
+\newlabel{app:edgecard}{{B}{15}{EdgeCard Schema}{appendix.B}{}}
+\@writefile{toc}{\contentsline {paragraph}{Core identity.}{15}{section*.27}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Estimates.}{15}{section*.28}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces Full Issue Detection Registry (30 Rules). Trigger: \texttt  {pre} = pre-run, \texttt  {post} = post-run, \texttt  {xrun} = cross-run.\relax }}{16}{table.caption.26}\protected@file@percent }
+\newlabel{tab:issue-registry}{{5}{16}{Full Issue Detection Registry (30 Rules). Trigger: \texttt {pre} = pre-run, \texttt {post} = post-run, \texttt {xrun} = cross-run.\relax }{table.caption.26}{}}
+\@writefile{toc}{\contentsline {paragraph}{Diagnostics.}{16}{section*.29}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Identification.}{16}{section*.30}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Counterfactual block.}{16}{section*.31}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Propagation role.}{16}{section*.32}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Credibility.}{16}{section*.33}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Literature.}{17}{section*.34}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Interpretation boundary.}{17}{section*.35}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Failure flags.}{17}{section*.36}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {C}Query REPL Example Session}{17}{appendix.C}\protected@file@percent }
+\newlabel{app:repl}{{C}{17}{Query REPL Example Session}{appendix.C}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Query REPL --- Literature Edge Proposal. The REPL searches academic papers via Semantic Scholar, OpenAlex, and arXiv, extracts causal claims using the LLM, and presents proposed edges with confidence scores, edge types, and evidence counts. The analyst reviews each proposal interactively (accept/reject).\relax }}{17}{figure.caption.37}\protected@file@percent }
+\newlabel{fig:query-repl}{{6}{17}{Query REPL --- Literature Edge Proposal. The REPL searches academic papers via Semantic Scholar, OpenAlex, and arXiv, extracts causal claims using the LLM, and presents proposed edges with confidence scores, edge types, and evidence counts. The analyst reviews each proposal interactively (accept/reject).\relax }{figure.caption.37}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {D}TSGuard Diagnostic Details}{18}{appendix.D}\protected@file@percent }
+\newlabel{app:tsguard}{{D}{18}{TSGuard Diagnostic Details}{appendix.D}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces TSGuard diagnostic tests and governance actions.\relax }}{18}{table.caption.38}\protected@file@percent }
+\newlabel{tab:tsguard-full}{{6}{18}{TSGuard diagnostic tests and governance actions.\relax }{table.caption.38}{}}
+\@writefile{toc}{\contentsline {paragraph}{Dynamics risk categories.}{18}{section*.39}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Governance rules.}{19}{section*.40}\protected@file@percent }
+\gdef \@abspage@last{19}
