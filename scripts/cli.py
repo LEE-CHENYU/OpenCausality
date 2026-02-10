@@ -21,6 +21,18 @@ from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
 
+BANNER = r"""[dim]    ___                    ____                        _ _ _
+   / _ \ _ __   ___ _ __  / ___|__ _ _   _ ___  __ _ | (_) |_ _   _
+  | | | | '_ \ / _ \ '_ \| |   / _` | | | / __|/ _` || | | __| | | |
+  | |_| | |_) |  __/ | | | |__| (_| | |_| \__ \ (_| || | | |_| |_| |
+   \___/| .__/ \___|_| |_|\____\__,_|\__,_|___/\__,_||_|_|\__|\__, |
+        |_|                                                    |___/[/dim]
+
+  [italic]sketch your causal story ~ we find the papers, collect the
+  data, pick the estimator, run the regressions, and tell you
+  what's wrong before you publish something you'll regret[/italic]
+"""
+
 app = typer.Typer(
     name="opencausality",
     help="OpenCausality — Open-Source Causal Inference Platform",
@@ -134,7 +146,7 @@ def list_studies():
 @app.command("info")
 def info():
     """Show information about the research platform."""
-    console.print("\n[bold cyan]OpenCausality Platform[/bold cyan]\n")
+    console.print(BANNER)
     console.print("Version: 0.3.0")
     console.print("\n[bold]Studies:[/bold]")
     console.print("  1. [cyan]household_welfare[/cyan] - Oil shocks -> household income")
@@ -171,6 +183,7 @@ def init_project():
             console.print("[dim]Aborted.[/dim]")
             raise typer.Exit(0)
 
+    console.print(BANNER)
     console.print(Panel("[bold cyan]OpenCausality Setup[/bold cyan]", subtitle="Creates .env"))
     console.print()
 

@@ -344,11 +344,14 @@ class QueryREPL:
             self._dispatch(intent, raw)
 
     def _print_welcome(self) -> None:
+        from scripts.cli import BANNER
+
         n_nodes = len(self.dag.nodes)
         n_edges = len(self.dag.edges)
         n_cards = len(self.edge_cards)
         llm_status = "LLM" if self.llm else "regex-only"
 
+        console.print(BANNER)
         console.print(Panel(
             f"[bold cyan]OpenCausality Query REPL[/bold cyan]\n\n"
             f"DAG: [cyan]{self.dag.metadata.name}[/cyan] "
