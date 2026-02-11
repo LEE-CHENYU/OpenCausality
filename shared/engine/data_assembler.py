@@ -508,6 +508,15 @@ PANEL_EDGE_SPECS: dict[str, dict[str, Any]] = {
     },
 }
 
+# Dynamic edge groups: populated at runtime by DynamicLoaderFactory
+_DYNAMIC_EDGE_GROUPS: dict[str, str] = {}
+
+
+def register_dynamic_edge_group(edge_id: str, group: str) -> None:
+    """Register a dynamic edge group classification at runtime."""
+    _DYNAMIC_EDGE_GROUPS[edge_id] = group
+
+
 # Accounting bridge edges: deterministic sensitivities, not regressions
 ACCOUNTING_BRIDGE_EDGES = {"loan_portfolio_to_rwa", "cor_to_capital"}
 
@@ -561,15 +570,30 @@ def _align_frequencies(treatment: pd.Series, outcome: pd.Series) -> tuple[pd.Ser
     # Inner join on overlapping dates
     common = treatment.index.intersection(outcome.index)
     if len(common) == 0:
-        # Try approximate merge
+        # Different quarterly conventions (QS vs QE-month) can leave dates ~60 days apart.
+        # Use merge_asof with a tolerance wide enough to bridge quarterly offsets.
         combined = pd.merge_asof(
             treatment.to_frame("treatment").sort_index(),
             outcome.to_frame("outcome").sort_index(),
             left_index=True,
             right_index=True,
-            tolerance=pd.Timedelta(days=15),
+            tolerance=pd.Timedelta(days=75),
+            direction="nearest",
         )
-        return combined["treatment"].dropna(), combined["outcome"].dropna()
+        combined = combined.dropna()
+        if combined.empty:
+            # Try reverse direction (outcome as left)
+            combined = pd.merge_asof(
+                outcome.to_frame("outcome").sort_index(),
+                treatment.to_frame("treatment").sort_index(),
+                left_index=True,
+                right_index=True,
+                tolerance=pd.Timedelta(days=75),
+                direction="nearest",
+            )
+            combined = combined.dropna()
+        return combined.get("treatment", pd.Series(dtype=float)).dropna(), \
+               combined.get("outcome", pd.Series(dtype=float)).dropna()
 
     return treatment.reindex(common).dropna(), outcome.reindex(common).dropna()
 
@@ -688,4 +712,6 @@ def get_edge_group(edge_id: str) -> str:
     else:
         if edge_id in EDGE_NODE_MAP:
             return "DYNAMIC_LP"
+        if edge_id in _DYNAMIC_EDGE_GROUPS:
+            return _DYNAMIC_EDGE_GROUPS[edge_id]
         return "UNKNOWN"

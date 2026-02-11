@@ -1,0 +1,336 @@
+edge_id: real_income_to_cor_kspi
+dag_version_hash: 26653d57356dd32eb34df1c02cad048b14bf6e9e53feb889643aa7d1ae6f233e
+created_at: '2026-02-11T12:10:03.961883'
+data_provenance:
+  treatment_source:
+    connector: parquet_file
+    dataset: real_income
+    series: null
+    retrieval_time: null
+    file_path: null
+    file_checksum: null
+    row_count: 37
+    column_count: null
+    date_range:
+    - '2011-09-01'
+    - '2024-09-01'
+    cache_key: null
+  outcome_source:
+    connector: parquet_file
+    dataset: cor_kspi
+    series: null
+    retrieval_time: null
+    file_path: null
+    file_checksum: null
+    row_count: 37
+    column_count: null
+    date_range:
+    - '2011-09-01'
+    - '2024-09-01'
+    cache_key: null
+  control_sources: {}
+  instrument_sources: {}
+  combined_row_count: 37
+  combined_date_range:
+  - '2011-09-01'
+  - '2024-09-01'
+  missing_rate: null
+  panel_dimensions: null
+  entity_boundary_note: null
+  kpi_definitions: null
+spec_hash: b327b4b58bb76c861cb9ea83d801f78185de731f39d0cf1487f8bfe48ffdf5b0
+spec_details:
+  design: LOCAL_PROJECTIONS
+  controls:
+  - y_lag1
+  - y_lag2
+  - x_lag1
+  - x_lag2
+  instruments: []
+  fixed_effects: []
+  se_method: HAC_newey_west
+  sample_filter: null
+  horizon: &id001
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  bandwidth: null
+estimates:
+  point: 7.012128804851029
+  se: 3.8406255045461553
+  ci_95:
+  - -0.5154971840594351
+  - 14.539754793761492
+  pvalue: 0.06788373779385015
+  horizons: *id001
+  irf:
+  - 7.012128804851029
+  - 5.715610305237133
+  - -2.875629527586193
+  - -6.5085879667745274
+  - 6.84766461420888
+  - 3.486048513306302
+  - 0.6733866085862551
+  irf_ci_lower:
+  - -0.5153588621654093
+  - -1.0906510602102193
+  - -10.440317067432993
+  - -16.156396294065715
+  - -1.5127194892260922
+  - -2.7527320850074593
+  - -5.623655915803518
+  irf_ci_upper:
+  - 14.539616471867468
+  - 12.521871670684487
+  - 4.689058012260606
+  - 3.139220360516658
+  - 15.208048717643852
+  - 9.724829111620064
+  - 6.970429132976028
+diagnostics:
+  hac_bandwidth:
+    name: hac_bandwidth
+    passed: true
+    value: 3.0
+    threshold: null
+    pvalue: null
+    message: 'Newey-West bandwidth: 3'
+  effective_obs:
+    name: effective_obs
+    passed: true
+    value: 35.0
+    threshold: 20.0
+    pvalue: null
+    message: ''
+  sign_consistency:
+    name: sign_consistency
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: No expected sign specified
+  ts_leads_test:
+    name: ts_leads_test
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_residual_autocorr:
+    name: ts_residual_autocorr
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_hac_sensitivity:
+    name: ts_hac_sensitivity
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_lag_sensitivity:
+    name: ts_lag_sensitivity
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_regime_stability:
+    name: ts_regime_stability
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_shock_support:
+    name: ts_shock_support
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+all_diagnostics_pass: true
+interpretation:
+  estimand: IRF of cor_kspi to a unit shock in real_income
+  is_not: Structural causal effect under all interventions
+  channels:
+  - direct
+  - indirect
+  population: ''
+  conditions: ''
+  allowed_uses: []
+  forbidden_uses: []
+failure_flags:
+  weak_identification: false
+  potential_bad_control: false
+  mechanical_identity_risk: false
+  regime_break_detected: false
+  small_sample: false
+  high_missing_rate: false
+  entity_boundary_change: false
+  definition_inconsistency: false
+  data_insufficient: false
+counterfactual:
+  supports_shock_path: true
+  supports_policy_intervention: false
+  intervention_note: Reduced-form LP estimate
+  external_validity: ''
+credibility_rating: A
+credibility_score: 0.84
+identification:
+  claim_level: REDUCED_FORM
+  risks:
+    unmeasured_confounding: medium
+    simultaneity: low
+    weak_variation: low
+    measurement_error: low
+    selection: low
+  untestable_assumptions:
+  - No omitted common cause of treatment and outcome
+  testable_threats_passed:
+  - hac_bandwidth
+  - effective_obs
+  - sign_consistency
+  - ts_leads_test
+  - ts_residual_autocorr
+  - ts_hac_sensitivity
+  - ts_lag_sensitivity
+  - ts_regime_stability
+  - ts_shock_support
+  testable_threats_failed: []
+  strategy_type: ''
+  strategy_argument: ''
+  strategy_key_assumption: ''
+counterfactual_block:
+  shock_scenario_allowed: false
+  policy_intervention_allowed: false
+  reason_shock_blocked: Design LOCAL_PROJECTIONS provides REDUCED_FORM level only
+  reason_policy_blocked: REDUCED_FORM mode does not allow policy interventions
+  allowed: false
+  reason_blocked: Design LOCAL_PROJECTIONS provides REDUCED_FORM level only
+propagation_role:
+  role: reduced_form
+  overlapping_paths: []
+  selected_for_counterfactual: true
+  mode_propagation_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: true
+    DESCRIPTIVE: true
+  mode_shock_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: true
+    DESCRIPTIVE: false
+  mode_policy_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: false
+    DESCRIPTIVE: false
+literature:
+  supporting:
+  - doi: 10.25501/soas.00029228
+    title: 'Emerging stock markets in the Pacific Basin : An empirical analysis with
+      particular reference to the Korean stock market.'
+    authors:
+    - Hyun-Jung Ryoo
+    year: 2001
+    excerpt: 'This thesis investigates emerging stock markets in the Pacific Basin
+      with particular reference to the Korean stock market, which is representative
+      of typical, fast-growing emerging markets. Using a broader range of econometric
+      models, the short-run and long-run behaviour of stock prices, the impact '
+    relevance: supporting
+    edge_id: real_income_to_cor_kspi
+    paper_id: ''
+    citation_count: 1
+    search_query: Real monetary income KSPI cost of risk causal effect
+    source: openalex
+    pdf_url: https://eprints.soas.ac.uk/29228/1/10731323.pdf
+  - doi: ''
+    title: 'Foundations of a Welfare Regime: The Case of Indonesia'
+    authors:
+    - Ramadani Torheim
+    year: 2013
+    excerpt: Indonesia is at a crossroads in building its welfare regime. The study
+      seeks to analyse the salient characteristics and enabling factors that influence
+      Indonesia’s current social policies in light of welfare state theories. The
+      adoption of the Social Security Providers Law in late 2011 underlined th
+    relevance: supporting
+    edge_id: real_income_to_cor_kspi
+    paper_id: ''
+    citation_count: 1
+    search_query: Real monetary income KSPI cost of risk causal effect
+    source: openalex
+    pdf_url: http://hdl.handle.net/10852/36942
+  - doi: 10.17170/kobra-202005181267
+    title: the Indonesian Oil Palm Plantation and Automobile Sectors
+    authors:
+    - Sinaga, Hariati
+    year: 2020
+    excerpt: Zugleich Dissertation, Universität Kassel, 2017. Die gedruckte Ausg.
+      ist im Rainer Hampp Verlag, Augsburg, München (www.Hampp-Verlag.de) erschienen
+    relevance: supporting
+    edge_id: real_income_to_cor_kspi
+    paper_id: ''
+    citation_count: 0
+    search_query: Real monetary income KSPI cost of risk causal effect
+    source: core
+    pdf_url: https://core.ac.uk/download/638846868.pdf
+  - doi: 10.21314/JOP.2019.229
+    title: On the Selection of Loss Severity Distributions to Model Operational Risk
+    authors:
+    - Daniel Hadley
+    - Harry Joe
+    - Natalia Nolde
+    year: 2021
+    excerpt: 'Accurate modeling of operational risk is important for a bank and the
+      finance industry as a whole to prepare for potentially catastrophic losses.
+      One approach to modeling operational is the loss distribution approach, which
+      requires a bank to group operational losses into risk categories and select '
+    relevance: supporting
+    edge_id: real_income_to_cor_kspi
+    paper_id: 2107.03979v1
+    citation_count: 0
+    search_query: Real monetary income KSPI cost of risk causal effect
+    source: arxiv
+    pdf_url: https://arxiv.org/pdf/2107.03979v1
+  - doi: ''
+    title: Levels of pharmaceuticals and endocrine disruptors in commercially available
+      seafood before and after cooking
+    authors:
+    - Barcelo, D.
+    - Caceres, N.
+    - Fernandez-Tejedor, M.
+    - Granby, Kit
+    - M. Marques, A.
+    - Maulvault, A.
+    - Munoz, D. A.
+    - Robbens, Johan
+    - Rodríguez-Mozaz, S
+    - Serra, A.
+    - Sioen, Isabelle
+    - Tediosi, A.
+    - Verbeke, K.
+    - Williamson, J.
+    year: 2016
+    excerpt: ''
+    relevance: supporting
+    edge_id: real_income_to_cor_kspi
+    paper_id: ''
+    citation_count: 0
+    search_query: Real monetary income KSPI cost of risk causal effect
+    source: core
+    pdf_url: https://core.ac.uk/download/84002501.pdf
+  challenging: []
+  methodological: []
+  search_status: SEARCHED
+  search_timestamp: '2026-02-11T12:10:03.961946'
+  search_query: Real monetary income KSPI cost of risk causal effect
+  total_results: 5
+companion_edge_id: null
+variant_of: null
+is_precisely_null: false
+null_equivalence_bound: null

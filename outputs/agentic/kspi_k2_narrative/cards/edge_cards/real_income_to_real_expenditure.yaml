@@ -1,0 +1,331 @@
+edge_id: real_income_to_real_expenditure
+dag_version_hash: 26653d57356dd32eb34df1c02cad048b14bf6e9e53feb889643aa7d1ae6f233e
+created_at: '2026-02-11T12:10:04.003080'
+data_provenance:
+  treatment_source:
+    connector: parquet_file
+    dataset: real_income
+    series: null
+    retrieval_time: null
+    file_path: null
+    file_checksum: null
+    row_count: 40
+    column_count: null
+    date_range:
+    - '2011-03-01'
+    - '2024-06-01'
+    cache_key: null
+  outcome_source:
+    connector: parquet_file
+    dataset: real_expenditure
+    series: null
+    retrieval_time: null
+    file_path: null
+    file_checksum: null
+    row_count: 40
+    column_count: null
+    date_range:
+    - '2011-03-01'
+    - '2024-06-01'
+    cache_key: null
+  control_sources: {}
+  instrument_sources: {}
+  combined_row_count: 40
+  combined_date_range:
+  - '2011-03-01'
+  - '2024-06-01'
+  missing_rate: null
+  panel_dimensions: null
+  entity_boundary_note: null
+  kpi_definitions: null
+spec_hash: b327b4b58bb76c861cb9ea83d801f78185de731f39d0cf1487f8bfe48ffdf5b0
+spec_details:
+  design: LOCAL_PROJECTIONS
+  controls:
+  - y_lag1
+  - y_lag2
+  - x_lag1
+  - x_lag2
+  instruments: []
+  fixed_effects: []
+  se_method: HAC_newey_west
+  sample_filter: null
+  horizon: &id001
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  bandwidth: null
+estimates:
+  point: 0.6950820896963353
+  se: 0.31900447977368895
+  ci_95:
+  - 0.06983330933990495
+  - 1.3203308700527656
+  pvalue: 0.029338345743874693
+  horizons: *id001
+  irf:
+  - 0.6950820896963353
+  - 0.2595155924053538
+  - -0.022754845176775833
+  - 0.6631651635803046
+  - 0.6277347439154694
+  - -0.15005996297253804
+  - 0.5872700535616995
+  irf_ci_lower:
+  - 0.06984479843296887
+  - -0.354296885356303
+  - -0.2815989156007901
+  - 0.06470132542055673
+  - 0.04699983649187289
+  - -0.5802374433801787
+  - 0.022815764880871114
+  irf_ci_upper:
+  - 1.3203193809597018
+  - 0.8733280701670106
+  - 0.2360892252472384
+  - 1.2616290017400527
+  - 1.2084696513390658
+  - 0.28011751743510266
+  - 1.1517243422425278
+diagnostics:
+  hac_bandwidth:
+    name: hac_bandwidth
+    passed: true
+    value: 3.0
+    threshold: null
+    pvalue: null
+    message: 'Newey-West bandwidth: 3'
+  effective_obs:
+    name: effective_obs
+    passed: true
+    value: 38.0
+    threshold: 20.0
+    pvalue: null
+    message: ''
+  sign_consistency:
+    name: sign_consistency
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: No expected sign specified
+  ts_leads_test:
+    name: ts_leads_test
+    passed: false
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: fail'
+  ts_residual_autocorr:
+    name: ts_residual_autocorr
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_hac_sensitivity:
+    name: ts_hac_sensitivity
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_lag_sensitivity:
+    name: ts_lag_sensitivity
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_regime_stability:
+    name: ts_regime_stability
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_shock_support:
+    name: ts_shock_support
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+all_diagnostics_pass: false
+interpretation:
+  estimand: IRF of real_expenditure to a unit shock in real_income
+  is_not: Structural causal effect under all interventions
+  channels:
+  - direct
+  - indirect
+  population: ''
+  conditions: ''
+  allowed_uses: []
+  forbidden_uses: []
+failure_flags:
+  weak_identification: false
+  potential_bad_control: false
+  mechanical_identity_risk: false
+  regime_break_detected: false
+  small_sample: false
+  high_missing_rate: false
+  entity_boundary_change: false
+  definition_inconsistency: false
+  data_insufficient: false
+counterfactual:
+  supports_shock_path: true
+  supports_policy_intervention: false
+  intervention_note: Reduced-form LP estimate
+  external_validity: ''
+credibility_rating: A
+credibility_score: 0.8015555555555556
+identification:
+  claim_level: BLOCKED_ID
+  risks:
+    unmeasured_confounding: medium
+    simultaneity: low
+    weak_variation: low
+    measurement_error: low
+    selection: low
+  untestable_assumptions:
+  - No omitted common cause of treatment and outcome
+  testable_threats_passed:
+  - hac_bandwidth
+  - effective_obs
+  - sign_consistency
+  - ts_residual_autocorr
+  - ts_hac_sensitivity
+  - ts_lag_sensitivity
+  - ts_regime_stability
+  - ts_shock_support
+  testable_threats_failed:
+  - ts_leads_test
+  strategy_type: ''
+  strategy_argument: ''
+  strategy_key_assumption: ''
+counterfactual_block:
+  shock_scenario_allowed: false
+  policy_intervention_allowed: false
+  reason_shock_blocked: Shock CF requires REDUCED_FORM+, edge has BLOCKED_ID
+  reason_policy_blocked: REDUCED_FORM mode does not allow policy interventions
+  allowed: false
+  reason_blocked: Shock CF requires REDUCED_FORM+, edge has BLOCKED_ID
+propagation_role:
+  role: diagnostic_only
+  overlapping_paths: []
+  selected_for_counterfactual: false
+  mode_propagation_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: false
+    DESCRIPTIVE: true
+  mode_shock_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: false
+    DESCRIPTIVE: false
+  mode_policy_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: false
+    DESCRIPTIVE: false
+literature:
+  supporting:
+  - doi: 10.1017/s0020818300018993
+    title: 'International regimes, transactions, and change: embedded liberalism in
+      the postwar economic order'
+    authors:
+    - John Gerard Ruggie
+    year: 1982
+    excerpt: The prevailing model of international economic regimes is strictly positivistic
+      in its epistemological orientation and stresses the distribution of material
+      power capabilities in its explanatory logic. It is inadequate to account for
+      the current set of international economic regimes and for the diff
+    relevance: supporting
+    edge_id: real_income_to_real_expenditure
+    paper_id: ''
+    citation_count: 4367
+    search_query: Real monetary income Real consumption expenditure causal effect
+    source: openalex
+    pdf_url: https://www.cambridge.org/core/services/aop-cambridge-core/content/view/238A600FEFE7EDBC2DDAB30E6A28B4D9/S0020818300018993a.pdf/div-class-title-international-regimes-transactions-and-change-embedded-liberalism-in-the-postwar-economic-order-div.pdf
+  - doi: 10.3386/w3301
+    title: 'Patent Statistics as Economic Indicators: A Survey'
+    authors:
+    - Zvi Griliches
+    year: 1990
+    excerpt: This survey reviews the growing use of patent data in economic analysis.After
+      describing some of the main characteristics of patents and patent data, it focuses
+      on the use of patents as an indicator of technological change.Cross-sectional
+      and time-series studies of the relationship of patents to R&D
+    relevance: supporting
+    edge_id: real_income_to_real_expenditure
+    paper_id: ''
+    citation_count: 3634
+    search_query: Real monetary income Real consumption expenditure causal effect
+    source: openalex
+    pdf_url: https://doi.org/10.3386/w3301
+  - doi: 10.1086/654340
+    title: An Optimization-Based Econometric Framework for the Evaluation of Monetary
+      Policy
+    authors:
+    - Julio J. Rotemberg
+    - Michael Woodford
+    year: 1997
+    excerpt: This paper considers a simple quantitative model of output, interest
+      rate and inflation determination in the United States, and uses it to evaluate
+      alternative rules by which the Fed may set interest rates. The model is derived
+      from optimizing behavior under rational expectations, both on the part o
+    relevance: supporting
+    edge_id: real_income_to_real_expenditure
+    paper_id: ''
+    citation_count: 1897
+    search_query: Real monetary income Real consumption expenditure causal effect
+    source: openalex
+    pdf_url: https://www.journals.uchicago.edu/doi/epdf/10.1086/654340
+  - doi: 10.1080/09638199.2024.2433008
+    title: Asymmetric effect of consumption expenditure on import function in Saudi
+      Arabia
+    authors:
+    - Abdullah M. Al-Malki
+    - Md. Fouad Bin Amin
+    - Mehboob Ul Hassan
+    year: 2024
+    excerpt: We study the asymmetric effect of consumption expenditure on Saudi imports
+      from 1991 to 2020. We found a direct relationship between consumption expenditure
+      and imports both in short and long-run periods, however, the positive shocks
+      in consumption expenditures have a dominant impact in the long run
+    relevance: supporting
+    edge_id: real_income_to_real_expenditure
+    paper_id: cf6ef30e2ce2ea82ee98ffcf675e7c286296cf8c
+    citation_count: 2
+    search_query: Real monetary income Real consumption expenditure causal effect
+    source: semantic_scholar
+    pdf_url: ''
+  - doi: 10.22219/jibe.v8i01.29447
+    title: Bank lending channel and household consumption expenditure in Nigeria
+    authors:
+    - A. Onanuga
+    - K. Arikewuyo
+    year: 2024
+    excerpt: The primary objective of this paper is to analyze the effect of the bank
+      lending channel on household consumption expenditure in Nigeria. Utilizing annual
+      secondary data from the United Nations Statistical Division Database and the
+      Central Bank of Nigeria Database, and employing the Generalized Meth
+    relevance: supporting
+    edge_id: real_income_to_real_expenditure
+    paper_id: 378dc1701be5cd05ea2beed921fdeaad238f1f75
+    citation_count: 0
+    search_query: Real monetary income Real consumption expenditure causal effect
+    source: semantic_scholar
+    pdf_url: ''
+  challenging: []
+  methodological: []
+  search_status: SEARCHED
+  search_timestamp: '2026-02-11T12:10:04.003130'
+  search_query: Real monetary income Real consumption expenditure causal effect
+  total_results: 5
+companion_edge_id: null
+variant_of: null
+is_precisely_null: false
+null_equivalence_bound: null

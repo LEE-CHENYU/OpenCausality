@@ -198,6 +198,9 @@ def _load_series_from_file(
     if isinstance(s.index, pd.DatetimeIndex) and s.index.duplicated().any():
         s = s.groupby(s.index).mean()
 
+    # Coerce to numeric — downloaded data may have string columns
+    s = pd.to_numeric(s, errors='coerce').dropna()
+
     s.name = node_id
     return s
 
@@ -327,69 +330,166 @@ class DynamicLoaderFactory:
         self._connector_strategies = dict(_CONNECTOR_STRATEGIES)
         self._transform_fns = dict(_TRANSFORM_FNS)
 
+    def _build_computed_loader(
+        self,
+        node: NodeSpec,
+        dag: DAGSpec,
+    ) -> Callable[[], pd.Series] | None:
+        """Build a loader for a derived node by evaluating its identity formula.
+
+        Returns None if the node is not derived or dependencies cannot be loaded.
+        """
+        if not node.derived or not node.identity:
+            return None
+
+        from shared.engine.data_assembler import NODE_LOADERS
+
+        formula = node.identity.formula
+        dep_names = list(node.depends_on)
+        node_id = node.id
+
+        # Ensure all dependencies have loaders (build them if needed)
+        for dep_name in dep_names:
+            if dep_name not in NODE_LOADERS:
+                dep_node = dag.get_node(dep_name)
+                if dep_node is None:
+                    logger.warning(
+                        f"ComputedLoader [{node_id}]: dependency '{dep_name}' "
+                        f"not found in DAG"
+                    )
+                    return None
+                loader = self.try_build_loader(dep_node)
+                if loader is not None:
+                    NODE_LOADERS[dep_name] = loader
+                else:
+                    # Try recursively for nested derived nodes
+                    loader = self._build_computed_loader(dep_node, dag)
+                    if loader is not None:
+                        NODE_LOADERS[dep_name] = loader
+                    else:
+                        logger.warning(
+                            f"ComputedLoader [{node_id}]: cannot build loader "
+                            f"for dependency '{dep_name}'"
+                        )
+                        return None
+
+        def _computed_loader(
+            _formula=formula,
+            _dep_names=dep_names,
+            _node_id=node_id,
+        ) -> pd.Series:
+            # Load all dependency series
+            dep_series: dict[str, pd.Series] = {}
+            for dep in _dep_names:
+                dep_series[dep] = NODE_LOADERS[dep]()
+
+            # Align all series to common index
+            combined = pd.DataFrame(dep_series).dropna()
+            if combined.empty:
+                raise ValueError(
+                    f"ComputedLoader [{_node_id}]: no overlapping data "
+                    f"for dependencies {_dep_names}"
+                )
+
+            # Build safe evaluation namespace
+            ns: dict[str, Any] = {}
+            for dep in _dep_names:
+                ns[dep] = combined[dep]
+            # Add safe math functions
+            ns["log"] = np.log
+            ns["exp"] = np.exp
+            ns["abs"] = np.abs
+            ns["sqrt"] = np.sqrt
+            ns["diff"] = lambda s: s.diff()
+
+            result = eval(_formula, {"__builtins__": {}}, ns)  # noqa: S307
+            if isinstance(result, pd.Series):
+                return result.dropna().rename(_node_id)
+            elif isinstance(result, (int, float)):
+                # Scalar result — broadcast to index
+                return pd.Series(result, index=combined.index, name=_node_id)
+            else:
+                return pd.Series(result, index=combined.index, name=_node_id).dropna()
+
+        return _computed_loader
+
     def try_build_loader(self, node: NodeSpec) -> Callable[[], pd.Series] | None:
         """Build a loader closure for a DAG node from its source spec.
 
+        Tries preferred sources first, then fallback sources.
         Returns None if no strategy exists or no source spec is available.
         """
         if not node.source or not node.source.preferred:
             return None
 
-        source = node.source.preferred[0]
-        connector = source.connector
-        dataset = source.dataset
-        series = source.series
+        # Build ordered list: preferred sources first, then fallbacks
+        all_sources = list(node.source.preferred)
+        if node.source.fallback:
+            all_sources.extend(node.source.fallback)
+
         node_id = node.id
         transforms = list(node.transforms)
 
-        strategy = self._connector_strategies.get(connector)
-        if strategy is None:
-            logger.debug(f"No connector strategy for '{connector}' (node {node_id})")
+        # Check at least one source has a known connector strategy
+        has_any_strategy = any(
+            self._connector_strategies.get(s.connector) is not None
+            for s in all_sources
+        )
+        if not has_any_strategy:
+            logger.debug(f"No connector strategies for any source of node {node_id}")
             return None
 
         # Special case: kspi_quarterly delegates to existing loader
-        if connector == "kspi_quarterly":
-            return self._build_kspi_loader(node_id, series, transforms)
+        primary = all_sources[0]
+        if primary.connector == "kspi_quarterly":
+            return self._build_kspi_loader(node_id, primary.series, transforms)
 
         def _loader(
-            _strategy=strategy,
-            _dataset=dataset,
-            _series=series,
+            _all_sources=all_sources,
             _node_id=node_id,
             _transforms=transforms,
-            _connector=connector,
+            _factory=self,
         ) -> pd.Series:
-            # Try local file paths
-            for template in _strategy.local_path_templates:
-                path = Path(template.format(
-                    series=_series,
-                    dataset=_dataset,
-                ))
-                if path.exists():
-                    logger.debug(f"DynamicLoader [{_node_id}]: loading from {path}")
-                    s = _load_series_from_file(path, _series, _node_id)
-                    return _apply_transforms(s, _transforms)
+            errors: list[str] = []
+            for src in _all_sources:
+                strategy = _factory._connector_strategies.get(src.connector)
+                if strategy is None:
+                    continue
 
-            # Try fuzzy directory scan: search for parquet files containing
-            # keywords from the series or dataset name
-            for scan_dir in _get_scan_dirs(_connector):
-                match = _fuzzy_find_file(scan_dir, _series, _dataset, _node_id)
-                if match is not None:
-                    logger.debug(f"DynamicLoader [{_node_id}]: fuzzy match {match}")
-                    s = _load_series_from_file(match, _series, _node_id)
-                    return _apply_transforms(s, _transforms)
+                # Try local file paths
+                for template in strategy.local_path_templates:
+                    path = Path(template.format(
+                        series=src.series,
+                        dataset=src.dataset,
+                    ))
+                    if path.exists():
+                        logger.debug(f"DynamicLoader [{_node_id}]: loading from {path}")
+                        s = _load_series_from_file(path, src.series, _node_id)
+                        return _apply_transforms(s, _transforms)
 
-            # Try API fallback
-            if _strategy.api_fallback:
-                s = self._try_api_fallback(
-                    _strategy.api_fallback, _dataset, _series, _node_id,
+                # Try fuzzy directory scan
+                for scan_dir in _get_scan_dirs(src.connector):
+                    match = _fuzzy_find_file(scan_dir, src.series, src.dataset, _node_id)
+                    if match is not None:
+                        logger.debug(f"DynamicLoader [{_node_id}]: fuzzy match {match}")
+                        s = _load_series_from_file(match, src.series, _node_id)
+                        return _apply_transforms(s, _transforms)
+
+                # Try API fallback
+                if strategy.api_fallback:
+                    s = _factory._try_api_fallback(
+                        strategy.api_fallback, src.dataset, src.series, _node_id,
+                    )
+                    if s is not None:
+                        return _apply_transforms(s, _transforms)
+
+                errors.append(
+                    f"connector={src.connector}, dataset={src.dataset}, series={src.series}"
                 )
-                if s is not None:
-                    return _apply_transforms(s, _transforms)
 
             raise FileNotFoundError(
-                f"DynamicLoader [{_node_id}]: no data found for "
-                f"connector={_connector}, dataset={_dataset}, series={_series}"
+                f"DynamicLoader [{_node_id}]: no data found. Tried: "
+                + "; ".join(errors)
             )
 
         return _loader
@@ -470,6 +570,9 @@ class DynamicLoaderFactory:
         for node in (from_node, to_node):
             if node.id not in NODE_LOADERS:
                 loader = self.try_build_loader(node)
+                if loader is None and node.derived:
+                    # Fallback: build a computed loader for derived nodes
+                    loader = self._build_computed_loader(node, dag)
                 if loader is None:
                     logger.warning(
                         f"DynamicLoader: cannot build loader for node '{node.id}'"
@@ -484,6 +587,24 @@ class DynamicLoaderFactory:
             f"DynamicLoader: registered edge '{edge.id}' "
             f"({edge.from_node} -> {edge.to_node})"
         )
+
+        # Register dynamic edge group based on edge_type
+        edge_type = edge.get_edge_type() if hasattr(edge, 'get_edge_type') else ""
+        if edge_type:
+            from shared.engine.data_assembler import register_dynamic_edge_group
+            type_to_group = {
+                "identity": "IDENTITY",
+                "immutable": "IMMUTABLE",
+                "mechanical": "ACCOUNTING_BRIDGE",
+            }
+            group = type_to_group.get(edge_type)
+            if group:
+                register_dynamic_edge_group(edge.id, group)
+                logger.info(
+                    f"DynamicLoader: registered edge group '{group}' "
+                    f"for '{edge.id}' (edge_type={edge_type})"
+                )
+
         return True
 
     def register_from_download(

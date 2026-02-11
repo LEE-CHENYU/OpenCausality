@@ -1,0 +1,18 @@
+node_id: nominal_expenditure
+connector: bns
+dataset: household_budget
+series: consumption_expenditure_pc
+download_time: '2026-02-11T00:29:00.987122'
+file_path: data/raw/kazakhstan_bns/household_budget.parquet
+size_bytes: 1886
+row_count: 16
+date_range:
+- '0'
+- '15'
+quality_notes:
+- small_sample
+provenance:
+  source: data_scout
+  added_at: '2026-02-11'
+  connector: bns
+  dataset: household_budget

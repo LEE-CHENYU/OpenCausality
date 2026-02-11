@@ -294,12 +294,23 @@ class TaskQueue:
         }
 
     def mark_failed(self, edge_id: str, reason: str) -> None:
-        """Mark a task as failed."""
+        """Mark a task as failed.
+
+        Also propagates artifact availability so that downstream tasks
+        whose from_node has other completed edges feeding it are not
+        permanently blocked by a single failed sibling.
+        """
         with self._lock:
             task = self._tasks.get(edge_id)
             if task:
                 task.fail(reason)
                 logger.error(f"Task {edge_id} failed: {reason}")
+
+        # Propagate artifact availability — downstream edges should not
+        # be permanently dammed by a failed sibling.  The estimation
+        # engine handles missing data gracefully; the queue should not
+        # prevent it from trying.
+        self.mark_artifact_available(edge_id, f"failed:{reason}")
 
     def acquire_lock(self, asset_id: str, locker_id: str) -> bool:
         """

@@ -1,0 +1,326 @@
+edge_id: kzt_usd_to_imported_inflation_instrument
+dag_version_hash: 26653d57356dd32eb34df1c02cad048b14bf6e9e53feb889643aa7d1ae6f233e
+created_at: '2026-02-11T12:10:03.263214'
+data_provenance:
+  treatment_source:
+    connector: parquet_file
+    dataset: kzt_usd
+    series: null
+    retrieval_time: null
+    file_path: null
+    file_checksum: null
+    row_count: 180
+    column_count: null
+    date_range:
+    - '2010-02-01'
+    - '2025-01-01'
+    cache_key: null
+  outcome_source:
+    connector: parquet_file
+    dataset: imported_inflation_instrument
+    series: null
+    retrieval_time: null
+    file_path: null
+    file_checksum: null
+    row_count: 180
+    column_count: null
+    date_range:
+    - '2010-02-01'
+    - '2025-01-01'
+    cache_key: null
+  control_sources: {}
+  instrument_sources: {}
+  combined_row_count: 180
+  combined_date_range:
+  - '2010-02-01'
+  - '2025-01-01'
+  missing_rate: null
+  panel_dimensions: null
+  entity_boundary_note: null
+  kpi_definitions: null
+spec_hash: b327b4b58bb76c861cb9ea83d801f78185de731f39d0cf1487f8bfe48ffdf5b0
+spec_details:
+  design: LOCAL_PROJECTIONS
+  controls:
+  - y_lag1
+  - y_lag2
+  - x_lag1
+  - x_lag2
+  instruments: []
+  fixed_effects: []
+  se_method: HAC_newey_west
+  sample_filter: null
+  horizon: &id001
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  bandwidth: null
+estimates:
+  point: 0.2643679548669966
+  se: 0.0025493606661942834
+  ci_95:
+  - 0.2593712079612558
+  - 0.2693647017727374
+  pvalue: 0.0
+  horizons: *id001
+  irf:
+  - 0.2643679548669966
+  - -0.009374501193292412
+  - -0.028085539675595555
+  - -0.04759305421909013
+  - 0.05940382939982993
+  - 0.01743142109025984
+  - -0.008574911069724502
+  irf_ci_lower:
+  - 0.2593712997776528
+  - -0.0787038749898803
+  - -0.06285921717492508
+  - -0.10621388758804427
+  - 9.705112538351685e-05
+  - -0.006845423277186333
+  - -0.04561716818223074
+  irf_ci_upper:
+  - 0.26936460995634043
+  - 0.05995487260329547
+  - 0.006688137823733977
+  - 0.011027779149864012
+  - 0.11871060767427635
+  - 0.04170826545770601
+  - 0.028467346042781734
+diagnostics:
+  hac_bandwidth:
+    name: hac_bandwidth
+    passed: true
+    value: 4.0
+    threshold: null
+    pvalue: null
+    message: 'Newey-West bandwidth: 4'
+  effective_obs:
+    name: effective_obs
+    passed: true
+    value: 178.0
+    threshold: 20.0
+    pvalue: null
+    message: ''
+  sign_consistency:
+    name: sign_consistency
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: No expected sign specified
+  ts_leads_test:
+    name: ts_leads_test
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_residual_autocorr:
+    name: ts_residual_autocorr
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_hac_sensitivity:
+    name: ts_hac_sensitivity
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_lag_sensitivity:
+    name: ts_lag_sensitivity
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_regime_stability:
+    name: ts_regime_stability
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_shock_support:
+    name: ts_shock_support
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+all_diagnostics_pass: true
+interpretation:
+  estimand: IRF of imported_inflation_instrument to a unit shock in kzt_usd
+  is_not: Structural causal effect under all interventions
+  channels:
+  - direct
+  - indirect
+  population: ''
+  conditions: ''
+  allowed_uses: []
+  forbidden_uses: []
+failure_flags:
+  weak_identification: false
+  potential_bad_control: false
+  mechanical_identity_risk: false
+  regime_break_detected: false
+  small_sample: false
+  high_missing_rate: false
+  entity_boundary_change: false
+  definition_inconsistency: false
+  data_insufficient: false
+counterfactual:
+  supports_shock_path: true
+  supports_policy_intervention: false
+  intervention_note: Reduced-form LP estimate
+  external_validity: ''
+credibility_rating: A
+credibility_score: 0.97
+identification:
+  claim_level: REDUCED_FORM
+  risks:
+    unmeasured_confounding: medium
+    simultaneity: low
+    weak_variation: low
+    measurement_error: low
+    selection: low
+  untestable_assumptions:
+  - No omitted common cause of treatment and outcome
+  testable_threats_passed:
+  - hac_bandwidth
+  - effective_obs
+  - sign_consistency
+  - ts_leads_test
+  - ts_residual_autocorr
+  - ts_hac_sensitivity
+  - ts_lag_sensitivity
+  - ts_regime_stability
+  - ts_shock_support
+  testable_threats_failed: []
+  strategy_type: ''
+  strategy_argument: ''
+  strategy_key_assumption: ''
+counterfactual_block:
+  shock_scenario_allowed: false
+  policy_intervention_allowed: false
+  reason_shock_blocked: Design LOCAL_PROJECTIONS provides REDUCED_FORM level only
+  reason_policy_blocked: REDUCED_FORM mode does not allow policy interventions
+  allowed: false
+  reason_blocked: Design LOCAL_PROJECTIONS provides REDUCED_FORM level only
+propagation_role:
+  role: identity
+  overlapping_paths: []
+  selected_for_counterfactual: true
+  mode_propagation_allowed:
+    STRUCTURAL: true
+    REDUCED_FORM: true
+    DESCRIPTIVE: true
+  mode_shock_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: true
+    DESCRIPTIVE: false
+  mode_policy_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: false
+    DESCRIPTIVE: false
+literature:
+  supporting:
+  - doi: ''
+    title: E-Government in Lebanon
+    authors:
+    - N. Beyrouti
+    - H. Hejase
+    - Tarik S Mikdashi
+    year: 2001
+    excerpt: ''
+    relevance: supporting
+    edge_id: kzt_usd_to_imported_inflation_instrument
+    paper_id: c05a8ebf06d791e784405299c7a3445636a43830
+    citation_count: 2
+    search_query: KZT/USD exchange rate Imported inflation IV causal effect
+    source: semantic_scholar
+    pdf_url: ''
+  - doi: 10.2139/ssrn.3884322
+    title: Are Import Prices More Elastic To Local Currency Depreciations Than Appreciations?
+    authors:
+    - Justas Dainauskas
+    year: 2020
+    excerpt: 'Exchange rates and international prices are endogenous – exchange rates
+      influence export prices directly through the costs of intermediate imports,
+      but import price inflation feeds back into the exchange rates indirectly through
+      monetary policy. This paper shows how to quantify the causal effect of '
+    relevance: supporting
+    edge_id: kzt_usd_to_imported_inflation_instrument
+    paper_id: b6e05a710707d210bcffd5988d5a34fc8b0e6ffa
+    citation_count: 1
+    search_query: KZT/USD exchange rate Imported inflation IV causal effect
+    source: semantic_scholar
+    pdf_url: ''
+  - doi: 10.71097/ijsat.v16.i3.8049
+    title: 'Exploring the Dynamic Interdependencies of Exchange Rates, Exports, and
+      Imports in Kazakhstan: Johansen Cointegration &amp; A Vector Autoregression
+      Analysis'
+    authors:
+    - Shyam Charan Barma
+    year: 2025
+    excerpt: This study examines the relationships among exchange rate, exports, and
+      imports in the Kazakhstan economy using monthly data from November 1993 to October
+      2022. All variables are non-stationary at levels but become stationary after
+      first differencing, indicating they are integrated of order one, I(1
+    relevance: supporting
+    edge_id: kzt_usd_to_imported_inflation_instrument
+    paper_id: ''
+    citation_count: 1
+    search_query: KZT/USD exchange rate Imported inflation IV causal effect
+    source: openalex
+    pdf_url: https://www.ijsat.org/papers/2025/3/8049.pdf
+  - doi: 10.5089/9781475598759.002
+    title: Republic of Kazakhstan
+    authors:
+    - International Monetary Fund. Middle East and Central Asia Dept.
+    year: 2017
+    excerpt: This Selected Issues Paper evaluates Kazakhstan’s oil rules, current
+      fiscal stance, and long-term sustainability. The sharp and sustained drop in
+      oil prices since 2014 has reduced the value of Kazakhstan’s oil wealth. Kazakhstan’s
+      non-oil deficit path has been higher than suggested by long-term benc
+    relevance: supporting
+    edge_id: kzt_usd_to_imported_inflation_instrument
+    paper_id: ''
+    citation_count: 1
+    search_query: KZT/USD exchange rate Imported inflation IV causal effect
+    source: openalex
+    pdf_url: https://www.elibrary.imf.org/doc/IMF002/24266-9781475598759/24266-9781475598759/Other_formats/Source_PDF/24266-9781475598810.pdf
+  - doi: 10.1515/jci-2018-0008
+    title: The Inflation Technique Completely Solves the Causal Compatibility Problem
+    authors:
+    - Miguel Navascues
+    - Elie Wolfe
+    year: 2017
+    excerpt: The causal compatibility question asks whether a given causal structure
+      graph -- possibly involving latent variables -- constitutes a genuinely plausible
+      causal explanation for a given probability distribution over the graph's observed
+      variables. Algorithms predicated on merely necessary constraints
+    relevance: supporting
+    edge_id: kzt_usd_to_imported_inflation_instrument
+    paper_id: 1707.06476v3
+    citation_count: 0
+    search_query: KZT/USD exchange rate Imported inflation IV causal effect
+    source: arxiv
+    pdf_url: https://arxiv.org/pdf/1707.06476v3
+  challenging: []
+  methodological: []
+  search_status: SEARCHED
+  search_timestamp: '2026-02-11T12:10:03.263265'
+  search_query: KZT/USD exchange rate Imported inflation IV causal effect
+  total_results: 5
+companion_edge_id: null
+variant_of: null
+is_precisely_null: false
+null_equivalence_bound: null

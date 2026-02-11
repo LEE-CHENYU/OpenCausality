@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>kspi_k2_stress</title>
+    <title>kspi_k2_stress_narrative</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -474,7 +474,7 @@
     </div>
     <svg id="graph"></svg>
     <div class="controls">
-        <h1 id="dagTitle">kspi_k2_stress</h1>
+        <h1 id="dagTitle">kspi_k2_stress_narrative</h1>
         <div class="subtitle" id="dagSubtitle"></div>
         <div class="control-row">
             <label>Edge type</label>
@@ -532,127 +532,6 @@
 // ── INJECTED DATA ────────────────────────────────────────────────────────
 const NODES = [
   {
-    "id": "oil_supply_shock",
-    "label": "Oil supply shock",
-    "description": "Baumeister oil supply shock (exogenous to Kazakhstan).",
-    "unit": "sd",
-    "frequency": "monthly",
-    "observed": true,
-    "latent": false,
-    "orphan": false,
-    "provenance_source": "manual"
-  },
-  {
-    "id": "oil_demand_shock",
-    "label": "Oil demand shock",
-    "description": "Baumeister oil demand shock (global demand-driven).",
-    "unit": "sd",
-    "frequency": "monthly",
-    "observed": true,
-    "latent": false,
-    "orphan": false,
-    "provenance_source": "manual"
-  },
-  {
-    "id": "global_activity_shock",
-    "label": "Global activity innovation",
-    "description": "Innovation in global activity index (IGREA).",
-    "unit": "innovation",
-    "frequency": "monthly",
-    "observed": true,
-    "latent": false,
-    "orphan": true,
-    "provenance_source": "data_scout"
-  },
-  {
-    "id": "vix_shock",
-    "label": "VIX shock",
-    "description": "Innovation in VIX (risk aversion shock).",
-    "unit": "innovation",
-    "frequency": "daily",
-    "observed": true,
-    "latent": false,
-    "orphan": false,
-    "provenance_source": "data_scout"
-  },
-  {
-    "id": "kzt_usd",
-    "label": "KZT/USD exchange rate",
-    "description": "Kazakh tenge per US dollar, log level.",
-    "unit": "log",
-    "frequency": "daily",
-    "observed": true,
-    "latent": false,
-    "orphan": false,
-    "provenance_source": "manual"
-  },
-  {
-    "id": "brent_price",
-    "label": "Brent crude oil price",
-    "description": "Brent spot price, USD per barrel, log level.",
-    "unit": "log",
-    "frequency": "daily",
-    "observed": true,
-    "latent": false,
-    "orphan": false,
-    "provenance_source": "manual"
-  },
-  {
-    "id": "nbk_policy_rate",
-    "label": "NBK base rate",
-    "description": "National Bank of Kazakhstan policy rate.",
-    "unit": "pct",
-    "frequency": "event",
-    "observed": true,
-    "latent": false,
-    "orphan": false,
-    "provenance_source": "manual"
-  },
-  {
-    "id": "cpi_headline",
-    "label": "Headline CPI",
-    "description": "Kazakhstan headline CPI index, log level.",
-    "unit": "log",
-    "frequency": "monthly",
-    "observed": true,
-    "latent": false,
-    "orphan": false,
-    "provenance_source": "manual"
-  },
-  {
-    "id": "cpi_tradable",
-    "label": "Tradable CPI",
-    "description": "CPI for tradable goods (import-weighted). Block A validated.",
-    "unit": "log",
-    "frequency": "monthly",
-    "observed": true,
-    "latent": false,
-    "orphan": false,
-    "provenance_source": "manual"
-  },
-  {
-    "id": "cpi_nontradable",
-    "label": "Non-tradable CPI",
-    "description": "CPI for non-tradable goods (services). Block A falsification.",
-    "unit": "log",
-    "frequency": "monthly",
-    "observed": true,
-    "latent": false,
-    "orphan": false,
-    "provenance_source": "manual"
-  },
-  {
-    "id": "imported_inflation_instrument",
-    "label": "Imported inflation IV",
-    "description": "Constructed instrument for imported inflation (FX change \u00d7 pre-period import share).",
-    "unit": "pct",
-    "frequency": "monthly",
-    "observed": true,
-    "latent": false,
-    "orphan": false,
-    "provenance_source": "manual"
-  },
-  {
     "id": "E_import_share",
     "label": "Pre-period import share",
     "description": "Pre-period regional import intensity (static exposure).",
@@ -661,95 +540,7 @@ const NODES = [
     "observed": true,
     "latent": false,
     "orphan": false,
-    "provenance_source": "manual"
-  },
-  {
-    "id": "nominal_income",
-    "label": "Nominal monetary income",
-    "description": "Regional household nominal monetary income. Block B validated.",
-    "unit": "log",
-    "frequency": "quarterly",
-    "observed": true,
-    "latent": false,
-    "orphan": false,
-    "provenance_source": "manual"
-  },
-  {
-    "id": "real_income",
-    "label": "Real monetary income",
-    "description": "Nominal income deflated by CPI. Identity node.",
-    "unit": "log",
-    "frequency": "quarterly",
-    "observed": true,
-    "latent": false,
-    "orphan": false,
-    "provenance_source": "manual"
-  },
-  {
-    "id": "wage_income",
-    "label": "Wage income",
-    "description": "Household income from wages and salaries.",
-    "unit": "log",
-    "frequency": "quarterly",
-    "observed": true,
-    "latent": false,
-    "orphan": false,
-    "provenance_source": "manual"
-  },
-  {
-    "id": "transfer_income",
-    "label": "Transfer income",
-    "description": "Household income from government transfers.",
-    "unit": "log",
-    "frequency": "quarterly",
-    "observed": true,
-    "latent": false,
-    "orphan": false,
-    "provenance_source": "manual"
-  },
-  {
-    "id": "nominal_expenditure",
-    "label": "Nominal consumption expenditure",
-    "description": "Household nominal consumption expenditure. Block F validated.",
-    "unit": "log",
-    "frequency": "quarterly",
-    "observed": true,
-    "latent": false,
-    "orphan": false,
-    "provenance_source": "manual"
-  },
-  {
-    "id": "real_expenditure",
-    "label": "Real consumption expenditure",
-    "description": "Nominal expenditure deflated by CPI. Block F validated.",
-    "unit": "log",
-    "frequency": "quarterly",
-    "observed": true,
-    "latent": false,
-    "orphan": false,
-    "provenance_source": "manual"
-  },
-  {
-    "id": "npl_aggregate",
-    "label": "Aggregate NPL ratio",
-    "description": "Banking sector NPL ratio from NBK.",
-    "unit": "pct",
-    "frequency": "monthly",
-    "observed": true,
-    "latent": false,
-    "orphan": true,
-    "provenance_source": "manual"
-  },
-  {
-    "id": "npl_kspi",
-    "label": "KSPI NPL ratio",
-    "description": "Kaspi.kz non-performing loan ratio.",
-    "unit": "pct",
-    "frequency": "quarterly",
-    "observed": true,
-    "latent": false,
-    "orphan": false,
-    "provenance_source": "manual"
+    "provenance_source": ""
   },
   {
     "id": "cor_kspi",
@@ -760,40 +551,40 @@ const NODES = [
     "observed": true,
     "latent": false,
     "orphan": false,
-    "provenance_source": "manual"
+    "provenance_source": ""
   },
   {
-    "id": "loan_portfolio_kspi",
-    "label": "KSPI net loan portfolio",
-    "description": "Kaspi.kz net loan portfolio level (bn KZT).",
+    "id": "cpi_headline",
+    "label": "Headline CPI",
+    "description": "Kazakhstan headline CPI index, log level.",
     "unit": "log",
-    "frequency": "quarterly",
+    "frequency": "monthly",
     "observed": true,
     "latent": false,
     "orphan": false,
-    "provenance_source": "manual"
+    "provenance_source": ""
   },
   {
-    "id": "portfolio_mix_kspi",
-    "label": "KSPI portfolio mix",
-    "description": "Shares by product type (BNPL, car loans, merchant).",
-    "unit": "share",
-    "frequency": "quarterly",
+    "id": "cpi_nontradable",
+    "label": "Non-tradable CPI",
+    "description": "CPI for non-tradable goods (services). Block A falsification.",
+    "unit": "log",
+    "frequency": "monthly",
     "observed": true,
     "latent": false,
     "orphan": false,
-    "provenance_source": "manual"
+    "provenance_source": ""
   },
   {
-    "id": "deposits_kspi",
-    "label": "KSPI deposits",
-    "description": "Kaspi.kz total deposits (bn KZT).",
+    "id": "cpi_tradable",
+    "label": "Tradable CPI",
+    "description": "CPI for tradable goods (import-weighted). Block A validated.",
     "unit": "log",
-    "frequency": "quarterly",
+    "frequency": "monthly",
     "observed": true,
     "latent": false,
-    "orphan": true,
-    "provenance_source": "manual"
+    "orphan": false,
+    "provenance_source": ""
   },
   {
     "id": "deposit_cost_kspi",
@@ -804,40 +595,18 @@ const NODES = [
     "observed": true,
     "latent": false,
     "orphan": false,
-    "provenance_source": "manual"
+    "provenance_source": ""
   },
   {
-    "id": "rwa_kspi",
-    "label": "KSPI risk-weighted assets",
-    "description": "Kaspi.kz risk-weighted assets for regulatory capital.",
-    "unit": "log",
-    "frequency": "quarterly",
+    "id": "imported_inflation_instrument",
+    "label": "Imported inflation IV",
+    "description": "Constructed instrument for imported inflation (FX change \u00d7 pre-period import share).",
+    "unit": "pct",
+    "frequency": "monthly",
     "observed": true,
     "latent": false,
     "orphan": false,
-    "provenance_source": "manual"
-  },
-  {
-    "id": "ppop_kspi",
-    "label": "KSPI pre-provision operating profit",
-    "description": "Kaspi.kz PPOP (revenue - opex, before provisions).",
-    "unit": "log",
-    "frequency": "quarterly",
-    "observed": true,
-    "latent": false,
-    "orphan": true,
-    "provenance_source": "manual"
-  },
-  {
-    "id": "total_capital_kspi",
-    "label": "KSPI total capital",
-    "description": "Kaspi.kz total regulatory capital (Tier 1 + Tier 2).",
-    "unit": "log",
-    "frequency": "quarterly",
-    "observed": true,
-    "latent": false,
-    "orphan": false,
-    "provenance_source": "manual"
+    "provenance_source": ""
   },
   {
     "id": "k2_ratio_kspi",
@@ -848,493 +617,136 @@ const NODES = [
     "observed": true,
     "latent": false,
     "orphan": false,
-    "provenance_source": "manual"
+    "provenance_source": ""
   },
   {
-    "id": "payments_revenue_kspi",
-    "label": "KSPI Payments revenue",
-    "description": "Kaspi.kz payments segment revenue.",
+    "id": "kzt_usd",
+    "label": "KZT/USD exchange rate",
+    "description": "Kazakh tenge per US dollar, log level.",
+    "unit": "log",
+    "frequency": "daily",
+    "observed": true,
+    "latent": false,
+    "orphan": false,
+    "provenance_source": ""
+  },
+  {
+    "id": "nominal_expenditure",
+    "label": "Nominal consumption expenditure",
+    "description": "Household nominal consumption expenditure. Block F validated.",
     "unit": "log",
     "frequency": "quarterly",
     "observed": true,
     "latent": false,
     "orphan": false,
-    "provenance_source": "manual"
+    "provenance_source": ""
   },
   {
-    "id": "marketplace_revenue_kspi",
-    "label": "KSPI Marketplace revenue",
-    "description": "Kaspi.kz marketplace segment revenue.",
+    "id": "nominal_income",
+    "label": "Nominal monetary income",
+    "description": "Regional household nominal monetary income. Block B validated.",
     "unit": "log",
     "frequency": "quarterly",
     "observed": true,
     "latent": false,
-    "orphan": true,
-    "provenance_source": "manual"
+    "orphan": false,
+    "provenance_source": ""
   },
   {
-    "id": "fintech_revenue_kspi",
-    "label": "KSPI Fintech revenue",
-    "description": "Kaspi.kz fintech (lending) segment revenue.",
+    "id": "ppop_kspi",
+    "label": "KSPI pre-provision operating profit",
+    "description": "Kaspi.kz PPOP (revenue - opex, before provisions).",
     "unit": "log",
     "frequency": "quarterly",
     "observed": true,
     "latent": false,
-    "orphan": true,
-    "provenance_source": "manual"
+    "orphan": false,
+    "provenance_source": ""
+  },
+  {
+    "id": "real_expenditure",
+    "label": "Real consumption expenditure",
+    "description": "Nominal expenditure deflated by CPI. Block F validated.",
+    "unit": "log",
+    "frequency": "quarterly",
+    "observed": true,
+    "latent": false,
+    "orphan": false,
+    "provenance_source": ""
+  },
+  {
+    "id": "real_income",
+    "label": "Real monetary income",
+    "description": "Nominal income deflated by CPI. Identity node.",
+    "unit": "log",
+    "frequency": "quarterly",
+    "observed": true,
+    "latent": false,
+    "orphan": false,
+    "provenance_source": ""
+  },
+  {
+    "id": "rwa_kspi",
+    "label": "KSPI risk-weighted assets",
+    "description": "Kaspi.kz risk-weighted assets for regulatory capital.",
+    "unit": "log",
+    "frequency": "quarterly",
+    "observed": true,
+    "latent": false,
+    "orphan": false,
+    "provenance_source": ""
+  },
+  {
+    "id": "total_capital_kspi",
+    "label": "KSPI total capital",
+    "description": "Kaspi.kz total regulatory capital (Tier 1 + Tier 2).",
+    "unit": "log",
+    "frequency": "quarterly",
+    "observed": true,
+    "latent": false,
+    "orphan": false,
+    "provenance_source": ""
+  },
+  {
+    "id": "transfer_income",
+    "label": "Transfer income",
+    "description": "Household income from government transfers.",
+    "unit": "log",
+    "frequency": "quarterly",
+    "observed": true,
+    "latent": false,
+    "orphan": false,
+    "provenance_source": ""
+  },
+  {
+    "id": "vix_shock",
+    "label": "VIX shock",
+    "description": "Innovation in VIX (risk aversion shock).",
+    "unit": "innovation",
+    "frequency": "daily",
+    "observed": true,
+    "latent": false,
+    "orphan": false,
+    "provenance_source": ""
   }
 ];
 const EDGES = [
   {
-    "id": "oil_supply_to_brent",
-    "source": "oil_supply_shock",
-    "target": "brent_price",
-    "edge_type": "causal",
-    "expected_sign": "negative",
-    "interpretation": "Oil price response to supply shock",
-    "notes": "Exogenous supply shock identification from Baumeister.",
-    "provenance_source": "manual",
-    "provenance_detail": "",
-    "strategy_type": "exogenous_shock",
-    "strategy_argument": "Baumeister oil supply shocks are exogenous to KZ demand via SVAR restrictions.",
-    "strategy_key_assumption": "SVAR identifying restrictions correctly separate supply from demand shocks.",
-    "point": -0.05166562593634781,
-    "se": 0.005406555751311881,
-    "pvalue": 1.2226952161375292e-21,
-    "design": "LOCAL_PROJECTIONS",
-    "rating": "A",
-    "score": 0.97,
-    "claim_level": "REDUCED_FORM",
-    "all_pass": true,
-    "diagnostics": [
-      {
-        "name": "hac_bandwidth",
-        "passed": true
-      },
-      {
-        "name": "effective_obs",
-        "passed": true
-      },
-      {
-        "name": "r_squared_h0",
-        "passed": true
-      },
-      {
-        "name": "residual_ac1",
-        "passed": true
-      },
-      {
-        "name": "sign_consistency",
-        "passed": true
-      }
-    ],
-    "failure_flags": [],
-    "id_risks": {
-      "unmeasured_confounding": "medium",
-      "simultaneity": "low",
-      "weak_variation": "low",
-      "measurement_error": "low",
-      "selection": "low"
-    },
-    "cf_shock_allowed": false,
-    "cf_policy_allowed": false,
-    "cf_reason_blocked": "Design LOCAL_PROJECTIONS provides REDUCED_FORM level only",
-    "n_obs": 306,
-    "issues": [
-      {
-        "issue_key": "SIGNIFICANT_BUT_NOT_IDENTIFIED:oil_supply_to_brent",
-        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
-        "severity": "CRITICAL",
-        "message": "p=0.0000 but claim_level=. Significance does not establish causation."
-      }
-    ],
-    "has_critical_issue": true,
-    "llm_annotation": "An oil supply shock is associated with movements in the Brent price, capturing how unexpected changes in global oil availability translate into market pricing of crude. A key risk is that the \u201cexogenous\u201d shock series may still embed demand news, inventory/precautionary demand, or contemporaneous policy/geopolitical information that also affects Brent, which would confound the reduced-form mapping and potentially distort the sign or magnitude. Another concern is timing/aggregation (e.g., monthly identification vs. higher-frequency price adjustment) and measurement error in the shock that can attenuate estimates. Next, check robustness to alternative oil shock measures (e.g., Kilian-type decompositions), verify the dynamic response via local projections/VAR impulse responses, and test for sensitivity to controlling for global activity, inventories, and financial conditions to ensure the shock is not proxying for broader macro news."
-  },
-  {
-    "id": "oil_supply_to_fx",
-    "source": "oil_supply_shock",
-    "target": "kzt_usd",
-    "edge_type": "causal",
-    "expected_sign": "positive",
-    "interpretation": "KZT response to oil supply shock",
-    "notes": "Oil exporter commodity currency dynamics.",
-    "provenance_source": "manual",
-    "provenance_detail": "",
-    "strategy_type": "exogenous_shock",
-    "strategy_argument": "Baumeister oil supply shocks are exogenous to Kazakhstan via SVAR restrictions.",
-    "strategy_key_assumption": "Small open economy cannot influence global oil supply.",
-    "point": 0.00044787194670315805,
-    "se": 0.1276521731480084,
-    "pvalue": 0.9972006009022166,
-    "design": "LOCAL_PROJECTIONS",
-    "rating": "A",
-    "score": 0.97,
-    "claim_level": "REDUCED_FORM",
-    "all_pass": true,
-    "diagnostics": [
-      {
-        "name": "hac_bandwidth",
-        "passed": true
-      },
-      {
-        "name": "effective_obs",
-        "passed": true
-      },
-      {
-        "name": "r_squared_h0",
-        "passed": true
-      },
-      {
-        "name": "residual_ac1",
-        "passed": true
-      },
-      {
-        "name": "sign_consistency",
-        "passed": true
-      }
-    ],
-    "failure_flags": [],
-    "id_risks": {
-      "unmeasured_confounding": "medium",
-      "simultaneity": "low",
-      "weak_variation": "low",
-      "measurement_error": "low",
-      "selection": "low"
-    },
-    "cf_shock_allowed": false,
-    "cf_policy_allowed": false,
-    "cf_reason_blocked": "Counterfactual Use: BLOCKED\nReason: regime break risk\n\nEven if p<0.05, this does not establish a causal effect.",
-    "n_obs": 187,
-    "issues": [
-      {
-        "issue_key": "RATING_DIAGNOSTICS_CONFLICT:oil_supply_to_fx",
-        "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
-        "severity": "HIGH",
-        "message": "A-rating despite failed diagnostics."
-      }
-    ],
-    "has_critical_issue": false,
-    "llm_annotation": ""
-  },
-  {
-    "id": "oil_demand_to_fx",
-    "source": "oil_demand_shock",
-    "target": "kzt_usd",
-    "edge_type": "causal",
-    "expected_sign": "negative",
-    "interpretation": "KZT response to oil demand shock",
-    "notes": "Commodity currency responds to global demand.",
-    "provenance_source": "manual",
-    "provenance_detail": "",
-    "strategy_type": "exogenous_shock",
-    "strategy_argument": "Baumeister oil demand shocks are exogenous to Kazakhstan via SVAR restrictions.",
-    "strategy_key_assumption": "Kazakhstan is too small to drive global oil demand.",
-    "point": -0.29825697639309134,
-    "se": 0.16108393436726334,
-    "pvalue": 0.06408866840834736,
-    "design": "LOCAL_PROJECTIONS",
-    "rating": "A",
-    "score": 0.97,
-    "claim_level": "REDUCED_FORM",
-    "all_pass": true,
-    "diagnostics": [
-      {
-        "name": "hac_bandwidth",
-        "passed": true
-      },
-      {
-        "name": "effective_obs",
-        "passed": true
-      },
-      {
-        "name": "r_squared_h0",
-        "passed": true
-      },
-      {
-        "name": "residual_ac1",
-        "passed": true
-      },
-      {
-        "name": "sign_consistency",
-        "passed": true
-      }
-    ],
-    "failure_flags": [],
-    "id_risks": {
-      "unmeasured_confounding": "medium",
-      "simultaneity": "low",
-      "weak_variation": "low",
-      "measurement_error": "low",
-      "selection": "low"
-    },
-    "cf_shock_allowed": false,
-    "cf_policy_allowed": false,
-    "cf_reason_blocked": "Counterfactual Use: BLOCKED\nReason: regime break risk\n\nEven if p<0.05, this does not establish a causal effect.",
-    "n_obs": 187,
-    "issues": [
-      {
-        "issue_key": "RATING_DIAGNOSTICS_CONFLICT:oil_demand_to_fx",
-        "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
-        "severity": "HIGH",
-        "message": "A-rating despite failed diagnostics."
-      }
-    ],
-    "has_critical_issue": false,
-    "llm_annotation": "This edge means that global oil demand shocks are associated with movements in the KZT/USD exchange rate, consistent with Kazakhstan behaving like a commodity currency whose terms of trade improve when oil demand strengthens. A key risk is that the \u201coil demand shock\u201d measure may still bundle global growth/financial risk shocks that simultaneously move capital flows and the dollar, creating omitted-variable bias or conflating demand with broader risk-on/risk-off dynamics; additionally, FX responses can reflect central bank intervention, capital controls, or anticipatory pricing that complicates timing. Next, a researcher should check identification of the oil-demand shock (e.g., alternative global demand instruments or sign/zero restrictions), test robustness to controlling for global dollar strength and risk sentiment (DXY, VIX, global rates), and verify the impulse timing (does KZT move after the shock rather than before) and stability across regimes (pre/post major policy changes or oil-price collapses)."
-  },
-  {
-    "id": "vix_to_fx",
-    "source": "vix_shock",
-    "target": "kzt_usd",
-    "edge_type": "causal",
-    "expected_sign": "positive",
-    "interpretation": "KZT response to global risk aversion",
-    "notes": "EM risk-off channel.",
-    "provenance_source": "manual",
-    "provenance_detail": "",
-    "strategy_type": "small_open_economy",
-    "strategy_argument": "VIX innovations reflect global risk aversion, exogenous to Kazakhstan-specific factors.",
-    "strategy_key_assumption": "Kazakhstan financial markets do not influence global risk sentiment.",
-    "point": -0.032423327653582856,
-    "se": 0.10994554441748393,
-    "pvalue": 0.768067585702398,
-    "design": "LOCAL_PROJECTIONS",
-    "rating": "A",
-    "score": 0.8900000000000001,
-    "claim_level": "REDUCED_FORM",
-    "all_pass": false,
-    "diagnostics": [
-      {
-        "name": "hac_bandwidth",
-        "passed": true
-      },
-      {
-        "name": "effective_obs",
-        "passed": true
-      },
-      {
-        "name": "r_squared_h0",
-        "passed": true
-      },
-      {
-        "name": "residual_ac1",
-        "passed": true
-      },
-      {
-        "name": "sign_consistency",
-        "passed": false
-      }
-    ],
-    "failure_flags": [],
-    "id_risks": {
-      "unmeasured_confounding": "medium",
-      "simultaneity": "low",
-      "weak_variation": "low",
-      "measurement_error": "low",
-      "selection": "low"
-    },
-    "cf_shock_allowed": false,
-    "cf_policy_allowed": false,
-    "cf_reason_blocked": "Design LOCAL_PROJECTIONS provides REDUCED_FORM level only",
-    "n_obs": 190,
-    "issues": [
-      {
-        "issue_key": "RATING_DIAGNOSTICS_CONFLICT:vix_to_fx",
-        "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
-        "severity": "HIGH",
-        "message": "A-rating despite failed diagnostics."
-      }
-    ],
-    "has_critical_issue": false,
-    "llm_annotation": "A VIX shock is associated with movements in KZT/USD through the EM \u201crisk-off\u201d channel: higher global risk aversion tends to trigger outflows from emerging markets and pressure local currencies, shifting the exchange rate. A key risk is that this reduced-form link may be confounded by concurrent global factors (oil price shocks, US rate surprises, global dollar strength) that move both VIX and KZT/USD, and by timing/market-hours issues that blur the direction of comovement\u2014especially given the imprecise estimate (large SE, high p-value). Next, check robustness to controlling for Brent/Urals oil, DXY, US Treasury yields/Fed surprises, and test alternative event windows/lags (and possibly local trading-hour-aligned changes) to see whether the association strengthens and whether the sign is stable across subsamples (e.g., crises vs calm periods)."
-  },
-  {
-    "id": "fx_to_cpi_tradable",
+    "id": "kzt_usd_to_cpi_tradable",
     "source": "kzt_usd",
     "target": "cpi_tradable",
     "edge_type": "immutable",
     "expected_sign": "positive",
     "interpretation": "Differential inflation response by import intensity",
     "notes": "Block A validated result: 11.3% FX pass-through to tradable CPI.",
-    "provenance_source": "manual",
+    "provenance_source": "",
     "provenance_detail": "",
-    "strategy_type": "validated_prior",
-    "strategy_argument": "Block A LP-IV estimate using regional import-share exposure variation.",
-    "strategy_key_assumption": "Pre-period import shares are exogenous to post-period inflation trends.",
-    "point": 0.113,
-    "se": 0.028,
-    "pvalue": 0.0001,
-    "design": "IMMUTABLE_EVIDENCE",
-    "rating": "A",
-    "score": 0.99,
-    "claim_level": "IDENTIFIED_CAUSAL",
-    "all_pass": true,
-    "diagnostics": [
-      {
-        "name": "validated_evidence",
-        "passed": true
-      },
-      {
-        "name": "effective_obs",
-        "passed": true
-      }
-    ],
-    "failure_flags": [],
-    "id_risks": {
-      "unmeasured_confounding": "low",
-      "simultaneity": "low",
-      "weak_variation": "low",
-      "measurement_error": "low",
-      "selection": "low"
-    },
-    "cf_shock_allowed": true,
-    "cf_policy_allowed": false,
-    "cf_reason_blocked": "REDUCED_FORM mode does not allow policy interventions",
-    "n_obs": 1200,
-    "issues": [
-      {
-        "issue_key": "SIGNIFICANT_BUT_NOT_IDENTIFIED:fx_to_cpi_tradable",
-        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
-        "severity": "CRITICAL",
-        "message": "p=0.0001 but claim_level=. Significance does not establish causation."
-      }
-    ],
-    "has_critical_issue": true,
-    "llm_annotation": "A change in the KZT/USD exchange rate causes a change in tradable CPI by altering local-currency prices of imported consumption goods and imported inputs used in tradable production; the estimate implies about 11.3% pass-through from FX movements into tradable consumer prices over the study horizon. Key risks include violations of the identification assumptions\u2014e.g., exchange-rate moves coinciding with unobserved shocks to import prices, tariffs, subsidies, administered prices, or demand conditions that also affect tradable CPI\u2014plus measurement/aggregation issues in the tradable CPI basket and potential nonlinear or state-dependent pass-through during crises. Next, the researcher should scrutinize the identifying variation and timing (event-study/pre-trends, placebo outcomes), test robustness to controlling for global commodity prices and foreign inflation, and check heterogeneity by import intensity/category and asymmetry between depreciations and appreciations."
-  },
-  {
-    "id": "fx_to_cpi_nontradable",
-    "source": "kzt_usd",
-    "target": "cpi_nontradable",
-    "edge_type": "immutable",
-    "expected_sign": "any",
-    "interpretation": "Falsification test for FX pass-through",
-    "notes": "Block A falsification: Near-zero pass-through to non-tradable CPI.",
-    "provenance_source": "manual",
-    "provenance_detail": "",
-    "strategy_type": "validated_prior",
-    "strategy_argument": "Block A falsification test using non-tradable goods as placebo.",
-    "strategy_key_assumption": "Non-tradable CPI should not respond to FX if pass-through is import-driven.",
-    "point": 0.0,
-    "se": 0.015,
-    "pvalue": 0.99,
-    "design": "IMMUTABLE_EVIDENCE",
-    "rating": "A",
-    "score": 0.99,
-    "claim_level": "IDENTIFIED_CAUSAL",
-    "all_pass": true,
-    "diagnostics": [
-      {
-        "name": "validated_evidence",
-        "passed": true
-      },
-      {
-        "name": "effective_obs",
-        "passed": true
-      }
-    ],
-    "failure_flags": [],
-    "id_risks": {
-      "unmeasured_confounding": "low",
-      "simultaneity": "low",
-      "weak_variation": "low",
-      "measurement_error": "low",
-      "selection": "low"
-    },
-    "cf_shock_allowed": true,
-    "cf_policy_allowed": false,
-    "cf_reason_blocked": "REDUCED_FORM mode does not allow policy interventions",
-    "n_obs": 1200,
-    "issues": [],
-    "has_critical_issue": false,
-    "llm_annotation": "This edge represents the causal effect of KZT/USD exchange-rate movements on prices of non-tradable goods and services, where theory would typically suggest little direct pass-through because these items are not imported and have limited foreign-input content. The near-zero estimate is consistent with non-tradables being insulated from exchange-rate shocks, making it a useful falsification check for broader pass-through claims. Key risks are misclassification of \u201cnon-tradable\u201d items (hidden imported inputs or regulated tariffs), CPI measurement/aggregation that masks sectoral effects, and identification failure if the exchange-rate variation used is endogenous to domestic inflation expectations or policy responses. Next, the researcher should verify the tradable/non-tradable basket construction and input import intensity, run event-study/lag specifications and subcomponents (services vs. shelter vs. administered prices), and test robustness to alternative instruments or shock definitions and to excluding periods with price controls or tax changes."
-  },
-  {
-    "id": "cpi_to_nbk_rate",
-    "source": "cpi_headline",
-    "target": "nbk_policy_rate",
-    "edge_type": "reaction_function",
-    "expected_sign": "positive",
-    "interpretation": "NBK reaction function to inflation",
-    "notes": "NBK responds to inflation. Requires nbk_policy_rate connector.",
-    "provenance_source": "manual",
-    "provenance_detail": "",
-    "strategy_type": "none",
-    "strategy_argument": "Reaction function \u2014 endogenous policy response, no identification strategy.",
-    "strategy_key_assumption": "N/A \u2014 this edge documents correlation, not causal effect.",
-    "point": -0.5352595428653101,
-    "se": 13.96562608868574,
-    "pvalue": 0.9694270212706624,
+    "point": 0.0001308707005012602,
+    "se": 7.462327268926213e-05,
+    "pvalue": 0.07947304146889873,
     "design": "LOCAL_PROJECTIONS",
     "rating": "A",
-    "score": 0.8240000000000001,
-    "claim_level": "BLOCKED_ID",
-    "all_pass": false,
-    "diagnostics": [
-      {
-        "name": "hac_bandwidth",
-        "passed": true
-      },
-      {
-        "name": "effective_obs",
-        "passed": true
-      },
-      {
-        "name": "r_squared_h0",
-        "passed": true
-      },
-      {
-        "name": "residual_ac1",
-        "passed": true
-      },
-      {
-        "name": "sign_consistency",
-        "passed": false
-      }
-    ],
-    "failure_flags": [],
-    "id_risks": {
-      "unmeasured_confounding": "medium",
-      "simultaneity": "low",
-      "weak_variation": "low",
-      "measurement_error": "low",
-      "selection": "low"
-    },
-    "cf_shock_allowed": false,
-    "cf_policy_allowed": false,
-    "cf_reason_blocked": "Claim level capped to BLOCKED_ID",
-    "n_obs": 67,
-    "issues": [
-      {
-        "issue_key": "RATING_DIAGNOSTICS_CONFLICT:cpi_to_nbk_rate",
-        "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
-        "severity": "HIGH",
-        "message": "A-rating despite failed diagnostics."
-      }
-    ],
-    "has_critical_issue": false,
-    "llm_annotation": "This edge represents the NBK\u2019s reaction function: headline inflation may be related to subsequent policy-rate adjustments as the central bank leans against inflationary pressure. The main risk is that this relationship is blocked or confounded by omitted drivers (e.g., exchange rate movements, output gap, global commodity prices, fiscal shocks) or by reverse timing/measurement issues (policy affecting inflation with lags while inflation data reflect earlier conditions), which can wash out the apparent link\u2014consistent with the extremely imprecise estimate and near-zero statistical signal here. Next, verify timing and information sets (use real-time CPI releases and meeting dates), add key controls and lags typical of Taylor-type rules, and check robustness across regimes (e.g., pre/post policy framework changes) to see whether CPI predicts rate moves in subsamples or at specific horizons."
-  },
-  {
-    "id": "fx_to_nbk_rate",
-    "source": "kzt_usd",
-    "target": "nbk_policy_rate",
-    "edge_type": "reaction_function",
-    "expected_sign": "positive",
-    "interpretation": "NBK reaction function to FX depreciation",
-    "notes": "NBK responds to FX conditions. Requires nbk_policy_rate connector.",
-    "provenance_source": "manual",
-    "provenance_detail": "",
-    "strategy_type": "none",
-    "strategy_argument": "Reaction function \u2014 endogenous policy response, no identification strategy.",
-    "strategy_key_assumption": "N/A \u2014 this edge documents correlation, not causal effect.",
-    "point": 0.018354935930909422,
-    "se": 1.1164573166093024,
-    "pvalue": 0.9868830988186311,
-    "design": "LOCAL_PROJECTIONS",
-    "rating": "A",
-    "score": 0.904,
+    "score": 0.97,
     "claim_level": "REDUCED_FORM",
     "all_pass": true,
     "diagnostics": [
@@ -1347,19 +759,352 @@ const EDGES = [
         "passed": true
       },
       {
-        "name": "r_squared_h0",
+        "name": "sign_consistency",
         "passed": true
       },
       {
-        "name": "residual_ac1",
+        "name": "ts_leads_test",
+        "passed": true
+      },
+      {
+        "name": "ts_residual_autocorr",
+        "passed": true
+      },
+      {
+        "name": "ts_hac_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_lag_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_regime_stability",
+        "passed": true
+      },
+      {
+        "name": "ts_shock_support",
+        "passed": true
+      }
+    ],
+    "failure_flags": [],
+    "id_risks": {
+      "unmeasured_confounding": "medium",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Design LOCAL_PROJECTIONS provides REDUCED_FORM level only",
+    "n_obs": 186,
+    "strategy_type": "",
+    "strategy_argument": "",
+    "strategy_key_assumption": "",
+    "issues": [],
+    "has_critical_issue": false
+  },
+  {
+    "id": "kzt_usd_to_cpi_nontradable",
+    "source": "kzt_usd",
+    "target": "cpi_nontradable",
+    "edge_type": "immutable",
+    "expected_sign": "any",
+    "interpretation": "Falsification test for FX pass-through",
+    "notes": "Block A falsification: Near-zero pass-through to non-tradable CPI.",
+    "provenance_source": "",
+    "provenance_detail": "",
+    "point": 7.680517172265832e-05,
+    "se": 3.3801146890145904e-05,
+    "pvalue": 0.023070493914662118,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "A",
+    "score": 0.97,
+    "claim_level": "REDUCED_FORM",
+    "all_pass": true,
+    "diagnostics": [
+      {
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
         "passed": true
       },
       {
         "name": "sign_consistency",
         "passed": true
+      },
+      {
+        "name": "ts_leads_test",
+        "passed": true
+      },
+      {
+        "name": "ts_residual_autocorr",
+        "passed": true
+      },
+      {
+        "name": "ts_hac_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_lag_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_regime_stability",
+        "passed": true
+      },
+      {
+        "name": "ts_shock_support",
+        "passed": true
       }
     ],
     "failure_flags": [],
+    "id_risks": {
+      "unmeasured_confounding": "medium",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Design LOCAL_PROJECTIONS provides REDUCED_FORM level only",
+    "n_obs": 186,
+    "strategy_type": "",
+    "strategy_argument": "",
+    "strategy_key_assumption": "",
+    "issues": [
+      {
+        "issue_key": "SIGNIFICANT_BUT_NOT_IDENTIFIED:kzt_usd_to_cpi_nontradable",
+        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+        "severity": "CRITICAL",
+        "message": "p=0.0231 but claim_level=REDUCED_FORM. Significance does not establish causation."
+      }
+    ],
+    "has_critical_issue": true
+  },
+  {
+    "id": "imported_inflation_instrument_to_real_income",
+    "source": "imported_inflation_instrument",
+    "target": "real_income",
+    "edge_type": "causal",
+    "expected_sign": "any",
+    "interpretation": "",
+    "notes": "NL-extracted: Imported inflation induced by exchange-rate depreciation-&gt;Households&#x27; purchasing power (negative)",
+    "provenance_source": "",
+    "provenance_detail": "",
+    "issues": [],
+    "has_critical_issue": false
+  },
+  {
+    "id": "cpi_headline_to_real_income",
+    "source": "cpi_headline",
+    "target": "real_income",
+    "edge_type": "causal",
+    "expected_sign": "any",
+    "interpretation": "",
+    "notes": "NL-extracted: Imported inflation (price level increase) with sticky incomes-&gt;Real disposable income (negative)",
+    "provenance_source": "",
+    "provenance_detail": "",
+    "point": 0.0,
+    "se": 0.0,
+    "pvalue": null,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "B",
+    "score": 0.6300000000000001,
+    "claim_level": "REDUCED_FORM",
+    "all_pass": false,
+    "diagnostics": [
+      {
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": false
+      },
+      {
+        "name": "sign_consistency",
+        "passed": true
+      },
+      {
+        "name": "ts_hac_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_regime_stability",
+        "passed": true
+      }
+    ],
+    "failure_flags": [
+      "small_sample"
+    ],
+    "id_risks": {
+      "unmeasured_confounding": "medium",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Design LOCAL_PROJECTIONS provides REDUCED_FORM level only",
+    "n_obs": 0,
+    "strategy_type": "",
+    "strategy_argument": "",
+    "strategy_key_assumption": "",
+    "issues": [],
+    "has_critical_issue": false
+  },
+  {
+    "id": "imported_inflation_instrument_to_real_expenditure_negative",
+    "source": "imported_inflation_instrument",
+    "target": "real_expenditure",
+    "edge_type": "causal",
+    "expected_sign": "any",
+    "interpretation": "",
+    "notes": "NL-extracted: Imported inflation (price level increase) with sticky incomes-&gt;Real household spending (consumption) (negative)",
+    "provenance_source": "",
+    "provenance_detail": "",
+    "issues": [],
+    "has_critical_issue": false
+  },
+  {
+    "id": "transfer_income_to_nominal_income_buffering",
+    "source": "transfer_income",
+    "target": "nominal_income",
+    "edge_type": "causal",
+    "expected_sign": "any",
+    "interpretation": "",
+    "notes": "NL-extracted: Transfers and regulated prices (buffers) during exchange-rate/price shock-&gt;Headline nominal income stability (positive)",
+    "provenance_source": "",
+    "provenance_detail": "",
+    "point": 0.0,
+    "se": 0.0,
+    "pvalue": null,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "B",
+    "score": 0.6300000000000001,
+    "claim_level": "REDUCED_FORM",
+    "all_pass": false,
+    "diagnostics": [
+      {
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": false
+      },
+      {
+        "name": "sign_consistency",
+        "passed": true
+      },
+      {
+        "name": "ts_hac_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_regime_stability",
+        "passed": true
+      }
+    ],
+    "failure_flags": [
+      "small_sample"
+    ],
+    "id_risks": {
+      "unmeasured_confounding": "medium",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Design LOCAL_PROJECTIONS provides REDUCED_FORM level only",
+    "n_obs": 0,
+    "strategy_type": "",
+    "strategy_argument": "",
+    "strategy_key_assumption": "",
+    "issues": [],
+    "has_critical_issue": false
+  },
+  {
+    "id": "real_income_to_cor_kspi",
+    "source": "real_income",
+    "target": "cor_kspi",
+    "edge_type": "causal",
+    "expected_sign": "any",
+    "interpretation": "",
+    "notes": "NL-extracted: Household purchasing-power squeeze (real income/spending softening)-&gt;Kaspi balance-sheet pressure (positive); Household squeeze / reduced purchasing power-&gt;Repayment stress (delinquencies and provisions) (positive); Deterioration in macro conditions / household squeeze (stress)-&gt;Increase in &#x27;macro provisioning&#x27; ahead of realized defaults (positive)",
+    "provenance_source": "",
+    "provenance_detail": "",
+    "issues": [],
+    "has_critical_issue": false
+  },
+  {
+    "id": "vix_shock_to_deposit_cost_kspi",
+    "source": "vix_shock",
+    "target": "deposit_cost_kspi",
+    "edge_type": "causal",
+    "expected_sign": "any",
+    "interpretation": "",
+    "notes": "NL-extracted: Tighter financial conditions-&gt;Kaspi funding costs (positive)",
+    "provenance_source": "",
+    "provenance_detail": "",
+    "point": 0.013267925068563167,
+    "se": 0.034509957033544404,
+    "pvalue": 0.7006326632381366,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "B",
+    "score": 0.6111111111111112,
+    "claim_level": "REDUCED_FORM",
+    "all_pass": false,
+    "diagnostics": [
+      {
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": true
+      },
+      {
+        "name": "sign_consistency",
+        "passed": true
+      },
+      {
+        "name": "ts_leads_test",
+        "passed": true
+      },
+      {
+        "name": "ts_residual_autocorr",
+        "passed": true
+      },
+      {
+        "name": "ts_hac_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_lag_sensitivity",
+        "passed": false
+      },
+      {
+        "name": "ts_regime_stability",
+        "passed": false
+      },
+      {
+        "name": "ts_shock_support",
+        "passed": true
+      }
+    ],
+    "failure_flags": [
+      "regime_break_detected",
+      "small_sample"
+    ],
     "id_risks": {
       "unmeasured_confounding": "medium",
       "simultaneity": "low",
@@ -1370,583 +1115,30 @@ const EDGES = [
     "cf_shock_allowed": false,
     "cf_policy_allowed": false,
     "cf_reason_blocked": "Counterfactual Use: BLOCKED\nReason: regime break risk\n\nEven if p<0.05, this does not establish a causal effect.",
-    "n_obs": 67,
+    "n_obs": 25,
+    "strategy_type": "",
+    "strategy_argument": "",
+    "strategy_key_assumption": "",
     "issues": [],
-    "has_critical_issue": false,
-    "llm_annotation": ""
+    "has_critical_issue": false
   },
   {
-    "id": "nbk_rate_to_deposit_cost",
-    "source": "nbk_policy_rate",
-    "target": "deposit_cost_kspi",
-    "edge_type": "causal",
-    "expected_sign": "positive",
-    "interpretation": "Association between policy rate and KSPI funding cost",
-    "notes": "Funding cost channel. Requires both connectors.",
-    "provenance_source": "manual",
-    "provenance_detail": "",
-    "strategy_type": "institutional_passthrough",
-    "strategy_argument": "NBK base rate mechanically feeds into regulated deposit rate corridors.",
-    "strategy_key_assumption": "Deposit rate corridor regulation ensures mechanical pass-through.",
-    "point": 0.22265648578368194,
-    "se": 0.06178252515647664,
-    "pvalue": 0.00031350811161777947,
-    "design": "LOCAL_PROJECTIONS",
-    "rating": "B",
-    "score": 0.73,
-    "claim_level": "BLOCKED_ID",
-    "all_pass": false,
-    "diagnostics": [
-      {
-        "name": "hac_bandwidth",
-        "passed": true
-      },
-      {
-        "name": "effective_obs",
-        "passed": false
-      },
-      {
-        "name": "r_squared_h0",
-        "passed": true
-      },
-      {
-        "name": "residual_ac1",
-        "passed": false
-      },
-      {
-        "name": "sign_consistency",
-        "passed": true
-      }
-    ],
-    "failure_flags": [
-      "small_sample"
-    ],
-    "id_risks": {
-      "unmeasured_confounding": "medium",
-      "simultaneity": "low",
-      "weak_variation": "low",
-      "measurement_error": "low",
-      "selection": "low"
-    },
-    "cf_shock_allowed": false,
-    "cf_policy_allowed": false,
-    "cf_reason_blocked": "Claim level capped to BLOCKED_ID",
-    "n_obs": 18,
-    "issues": [
-      {
-        "issue_key": "SIGNIFICANT_BUT_NOT_IDENTIFIED:nbk_rate_to_deposit_cost",
-        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
-        "severity": "CRITICAL",
-        "message": "p=0.0003 but claim_level=. Significance does not establish causation."
-      }
-    ],
-    "has_critical_issue": true,
-    "llm_annotation": "A higher NBK policy rate is plausibly related to higher deposit funding costs at KSPI through the standard monetary transmission \u201cfunding cost channel,\u201d where banks must offer higher rates to retain/attract deposits. The main risk is that this edge is not identified: concurrent shocks (inflation expectations, FX pressure, liquidity stress, regulatory changes, or risk-premium shifts) can move the policy rate and KSPI\u2019s effective deposit cost together, and deposit-cost measurement/composition changes (term mix, retail vs corporate, promotional pricing) can mechanically generate the association. Next, verify the required connectors and timing by checking event-study dynamics around policy announcements, controlling for macro/market confounders (inflation, KZT/USD, sovereign spreads, system liquidity), and testing whether the pass-through differs by deposit type/maturity or by the share of sticky vs rate-sensitive deposits."
-  },
-  {
-    "id": "nbk_rate_to_cor",
-    "source": "nbk_policy_rate",
-    "target": "cor_kspi",
-    "edge_type": "causal",
-    "expected_sign": "positive",
-    "interpretation": "Association between policy rate and KSPI credit losses",
-    "notes": "Borrower stress channel. Lagged 2Q for credit deterioration.",
-    "provenance_source": "manual",
-    "provenance_detail": "",
-    "strategy_type": "institutional_passthrough",
-    "strategy_argument": "Higher policy rate increases borrower debt service costs, raising default risk.",
-    "strategy_key_assumption": "Rate pass-through to lending rates is near-complete in KZ banking.",
-    "point": 0.3559558353990485,
-    "se": 0.11934467793177896,
-    "pvalue": 0.002858237880200499,
-    "design": "LOCAL_PROJECTIONS",
-    "rating": "B",
-    "score": 0.79,
-    "claim_level": "BLOCKED_ID",
-    "all_pass": false,
-    "diagnostics": [
-      {
-        "name": "hac_bandwidth",
-        "passed": true
-      },
-      {
-        "name": "effective_obs",
-        "passed": false
-      },
-      {
-        "name": "r_squared_h0",
-        "passed": true
-      },
-      {
-        "name": "residual_ac1",
-        "passed": true
-      },
-      {
-        "name": "sign_consistency",
-        "passed": true
-      }
-    ],
-    "failure_flags": [
-      "small_sample"
-    ],
-    "id_risks": {
-      "unmeasured_confounding": "medium",
-      "simultaneity": "low",
-      "weak_variation": "low",
-      "measurement_error": "low",
-      "selection": "low"
-    },
-    "cf_shock_allowed": false,
-    "cf_policy_allowed": false,
-    "cf_reason_blocked": "Claim level capped to BLOCKED_ID",
-    "n_obs": 18,
-    "issues": [
-      {
-        "issue_key": "SIGNIFICANT_BUT_NOT_IDENTIFIED:nbk_rate_to_cor",
-        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
-        "severity": "CRITICAL",
-        "message": "p=0.0029 but claim_level=. Significance does not establish causation."
-      }
-    ],
-    "has_critical_issue": true,
-    "llm_annotation": "A higher NBK policy rate may be related to a subsequent rise in the KSPI corporate NPL (or distress) measure through the borrower-stress channel: higher debt-service costs and tighter financial conditions can worsen firms\u2019 repayment capacity, with a plausible two-quarter lag before deterioration is realized in bank portfolios. The main risk to a causal interpretation is endogeneity of policy: the NBK may raise rates in response to macro conditions (inflation, overheating, FX pressure, commodity shocks) that also independently affect corporate credit quality, plus omitted concurrent macroprudential actions or regulatory changes that shift measured impairment. Next, a researcher should check robustness to controlling for the NBK reaction function and common macro drivers (output gap, inflation, exchange rate, oil/commodity prices), test alternative lag structures and pre-trends, and verify that cor_kspi measurement/accounting rules and loan classification practices are stable over time."
-  },
-  {
-    "id": "cpi_to_nominal_income",
-    "source": "cpi_headline",
-    "target": "nominal_income",
-    "edge_type": "immutable",
-    "expected_sign": "positive",
-    "interpretation": "Nominal income response to external inflation (IV)",
-    "notes": "Block B validated: LP-IV estimate using imported inflation IV.",
-    "provenance_source": "manual",
-    "provenance_detail": "",
-    "strategy_type": "validated_prior",
-    "strategy_argument": "Block B LP-IV using imported inflation instrument (FX x pre-period import share).",
-    "strategy_key_assumption": "Exclusion restriction: imported inflation IV affects income only through prices.",
-    "point": 0.65,
-    "se": 0.18,
-    "pvalue": 0.0003,
-    "design": "IMMUTABLE_EVIDENCE",
-    "rating": "A",
-    "score": 0.99,
-    "claim_level": "IDENTIFIED_CAUSAL",
-    "all_pass": true,
-    "diagnostics": [
-      {
-        "name": "validated_evidence",
-        "passed": true
-      },
-      {
-        "name": "effective_obs",
-        "passed": true
-      }
-    ],
-    "failure_flags": [],
-    "id_risks": {
-      "unmeasured_confounding": "low",
-      "simultaneity": "low",
-      "weak_variation": "low",
-      "measurement_error": "low",
-      "selection": "low"
-    },
-    "cf_shock_allowed": true,
-    "cf_policy_allowed": false,
-    "cf_reason_blocked": "REDUCED_FORM mode does not allow policy interventions",
-    "n_obs": 80,
-    "issues": [
-      {
-        "issue_key": "SIGNIFICANT_BUT_NOT_IDENTIFIED:cpi_to_nominal_income",
-        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
-        "severity": "CRITICAL",
-        "message": "p=0.0003 but claim_level=. Significance does not establish causation."
-      }
-    ],
-    "has_critical_issue": true,
-    "llm_annotation": "A rise in headline CPI causes an increase in nominal income, consistent with wage/earnings indexation, cost-of-living adjustments, and price passthrough into nominal pay and receipts. The main threat is that the imported-inflation instrument could still shift nominal income through channels other than domestic CPI (e.g., trade exposure affecting labor demand, sectoral composition, or terms-of-trade income), or that the LP specification is contaminated by anticipatory wage setting or differential measurement/timing of CPI versus income. Next, check exclusion and monotonicity more directly by testing balance on pre-trends and trade-exposure covariates, running sector/region heterogeneity and placebo outcomes (e.g., employment or hours), and verifying robustness to alternative CPI definitions (core vs headline) and income measures (wages vs total household/firm income)."
-  },
-  {
-    "id": "fx_to_real_expenditure",
-    "source": "kzt_usd",
-    "target": "real_expenditure",
-    "edge_type": "immutable",
-    "expected_sign": "negative",
-    "interpretation": "MPC-like ratio to FX shocks",
-    "notes": "Block F validated: IRF(0) = -0.10 for real expenditure.",
-    "provenance_source": "manual",
-    "provenance_detail": "",
-    "strategy_type": "validated_prior",
-    "strategy_argument": "Block F LP estimate using regional panel variation in FX exposure.",
-    "strategy_key_assumption": "Regional FX exposure variation is exogenous to expenditure trends.",
-    "point": -0.1,
-    "se": 0.04,
-    "pvalue": 0.012,
-    "design": "IMMUTABLE_EVIDENCE",
-    "rating": "A",
-    "score": 0.99,
-    "claim_level": "IDENTIFIED_CAUSAL",
-    "all_pass": true,
-    "diagnostics": [
-      {
-        "name": "validated_evidence",
-        "passed": true
-      },
-      {
-        "name": "effective_obs",
-        "passed": true
-      }
-    ],
-    "failure_flags": [],
-    "id_risks": {
-      "unmeasured_confounding": "low",
-      "simultaneity": "low",
-      "weak_variation": "low",
-      "measurement_error": "low",
-      "selection": "low"
-    },
-    "cf_shock_allowed": true,
-    "cf_policy_allowed": false,
-    "cf_reason_blocked": "REDUCED_FORM mode does not allow policy interventions",
-    "n_obs": 60,
-    "issues": [
-      {
-        "issue_key": "SIGNIFICANT_BUT_NOT_IDENTIFIED:fx_to_real_expenditure",
-        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
-        "severity": "CRITICAL",
-        "message": "p=0.0120 but claim_level=. Significance does not establish causation."
-      }
-    ],
-    "has_critical_issue": true,
-    "llm_annotation": "A rise in **kzt_usd** (a KZT depreciation against the USD) **causes** a decline in **real_expenditure**, consistent with exchange-rate pass-through raising the domestic price of imported consumption/investment goods and tightening real purchasing power; the IRF(0) of -0.10 suggests an immediate contraction. The main threats are violations of the identification assumptions\u2014e.g., contemporaneous monetary/fiscal or commodity-price shocks moving both the exchange rate and spending, anticipatory behavior (expenditure falling before the depreciation), or measurement/deflation issues that mechanically induce a negative response. Next, check pre-trends/placebo leads and sensitivity to alternative identification (e.g., different shock ordering/instruments), and verify robustness across deflators (CPI vs. PCE) and subsamples (oil-price regimes, crisis periods) to ensure the effect isn\u2019t driven by correlated external shocks or inflation mismeasurement."
-  },
-  {
-    "id": "shock_to_npl_kspi",
-    "source": "imported_inflation_instrument",
-    "target": "npl_kspi",
-    "edge_type": "causal",
-    "expected_sign": "positive",
-    "interpretation": "Aggregate NPL response to imported inflation shock",
-    "notes": "Reduced-form NPL response. Cannot decompose channels without loan-level data.",
-    "provenance_source": "manual",
-    "provenance_detail": "",
-    "strategy_type": "iv",
-    "strategy_argument": "Imported inflation instrument (FX x pre-period import share) provides exogenous variation.",
-    "strategy_key_assumption": "Exclusion: imported inflation affects NPL only through household income channel.",
-    "point": 72.79719737828836,
-    "se": 10.297353981285937,
-    "pvalue": 1.5548712171304386e-12,
-    "design": "LOCAL_PROJECTIONS",
-    "rating": "B",
-    "score": 0.79,
-    "claim_level": "REDUCED_FORM",
-    "all_pass": true,
-    "diagnostics": [
-      {
-        "name": "hac_bandwidth",
-        "passed": true
-      },
-      {
-        "name": "effective_obs",
-        "passed": true
-      },
-      {
-        "name": "r_squared_h0",
-        "passed": true
-      },
-      {
-        "name": "residual_ac1",
-        "passed": true
-      },
-      {
-        "name": "sign_consistency",
-        "passed": true
-      }
-    ],
-    "failure_flags": [
-      "small_sample"
-    ],
-    "id_risks": {
-      "unmeasured_confounding": "medium",
-      "simultaneity": "low",
-      "weak_variation": "low",
-      "measurement_error": "low",
-      "selection": "low"
-    },
-    "cf_shock_allowed": false,
-    "cf_policy_allowed": false,
-    "cf_reason_blocked": "Design LOCAL_PROJECTIONS provides REDUCED_FORM level only",
-    "n_obs": 26,
-    "issues": [
-      {
-        "issue_key": "SIGNIFICANT_BUT_NOT_IDENTIFIED:shock_to_npl_kspi",
-        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
-        "severity": "CRITICAL",
-        "message": "p=0.0000 but claim_level=. Significance does not establish causation."
-      }
-    ],
-    "has_critical_issue": true,
-    "llm_annotation": "An increase in the imported-inflation instrument is associated with higher NPLs in KSPI, consistent with a macro price shock that may squeeze real incomes, raise input costs, or tighten financial conditions and thereby worsen repayment capacity. The main risk to interpreting this as a clean reduced-form shock transmission is that the instrument could be correlated with other contemporaneous forces affecting NPLs (e.g., exchange-rate movements, policy responses, sectoral demand shocks) or that bank-level exposure/composition shifts mechanically change measured NPLs. Given the note that channels can\u2019t be decomposed without loan-level data, the next checks should focus on validating the instrument\u2019s exogeneity (placebo tests on pre-trends and unaffected outcomes, robustness to adding exchange rate/monetary policy controls) and exploring heterogeneity using available aggregates (e.g., by sectoral loan shares, maturity structure, or borrower type) to see whether the response aligns with plausible pass-through mechanisms."
-  },
-  {
-    "id": "shock_to_cor_kspi",
-    "source": "imported_inflation_instrument",
-    "target": "cor_kspi",
-    "edge_type": "causal",
-    "expected_sign": "positive",
-    "interpretation": "Total provisioning response to imported inflation shock",
-    "notes": "Reduced-form CoR response. IFRS 9 overlay is latent.",
-    "provenance_source": "manual",
-    "provenance_detail": "",
-    "strategy_type": "iv",
-    "strategy_argument": "Imported inflation instrument (FX x pre-period import share) provides exogenous variation.",
-    "strategy_key_assumption": "Exclusion: imported inflation affects CoR only through household income/default channel.",
-    "point": 85.95725782265163,
-    "se": 7.40220359386492,
-    "pvalue": 3.565189467439174e-31,
-    "design": "LOCAL_PROJECTIONS",
-    "rating": "B",
-    "score": 0.79,
-    "claim_level": "REDUCED_FORM",
-    "all_pass": true,
-    "diagnostics": [
-      {
-        "name": "hac_bandwidth",
-        "passed": true
-      },
-      {
-        "name": "effective_obs",
-        "passed": true
-      },
-      {
-        "name": "r_squared_h0",
-        "passed": true
-      },
-      {
-        "name": "residual_ac1",
-        "passed": true
-      },
-      {
-        "name": "sign_consistency",
-        "passed": true
-      }
-    ],
-    "failure_flags": [
-      "small_sample"
-    ],
-    "id_risks": {
-      "unmeasured_confounding": "medium",
-      "simultaneity": "low",
-      "weak_variation": "low",
-      "measurement_error": "low",
-      "selection": "low"
-    },
-    "cf_shock_allowed": false,
-    "cf_policy_allowed": false,
-    "cf_reason_blocked": "Design LOCAL_PROJECTIONS provides REDUCED_FORM level only",
-    "n_obs": 26,
-    "issues": [
-      {
-        "issue_key": "SIGNIFICANT_BUT_NOT_IDENTIFIED:shock_to_cor_kspi",
-        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
-        "severity": "CRITICAL",
-        "message": "p=0.0000 but claim_level=. Significance does not establish causation."
-      }
-    ],
-    "has_critical_issue": true,
-    "llm_annotation": ""
-  },
-  {
-    "id": "expenditure_to_payments_revenue",
-    "source": "real_expenditure",
-    "target": "payments_revenue_kspi",
-    "edge_type": "causal",
-    "expected_sign": "positive",
-    "interpretation": "Association between spending and KSPI payments revenue",
-    "notes": "Spending -&gt; GMV -&gt; Interchange -&gt; Revenue. Requires KSPI connector.",
-    "provenance_source": "manual",
-    "provenance_detail": "",
-    "strategy_type": "none",
-    "strategy_argument": "No identification strategy \u2014 confounded by KSPI market share growth and platform dynamics.",
-    "strategy_key_assumption": "N/A \u2014 association only.",
-    "point": 333.40898842797117,
-    "se": 70.95395662999425,
-    "pvalue": 2.615043739933785e-06,
-    "design": "LOCAL_PROJECTIONS",
-    "rating": "B",
-    "score": 0.6923529411764707,
-    "claim_level": "REDUCED_FORM",
-    "all_pass": false,
-    "diagnostics": [
-      {
-        "name": "hac_bandwidth",
-        "passed": true
-      },
-      {
-        "name": "effective_obs",
-        "passed": false
-      },
-      {
-        "name": "r_squared_h0",
-        "passed": true
-      },
-      {
-        "name": "residual_ac1",
-        "passed": true
-      },
-      {
-        "name": "sign_consistency",
-        "passed": true
-      }
-    ],
-    "failure_flags": [
-      "small_sample"
-    ],
-    "id_risks": {
-      "unmeasured_confounding": "medium",
-      "simultaneity": "low",
-      "weak_variation": "low",
-      "measurement_error": "low",
-      "selection": "low"
-    },
-    "cf_shock_allowed": false,
-    "cf_policy_allowed": false,
-    "cf_reason_blocked": "Counterfactual Use: BLOCKED\nReason: insufficient shock episodes\n\nEven if p<0.05, this does not establish a causal effect.",
-    "n_obs": 7,
-    "issues": [
-      {
-        "issue_key": "SIGNIFICANT_BUT_NOT_IDENTIFIED:expenditure_to_payments_revenue",
-        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
-        "severity": "CRITICAL",
-        "message": "p=0.0000 but claim_level=. Significance does not establish causation."
-      }
-    ],
-    "has_critical_issue": true,
-    "llm_annotation": "Higher real_expenditure is associated with higher payments_revenue_kspi, consistent with a channel where customer spending increases GMV that flows through the KSPI connector into interchange and fee-based payments revenue. A key risk is that expenditure may be proxying for broader demand or seasonality that also directly raises payments revenue (e.g., promotions, macro conditions, merchant mix), and connector availability/measurement issues could induce selection or attenuation if KSPI coverage changes over time. Next, check whether the relationship is stable across periods with constant KSPI integration (and across cohorts/markets), and validate the GMV\u2192interchange\u2192revenue linkage by testing intermediate outcomes (GMV, connected share, take rate) and ruling out concurrent pricing or tracking changes."
-  },
-  {
-    "id": "cor_to_capital",
-    "source": "cor_kspi",
-    "target": "total_capital_kspi",
-    "edge_type": "mechanical",
-    "expected_sign": "negative",
-    "interpretation": "Capital impact from provisioning",
-    "notes": "Provisioning reduces capital. Control for PPOP.",
-    "provenance_source": "manual",
-    "provenance_detail": "",
-    "strategy_type": "accounting_identity",
-    "strategy_argument": "Provisions directly reduce retained earnings and thus regulatory capital.",
-    "strategy_key_assumption": "IFRS accounting rules mechanically link provisions to capital.",
-    "point": -22.4,
-    "se": 0.0,
-    "pvalue": null,
-    "design": "ACCOUNTING_BRIDGE",
-    "rating": "A",
-    "score": 0.9299999999999999,
-    "claim_level": "IDENTIFIED_CAUSAL",
-    "all_pass": true,
-    "diagnostics": [
-      {
-        "name": "identity_consistency",
-        "passed": true
-      }
-    ],
-    "failure_flags": [
-      "mechanical_identity_risk"
-    ],
-    "id_risks": {
-      "unmeasured_confounding": "low",
-      "simultaneity": "low",
-      "weak_variation": "low",
-      "measurement_error": "low",
-      "selection": "low"
-    },
-    "cf_shock_allowed": true,
-    "cf_policy_allowed": false,
-    "cf_reason_blocked": "REDUCED_FORM mode does not allow policy interventions",
-    "n_obs": null,
-    "issues": [
-      {
-        "issue_key": "SIGNIFICANT_BUT_NOT_IDENTIFIED:cor_to_capital",
-        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
-        "severity": "CRITICAL",
-        "message": "p=0.0000 but claim_level=BLOCKED_ID. Significance does not establish causation."
-      }
-    ],
-    "has_critical_issue": true,
-    "llm_annotation": "Higher loan-loss provisioning (cor_kspi) mechanically causes lower total regulatory capital (total_capital_kspi) because provisions flow through earnings and reduce retained earnings/CET1 under standard accounting and capital rules. The main threat to interpreting the magnitude as causal is that provisioning is typically prompted by underlying credit deterioration that also affects capital through other channels (charge-offs, risk-weight changes, supervisory actions), and any \u201ccontrol for PPOP\u201d may not fully net out simultaneous income shocks or timing mismatches. Next, verify the exact capital definition and mapping (e.g., CET1 vs total capital, treatment of expected-loss reserves) and run timing/robustness checks (lags, event-study around provisioning spikes) to confirm the relationship is purely accounting-mechanical rather than driven by concurrent balance-sheet or regulatory adjustments."
-  },
-  {
-    "id": "loan_portfolio_to_rwa",
-    "source": "loan_portfolio_kspi",
-    "target": "rwa_kspi",
-    "edge_type": "mechanical",
-    "expected_sign": "positive",
-    "interpretation": "Mechanical volume effect on RWA",
-    "notes": "Volume \u00d7 avg RW. Mechanical relationship.",
-    "provenance_source": "manual",
-    "provenance_detail": "",
-    "strategy_type": "accounting_identity",
-    "strategy_argument": "RWA = Loan volume x average risk weight. Volume effect is mechanical.",
-    "strategy_key_assumption": "Average risk weight is approximately constant over the sample period.",
-    "point": 0.5714285714285714,
-    "se": 0.0,
-    "pvalue": null,
-    "design": "ACCOUNTING_BRIDGE",
-    "rating": "A",
-    "score": 0.9299999999999999,
-    "claim_level": "IDENTIFIED_CAUSAL",
-    "all_pass": true,
-    "diagnostics": [
-      {
-        "name": "identity_consistency",
-        "passed": true
-      }
-    ],
-    "failure_flags": [
-      "mechanical_identity_risk"
-    ],
-    "id_risks": {
-      "unmeasured_confounding": "low",
-      "simultaneity": "low",
-      "weak_variation": "low",
-      "measurement_error": "low",
-      "selection": "low"
-    },
-    "cf_shock_allowed": true,
-    "cf_policy_allowed": false,
-    "cf_reason_blocked": "REDUCED_FORM mode does not allow policy interventions",
-    "n_obs": null,
-    "issues": [
-      {
-        "issue_key": "SIGNIFICANT_BUT_NOT_IDENTIFIED:loan_portfolio_to_rwa",
-        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
-        "severity": "CRITICAL",
-        "message": "p=0.0000 but claim_level=REDUCED_FORM. Significance does not establish causation."
-      }
-    ],
-    "has_critical_issue": true,
-    "llm_annotation": "This edge represents the accounting/regulatory mapping from loan portfolio volume into risk\u2011weighted assets: holding the average risk weight fixed, increasing loan exposures causes a proportional increase in RWA by construction (Volume \u00d7 avg RW), so the coefficient is essentially a scaling factor. The main risk to interpreting this as a stable causal effect is that \u201cavg RW\u201d is not actually fixed\u2014changes in portfolio composition, IRB model updates, regulatory parameter shifts, or RWA optimization can make RWA respond non-proportionally to volume and break the purely mechanical relationship. Next, verify that the definition of loan_portfolio_kspi matches the exposure measure used in RWA (EAD vs book value, netting, CRM, off\u2011balance sheet CCFs) and check whether the implied average risk weight (RWA/Volume) is constant over time or varies with composition/regime changes."
-  },
-  {
-    "id": "portfolio_mix_to_rwa",
-    "source": "portfolio_mix_kspi",
-    "target": "rwa_kspi",
+    "id": "vix_shock_to_ppop_kspi",
+    "source": "vix_shock",
+    "target": "ppop_kspi",
     "edge_type": "causal",
     "expected_sign": "any",
-    "interpretation": "RWA composition effect from product mix shifts",
-    "notes": "Product mix shifts risk weights. NBK uses 150%+ for unsecured.",
-    "provenance_source": "manual",
+    "interpretation": "",
+    "notes": "NL-extracted: Tighter financial conditions-&gt;Kaspi interest margins (profit margins) (negative)",
+    "provenance_source": "",
     "provenance_detail": "",
-    "strategy_type": "none",
-    "strategy_argument": "No identification strategy \u2014 portfolio mix changes are endogenous to KSPI business decisions.",
-    "strategy_key_assumption": "N/A \u2014 association only.",
-    "point": 18195.962971994624,
-    "se": 3952.75417946752,
-    "pvalue": 4.157223824460209e-06,
+    "point": -0.026254179640865256,
+    "se": 0.015522315437371705,
+    "pvalue": 0.09076368696029093,
     "design": "LOCAL_PROJECTIONS",
     "rating": "B",
-    "score": 0.7982352941176472,
-    "claim_level": "BLOCKED_ID",
+    "score": 0.6955555555555556,
+    "claim_level": "REDUCED_FORM",
     "all_pass": false,
     "diagnostics": [
       {
@@ -1958,15 +1150,31 @@ const EDGES = [
         "passed": false
       },
       {
-        "name": "r_squared_h0",
-        "passed": true
-      },
-      {
-        "name": "residual_ac1",
-        "passed": true
-      },
-      {
         "name": "sign_consistency",
+        "passed": true
+      },
+      {
+        "name": "ts_leads_test",
+        "passed": true
+      },
+      {
+        "name": "ts_residual_autocorr",
+        "passed": true
+      },
+      {
+        "name": "ts_hac_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_lag_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_regime_stability",
+        "passed": true
+      },
+      {
+        "name": "ts_shock_support",
         "passed": true
       }
     ],
@@ -1982,111 +1190,138 @@ const EDGES = [
     },
     "cf_shock_allowed": false,
     "cf_policy_allowed": false,
-    "cf_reason_blocked": "Claim level capped to BLOCKED_ID",
-    "n_obs": 16,
-    "issues": [
-      {
-        "issue_key": "SIGNIFICANT_BUT_NOT_IDENTIFIED:portfolio_mix_to_rwa",
-        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
-        "severity": "CRITICAL",
-        "message": "p=0.0000 but claim_level=. Significance does not establish causation."
-      }
-    ],
-    "has_critical_issue": true,
-    "llm_annotation": ""
-  },
-  {
-    "id": "capital_to_k2",
-    "source": "total_capital_kspi",
-    "target": "k2_ratio_kspi",
-    "edge_type": "identity",
-    "expected_sign": "",
-    "interpretation": "K2 identity: Capital / RWA",
-    "notes": "K2 = Total Capital / RWA. Mechanical identity.",
-    "provenance_source": "manual",
-    "provenance_detail": "",
-    "strategy_type": "accounting_identity",
-    "strategy_argument": "K2 = Total Capital / RWA is a regulatory definition.",
-    "strategy_key_assumption": "Regulatory definition is stable over the sample period.",
-    "point": 0.0625,
-    "se": 0.0,
-    "pvalue": null,
-    "design": "IDENTITY",
-    "rating": "A",
-    "score": 0.94,
-    "claim_level": "IDENTIFIED_CAUSAL",
-    "all_pass": true,
-    "diagnostics": [
-      {
-        "name": "identity_check",
-        "passed": true
-      }
-    ],
-    "failure_flags": [
-      "mechanical_identity_risk"
-    ],
-    "id_risks": {
-      "unmeasured_confounding": "low",
-      "simultaneity": "low",
-      "weak_variation": "low",
-      "measurement_error": "low",
-      "selection": "low"
-    },
-    "cf_shock_allowed": true,
-    "cf_policy_allowed": false,
-    "cf_reason_blocked": "REDUCED_FORM mode does not allow policy interventions",
-    "n_obs": null,
+    "cf_reason_blocked": "Design LOCAL_PROJECTIONS provides REDUCED_FORM level only",
+    "n_obs": 15,
+    "strategy_type": "",
+    "strategy_argument": "",
+    "strategy_key_assumption": "",
     "issues": [],
-    "has_critical_issue": false,
-    "llm_annotation": "Higher total capital mechanically increases the K2 ratio because \\(K2 = \\frac{\\text{Total Capital}}{\\text{RWA}}\\); holding RWA fixed, a one-unit increase in capital raises K2 one-for-one scaled by \\(1/\\text{RWA}\\). The main risk to interpreting the 0.0625 as a stable \u201ccausal effect\u201d is that RWA is in the denominator and typically varies with portfolio risk, regulation, and measurement choices, so changes in capital may coincide with changes in RWA that alter the mapping from capital to K2. A researcher should verify the exact construction and units (e.g., whether K2 is in percentage points and capital/RWA in consistent currency terms), check for any smoothing/averaging or reporting lags, and confirm that RWA is treated consistently across time and banks so the implied derivative \\(dK2/dCapital \\approx 1/\\text{RWA}\\) matches the estimate."
+    "has_critical_issue": false
   },
   {
-    "id": "rwa_to_k2",
+    "id": "ppop_kspi_to_total_capital_kspi",
+    "source": "ppop_kspi",
+    "target": "total_capital_kspi",
+    "edge_type": "mechanical",
+    "expected_sign": "any",
+    "interpretation": "",
+    "notes": "NL-extracted: Profits and provisions dynamics-&gt;Kaspi capital headroom (capital numerator) (ambiguous)",
+    "provenance_source": "",
+    "provenance_detail": "",
+    "issues": [],
+    "has_critical_issue": false
+  },
+  {
+    "id": "rwa_kspi_to_k2_ratio_kspi",
     "source": "rwa_kspi",
     "target": "k2_ratio_kspi",
     "edge_type": "identity",
-    "expected_sign": "",
+    "expected_sign": "any",
     "interpretation": "K2 identity: Capital / RWA",
     "notes": "K2 = Total Capital / RWA. Mechanical identity.",
-    "provenance_source": "manual",
+    "provenance_source": "",
     "provenance_detail": "",
-    "strategy_type": "accounting_identity",
-    "strategy_argument": "K2 = Total Capital / RWA is a regulatory definition.",
-    "strategy_key_assumption": "Regulatory definition is stable over the sample period.",
-    "point": -0.010125,
-    "se": 0.0,
-    "pvalue": null,
-    "design": "IDENTITY",
-    "rating": "A",
-    "score": 0.94,
-    "claim_level": "IDENTIFIED_CAUSAL",
-    "all_pass": true,
+    "point": -0.006058255436425573,
+    "se": 0.002047730679385075,
+    "pvalue": 0.003091185818188935,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "B",
+    "score": 0.7155555555555556,
+    "claim_level": "BLOCKED_ID",
+    "all_pass": false,
     "diagnostics": [
       {
-        "name": "identity_check",
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": true
+      },
+      {
+        "name": "sign_consistency",
+        "passed": true
+      },
+      {
+        "name": "ts_leads_test",
+        "passed": false
+      },
+      {
+        "name": "ts_residual_autocorr",
+        "passed": true
+      },
+      {
+        "name": "ts_hac_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_lag_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_regime_stability",
+        "passed": true
+      },
+      {
+        "name": "ts_shock_support",
         "passed": true
       }
     ],
     "failure_flags": [
-      "mechanical_identity_risk"
+      "small_sample"
     ],
     "id_risks": {
-      "unmeasured_confounding": "low",
+      "unmeasured_confounding": "medium",
       "simultaneity": "low",
       "weak_variation": "low",
       "measurement_error": "low",
       "selection": "low"
     },
-    "cf_shock_allowed": true,
+    "cf_shock_allowed": false,
     "cf_policy_allowed": false,
-    "cf_reason_blocked": "REDUCED_FORM mode does not allow policy interventions",
-    "n_obs": null,
-    "issues": [],
-    "has_critical_issue": false,
-    "llm_annotation": "Higher RWA mechanically lowers the K2 ratio because \\(K2=\\frac{\\text{Total Capital}}{\\text{RWA}}\\); holding capital fixed, an increase in the denominator reduces the ratio one-for-one in proportional terms. The main risk is not causal invalidity but measurement/definition mismatches (e.g., capital and RWA not aligned in time, consolidation scope, or regulatory definition changes) and any data construction that induces non-classical error, which can make the identity fail empirically. Next, verify unit consistency and timing (same reporting date), confirm the exact capital numerator used (e.g., total vs. Tier 2/total regulatory capital), and recompute K2 directly from the underlying components to ensure the estimated coefficient reflects the accounting identity rather than a coding artifact."
+    "cf_reason_blocked": "Shock CF requires REDUCED_FORM+, edge has BLOCKED_ID",
+    "n_obs": 25,
+    "strategy_type": "",
+    "strategy_argument": "",
+    "strategy_key_assumption": "",
+    "issues": [
+      {
+        "issue_key": "SIGNIFICANT_BUT_NOT_IDENTIFIED:rwa_kspi_to_k2_ratio_kspi",
+        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+        "severity": "CRITICAL",
+        "message": "p=0.0031 but claim_level=BLOCKED_ID. Significance does not establish causation."
+      }
+    ],
+    "has_critical_issue": true
   },
   {
-    "id": "import_share_to_iv",
+    "id": "real_expenditure_to_ppop_kspi",
+    "source": "real_expenditure",
+    "target": "ppop_kspi",
+    "edge_type": "causal",
+    "expected_sign": "any",
+    "interpretation": "",
+    "notes": "NL-extracted: Consumer spending holding up during stress-&gt;Non-bank revenues and dividends (holding company support capacity) (positive)",
+    "provenance_source": "",
+    "provenance_detail": "",
+    "issues": [],
+    "has_critical_issue": false
+  },
+  {
+    "id": "kzt_usd_to_imported_inflation_instrument",
+    "source": "kzt_usd",
+    "target": "imported_inflation_instrument",
+    "edge_type": "identity",
+    "expected_sign": "",
+    "interpretation": "Identity component: imported_inflation_iv",
+    "notes": "Auto-created identity edge from imported_inflation_iv",
+    "provenance_source": "",
+    "provenance_detail": "",
+    "issues": [],
+    "has_critical_issue": false
+  },
+  {
+    "id": "e_import_share_to_imported_inflation_instrument",
     "source": "E_import_share",
     "target": "imported_inflation_instrument",
     "edge_type": "identity",
@@ -2098,39 +1333,27 @@ const EDGES = [
     "strategy_type": "accounting_identity",
     "strategy_argument": "IV = diff(log(kzt_usd)) * E_import_share is a deterministic construction.",
     "strategy_key_assumption": "Pre-period import shares are fixed exposure weights.",
-    "point": 1.0,
-    "se": 0.0,
-    "pvalue": null,
-    "design": "IDENTITY",
-    "rating": "A",
-    "score": 0.94,
-    "claim_level": "IDENTIFIED_CAUSAL",
-    "all_pass": true,
-    "diagnostics": [
-      {
-        "name": "identity_check",
-        "passed": true
-      }
-    ],
-    "failure_flags": [
-      "mechanical_identity_risk"
-    ],
-    "id_risks": {
-      "unmeasured_confounding": "low",
-      "simultaneity": "low",
-      "weak_variation": "low",
-      "measurement_error": "low",
-      "selection": "low"
-    },
-    "cf_shock_allowed": true,
-    "cf_policy_allowed": false,
-    "cf_reason_blocked": null,
-    "n_obs": null,
     "issues": [],
     "has_critical_issue": false
   },
   {
-    "id": "nominal_expenditure_to_real",
+    "id": "total_capital_kspi_to_k2_ratio_kspi",
+    "source": "total_capital_kspi",
+    "target": "k2_ratio_kspi",
+    "edge_type": "identity",
+    "expected_sign": "",
+    "interpretation": "K2 identity: Capital / RWA",
+    "notes": "K2 = Total Capital / RWA. Mechanical identity.",
+    "provenance_source": "manual",
+    "provenance_detail": "",
+    "strategy_type": "accounting_identity",
+    "strategy_argument": "K2 = Total Capital / RWA is a regulatory definition.",
+    "strategy_key_assumption": "Regulatory definition is stable over the sample period.",
+    "issues": [],
+    "has_critical_issue": false
+  },
+  {
+    "id": "nominal_expenditure_to_real_expenditure",
     "source": "nominal_expenditure",
     "target": "real_expenditure",
     "edge_type": "identity",
@@ -2142,134 +1365,417 @@ const EDGES = [
     "strategy_type": "accounting_identity",
     "strategy_argument": "real_expenditure = log(nominal_expenditure) - log(cpi_headline) is a deflation identity.",
     "strategy_key_assumption": "CPI is the appropriate deflator for household consumption.",
-    "point": 1.0,
+    "point": 0.0,
     "se": 0.0,
     "pvalue": null,
-    "design": "IDENTITY",
-    "rating": "A",
-    "score": 0.94,
-    "claim_level": "IDENTIFIED_CAUSAL",
-    "all_pass": true,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "B",
+    "score": 0.6300000000000001,
+    "claim_level": "REDUCED_FORM",
+    "all_pass": false,
     "diagnostics": [
       {
-        "name": "identity_check",
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": false
+      },
+      {
+        "name": "sign_consistency",
+        "passed": true
+      },
+      {
+        "name": "ts_hac_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_regime_stability",
         "passed": true
       }
     ],
     "failure_flags": [
-      "mechanical_identity_risk"
+      "small_sample"
     ],
     "id_risks": {
-      "unmeasured_confounding": "low",
+      "unmeasured_confounding": "medium",
       "simultaneity": "low",
       "weak_variation": "low",
       "measurement_error": "low",
       "selection": "low"
     },
-    "cf_shock_allowed": true,
+    "cf_shock_allowed": false,
     "cf_policy_allowed": false,
-    "cf_reason_blocked": null,
-    "n_obs": null,
+    "cf_reason_blocked": "Design LOCAL_PROJECTIONS provides REDUCED_FORM level only",
+    "n_obs": 0,
     "issues": [],
     "has_critical_issue": false
   },
   {
-    "id": "wage_to_nominal_income",
-    "source": "wage_income",
-    "target": "nominal_income",
-    "edge_type": "mechanical",
+    "id": "cpi_headline_to_real_expenditure",
+    "source": "cpi_headline",
+    "target": "real_expenditure",
+    "edge_type": "identity",
     "expected_sign": "",
-    "interpretation": "Wage component of total nominal income",
-    "notes": "Income channel decomposition. Wages are ~60% of nominal monetary income.",
+    "interpretation": "Identity component: real_expenditure_identity",
+    "notes": "Auto-created identity edge from real_expenditure_identity",
+    "provenance_source": "",
+    "provenance_detail": "",
+    "point": 0.8689514450133883,
+    "se": 1.8932045762536065,
+    "pvalue": 0.6462453388638387,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "B",
+    "score": 0.7291111111111112,
+    "claim_level": "REDUCED_FORM",
+    "all_pass": false,
+    "diagnostics": [
+      {
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": true
+      },
+      {
+        "name": "sign_consistency",
+        "passed": true
+      },
+      {
+        "name": "ts_leads_test",
+        "passed": true
+      },
+      {
+        "name": "ts_residual_autocorr",
+        "passed": true
+      },
+      {
+        "name": "ts_hac_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_lag_sensitivity",
+        "passed": false
+      },
+      {
+        "name": "ts_regime_stability",
+        "passed": false
+      },
+      {
+        "name": "ts_shock_support",
+        "passed": true
+      }
+    ],
+    "failure_flags": [
+      "regime_break_detected"
+    ],
+    "id_risks": {
+      "unmeasured_confounding": "medium",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Counterfactual Use: BLOCKED\nReason: regime break risk\n\nEven if p<0.05, this does not establish a causal effect.",
+    "n_obs": 54,
+    "strategy_type": "",
+    "strategy_argument": "",
+    "strategy_key_assumption": "",
+    "issues": [],
+    "has_critical_issue": false
+  },
+  {
+    "id": "nominal_income_to_real_income",
+    "source": "nominal_income",
+    "target": "real_income",
+    "edge_type": "identity",
+    "expected_sign": "",
+    "interpretation": "Identity component: real_income_identity",
+    "notes": "Auto-created identity edge from real_income_identity",
+    "provenance_source": "",
+    "provenance_detail": "",
+    "point": 0.9330544195797443,
+    "se": 0.02770422400969326,
+    "pvalue": 1.1680567298440232e-248,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "A",
+    "score": 0.8375555555555555,
+    "claim_level": "BLOCKED_ID",
+    "all_pass": false,
+    "diagnostics": [
+      {
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": true
+      },
+      {
+        "name": "sign_consistency",
+        "passed": true
+      },
+      {
+        "name": "ts_leads_test",
+        "passed": false
+      },
+      {
+        "name": "ts_residual_autocorr",
+        "passed": true
+      },
+      {
+        "name": "ts_hac_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_lag_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_regime_stability",
+        "passed": true
+      },
+      {
+        "name": "ts_shock_support",
+        "passed": true
+      }
+    ],
+    "failure_flags": [],
+    "id_risks": {
+      "unmeasured_confounding": "medium",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Shock CF requires REDUCED_FORM+, edge has BLOCKED_ID",
+    "n_obs": 56,
+    "strategy_type": "",
+    "strategy_argument": "",
+    "strategy_key_assumption": "",
+    "issues": [
+      {
+        "issue_key": "SIGNIFICANT_BUT_NOT_IDENTIFIED:nominal_income_to_real_income",
+        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+        "severity": "CRITICAL",
+        "message": "p=0.0000 but claim_level=BLOCKED_ID. Significance does not establish causation."
+      },
+      {
+        "issue_key": "RATING_DIAGNOSTICS_CONFLICT:nominal_income_to_real_income",
+        "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
+        "severity": "HIGH",
+        "message": "A-rating despite failed diagnostics."
+      }
+    ],
+    "has_critical_issue": true
+  },
+  {
+    "id": "cor_kspi_to_total_capital_kspi",
+    "source": "cor_kspi",
+    "target": "total_capital_kspi",
+    "edge_type": "mechanical",
+    "expected_sign": "negative",
+    "interpretation": "Capital impact from provisioning",
+    "notes": "Provisioning reduces capital. Control for PPOP.",
     "provenance_source": "manual",
     "provenance_detail": "",
     "strategy_type": "accounting_identity",
-    "strategy_argument": "Nominal income = wages + transfers + self-employment + other. Wages are the dominant component (~60%).",
-    "strategy_key_assumption": "Income decomposition is exhaustive.",
-    "point": 0.6,
-    "se": 0.0,
-    "pvalue": null,
-    "design": "IDENTITY",
+    "strategy_argument": "Provisions directly reduce retained earnings and thus regulatory capital.",
+    "strategy_key_assumption": "IFRS accounting rules mechanically link provisions to capital.",
+    "issues": [],
+    "has_critical_issue": false
+  },
+  {
+    "id": "cpi_nontradable_to_cpi_headline",
+    "source": "cpi_nontradable",
+    "target": "cpi_headline",
+    "edge_type": "identity",
+    "expected_sign": "",
+    "interpretation": "Aggregation/measurement bridge: cpi_nontradable feeds cpi_headline",
+    "notes": "Auto-bridged: cpi_nontradable was unreachable from target. Connected to cpi_headline by tag similarity (shared: [&#x27;inflation&#x27;, &#x27;prices&#x27;]).",
+    "provenance_source": "",
+    "provenance_detail": "",
+    "point": 0.722095626287286,
+    "se": 0.22687975273453517,
+    "pvalue": 0.0014589663178228855,
+    "design": "LOCAL_PROJECTIONS",
     "rating": "A",
-    "score": 0.94,
-    "claim_level": "IDENTIFIED_CAUSAL",
-    "all_pass": true,
+    "score": 0.9255555555555555,
+    "claim_level": "BLOCKED_ID",
+    "all_pass": false,
     "diagnostics": [
       {
-        "name": "identity_check",
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": true
+      },
+      {
+        "name": "sign_consistency",
+        "passed": true
+      },
+      {
+        "name": "ts_leads_test",
+        "passed": false
+      },
+      {
+        "name": "ts_residual_autocorr",
+        "passed": true
+      },
+      {
+        "name": "ts_hac_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_lag_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_regime_stability",
+        "passed": true
+      },
+      {
+        "name": "ts_shock_support",
         "passed": true
       }
     ],
-    "failure_flags": [
-      "mechanical_identity_risk"
-    ],
+    "failure_flags": [],
     "id_risks": {
-      "unmeasured_confounding": "low",
+      "unmeasured_confounding": "medium",
       "simultaneity": "low",
       "weak_variation": "low",
       "measurement_error": "low",
       "selection": "low"
     },
-    "cf_shock_allowed": true,
+    "cf_shock_allowed": false,
     "cf_policy_allowed": false,
-    "cf_reason_blocked": null,
-    "n_obs": null,
-    "issues": [],
-    "has_critical_issue": false
+    "cf_reason_blocked": "Shock CF requires REDUCED_FORM+, edge has BLOCKED_ID",
+    "n_obs": 176,
+    "strategy_type": "",
+    "strategy_argument": "",
+    "strategy_key_assumption": "",
+    "issues": [
+      {
+        "issue_key": "SIGNIFICANT_BUT_NOT_IDENTIFIED:cpi_nontradable_to_cpi_headline",
+        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+        "severity": "CRITICAL",
+        "message": "p=0.0015 but claim_level=BLOCKED_ID. Significance does not establish causation."
+      },
+      {
+        "issue_key": "RATING_DIAGNOSTICS_CONFLICT:cpi_nontradable_to_cpi_headline",
+        "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
+        "severity": "HIGH",
+        "message": "A-rating despite failed diagnostics."
+      }
+    ],
+    "has_critical_issue": true
+  },
+  {
+    "id": "cpi_tradable_to_cpi_headline",
+    "source": "cpi_tradable",
+    "target": "cpi_headline",
+    "edge_type": "identity",
+    "expected_sign": "",
+    "interpretation": "Aggregation/measurement bridge: cpi_tradable feeds cpi_headline",
+    "notes": "Auto-bridged: cpi_tradable was unreachable from target. Connected to cpi_headline by tag similarity (shared: [&#x27;inflation&#x27;, &#x27;prices&#x27;]).",
+    "provenance_source": "",
+    "provenance_detail": "",
+    "point": 0.761814289462254,
+    "se": 0.043327155866326385,
+    "pvalue": 3.334696254595197e-69,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "A",
+    "score": 0.9255555555555555,
+    "claim_level": "BLOCKED_ID",
+    "all_pass": false,
+    "diagnostics": [
+      {
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": true
+      },
+      {
+        "name": "sign_consistency",
+        "passed": true
+      },
+      {
+        "name": "ts_leads_test",
+        "passed": false
+      },
+      {
+        "name": "ts_residual_autocorr",
+        "passed": true
+      },
+      {
+        "name": "ts_hac_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_lag_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_regime_stability",
+        "passed": true
+      },
+      {
+        "name": "ts_shock_support",
+        "passed": true
+      }
+    ],
+    "failure_flags": [],
+    "id_risks": {
+      "unmeasured_confounding": "medium",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Shock CF requires REDUCED_FORM+, edge has BLOCKED_ID",
+    "n_obs": 176,
+    "strategy_type": "",
+    "strategy_argument": "",
+    "strategy_key_assumption": "",
+    "issues": [
+      {
+        "issue_key": "SIGNIFICANT_BUT_NOT_IDENTIFIED:cpi_tradable_to_cpi_headline",
+        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+        "severity": "CRITICAL",
+        "message": "p=0.0000 but claim_level=BLOCKED_ID. Significance does not establish causation."
+      },
+      {
+        "issue_key": "RATING_DIAGNOSTICS_CONFLICT:cpi_tradable_to_cpi_headline",
+        "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
+        "severity": "HIGH",
+        "message": "A-rating despite failed diagnostics."
+      }
+    ],
+    "has_critical_issue": true
   }
 ];
-const LATENTS = [
-  {
-    "id": "ifrs9_overlay",
-    "description": "Forward-looking macro overlay in IFRS 9 ECL provisioning.",
-    "affects": [
-      "cor_kspi"
-    ]
-  },
-  {
-    "id": "regulatory_changes",
-    "description": "NBK RW rule changes affecting unsecured consumer loans.",
-    "affects": [
-      "rwa_kspi"
-    ]
-  },
-  {
-    "id": "kspi_customer_composition",
-    "description": "Unobserved changes in KSPI customer risk profile.",
-    "affects": [
-      "npl_kspi",
-      "cor_kspi"
-    ]
-  },
-  {
-    "id": "migration",
-    "description": "Labor migration affecting regional income dynamics.",
-    "affects": [
-      "nominal_income",
-      "real_income"
-    ]
-  },
-  {
-    "id": "fiscal_policy",
-    "description": "Unobserved fiscal policy responses to shocks.",
-    "affects": [
-      "transfer_income",
-      "nominal_income"
-    ]
-  }
-];
+const LATENTS = [];
 const METADATA = {
-  "name": "kspi_k2_stress",
-  "description": "Global shocks -> KZ macro -> KSPI balance sheet -> K2 capital ratio",
+  "name": "kspi_k2_stress_narrative",
+  "description": "DAG generated from narrative text, based on kspi_k2_stress. Contains 12 edges (3 matched, 9 new).",
   "target_node": "k2_ratio_kspi",
-  "created": "2026-02-02",
-  "owner": "research_team",
-  "scope_default": "kazakhstan_only",
+  "created": "2026-02-08",
+  "owner": "narrative_pipeline",
   "tags": [
-    "kspi",
-    "capital",
-    "stress_test",
-    "k2"
+    "narrative",
+    "auto-generated"
   ]
 };
 const EDGE_TYPE_COLORS = {"causal": "#2563eb", "reaction_function": "#059669", "bridge": "#9333ea", "identity": "#9333ea", "mechanical": "#9333ea", "immutable": "#d97706"};
@@ -3018,7 +2524,7 @@ const ACTIONS_BY_RULE = {
     ]
   }
 };
-const GENERATED_AT = "2026-02-11 07:35:41 UTC";
+const GENERATED_AT = "2026-02-11 18:32:12 UTC";
 const ISSUE_GUIDANCE = {
   "SIGNIFICANT_BUT_NOT_IDENTIFIED:fx_to_cpi_tradable": "**Finding**: The edge **fx_to_cpi_tradable** has a statistically significant estimated effect (**\u03b2 = 0.113**, **SE = 0.028**, **p = 0.0001**, **N = 1200**) while being labeled **IDENTIFIED_CAUSAL** under **IMMUTABLE_EVIDENCE**.\n\n**Concern**: Even with **p = 0.0001**, statistical significance alone does not justify a causal claim, and with **no failed diagnostics reported** there is still an identification gap: the evidence presented supports a precisely estimated association but does not document the specific quasi-experimental/exogeneity conditions required for **IDENTIFIED_CAUSAL**.\n\n**Recommendation**: **Downgrade the claim level from IDENTIFIED_CAUSAL to ASSOCIATIONAL (or \u201cNOT_IDENTIFIED\u201d) unless you can explicitly document the identification argument** tied to \u201cIMMUTABLE_EVIDENCE\u201d (e.g., a clearly exogenous FX shock/assignment mechanism), keeping **\u03b2 = 0.113 (p = 0.0001)** as strong evidence of association but not, by itself, causation.",
   "RATING_DIAGNOSTICS_CONFLICT:cpi_to_nbk_rate": "**Finding**: The cpi_to_nbk_rate edge is rated **A** even though the estimated effect is essentially null (**coefficient = -0.5353**, **SE = 13.9656**, **p = 0.9694**, **N = 67**) and it **fails sign_consistency**.\n\n**Concern**: An **A-rating** is not credible here because **sign_consistency failed**, indicating the estimated direction is unstable across horizons/specifications in the local projections setup, and the extremely weak statistical signal (**p = 0.9694**) makes any causal directional claim at the **BLOCKED_ID** level highly unreliable.\n\n**Recommendation**: **Downgrade or block** this edge for causal interpretation (at minimum remove the **A** rating) unless you can resolve the **sign_consistency** failure (e.g., by tightening the LP specification/horizon set or addressing instability); with **p = 0.9694**, the practical default should be to treat this as **no evidence of an effect** rather than an A-rated causal link.",

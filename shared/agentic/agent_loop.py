@@ -16,6 +16,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Literal
 
+import pandas as pd
+
 from shared.agentic.dag.parser import DAGSpec, parse_dag
 from shared.agentic.dag.validator import DAGValidator, ValidationReport
 from shared.agentic.queue.queue import TaskQueue, create_queue_from_dag
@@ -1080,7 +1082,143 @@ class AgentLoop:
         )
 
     def _create_identity_card(self, task: LinkageTask) -> EdgeCard:
-        """Create EdgeCard from identity (mechanical) sensitivity."""
+        """Create EdgeCard from identity (mechanical) sensitivity.
+
+        Handles two cases:
+        1. Legacy K2 edges (capital_to_k2, rwa_to_k2) — uses hardcoded KSPI logic
+        2. Generic identity edges — numerically computes sensitivity from the
+           target node's identity formula using loaded dependency series
+        """
+        from shared.agentic.output.edge_card import (
+            Estimates, DiagnosticResult, Interpretation,
+            FailureFlags, CounterfactualApplicability,
+        )
+        from shared.agentic.output.provenance import SpecDetails
+
+        _K2_EDGES = {"capital_to_k2", "rwa_to_k2"}
+
+        if task.edge_id in _K2_EDGES:
+            return self._create_k2_identity_card(task)
+
+        # --- Generic identity card via numerical sensitivity ---
+        edge = self.dag.get_edge(task.edge_id)
+        if not edge:
+            raise ValueError(f"Edge not found: {task.edge_id}")
+
+        to_node = self.dag.get_node(edge.to_node)
+        from_node_id = edge.from_node
+
+        # Find the identity formula on the target node
+        formula = None
+        dep_names: list[str] = []
+        if to_node and to_node.identity:
+            formula = to_node.identity.formula
+            dep_names = list(to_node.depends_on)
+
+        if formula is None:
+            raise ValueError(
+                f"Identity edge {task.edge_id}: target node '{edge.to_node}' "
+                f"has no identity formula"
+            )
+
+        # Load dependency series and compute sensitivity numerically
+        from shared.engine.data_assembler import NODE_LOADERS
+        import numpy as _np
+
+        dep_series: dict[str, pd.Series] = {}
+        for dep in dep_names:
+            if dep in NODE_LOADERS:
+                dep_series[dep] = NODE_LOADERS[dep]()
+
+        if from_node_id not in dep_series:
+            raise ValueError(
+                f"Identity edge {task.edge_id}: from_node '{from_node_id}' "
+                f"not loadable for sensitivity computation"
+            )
+
+        # Align to common index
+        combined = pd.DataFrame(dep_series).dropna()
+        if combined.empty:
+            raise ValueError(
+                f"Identity edge {task.edge_id}: no overlapping data for "
+                f"dependencies {dep_names}"
+            )
+
+        # Build safe evaluation namespace
+        def _eval_formula(data: dict[str, pd.Series]) -> pd.Series:
+            ns: dict = {"__builtins__": {}}
+            ns.update(data)
+            ns["log"] = _np.log
+            ns["exp"] = _np.exp
+            ns["abs"] = _np.abs
+            ns["sqrt"] = _np.sqrt
+            result = eval(formula, ns)  # noqa: S307
+            if isinstance(result, pd.Series):
+                return result
+            return pd.Series(result, index=next(iter(data.values())).index)
+
+        # Compute baseline
+        base_data = {dep: combined[dep] for dep in dep_names}
+        baseline = _eval_formula(base_data)
+
+        # Perturb from_node by 1% to get numerical derivative
+        perturbed_data = dict(base_data)
+        delta = combined[from_node_id].abs().mean() * 0.01
+        if delta == 0:
+            delta = 1.0
+        perturbed_data[from_node_id] = combined[from_node_id] + delta
+        perturbed = _eval_formula(perturbed_data)
+
+        # Sensitivity = mean(Δoutput / Δinput)
+        sensitivity = float(((perturbed - baseline) / delta).mean())
+
+        formula_str = f"d({to_node.id})/d({from_node_id}) via {formula}"
+
+        estimates = Estimates(
+            point=sensitivity,
+            se=0.0,
+            ci_95=(sensitivity, sensitivity),
+            pvalue=None,
+        )
+        diagnostics = {
+            "identity_check": DiagnosticResult(
+                name="identity_check", passed=True,
+                value=sensitivity,
+                message=f"Deterministic: {formula_str}",
+            ),
+        }
+        failure_flags = FailureFlags(mechanical_identity_risk=True)
+        spec_details = SpecDetails(design="IDENTITY", se_method="deterministic")
+
+        score, rating = compute_credibility_score(
+            diagnostics=diagnostics,
+            failure_flags=failure_flags,
+            design_weight=1.0,
+            data_coverage=1.0,
+        )
+        return EdgeCard(
+            edge_id=task.edge_id,
+            dag_version_hash=self._dag_hash,
+            spec_hash=spec_details.compute_hash(),
+            spec_details=spec_details,
+            estimates=estimates,
+            diagnostics=diagnostics,
+            interpretation=Interpretation(
+                estimand=f"Sensitivity: {formula_str}",
+                is_not="Causal effect; this is a mechanical identity",
+            ),
+            failure_flags=failure_flags,
+            counterfactual=CounterfactualApplicability(
+                supports_shock_path=True,
+                supports_policy_intervention=True,
+                intervention_note="Mechanical identity; always holds by definition",
+            ),
+            credibility_rating=rating,
+            credibility_score=score,
+        )
+
+    def _create_k2_identity_card(self, task: LinkageTask) -> EdgeCard:
+        """Create EdgeCard for legacy K2 identity edges (capital_to_k2, rwa_to_k2)."""
         from shared.engine.ts_estimator import compute_identity_sensitivity
         from shared.engine.data_assembler import _load_kspi_quarterly
         from shared.agentic.output.edge_card import (
@@ -1254,20 +1392,30 @@ class AgentLoop:
         point = lp.impact_estimate
         se = lp.impact_se
         n_obs = lp.nobs[0] if lp.nobs else 0
-        ci_lo = point - 1.96 * se if not np_.isnan(se) else 0.0
-        ci_hi = point + 1.96 * se if not np_.isnan(se) else 0.0
-        pval = lp.pvalues[0] if lp.pvalues and not np_.isnan(lp.pvalues[0]) else None
+        data_insufficient = (n_obs < 5)
 
-        estimates = Estimates(
-            point=float(point) if not np_.isnan(point) else 0.0,
-            se=float(se) if not np_.isnan(se) else 0.0,
-            ci_95=(float(ci_lo), float(ci_hi)),
-            pvalue=float(pval) if pval is not None else None,
-            horizons=lp.horizons,
-            irf=lp.coefficients,
-            irf_ci_lower=lp.ci_lower,
-            irf_ci_upper=lp.ci_upper,
-        )
+        if data_insufficient:
+            # Zero or near-zero observations — don't report a misleading 0.0 estimate
+            estimates = None
+            logger.warning(
+                f"Edge {task.edge_id}: DATA INSUFFICIENT — only {n_obs} observations "
+                f"after alignment. No estimate produced."
+            )
+        else:
+            ci_lo = point - 1.96 * se if not np_.isnan(se) else 0.0
+            ci_hi = point + 1.96 * se if not np_.isnan(se) else 0.0
+            pval = lp.pvalues[0] if lp.pvalues and not np_.isnan(lp.pvalues[0]) else None
+
+            estimates = Estimates(
+                point=float(point) if not np_.isnan(point) else 0.0,
+                se=float(se) if not np_.isnan(se) else 0.0,
+                ci_95=(float(ci_lo), float(ci_hi)),
+                pvalue=float(pval) if pval is not None else None,
+                horizons=lp.horizons,
+                irf=lp.coefficients,
+                irf_ci_lower=lp.ci_lower,
+                irf_ci_upper=lp.ci_upper,
+            )
 
         diagnostics: dict[str, DiagnosticResult] = {}
         if lp.hac_bandwidth:
@@ -1301,10 +1449,11 @@ class AgentLoop:
         failure_flags = FailureFlags(
             small_sample=is_quarterly or n_obs < 30,
             regime_break_detected=regime_break,
+            data_insufficient=data_insufficient,
         )
         treatment_node, outcome_node = EDGE_NODE_MAP[task.edge_id]
         spec_details = SpecDetails(
-            design="LOCAL_PROJECTIONS",
+            design="LOCAL_PROJECTIONS" if not data_insufficient else "DATA_INSUFFICIENT",
             controls=[f"y_lag{i}" for i in range(1, n_lags + 1)] + [f"x_lag{i}" for i in range(1, n_lags + 1)],
             se_method="HAC_newey_west",
             horizon=lp.horizons,
@@ -1315,16 +1464,21 @@ class AgentLoop:
             diagnostics=diagnostics, failure_flags=failure_flags,
             design_weight=design_weight, data_coverage=data_coverage,
         )
-        if is_quarterly and rating == "A":
+        if data_insufficient:
+            rating = "D"
+            score = 0.0
+        elif is_quarterly and rating == "A":
             rating = "B"
             score = min(score, 0.79)
 
         # Null detection
         is_null = False
         null_bound = None
-        if pval is not None and pval > 0.10 and abs(point) < 2 * se:
-            is_null = True
-            null_bound = float(2 * se)
+        if not data_insufficient and estimates is not None:
+            pval = estimates.pvalue
+            if pval is not None and pval > 0.10 and abs(estimates.point) < 2 * estimates.se:
+                is_null = True
+                null_bound = float(2 * estimates.se)
 
         date_range = (str(data.index.min().date()), str(data.index.max().date())) if len(data) > 0 else None
         provenance = DataProvenance(
@@ -1380,6 +1534,14 @@ class AgentLoop:
         for edge_id, reason in self.queue.get_blocking_issues().items():
             report.add_blocked_edge(edge_id, reason)
 
+        # Add failed edges (data gaps, adapter errors, etc.)
+        for task in self.queue.get_by_status(TaskStatus.FAILED):
+            if task.edge_id not in report.blocked_edges:
+                report.add_blocked_edge(
+                    task.edge_id,
+                    task.blocked_reason or "Failed (unknown reason)",
+                )
+
         # Compute critical path
         critical_tasks = self.queue.get_critical_tasks()
         critical_ids = [t.edge_id for t in critical_tasks]
@@ -1407,7 +1569,19 @@ class AgentLoop:
                 report.metadata = {}
             report.metadata["data_guidance"] = self._data_guidance
 
+        # Persist report JSON so the viz builder can show blocked-edge guidance
+        self._save_run_report(report)
+
         return report
+
+    def _save_run_report(self, report: SystemReport) -> None:
+        """Save run report JSON to the output directory for viz consumption."""
+        import json
+        report_path = self.config.output_dir / "run_report.json"
+        report_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(report_path, "w") as f:
+            json.dump(report.to_dict(), f, indent=2, default=str)
+        logger.info(f"Run report saved to {report_path}")
 
     def _print_edge_risk_block(
         self,

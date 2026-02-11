@@ -1,0 +1,127 @@
+{
+  "last_updated": "2026-02-11T20:10:04.144755+00:00",
+  "baseline_run_id": "",
+  "baseline_mode": "",
+  "baseline_dag_hash": "",
+  "issues": {
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:rwa_kspi_to_k2_ratio_kspi": {
+      "status": "OPEN",
+      "opened_run": "eee75eeb",
+      "severity": "CRITICAL",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0031 but claim_level=BLOCKED_ID. Significance does not establish causation."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:cpi_nontradable_to_cpi_headline": {
+      "status": "OPEN",
+      "opened_run": "eee75eeb",
+      "severity": "CRITICAL",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0015 but claim_level=BLOCKED_ID. Significance does not establish causation."
+    },
+    "RATING_DIAGNOSTICS_CONFLICT:cpi_nontradable_to_cpi_headline": {
+      "status": "OPEN",
+      "opened_run": "eee75eeb",
+      "severity": "HIGH",
+      "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
+      "message": "A-rating despite failed diagnostics."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:kzt_usd_to_cpi_nontradable": {
+      "status": "OPEN",
+      "opened_run": "eee75eeb",
+      "severity": "CRITICAL",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0231 but claim_level=REDUCED_FORM. Significance does not establish causation."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:real_expenditure_to_ppop_kspi": {
+      "status": "OPEN",
+      "opened_run": "eee75eeb",
+      "severity": "CRITICAL",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0000 but claim_level=REDUCED_FORM. Significance does not establish causation."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:cor_kspi_to_total_capital_kspi": {
+      "status": "OPEN",
+      "opened_run": "eee75eeb",
+      "severity": "CRITICAL",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0000 but claim_level=BLOCKED_ID. Significance does not establish causation."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:ppop_kspi_to_total_capital_kspi": {
+      "status": "OPEN",
+      "opened_run": "eee75eeb",
+      "severity": "CRITICAL",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0000 but claim_level=BLOCKED_ID. Significance does not establish causation."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:cpi_tradable_to_cpi_headline": {
+      "status": "OPEN",
+      "opened_run": "eee75eeb",
+      "severity": "CRITICAL",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0000 but claim_level=BLOCKED_ID. Significance does not establish causation."
+    },
+    "RATING_DIAGNOSTICS_CONFLICT:cpi_tradable_to_cpi_headline": {
+      "status": "OPEN",
+      "opened_run": "eee75eeb",
+      "severity": "HIGH",
+      "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
+      "message": "A-rating despite failed diagnostics."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:nominal_income_to_real_income": {
+      "status": "OPEN",
+      "opened_run": "eee75eeb",
+      "severity": "CRITICAL",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0000 but claim_level=BLOCKED_ID. Significance does not establish causation."
+    },
+    "RATING_DIAGNOSTICS_CONFLICT:nominal_income_to_real_income": {
+      "status": "OPEN",
+      "opened_run": "eee75eeb",
+      "severity": "HIGH",
+      "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
+      "message": "A-rating despite failed diagnostics."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:imported_inflation_instrument_to_real_expenditure_negative": {
+      "status": "OPEN",
+      "opened_run": "1fc33ff0",
+      "severity": "CRITICAL",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0003 but claim_level=REDUCED_FORM. Significance does not establish causation."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:kzt_usd_to_imported_inflation_instrument": {
+      "status": "OPEN",
+      "opened_run": "1fc33ff0",
+      "severity": "CRITICAL",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0000 but claim_level=REDUCED_FORM. Significance does not establish causation."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:e_import_share_to_imported_inflation_instrument": {
+      "status": "OPEN",
+      "opened_run": "1fc33ff0",
+      "severity": "CRITICAL",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0492 but claim_level=REDUCED_FORM. Significance does not establish causation."
+    },
+    "RATING_DIAGNOSTICS_CONFLICT:e_import_share_to_imported_inflation_instrument": {
+      "status": "OPEN",
+      "opened_run": "1fc33ff0",
+      "severity": "HIGH",
+      "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
+      "message": "A-rating despite failed diagnostics."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:real_income_to_real_expenditure": {
+      "status": "OPEN",
+      "opened_run": "f656908a",
+      "severity": "CRITICAL",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0293 but claim_level=BLOCKED_ID. Significance does not establish causation."
+    },
+    "RATING_DIAGNOSTICS_CONFLICT:real_income_to_real_expenditure": {
+      "status": "OPEN",
+      "opened_run": "f656908a",
+      "severity": "HIGH",
+      "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
+      "message": "A-rating despite failed diagnostics."
+    }
+  }
+}

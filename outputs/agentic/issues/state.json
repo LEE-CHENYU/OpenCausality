@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-02-08T03:53:30.713158+00:00",
+  "last_updated": "2026-02-11T18:31:03.280962+00:00",
   "baseline_run_id": "",
   "baseline_mode": "",
   "baseline_dag_hash": "",
@@ -164,7 +164,7 @@
       "severity": "CRITICAL",
       "rule_id": "UNIT_MISSING_IN_EDGECARD",
       "message": "EdgeCard missing treatment_unit/outcome_unit.",
-      "closed_run": "7679191c",
+      "closed_run": "f92ae9db",
       "resolution": "auto_fix:add_edge_units"
     },
     "UNIT_MISSING_IN_EDGECARD:fx_to_cpi_tradable": {
@@ -173,7 +173,7 @@
       "severity": "CRITICAL",
       "rule_id": "UNIT_MISSING_IN_EDGECARD",
       "message": "EdgeCard missing treatment_unit/outcome_unit.",
-      "closed_run": "7679191c",
+      "closed_run": "f92ae9db",
       "resolution": "auto_fix:add_edge_units"
     },
     "UNIT_MISSING_IN_EDGECARD:cpi_to_nbk_rate": {
@@ -182,7 +182,7 @@
       "severity": "CRITICAL",
       "rule_id": "UNIT_MISSING_IN_EDGECARD",
       "message": "EdgeCard missing treatment_unit/outcome_unit.",
-      "closed_run": "7679191c",
+      "closed_run": "f92ae9db",
       "resolution": "auto_fix:add_edge_units"
     },
     "UNIT_MISSING_IN_EDGECARD:loan_portfolio_to_rwa": {
@@ -191,7 +191,7 @@
       "severity": "CRITICAL",
       "rule_id": "UNIT_MISSING_IN_EDGECARD",
       "message": "EdgeCard missing treatment_unit/outcome_unit.",
-      "closed_run": "7679191c",
+      "closed_run": "f92ae9db",
       "resolution": "auto_fix:add_edge_units"
     },
     "UNIT_MISSING_IN_EDGECARD:fx_to_nbk_rate": {
@@ -200,7 +200,7 @@
       "severity": "CRITICAL",
       "rule_id": "UNIT_MISSING_IN_EDGECARD",
       "message": "EdgeCard missing treatment_unit/outcome_unit.",
-      "closed_run": "7679191c",
+      "closed_run": "f92ae9db",
       "resolution": "auto_fix:add_edge_units"
     },
     "UNIT_MISSING_IN_EDGECARD:shock_to_npl_kspi_annual": {
@@ -209,7 +209,7 @@
       "severity": "CRITICAL",
       "rule_id": "UNIT_MISSING_IN_EDGECARD",
       "message": "EdgeCard missing treatment_unit/outcome_unit.",
-      "closed_run": "7679191c",
+      "closed_run": "f92ae9db",
       "resolution": "auto_fix:add_edge_units"
     },
     "UNIT_MISSING_IN_EDGECARD:shock_to_npl_sector": {
@@ -218,7 +218,7 @@
       "severity": "CRITICAL",
       "rule_id": "UNIT_MISSING_IN_EDGECARD",
       "message": "EdgeCard missing treatment_unit/outcome_unit.",
-      "closed_run": "7679191c",
+      "closed_run": "f92ae9db",
       "resolution": "auto_fix:add_edge_units"
     },
     "UNIT_MISSING_IN_EDGECARD:shock_to_cor_kspi_annual": {
@@ -227,7 +227,7 @@
       "severity": "CRITICAL",
       "rule_id": "UNIT_MISSING_IN_EDGECARD",
       "message": "EdgeCard missing treatment_unit/outcome_unit.",
-      "closed_run": "7679191c",
+      "closed_run": "f92ae9db",
       "resolution": "auto_fix:add_edge_units"
     },
     "UNIT_MISSING_IN_EDGECARD:vix_to_fx": {
@@ -236,7 +236,7 @@
       "severity": "CRITICAL",
       "rule_id": "UNIT_MISSING_IN_EDGECARD",
       "message": "EdgeCard missing treatment_unit/outcome_unit.",
-      "closed_run": "7679191c",
+      "closed_run": "f92ae9db",
       "resolution": "auto_fix:add_edge_units"
     },
     "UNIT_MISSING_IN_EDGECARD:oil_supply_to_income": {
@@ -254,7 +254,7 @@
       "severity": "CRITICAL",
       "rule_id": "UNIT_MISSING_IN_EDGECARD",
       "message": "EdgeCard missing treatment_unit/outcome_unit.",
-      "closed_run": "7679191c",
+      "closed_run": "f92ae9db",
       "resolution": "auto_fix:add_edge_units"
     },
     "UNIT_MISSING_IN_EDGECARD:cpi_to_nominal_income": {
@@ -263,7 +263,7 @@
       "severity": "CRITICAL",
       "rule_id": "UNIT_MISSING_IN_EDGECARD",
       "message": "EdgeCard missing treatment_unit/outcome_unit.",
-      "closed_run": "7679191c",
+      "closed_run": "f92ae9db",
       "resolution": "auto_fix:add_edge_units"
     },
     "UNIT_MISSING_IN_EDGECARD:cor_to_capital": {
@@ -272,7 +272,7 @@
       "severity": "CRITICAL",
       "rule_id": "UNIT_MISSING_IN_EDGECARD",
       "message": "EdgeCard missing treatment_unit/outcome_unit.",
-      "closed_run": "7679191c",
+      "closed_run": "f92ae9db",
       "resolution": "auto_fix:add_edge_units"
     },
     "UNIT_MISSING_IN_EDGECARD:global_activity_to_income": {
@@ -290,7 +290,7 @@
       "severity": "CRITICAL",
       "rule_id": "UNIT_MISSING_IN_EDGECARD",
       "message": "EdgeCard missing treatment_unit/outcome_unit.",
-      "closed_run": "7679191c",
+      "closed_run": "f92ae9db",
       "resolution": "auto_fix:add_edge_units"
     },
     "UNIT_MISSING_IN_EDGECARD:portfolio_mix_to_rwa": {
@@ -299,7 +299,7 @@
       "severity": "CRITICAL",
       "rule_id": "UNIT_MISSING_IN_EDGECARD",
       "message": "EdgeCard missing treatment_unit/outcome_unit.",
-      "closed_run": "7679191c",
+      "closed_run": "f92ae9db",
       "resolution": "auto_fix:add_edge_units"
     },
     "UNIT_MISSING_IN_EDGECARD:expenditure_to_payments_revenue": {
@@ -308,7 +308,7 @@
       "severity": "CRITICAL",
       "rule_id": "UNIT_MISSING_IN_EDGECARD",
       "message": "EdgeCard missing treatment_unit/outcome_unit.",
-      "closed_run": "7679191c",
+      "closed_run": "f92ae9db",
       "resolution": "auto_fix:add_edge_units"
     },
     "UNIT_MISSING_IN_EDGECARD:nbk_rate_to_cor": {
@@ -317,7 +317,7 @@
       "severity": "CRITICAL",
       "rule_id": "UNIT_MISSING_IN_EDGECARD",
       "message": "EdgeCard missing treatment_unit/outcome_unit.",
-      "closed_run": "7679191c",
+      "closed_run": "f92ae9db",
       "resolution": "auto_fix:add_edge_units"
     },
     "UNIT_MISSING_IN_EDGECARD:oil_supply_to_fx": {
@@ -326,7 +326,7 @@
       "severity": "CRITICAL",
       "rule_id": "UNIT_MISSING_IN_EDGECARD",
       "message": "EdgeCard missing treatment_unit/outcome_unit.",
-      "closed_run": "7679191c",
+      "closed_run": "f92ae9db",
       "resolution": "auto_fix:add_edge_units"
     },
     "UNIT_MISSING_IN_EDGECARD:shock_to_cor_kspi": {
@@ -335,7 +335,7 @@
       "severity": "CRITICAL",
       "rule_id": "UNIT_MISSING_IN_EDGECARD",
       "message": "EdgeCard missing treatment_unit/outcome_unit.",
-      "closed_run": "7679191c",
+      "closed_run": "f92ae9db",
       "resolution": "auto_fix:add_edge_units"
     },
     "UNIT_MISSING_IN_EDGECARD:shock_to_npl_kspi": {
@@ -344,7 +344,7 @@
       "severity": "CRITICAL",
       "rule_id": "UNIT_MISSING_IN_EDGECARD",
       "message": "EdgeCard missing treatment_unit/outcome_unit.",
-      "closed_run": "7679191c",
+      "closed_run": "f92ae9db",
       "resolution": "auto_fix:add_edge_units"
     },
     "UNIT_MISSING_IN_EDGECARD:oil_supply_to_brent": {
@@ -353,7 +353,7 @@
       "severity": "CRITICAL",
       "rule_id": "UNIT_MISSING_IN_EDGECARD",
       "message": "EdgeCard missing treatment_unit/outcome_unit.",
-      "closed_run": "7679191c",
+      "closed_run": "f92ae9db",
       "resolution": "auto_fix:add_edge_units"
     },
     "UNIT_MISSING_IN_EDGECARD:shock_to_cor_sector": {
@@ -362,7 +362,7 @@
       "severity": "CRITICAL",
       "rule_id": "UNIT_MISSING_IN_EDGECARD",
       "message": "EdgeCard missing treatment_unit/outcome_unit.",
-      "closed_run": "7679191c",
+      "closed_run": "f92ae9db",
       "resolution": "auto_fix:add_edge_units"
     },
     "UNIT_MISSING_IN_EDGECARD:fx_to_real_expenditure": {
@@ -371,7 +371,7 @@
       "severity": "CRITICAL",
       "rule_id": "UNIT_MISSING_IN_EDGECARD",
       "message": "EdgeCard missing treatment_unit/outcome_unit.",
-      "closed_run": "7679191c",
+      "closed_run": "f92ae9db",
       "resolution": "auto_fix:add_edge_units"
     },
     "UNIT_MISSING_IN_EDGECARD:nbk_rate_to_cor_sector": {
@@ -380,7 +380,7 @@
       "severity": "CRITICAL",
       "rule_id": "UNIT_MISSING_IN_EDGECARD",
       "message": "EdgeCard missing treatment_unit/outcome_unit.",
-      "closed_run": "7679191c",
+      "closed_run": "f92ae9db",
       "resolution": "auto_fix:add_edge_units"
     },
     "UNIT_MISSING_IN_EDGECARD:nbk_rate_to_deposit_cost_sector": {
@@ -389,7 +389,7 @@
       "severity": "CRITICAL",
       "rule_id": "UNIT_MISSING_IN_EDGECARD",
       "message": "EdgeCard missing treatment_unit/outcome_unit.",
-      "closed_run": "7679191c",
+      "closed_run": "f92ae9db",
       "resolution": "auto_fix:add_edge_units"
     },
     "UNIT_MISSING_IN_EDGECARD:oil_demand_to_fx": {
@@ -398,7 +398,7 @@
       "severity": "CRITICAL",
       "rule_id": "UNIT_MISSING_IN_EDGECARD",
       "message": "EdgeCard missing treatment_unit/outcome_unit.",
-      "closed_run": "7679191c",
+      "closed_run": "f92ae9db",
       "resolution": "auto_fix:add_edge_units"
     },
     "UNIT_MISSING_IN_EDGECARD:nbk_rate_to_deposit_cost": {
@@ -407,7 +407,7 @@
       "severity": "CRITICAL",
       "rule_id": "UNIT_MISSING_IN_EDGECARD",
       "message": "EdgeCard missing treatment_unit/outcome_unit.",
-      "closed_run": "7679191c",
+      "closed_run": "f92ae9db",
       "resolution": "auto_fix:add_edge_units"
     },
     "UNIT_MISSING_IN_EDGECARD:oil_demand_to_income": {
@@ -443,6 +443,62 @@
     "RATING_DIAGNOSTICS_CONFLICT:oil_demand_to_fx": {
       "status": "OPEN",
       "opened_run": "7679191c",
+      "severity": "HIGH",
+      "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
+      "message": "A-rating despite failed diagnostics."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:rwa_kspi_to_k2_ratio_kspi": {
+      "status": "OPEN",
+      "opened_run": "c7cccb21",
+      "severity": "CRITICAL",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0031 but claim_level=BLOCKED_ID. Significance does not establish causation."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:cpi_nontradable_to_cpi_headline": {
+      "status": "OPEN",
+      "opened_run": "c7cccb21",
+      "severity": "CRITICAL",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0015 but claim_level=BLOCKED_ID. Significance does not establish causation."
+    },
+    "RATING_DIAGNOSTICS_CONFLICT:cpi_nontradable_to_cpi_headline": {
+      "status": "OPEN",
+      "opened_run": "c7cccb21",
+      "severity": "HIGH",
+      "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
+      "message": "A-rating despite failed diagnostics."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:kzt_usd_to_cpi_nontradable": {
+      "status": "OPEN",
+      "opened_run": "c7cccb21",
+      "severity": "CRITICAL",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0231 but claim_level=REDUCED_FORM. Significance does not establish causation."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:cpi_tradable_to_cpi_headline": {
+      "status": "OPEN",
+      "opened_run": "c7cccb21",
+      "severity": "CRITICAL",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0000 but claim_level=BLOCKED_ID. Significance does not establish causation."
+    },
+    "RATING_DIAGNOSTICS_CONFLICT:cpi_tradable_to_cpi_headline": {
+      "status": "OPEN",
+      "opened_run": "c7cccb21",
+      "severity": "HIGH",
+      "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
+      "message": "A-rating despite failed diagnostics."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:nominal_income_to_real_income": {
+      "status": "OPEN",
+      "opened_run": "f92ae9db",
+      "severity": "CRITICAL",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0000 but claim_level=BLOCKED_ID. Significance does not establish causation."
+    },
+    "RATING_DIAGNOSTICS_CONFLICT:nominal_income_to_real_income": {
+      "status": "OPEN",
+      "opened_run": "f92ae9db",
       "severity": "HIGH",
       "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
       "message": "A-rating despite failed diagnostics."

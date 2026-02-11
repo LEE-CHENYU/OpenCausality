@@ -476,15 +476,25 @@ def repair_narrative_dag(
             continue
         formula = identity.get("formula", "")
         deps = identity.get("depends_on") or node.get("depends_on", [])
+        logged_deps: set[str] = set()
         for dep in deps:
             dep_node = nodes.get(dep)
             if not dep_node:
                 continue
             if "log" in dep_node.get("transforms", []):
+                logged_deps.add(dep)
                 # diff(log(X)) → diff(X)
                 formula = formula.replace(f"diff(log({dep}))", f"diff({dep})")
                 # log(X) → X  (standalone)
                 formula = formula.replace(f"log({dep})", dep)
+        # X / Y → exp(X - Y) when both operands are log-transformed
+        # (dividing logs is meaningless; the level ratio is exp(log_X - log_Y))
+        if len(deps) == 2 and logged_deps == set(deps):
+            a, b = deps[0], deps[1]
+            if formula.strip() == f"{a} / {b}":
+                formula = f"exp({a} - {b})"
+            elif formula.strip() == f"{b} / {a}":
+                formula = f"exp({b} - {a})"
         identity["formula"] = formula
 
     # ── 2. Missing identity edges ─────────────────────────────────────
@@ -565,8 +575,107 @@ def repair_narrative_dag(
                         edge_pairs_current.add((bf, bt))
                         outgoing[node_id] += 1
 
+    # ── 3b. Target-reachability repair ──────────────────────────────
+    # After sink-node repair, check which nodes can still not reach the
+    # target.  For unreachable sinks, find the nearest reachable node by
+    # tag overlap and create a measurement/bridge edge.
+    #
+    # IMPORTANT: only consider nodes from the *original* reachable set as
+    # bridge targets (not other sinks that were just bridged), to avoid
+    # chaining sinks to each other (e.g., cpi_tradable → cpi_nontradable
+    # instead of both → cpi_headline).
+    target = dag.get("metadata", {}).get("target_node", "")
+    edge_pairs_after = {(e["from"], e["to"]) for e in edges}
+    rev_adj: dict[str, set[str]] = {n: set() for n in nodes}
+    for e in edges:
+        fn, tn = e.get("from", ""), e.get("to", "")
+        if tn in rev_adj:
+            rev_adj[tn].add(fn)
+
+    def _reachable_from_target() -> set[str]:
+        visited: set[str] = set()
+        queue = [target]
+        while queue:
+            n = queue.pop(0)
+            if n in visited:
+                continue
+            visited.add(n)
+            for p in rev_adj.get(n, set()):
+                queue.append(p)
+        return visited
+
+    original_reachable = _reachable_from_target()
+    unreachable_sinks = [
+        nid for nid in nodes
+        if nid not in original_reachable
+        and any(e["to"] == nid for e in edges)  # has incoming (not a pure source)
+        and not any(e["from"] == nid for e in edges)  # no outgoing (sink)
+    ]
+
+    if unreachable_sinks:
+        for sink_id in unreachable_sinks:
+            sink_tags = set(nodes[sink_id].get("tags", []))
+            sink_name = nodes[sink_id].get("name", "").lower()
+            # Score each ORIGINALLY reachable node by tag overlap
+            candidates: list[tuple[int, int, str]] = []
+            for candidate_id in original_reachable:
+                if candidate_id == sink_id:
+                    continue
+                cand_tags = set(nodes.get(candidate_id, {}).get("tags", []))
+                tag_score = len(sink_tags & cand_tags)
+                # Tiebreaker: prefer nodes with more incoming edges (aggregation hubs)
+                incoming_count = sum(1 for e in edges if e["to"] == candidate_id)
+                candidates.append((tag_score, incoming_count, candidate_id))
+            candidates.sort(reverse=True)
+
+            bridged = False
+            if candidates and candidates[0][0] >= 2:
+                best_target_id = candidates[0][2]
+                pair = (sink_id, best_target_id)
+                if pair not in edge_pairs_after:
+                    shared = sorted(sink_tags & set(nodes.get(best_target_id, {}).get("tags", [])))
+                    edge_id = f"{sink_id}_to_{best_target_id}"
+                    edges.append({
+                        "id": edge_id,
+                        "from": sink_id,
+                        "to": best_target_id,
+                        "edge_type": "identity",
+                        "edge_status": "IDENTITY",
+                        "timing": {
+                            "lag": 0,
+                            "lag_unit": nodes[sink_id].get("frequency", "quarter"),
+                            "contemporaneous": True, "max_anticipation": 0,
+                        },
+                        "allowed_designs": [],
+                        "interpretation": {
+                            "is": f"Aggregation/measurement bridge: {sink_id} feeds {best_target_id}",
+                            "is_not": ["Causal relationship"],
+                            "allowed_uses": ["scenario_only"],
+                        },
+                        "unit_specification": {
+                            "treatment_unit": nodes[sink_id].get("unit", ""),
+                            "outcome_unit": nodes.get(best_target_id, {}).get("unit", ""),
+                        },
+                        "notes": f"Auto-bridged: {sink_id} was unreachable from target. "
+                                 f"Connected to {best_target_id} by tag similarity "
+                                 f"(shared: {shared}).",
+                    })
+                    edge_pairs_after.add(pair)
+                    rev_adj.setdefault(best_target_id, set()).add(sink_id)
+                    logger.info(f"Bridged unreachable sink {sink_id} -> {best_target_id} "
+                                f"(tag score={candidates[0][0]})")
+                    bridged = True
+
+            if not bridged:
+                logger.warning(
+                    f"Unreachable sink {sink_id}: no reachable node with ≥2 shared tags "
+                    f"(best score={candidates[0][0] if candidates else 0}). "
+                    f"Improve the narrative to include downstream connections for this variable."
+                )
+
     # ── 4. Edge ID sanitization + misleading ID regeneration ──────────
     # Runs AFTER edge additions so borrowed edges also get normalized.
+    _MAX_EDGE_ID_LEN = 60
     seen_ids: set[str] = set()
     for edge in edges:
         new_id = _sanitize_edge_id(edge["id"])
@@ -578,6 +687,9 @@ def repair_narrative_dag(
         if from_lower and to_lower:
             if from_lower not in new_id or to_lower not in new_id:
                 new_id = _sanitize_edge_id(f"{from_node}_to_{to_node}")
+        # Truncate overly long IDs to {from}_to_{to}
+        if len(new_id) > _MAX_EDGE_ID_LEN and from_node and to_node:
+            new_id = _sanitize_edge_id(f"{from_node}_to_{to_node}")
         # Collision guard
         if new_id in seen_ids:
             new_id = f"{new_id}_nl"

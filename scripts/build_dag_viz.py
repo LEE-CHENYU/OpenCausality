@@ -73,7 +73,7 @@ def load_edge_card(card_path: Path) -> dict | None:
     if not card:
         return None
 
-    estimates = card.get("estimates", {})
+    estimates = card.get("estimates") or {}
     diagnostics_raw = card.get("diagnostics", {})
     identification = card.get("identification", {})
     spec = card.get("spec_details", {})
@@ -815,6 +815,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
         <span>C: <strong id="statC">0</strong></span>
         <span>Issues: <strong id="statIssues">0</strong></span>
         <span>Identified: <strong id="statIdentified">0</strong></span>
+        <span style="color:#c00">Blocked: <strong id="statBlocked">0</strong></span>
     </div>
     <div class="pitfall-sidebar" id="pitfallSidebar">
         <div class="pitfall-header">
@@ -1481,6 +1482,7 @@ function showEdgeTooltip(e, d) {
     var html = '<h3>' + d.source.id.replace(/_/g, ' ') + ' &rarr; ' + d.target.id.replace(/_/g, ' ') + '</h3>';
     html += '<div class="tooltip-row"><span class="tooltip-label">Edge ID</span><span class="tooltip-value">' + d.id + '</span></div>';
     html += '<div class="tooltip-row"><span class="tooltip-label">Type</span><span class="tooltip-value">' + (EDGE_TYPE_LABELS[d.edge_type] || d.edge_type) + '</span></div>';
+    var hasEstimate = (d.point !== null && d.point !== undefined) || d.design;
     if (d.point !== null && d.point !== undefined) {
         html += '<div class="tooltip-row"><span class="tooltip-label">&beta;</span><span class="tooltip-value">' + d.point.toFixed(4) + '</span></div>';
     }
@@ -1493,6 +1495,30 @@ function showEdgeTooltip(e, d) {
     if (d.claim_level) html += '<div class="tooltip-row"><span class="tooltip-label">Claim</span><span class="tooltip-value">' + d.claim_level + '</span></div>';
     if (d.rating) html += '<div class="tooltip-row"><span class="tooltip-label">Rating</span><span class="tooltip-value">' + d.rating + '</span></div>';
     if (d.design) html += '<div class="tooltip-row"><span class="tooltip-label">Design</span><span class="tooltip-value">' + d.design + '</span></div>';
+    if (d.design === 'DATA_INSUFFICIENT') {
+        html += '<div style="margin-top:8px;padding:6px 8px;background:#f8d7da;border:1px solid #f5c2c7;border-radius:4px;font-size:10px">';
+        html += '<div style="font-weight:600;color:#842029;margin-bottom:4px">Insufficient Data</div>';
+        html += '<div style="color:#842029;margin-bottom:4px">This edge has fewer than 5 overlapping observations after data alignment. No reliable estimate can be produced.</div>';
+        var ffList = d.failure_flags || [];
+        if (ffList.indexOf('data_insufficient') >= 0) {
+            html += '<div style="color:#555;margin-top:4px"><strong>Common causes:</strong> Date format mismatch between series, missing time periods in downloaded data, or derived node dependencies that fail to compute.</div>';
+        }
+        if (d.blocked_reason) html += '<div style="color:#555;margin-top:4px">' + escHtml(d.blocked_reason) + '</div>';
+        if (d.remediation) html += '<div style="color:#555;margin-top:4px">' + escHtml(d.remediation) + '</div>';
+        html += '</div>';
+    } else if (!hasEstimate) {
+        html += '<div style="margin-top:8px;padding:6px 8px;background:#fff3cd;border:1px solid #ffc107;border-radius:4px;font-size:10px">';
+        html += '<div style="font-weight:600;color:#856404;margin-bottom:4px">Not Estimated</div>';
+        if (d.blocked_reason) {
+            html += '<div style="color:#856404;margin-bottom:4px">' + escHtml(d.blocked_reason) + '</div>';
+        }
+        if (d.remediation) {
+            html += '<div style="color:#555">' + escHtml(d.remediation) + '</div>';
+        } else {
+            html += '<div style="color:#555">Run the pipeline to estimate this edge, or check that required data is available for both endpoints.</div>';
+        }
+        html += '</div>';
+    }
     if (d.strategy_type) html += '<div class="tooltip-row"><span class="tooltip-label">ID Strategy</span><span class="tooltip-value">' + d.strategy_type.replace(/_/g, ' ') + '</span></div>';
     if (d.strategy_argument) html += '<div class="tooltip-row"><span class="tooltip-label">Argument</span><span class="tooltip-value" style="text-align:left;font-weight:400;font-size:10px">' + d.strategy_argument + '</span></div>';
     if (d.provenance_source) {
@@ -1676,6 +1702,9 @@ function applyFilters() {
     document.getElementById('statIssues').textContent = visibleIssues;
     var identified = visible.filter(function(e) { return e.claim_level === 'IDENTIFIED_CAUSAL'; }).length;
     document.getElementById('statIdentified').textContent = identified;
+    var blocked = visible.filter(function(e) { return e.blocked_reason; }).length;
+    var nodata = visible.filter(function(e) { return e.design === 'DATA_INSUFFICIENT'; }).length;
+    document.getElementById('statBlocked').textContent = blocked + (nodata ? ' + ' + nodata + ' no data' : '');
 }
 
 document.getElementById('typeFilter').addEventListener('change', applyFilters);
@@ -1697,11 +1726,17 @@ def build(
     cards_dir: Path | None = None,
     state_path: Path | None = None,
     output_path: Path | None = None,
-    llm_annotate: bool = False,
+    llm_annotate: bool = True,
     actions_path: Path | None = None,
     registry_path: Path | None = None,
+    cache_dir: Path | None = None,
 ) -> Path:
-    """Build the DAG visualization HTML."""
+    """Build the DAG visualization HTML.
+
+    Args:
+        cache_dir: Per-DAG LLM cache directory. If None, falls back to
+            the global outputs/agentic/llm_cache for backward compat.
+    """
     dag = load_dag(dag_path)
     metadata = dag.get("metadata", {})
     title = _html.escape(metadata.get("name", dag_path.stem))
@@ -1716,29 +1751,69 @@ def build(
     rules = load_rule_info(reg_path)
     print(f"  {len(actions)} action rules, {len(rules)} rule descriptions loaded")
 
-    # LLM annotations via shared cache
+    # LLM annotations via per-DAG cache
     from shared.llm.guidance_cache import load_cache, generate_and_cache
 
-    cache_dir = PROJECT_ROOT / "outputs" / "agentic" / "llm_cache"
-    cache = load_cache(cache_dir)
+    effective_cache_dir = cache_dir or (PROJECT_ROOT / "outputs" / "agentic" / "llm_cache")
+    cache = load_cache(effective_cache_dir)
     if cache is None and llm_annotate:
-        print("Generating LLM annotations (shared cache)...")
+        print("Generating LLM annotations (per-DAG cache)...")
         cache = generate_and_cache(
             state_path or DEFAULT_STATE, cards_dir or DEFAULT_CARDS_DIR,
-            dag_path, cache_dir,
+            dag_path, effective_cache_dir,
         )
     elif cache is not None:
-        print("  Loaded LLM annotations from cache")
+        print(f"  Loaded LLM annotations from cache ({effective_cache_dir})")
 
     annotations = cache["edge_annotations"] if cache else None
     issue_guidance: dict[str, str] = cache["issue_guidance"] if cache else {}
     orphan_explanations: dict[str, str] = cache.get("orphan_explanations", {}) if cache else {}
     causal_assessments: dict[str, str] = cache.get("causal_assessments", {}) if cache else {}
 
+    # Load blocked-edge reasons from run report (if available)
+    blocked_edges: dict[str, str] = {}
+    data_guidance: list[str] = []
+    report_path = (cache_dir.parent / "run_report.json") if cache_dir else None
+    if report_path is None and cards_dir:
+        report_path = cards_dir.parent.parent / "run_report.json"
+    if report_path and report_path.exists():
+        with open(report_path) as f:
+            run_report = json.load(f)
+        blocked_edges = run_report.get("blocked_edges", {})
+        data_guidance = run_report.get("metadata", {}).get("data_guidance", []) if run_report.get("metadata") else []
+        print(f"  {len(blocked_edges)} blocked edges from run report")
+
     # Build data arrays
     nodes = build_nodes_data(dag)
     edges = build_edges_data(dag, cards_dir, issues, annotations, causal_assessments)
     latents = build_latents_data(dag)
+
+    # Inject blocked-edge guidance into edge data
+    for edge_data in edges:
+        eid = edge_data.get("id", "")
+        if eid in blocked_edges:
+            reason = blocked_edges[eid]
+            edge_data["blocked_reason"] = _html.escape(reason)
+            # Generate remediation text based on reason
+            if "no data found for node" in reason.lower():
+                import re as _re_mod
+                node_match = _re_mod.search(r"node '([^']+)'", reason)
+                missing_node = node_match.group(1) if node_match else "unknown"
+                edge_data["remediation"] = _html.escape(
+                    f"Place a CSV with columns [date, {missing_node}] in "
+                    f"data/downloaded/{missing_node}.csv, or add a source "
+                    f"entry in the DAG YAML under nodes.{missing_node}.source."
+                )
+            elif "no adapter" in reason.lower():
+                edge_data["remediation"] = _html.escape(
+                    "Set edge_type in the DAG YAML to one of: causal, identity, "
+                    "immutable, mechanical. Then re-run the pipeline."
+                )
+            else:
+                edge_data["remediation"] = _html.escape(
+                    "Check the run report for details. Common fixes: provide "
+                    "missing data, fix dtype issues, or resolve upstream blockers."
+                )
 
     print(f"  {len(nodes)} nodes, {len(edges)} edges, {len(latents)} latents")
     issue_count = sum(len(issues.get(e["id"], [])) for e in edges)
@@ -1805,8 +1880,9 @@ def main():
     )
     parser.add_argument(
         "--llm-annotate",
-        action="store_true",
-        help="Generate LLM annotations for edge tooltips",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Generate LLM annotations for edge tooltips (default: on)",
     )
     parser.add_argument(
         "--actions-file",

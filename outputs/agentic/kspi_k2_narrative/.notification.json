@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "timestamp": "2026-02-11T20:10:04.855029+00:00",
+  "run_id": "f656908a",
+  "event": "run_complete",
+  "edges_estimated": 22,
+  "edges_blocked": 0,
+  "mean_credibility": 0.716,
+  "message": "Run complete: 22 edges estimated, 0 blocked, mean credibility 0.72"
+}

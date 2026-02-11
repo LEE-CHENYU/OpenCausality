@@ -44,6 +44,20 @@ def resolve_path(p: str | Path) -> Path:
         return rooted
     return p  # fall back to original for error messages
 
+
+def get_dag_output_dir(dag_path: Path) -> Path:
+    """Derive per-DAG output directory from the DAG YAML.
+
+    Each DAG gets its own artifact directory under outputs/agentic/{dag_slug}/
+    so that multiple DAGs (e.g. narrative vs full) don't share or collide
+    on edge cards, issues, LLM caches, or HTML outputs.
+
+    The slug is the YAML stem (filename without extension), e.g.
+    ``kspi_k2_narrative.yaml`` → ``outputs/agentic/kspi_k2_narrative/``.
+    """
+    slug = dag_path.stem  # e.g. "kspi_k2_narrative"
+    return Path("outputs/agentic") / slug
+
 BANNER = r"""[dim]    ___                    ____                        _ _ _
    / _ \ _ __   ___ _ __  / ___|__ _ _   _ ___  __ _ | (_) |_ _   _
   | | | | '_ \ / _ \ '_ \| |   / _` | | | / __|/ _` || | | __| | | |
@@ -614,11 +628,12 @@ def dag_run(
 
         console.print("  [green]Validation passed[/green]")
 
-        # Configure loop
+        # Configure loop — per-DAG output directory
+        effective_output_dir = output_dir or get_dag_output_dir(dag_path)
         config = AgentLoopConfig(
             mode=mode,
             max_iterations=max_iterations,
-            output_dir=output_dir or Path("outputs/agentic"),
+            output_dir=effective_output_dir,
             force_run=force,
         )
 
@@ -641,25 +656,125 @@ def dag_run(
         table.add_column("Score", style="white")
 
         for summary in report.edge_summaries:
-            est = f"{summary.estimate:.4f}" if summary.estimate else "-"
+            if summary.design == "DATA_INSUFFICIENT":
+                est = "[red]NO DATA[/red]"
+                design_display = "[red]NO DATA[/red]"
+                rating_display = "[dim]-[/dim]"
+                score_display = "[dim]-[/dim]"
+            else:
+                est = f"{summary.estimate:.4f}" if summary.estimate else "-"
+                design_display = summary.design
+                rating_display = summary.credibility_rating
+                score_display = f"{summary.credibility_score:.2f}"
             table.add_row(
                 summary.edge_id,
-                summary.design,
+                design_display,
                 est,
-                summary.credibility_rating,
-                f"{summary.credibility_score:.2f}",
+                rating_display,
+                score_display,
             )
 
         console.print(table)
 
-        # Blocked edges
+        # Blocked / failed edges — actionable guidance
         if report.blocked_edges:
-            console.print("\n[bold red]Blocked Edges:[/bold red]")
+            console.print("\n[bold red]Blocked / Failed Edges[/bold red]")
+            console.print(
+                "[dim]The following edges could not be estimated.  "
+                "Guidance below explains what went wrong and how to fix it.[/dim]\n"
+            )
+
             for edge_id, reason in report.blocked_edges.items():
-                console.print(f"  {edge_id}: {reason}")
+                # Look up the edge spec for richer context
+                edge_spec = next((e for e in dag.edges if e.id == edge_id), None)
+                from_label = edge_spec.from_node if edge_spec else "?"
+                to_label = edge_spec.to_node if edge_spec else "?"
+
+                console.print(f"  [bold]{edge_id}[/bold]  ({from_label} -> {to_label})")
+                console.print(f"    [red]Reason:[/red] {reason}")
+
+                # ── Classify the failure and give specific remediation ──
+
+                if "no data found for node" in reason.lower():
+                    # Extract the node name from the reason string
+                    import re as _re
+                    node_match = _re.search(r"node '([^']+)'", reason)
+                    missing_node = node_match.group(1) if node_match else "unknown"
+                    node_spec = next((n for n in dag.nodes if n.id == missing_node), None)
+
+                    console.print(f"    [yellow]Fix:[/yellow]  Provide data for node [cyan]{missing_node}[/cyan].")
+                    if node_spec and node_spec.source:
+                        sources = node_spec.source.preferred + node_spec.source.fallback
+                        if sources:
+                            console.print(f"    [yellow]Expected sources:[/yellow]")
+                            for src in sources:
+                                console.print(f"      - {src.connector} / {src.dataset} / {src.series}")
+                                if src.notes:
+                                    console.print(f"        ({src.notes})")
+                    if node_spec and node_spec.unit:
+                        console.print(f"    [yellow]Unit:[/yellow]  {node_spec.unit}  |  Frequency: {node_spec.frequency}")
+
+                    console.print(
+                        f"    [yellow]How:[/yellow]   Place a CSV with columns [date, {missing_node}] "
+                        f"in data/downloaded/{missing_node}.csv,\n"
+                        f"           or add a source entry under 'nodes.{missing_node}.source' "
+                        f"in your DAG YAML."
+                    )
+
+                elif "no adapter for edge group" in reason.lower():
+                    console.print(
+                        f"    [yellow]Fix:[/yellow]  This edge's group is not registered. "
+                        f"Check that edge_type in the DAG YAML is one of: "
+                        f"causal, identity, immutable, mechanical."
+                    )
+                    console.print(
+                        f"    [yellow]How:[/yellow]  In the DAG YAML, set  edges.{edge_id}.edge_type  "
+                        f"to the correct type, then re-run."
+                    )
+
+                elif "waiting" in reason.lower() or "upstream" in reason.lower():
+                    console.print(
+                        f"    [yellow]Fix:[/yellow]  This edge is waiting on an upstream edge to complete. "
+                        f"Resolve the upstream blocker first."
+                    )
+
+                else:
+                    console.print(
+                        f"    [yellow]Fix:[/yellow]  Check the error above. Common causes: "
+                        f"dtype issues (non-numeric data), missing columns, "
+                        f"or insufficient time-series overlap."
+                    )
+
+                console.print()  # blank line between edges
+
+            # Overall remediation summary
+            data_gaps = [
+                eid for eid, r in report.blocked_edges.items()
+                if "no data found" in r.lower()
+            ]
+            if data_gaps:
+                console.print(Panel(
+                    "[bold]Quick-fix for data gaps:[/bold]\n"
+                    "  1. Download the required series as CSV (date + value columns)\n"
+                    "  2. Save to  data/downloaded/<node_name>.csv\n"
+                    "  3. Re-run:  [cyan]opencausality dag run " + str(dag_path) + "[/cyan]\n\n"
+                    "Or add 'source:' entries to the DAG YAML so DataScout can fetch them automatically.",
+                    title="Data Gap Remediation",
+                    border_style="yellow",
+                ))
+
+        # Data guidance from DataScout (if any)
+        if hasattr(report, "metadata") and report.metadata and report.metadata.get("data_guidance"):
+            console.print("\n[bold yellow]DataScout Guidance[/bold yellow]")
+            for msg in report.metadata["data_guidance"]:
+                for line in msg.strip().split("\n"):
+                    console.print(f"  {line}")
 
         # Output location
         console.print(f"\nResults saved to: [cyan]{config.output_dir}[/cyan]")
+        console.print(
+            f"Build visualization: [cyan]opencausality dag viz {dag_path}[/cyan]"
+        )
 
     except Exception as e:
         console.print(f"\n[bold red]Error: {e}[/bold red]")
@@ -783,6 +898,125 @@ def dag_list(
 
 
 # ============================================================================
+# DAG Edge Commands
+# ============================================================================
+
+@dag_app.command("add-edge")
+def dag_add_edge(
+    dag_path: Path = typer.Argument(
+        ...,
+        help="Path to DAG YAML to modify",
+    ),
+    from_node: str = typer.Option(
+        ..., "--from", "-f",
+        help="Source node ID (treatment variable)",
+    ),
+    to_node: str = typer.Option(
+        ..., "--to", "-t",
+        help="Target node ID (outcome variable)",
+    ),
+    edge_type: str = typer.Option(
+        "causal", "--type",
+        help="Edge type: causal, identity, immutable, mechanical",
+    ),
+    notes: str = typer.Option(
+        "", "--notes", "-n",
+        help="Human-readable notes about this edge",
+    ),
+    dry_run: bool = typer.Option(
+        False, "--dry-run",
+        help="Preview the edge without writing to file",
+    ),
+):
+    """
+    Add a causal edge to a DAG YAML interactively.
+
+    Example:
+        opencausality dag add-edge kspi_k2_narrative.yaml --from real_income --to real_expenditure
+        opencausality dag add-edge kspi_k2_narrative.yaml -f real_income -t real_expenditure --notes "Income squeeze reduces spending"
+    """
+    import yaml
+
+    dag_path = resolve_path(dag_path)
+    if not dag_path.exists():
+        console.print(f"[red]DAG file not found: {dag_path}[/red]")
+        raise typer.Exit(1)
+
+    # Parse to validate nodes exist
+    try:
+        from shared.agentic.dag.parser import parse_dag
+        dag = parse_dag(dag_path)
+    except Exception as e:
+        console.print(f"[red]Cannot parse DAG: {e}[/red]")
+        raise typer.Exit(1)
+
+    # Check nodes exist
+    node_ids = {n.id for n in dag.nodes}
+    missing = []
+    if from_node not in node_ids:
+        missing.append(f"from_node '{from_node}'")
+    if to_node not in node_ids:
+        missing.append(f"to_node '{to_node}'")
+    if missing:
+        console.print(f"[red]Node(s) not found in DAG: {', '.join(missing)}[/red]")
+        console.print(f"[dim]Available nodes: {', '.join(sorted(node_ids))}[/dim]")
+        raise typer.Exit(1)
+
+    # Check for duplicate edge
+    edge_id = f"{from_node}_to_{to_node}"
+    existing_ids = {e.id for e in dag.edges}
+    if edge_id in existing_ids:
+        console.print(f"[yellow]Edge '{edge_id}' already exists in DAG.[/yellow]")
+        raise typer.Exit(0)
+
+    # Build the new edge
+    from_spec = next(n for n in dag.nodes if n.id == from_node)
+    to_spec = next(n for n in dag.nodes if n.id == to_node)
+
+    new_edge = {
+        "id": edge_id,
+        "from": from_node,
+        "to": to_node,
+        "edge_type": edge_type,
+        "estimand": {"type": "elasticity"},
+        "timing": {"lag": 1, "contemporaneous": False, "unit": "quarter"},
+        "unit_spec": {
+            "treatment_unit": f"1 {from_spec.unit}",
+            "outcome_unit": f"1 {to_spec.unit}",
+        },
+    }
+    if notes:
+        new_edge["notes"] = notes
+
+    # Display preview
+    console.print(f"\n[bold cyan]New Edge Preview[/bold cyan]")
+    console.print(f"  ID:   [cyan]{edge_id}[/cyan]")
+    console.print(f"  From: {from_node} ({from_spec.name})")
+    console.print(f"  To:   {to_node} ({to_spec.name})")
+    console.print(f"  Type: {edge_type}")
+    if notes:
+        console.print(f"  Notes: {notes}")
+
+    if dry_run:
+        console.print("\n[yellow]Dry run — no changes written.[/yellow]")
+        console.print(f"\n[dim]YAML that would be appended:[/dim]")
+        console.print(yaml.dump([new_edge], sort_keys=False, allow_unicode=True))
+        return
+
+    # Append to YAML file
+    with open(dag_path) as f:
+        raw = yaml.safe_load(f)
+
+    raw.setdefault("edges", []).append(new_edge)
+
+    with open(dag_path, "w") as f:
+        yaml.dump(raw, f, sort_keys=False, allow_unicode=True, default_flow_style=False)
+
+    console.print(f"\n[green]Edge '{edge_id}' added to {dag_path.name}[/green]")
+    console.print(f"Re-run pipeline: [cyan]opencausality dag run {dag_path}[/cyan]")
+
+
+# ============================================================================
 # DAG Viz Command
 # ============================================================================
 
@@ -805,18 +1039,21 @@ def dag_viz(
         help="Output HTML file path",
     ),
     llm_annotate: bool = typer.Option(
-        False, "--llm-annotate",
-        help="Generate LLM annotations for edge tooltips",
+        True, "--llm-annotate/--no-llm-annotate",
+        help="Generate LLM annotations for edge tooltips (default: on)",
     ),
 ):
     """
     Generate an interactive DAG visualization HTML.
 
+    Uses per-DAG artifact directories: edge cards, issues, and LLM cache
+    are resolved from outputs/agentic/{dag_name}/ automatically.
+
     Example:
         opencausality dag viz config/agentic/dags/kspi_k2_full.yaml
-        opencausality dag viz --llm-annotate -o /tmp/viz.html
+        opencausality dag viz --no-llm-annotate -o /tmp/viz.html
     """
-    from scripts.build_dag_viz import build, DEFAULT_CARDS_DIR, DEFAULT_STATE
+    from scripts.build_dag_viz import build
 
     if dag_path is None:
         try:
@@ -831,13 +1068,21 @@ def dag_viz(
         console.print(f"[red]DAG file not found: {dag_path}[/red]")
         raise typer.Exit(1)
 
+    # Resolve per-DAG artifact directories
+    dag_out = get_dag_output_dir(dag_path)
+    effective_cards = cards_dir or (dag_out / "cards" / "edge_cards")
+    effective_state = state_file or (dag_out / "issues" / "state.json")
+    effective_output = output or (dag_out / "dag_viz.html")
+
     console.print(f"[bold cyan]Building DAG visualization: {dag_path}[/bold cyan]")
+    console.print(f"  Artifacts from: [dim]{dag_out}[/dim]")
     result = build(
         dag_path=dag_path,
-        cards_dir=cards_dir or DEFAULT_CARDS_DIR,
-        state_path=state_file or DEFAULT_STATE,
-        output_path=output,
+        cards_dir=effective_cards,
+        state_path=effective_state,
+        output_path=effective_output,
         llm_annotate=llm_annotate,
+        cache_dir=dag_out / "llm_cache",
     )
     console.print(f"[green]Written: {result}[/green]")
 
@@ -1493,38 +1738,61 @@ app.add_typer(hitl_app, name="hitl")
 
 @hitl_app.command("build")
 def hitl_build(
+    dag_file: Optional[Path] = typer.Argument(
+        None,
+        help="Path to DAG YAML (resolves per-DAG artifacts automatically)",
+    ),
     state_file: Optional[Path] = typer.Option(
         None, "--state-file",
-        help="Path to state.json",
-    ),
-    dag_file: Optional[Path] = typer.Option(
-        None, "--dag-file",
-        help="Path to DAG YAML for edge/node context",
+        help="Path to state.json (default: per-DAG issues/state.json)",
     ),
     llm_annotate: bool = typer.Option(
-        False, "--llm-annotate",
-        help="Generate LLM-powered contextual decision guidance",
+        True, "--llm-annotate/--no-llm-annotate",
+        help="Generate LLM-powered contextual decision guidance (default: on)",
     ),
     output_dir: Optional[Path] = typer.Option(
         None, "--output-dir", "-o",
         help="Output directory for hitl_panel.html",
     ),
 ):
-    """Build the HITL Resolution Panel HTML."""
+    """Build the HITL Resolution Panel HTML.
+
+    Uses per-DAG artifact directories when a DAG file is provided.
+    Cards, state, and output are resolved from outputs/agentic/{dag_name}/.
+
+    Example:
+        opencausality hitl build config/agentic/dags/kspi_k2_narrative.yaml
+    """
     from scripts.build_hitl_panel import (
-        build, DEFAULT_STATE, DEFAULT_CARDS_DIR,
-        DEFAULT_ACTIONS, DEFAULT_REGISTRY, DEFAULT_OUTPUT_DIR, DEFAULT_DAG,
+        build, DEFAULT_ACTIONS, DEFAULT_REGISTRY,
     )
 
-    console.print("[bold cyan]Building HITL panel...[/bold cyan]")
+    # Resolve DAG path
+    if dag_file is None:
+        try:
+            from config.settings import get_settings
+            dag_file = resolve_path(get_settings().default_dag_path)
+        except Exception:
+            dag_file = resolve_path("config/agentic/dags/kspi_k2_full.yaml")
+    else:
+        dag_file = resolve_path(dag_file)
+
+    # Per-DAG artifact resolution
+    dag_out = get_dag_output_dir(dag_file)
+    effective_state = state_file or (dag_out / "issues" / "state.json")
+    effective_cards = dag_out / "cards" / "edge_cards"
+    effective_output = output_dir or dag_out
+
+    console.print(f"[bold cyan]Building HITL panel for: {dag_file.name}[/bold cyan]")
+    console.print(f"  Artifacts from: [dim]{dag_out}[/dim]")
     try:
         result = build(
-            state_path=state_file or DEFAULT_STATE,
-            cards_dir=DEFAULT_CARDS_DIR,
+            state_path=effective_state,
+            cards_dir=effective_cards,
             actions_path=DEFAULT_ACTIONS,
             registry_path=DEFAULT_REGISTRY,
-            output_dir=output_dir or DEFAULT_OUTPUT_DIR,
-            dag_path=dag_file or DEFAULT_DAG,
+            output_dir=effective_output,
+            dag_path=dag_file,
             llm_annotate=llm_annotate,
         )
         console.print(f"[green]Written: {result}[/green]")
