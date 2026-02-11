@@ -267,6 +267,19 @@ class PaperDAGExtractor:
                 if not edge_id and from_node and to_node:
                     edge_id = f"{from_node}_to_{to_node}"
 
+                # Sanitize edge_id: no spaces, arrows, or parens
+                if edge_id:
+                    import re as _re2
+                    edge_id = _re2.sub(
+                        r"_+", "_",
+                        _re2.sub(r"[^a-z0-9_]", "_",
+                                 edge_id.replace("->", "_to_").lower()),
+                    ).strip("_")
+                    # Regenerate if ID doesn't reference actual from/to
+                    if from_node and to_node:
+                        if from_node not in edge_id or to_node not in edge_id:
+                            edge_id = f"{from_node}_to_{to_node}"
+
                 # Resolve edge using structural matching
                 existing_edge, canonical_id = self.dag.resolve_edge(
                     edge_id, from_node, to_node,

@@ -70,6 +70,18 @@ def _canonical_id(name: str) -> str:
     return re.sub(r"[^a-z0-9_]", "_", name.lower()).strip("_")
 
 
+def _sanitize_edge_id(raw_id: str) -> str:
+    """Sanitize edge ID to snake_case (no spaces, arrows, parentheses).
+
+    Converts ``->`` to ``_to_``, strips parens / special chars,
+    collapses consecutive underscores.
+    """
+    cleaned = raw_id.replace("->", "_to_").replace("→", "_to_")
+    cleaned = re.sub(r"[^a-z0-9_]", "_", cleaned.lower())
+    cleaned = re.sub(r"_+", "_", cleaned).strip("_")
+    return cleaned
+
+
 def _dedup_id(candidate: str, existing_ids: set[str]) -> str:
     """Return a unique ID, appending _2 suffix on collision."""
     if candidate not in existing_ids:
@@ -120,7 +132,9 @@ def _generate_new_nodes(
 
 def _build_dag(base_dag: Any, proposed_edges: list[Any], new_nodes: list[Any]) -> Any:
     """Build a new DAGSpec from proposed edges and new nodes."""
-    from shared.agentic.dag.parser import DAGMetadata, DAGSpec, EdgeSpec
+    from shared.agentic.dag.parser import (
+        DAGMetadata, DAGSpec, EdgeSpec, EdgeTiming, EdgeInterpretation,
+    )
 
     new_node_map = {n.id: n for n in new_nodes}
 
@@ -178,6 +192,7 @@ def _build_dag(base_dag: Any, proposed_edges: list[Any], new_nodes: list[Any]) -
     }
     edges: list[EdgeSpec] = []
     seen_ids: set[str] = set()
+    seen_pairs: set[tuple[str, str]] = set()
     for pe in proposed_edges:
         key = (pe.from_node, pe.to_node)
         if pe.is_existing and key in base_edge_map:
@@ -189,11 +204,19 @@ def _build_dag(base_dag: Any, proposed_edges: list[Any], new_nodes: list[Any]) -
                 )
             edges.append(existing_edge)
             seen_ids.add(existing_edge.id)
+            seen_pairs.add(key)
         else:
-            edge_id = pe.edge_id or f"{pe.from_node}_to_{pe.to_node}"
+            edge_id = _sanitize_edge_id(
+                pe.edge_id or f"{pe.from_node}_to_{pe.to_node}"
+            )
+            # Regenerate ID if it doesn't reflect actual from/to nodes
+            if pe.from_node and pe.to_node:
+                if pe.from_node not in edge_id or pe.to_node not in edge_id:
+                    edge_id = f"{pe.from_node}_to_{pe.to_node}"
             if edge_id in seen_ids:
                 edge_id = f"{edge_id}_nl"
             seen_ids.add(edge_id)
+            seen_pairs.add(key)
             evidence_notes = "; ".join(
                 f"{c.treatment}->{c.outcome} ({c.direction})" for c in pe.evidence
             )
@@ -202,6 +225,47 @@ def _build_dag(base_dag: Any, proposed_edges: list[Any], new_nodes: list[Any]) -
                 edge_type=pe.edge_type, notes=f"NL-extracted: {evidence_notes}",
                 unit_specification=_get_unit_spec(pe.from_node, pe.to_node),
             ))
+
+    # --- Auto-create identity edges for derived nodes ---
+    node_id_set = {n.id for n in nodes}
+    for node in nodes:
+        if not getattr(node, "derived", False):
+            continue
+        identity = getattr(node, "identity", None)
+        if not identity:
+            continue
+        deps = getattr(identity, "depends_on", None) or getattr(node, "depends_on", [])
+        for dep_id in deps or []:
+            if dep_id not in node_id_set:
+                continue
+            pair = (dep_id, node.id)
+            if pair in seen_pairs:
+                continue
+            edge_id = f"{dep_id}_to_{node.id}"
+            if edge_id in seen_ids:
+                continue
+            # Copy from expert DAG if available, otherwise create minimal identity edge
+            if pair in base_edge_map:
+                edges.append(base_edge_map[pair])
+                seen_ids.add(base_edge_map[pair].id)
+            else:
+                seen_ids.add(edge_id)
+                formula_name = getattr(identity, "name", "") or ""
+                edges.append(EdgeSpec(
+                    id=edge_id, from_node=dep_id, to_node=node.id,
+                    edge_type="identity", edge_status="IDENTITY",
+                    allowed_designs=[],
+                    timing=EdgeTiming(lag=0, lag_unit="quarter",
+                                     contemporaneous=True, max_anticipation=0),
+                    interpretation=EdgeInterpretation(
+                        is_field=f"Identity component: {formula_name}",
+                        is_not=["Causal relationship"],
+                        allowed_uses=["scenario_only"],
+                    ),
+                    notes=f"Auto-created identity edge from {formula_name}",
+                    unit_specification=_get_unit_spec(dep_id, node.id),
+                ))
+            seen_pairs.add(pair)
 
     base_name = base_dag.metadata.name
     n_matched = sum(1 for p in proposed_edges if p.is_existing)
@@ -352,7 +416,199 @@ def generate(
     # Print comparison table
     _print_comparison(base_dag, new_dag)
 
+    # Post-generation repair pass
+    logger.info("Running post-generation repair pass...")
+    with open(output_path) as f:
+        raw_dag = yaml.safe_load(f)
+    repaired = repair_narrative_dag(raw_dag, base_dag_path)
+    with open(output_path, "w", encoding="utf-8") as f:
+        yaml.dump(repaired, f, sort_keys=False, allow_unicode=True,
+                  default_flow_style=False)
+    logger.info("Repair pass complete.")
+
     return output_path
+
+
+# =========================================================================
+# Post-generation repair
+# =========================================================================
+
+def repair_narrative_dag(
+    dag_dict: dict,
+    base_dag_path: Path = DEFAULT_BASE_DAG,
+) -> dict:
+    """Post-generation repair pass that fixes known issues in narrative DAGs.
+
+    Works on the raw YAML dict so it can be applied to any existing DAG file.
+
+    Fixes applied in order:
+      1. Double-logging formula correction (strip log() when node has transforms: [log])
+      2. Missing identity edges (auto-create from derived node depends_on)
+      3. Sink-node repair (borrow outgoing edges from base DAG)
+      4. Edge ID sanitization (snake_case, no arrows/spaces/parens) — runs LAST so
+         borrowed edges also get normalized, ensuring idempotency
+      5. Scope-consistency assumption (auto-generate when cross-scope edges exist)
+
+    Args:
+        dag_dict: Raw narrative DAG loaded via yaml.safe_load.
+        base_dag_path: Path to expert/base DAG for edge borrowing.
+
+    Returns:
+        Repaired DAG dict (deep copy; original is not mutated).
+    """
+    import copy
+
+    dag = copy.deepcopy(dag_dict)
+
+    # Load base DAG for edge borrowing
+    base_dag: dict | None = None
+    if base_dag_path.exists():
+        with open(base_dag_path) as f:
+            base_dag = yaml.safe_load(f)
+
+    nodes: dict[str, dict] = {n["id"]: n for n in dag.get("nodes", [])}
+    edges: list[dict] = dag.get("edges", [])
+
+    # ── 1. Double-logging formula correction ─────────────────────────
+    for node_id, node in nodes.items():
+        identity = node.get("identity")
+        if not identity:
+            continue
+        formula = identity.get("formula", "")
+        deps = identity.get("depends_on") or node.get("depends_on", [])
+        for dep in deps:
+            dep_node = nodes.get(dep)
+            if not dep_node:
+                continue
+            if "log" in dep_node.get("transforms", []):
+                # diff(log(X)) → diff(X)
+                formula = formula.replace(f"diff(log({dep}))", f"diff({dep})")
+                # log(X) → X  (standalone)
+                formula = formula.replace(f"log({dep})", dep)
+        identity["formula"] = formula
+
+    # ── 2. Missing identity edges ─────────────────────────────────────
+    edge_pairs: set[tuple[str, str]] = {
+        (e["from"], e["to"]) for e in edges
+    }
+    base_edge_map: dict[tuple[str, str], dict] = {}
+    if base_dag:
+        base_edge_map = {
+            (e["from"], e["to"]): e for e in base_dag.get("edges", [])
+        }
+
+    for node_id, node in nodes.items():
+        if not node.get("derived"):
+            continue
+        identity = node.get("identity")
+        if not identity:
+            continue
+        deps = identity.get("depends_on") or node.get("depends_on", [])
+        for dep in deps:
+            if dep not in nodes:
+                continue
+            if (dep, node_id) in edge_pairs:
+                continue
+            # Prefer copying from base DAG (preserves rich metadata)
+            import copy as _copy
+            if (dep, node_id) in base_edge_map:
+                edges.append(_copy.deepcopy(base_edge_map[(dep, node_id)]))
+            else:
+                edge_id = f"{dep}_to_{node_id}"
+                edges.append({
+                    "id": edge_id,
+                    "from": dep,
+                    "to": node_id,
+                    "edge_type": "identity",
+                    "edge_status": "IDENTITY",
+                    "timing": {
+                        "lag": 0, "lag_unit": "quarter",
+                        "contemporaneous": True, "max_anticipation": 0,
+                    },
+                    "allowed_designs": [],
+                    "interpretation": {
+                        "is": f"Identity component: {identity.get('name', '')}",
+                        "is_not": ["Causal relationship"],
+                        "allowed_uses": ["scenario_only"],
+                    },
+                    "unit_specification": {
+                        "treatment_unit": nodes.get(dep, {}).get("unit", ""),
+                        "outcome_unit": node.get("unit", ""),
+                    },
+                    "notes": f"Auto-created identity edge from {identity.get('name', '')}",
+                })
+            edge_pairs.add((dep, node_id))
+
+    # ── 3. Sink-node repair (borrow outgoing edges from base DAG) ─────
+    if base_dag:
+        target = dag.get("metadata", {}).get("target_node", "")
+        edge_pairs_current = {(e["from"], e["to"]) for e in edges}
+        outgoing: dict[str, int] = {n: 0 for n in nodes}
+        incoming_set: dict[str, int] = {n: 0 for n in nodes}
+        for e in edges:
+            fn, tn = e.get("from", ""), e.get("to", "")
+            if fn in outgoing:
+                outgoing[fn] += 1
+            if tn in incoming_set:
+                incoming_set[tn] += 1
+
+        for node_id in nodes:
+            if node_id == target:
+                continue
+            if incoming_set[node_id] > 0 and outgoing[node_id] == 0:
+                # Sink node — look for outgoing edges in base DAG
+                for base_edge in base_dag.get("edges", []):
+                    bf, bt = base_edge["from"], base_edge["to"]
+                    if bf == node_id and bt in nodes and (bf, bt) not in edge_pairs_current:
+                        import copy as _copy
+                        edges.append(_copy.deepcopy(base_edge))
+                        edge_pairs_current.add((bf, bt))
+                        outgoing[node_id] += 1
+
+    # ── 4. Edge ID sanitization + misleading ID regeneration ──────────
+    # Runs AFTER edge additions so borrowed edges also get normalized.
+    seen_ids: set[str] = set()
+    for edge in edges:
+        new_id = _sanitize_edge_id(edge["id"])
+        from_node = edge.get("from", "")
+        to_node = edge.get("to", "")
+        from_lower = from_node.lower()
+        to_lower = to_node.lower()
+        # Regenerate if ID doesn't contain both from/to (case-insensitive)
+        if from_lower and to_lower:
+            if from_lower not in new_id or to_lower not in new_id:
+                new_id = _sanitize_edge_id(f"{from_node}_to_{to_node}")
+        # Collision guard
+        if new_id in seen_ids:
+            new_id = f"{new_id}_nl"
+        seen_ids.add(new_id)
+        edge["id"] = new_id
+
+    # ── 5. Scope-consistency assumption ───────────────────────────────
+    assumptions: list[dict] = dag.get("assumptions", []) or []
+    assumption_ids = {a["id"] for a in assumptions}
+
+    if "scope_consistency" not in assumption_ids:
+        cross_scope_edges: list[str] = []
+        for edge in edges:
+            from_scope = nodes.get(edge["from"], {}).get("scope", "")
+            to_scope = nodes.get(edge["to"], {}).get("scope", "")
+            if from_scope and to_scope and from_scope != to_scope:
+                cross_scope_edges.append(edge["id"])
+        if cross_scope_edges:
+            assumptions.append({
+                "id": "scope_consistency",
+                "description": (
+                    "Transmission of global shocks to Kazakhstan-specific outcomes "
+                    "preserves relative comparisons across regions within KZ."
+                ),
+                "applies_to_edges": cross_scope_edges,
+                "testable": False,
+            })
+
+    dag["assumptions"] = assumptions
+    dag["edges"] = edges
+    return dag
 
 
 def main() -> None:
@@ -365,6 +621,8 @@ def main() -> None:
                         help="Path to base DAG YAML for node matching.")
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT,
                         help="Output path for generated DAG YAML.")
+    parser.add_argument("--repair", type=Path, default=None,
+                        help="Repair an existing narrative DAG YAML (skip generation).")
     parser.add_argument("--verbose", action="store_true", help="Enable debug logging.")
     args = parser.parse_args()
 
@@ -374,7 +632,18 @@ def main() -> None:
     )
 
     try:
-        generate(args.narrative, args.base_dag, args.out)
+        if args.repair:
+            logger.info(f"Repairing existing DAG: {args.repair}")
+            with open(args.repair) as f:
+                raw = yaml.safe_load(f)
+            repaired = repair_narrative_dag(raw, args.base_dag)
+            out = args.out or args.repair
+            with open(out, "w", encoding="utf-8") as f:
+                yaml.dump(repaired, f, sort_keys=False, allow_unicode=True,
+                          default_flow_style=False)
+            logger.info(f"Wrote repaired DAG to {out}")
+        else:
+            generate(args.narrative, args.base_dag, args.out)
     except FileNotFoundError as e:
         logger.error(str(e))
         sys.exit(1)

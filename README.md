@@ -43,6 +43,49 @@ NL-to-DAG pipeline that extracts causal structures from academic papers via LLM,
 letting you bootstrap DAGs from existing literature and compare them against
 expert-built specifications.
 
+## Why OpenCausality
+
+The past decade of data science was shaped by a single economic force: the plummeting
+cost of storage and compute made it cheaper to collect everything and predict than to
+think carefully and explain. Predictive ML flourished not because prediction is what
+organizations need most, but because big data made it the path of least resistance.
+Correctness — understanding *why* something happens — was never the optimization target.
+
+This matters because prediction, causal interpretation, and causal inference are
+fundamentally different things. A predictive model can exploit any statistical
+regularity — including spurious correlations and confounded associations — and still
+forecast well, without representing the actual data generating process at all. Causal
+interpretation goes a step further: it takes an observed correlation and attaches a
+story about cause and effect. But a plausible story about *why* two variables move
+together is not evidence that intervening on one will change the other. Correlations
+can arise from confounding, reverse causality, or selection — none of which a
+predictive model or a post-hoc narrative is designed to detect. Causal inference, by
+contrast, is the discipline of recovering the data generating process itself:
+specifying which variables cause which, under what assumptions identification holds,
+and what would happen under intervention. That is a qualitatively harder problem than
+prediction, and it is the problem that matters when decisions have consequences.
+
+Yet causal reasoning is not a niche academic skill. It is among the most fundamental
+forms of intelligence: pre-linguistic, rooted in physical interaction with the world,
+present in infants long before they can speak. Every time a child pushes a block off a
+table, they are running a causal experiment. This is the reasoning mode that AI systems
+need to create real-world value — not just correlation-surfing, but genuine
+understanding of mechanism and intervention.
+
+The bottleneck is not insight. Researchers across economics, epidemiology, and the
+social sciences already carry rich causal intuitions about their domains. The bottleneck
+is tooling: the mechanical overhead of translating a causal story into a formal DAG,
+selecting an appropriate estimator, diagnosing identification failures, and documenting
+every decision for reproducibility. Researchers spend their time fighting software
+instead of forming and testing hypotheses.
+
+OpenCausality removes that bottleneck. You describe your causal story — in YAML or
+plain English — and the framework handles the rest: DAG construction, estimator
+dispatch, diagnostic checking, issue detection, and audit-trail generation. The human
+stays where humans are irreplaceable — judging whether the causal narrative makes
+sense — while the machine handles what machines do well: mechanical, repeatable,
+auditable computation.
+
 **Who is this for?** Researchers, data scientists, and analysts who need to make causal
 claims from observational data — and need those claims to be auditable, reproducible,
 and defensible. Whether you are running a randomized experiment in a tech company,

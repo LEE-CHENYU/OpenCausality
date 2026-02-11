@@ -499,6 +499,89 @@ rules:
       identity edge and edge card. For others, add an edge with proper
       estimation or remove the orphan node from the DAG.
 
+  - rule_id: TARGET_UNREACHABLE
+    severity: CRITICAL
+    trigger: pre_run
+    auto_fixable: false
+    requires_human: true
+    description: "Target node is unreachable from any root node in the DAG"
+    explanation: >
+      The target node (the variable the DAG is designed to explain) cannot be
+      reached by following edges from any exogenous root node. This means the
+      causal narrative is structurally broken — shocks cannot propagate to the
+      target. Common causes include missing identity edges, disconnected
+      components, or incomplete narrative extraction.
+    guidance: >
+      Add the missing edges that connect the exogenous shock chain to the target.
+      For identity nodes (e.g., K2 = Capital / RWA), ensure both identity
+      component edges exist.
+
+  - rule_id: IDENTITY_DEPS_INCOMPLETE
+    severity: HIGH
+    trigger: pre_run
+    auto_fixable: true
+    requires_human: false
+    description: "Derived node's identity formula has dependencies without edges"
+    explanation: >
+      A derived node has an identity formula (e.g., K2 = Capital / RWA) that
+      references dependency nodes, but one or more of those dependencies lack
+      an edge pointing to the derived node. This breaks the accounting identity
+      chain and prevents correct propagation through the identity relationship.
+    guidance: >
+      The system will auto-create identity edges from each dependency to the
+      derived node. Accept if the dependencies are correctly specified in the
+      formula.
+
+  - rule_id: SINK_NODE_NOT_TARGET
+    severity: MEDIUM
+    trigger: pre_run
+    auto_fixable: false
+    requires_human: true
+    description: "Non-target node absorbs information but does not transmit downstream"
+    explanation: >
+      A node has incoming edges but no outgoing edges, yet it is not the DAG's
+      target node. This means information (shocks) flow into this node but are
+      absorbed without transmitting further. If the node is meant to influence
+      downstream variables, the missing outgoing edge represents a gap in the
+      causal narrative.
+    guidance: >
+      Either add an outgoing edge to connect this node downstream, or accept
+      this as a terminal diagnostic node that is not part of the propagation
+      chain.
+
+  - rule_id: EDGE_ID_SYNTAX_INVALID
+    severity: HIGH
+    trigger: pre_run
+    auto_fixable: true
+    requires_human: false
+    description: "Edge ID contains spaces, arrows, or other invalid characters"
+    explanation: >
+      Edge IDs must be valid snake_case identifiers (lowercase letters, digits,
+      underscores only). IDs containing spaces, arrows (->), parentheses, or
+      other special characters cause filesystem errors when saving EdgeCards
+      and break downstream tooling that expects clean identifiers.
+    guidance: >
+      The system will auto-sanitize the edge ID by converting arrows to _to_,
+      removing special characters, and collapsing consecutive underscores.
+
+  - rule_id: IDENTITY_FORMULA_DOUBLE_TRANSFORM
+    severity: MEDIUM
+    trigger: pre_run
+    auto_fixable: false
+    requires_human: true
+    description: "Identity formula applies log() to a node already stored in log form"
+    explanation: >
+      A derived node's identity formula contains log(X) where X already has
+      transforms: [log], meaning the data is already in log levels. Applying
+      log() again would double-log the variable, producing incorrect results.
+      This is usually a documentation convention issue rather than a runtime
+      bug, but it creates ambiguity about whether the formula represents a
+      mathematical operation or a label.
+    guidance: >
+      If the convention is that transforms: [log] means "data stored in log
+      form", then the formula should use the variable name directly (e.g.,
+      X - Y instead of log(X) - log(Y)). Update the formula to match.
+
   - rule_id: UNIT_MISSING_IN_EDGECARD
     severity: CRITICAL
     trigger: post_run

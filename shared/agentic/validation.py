@@ -166,6 +166,11 @@ class DAGValidator:
         self._check_edge_type_presence(result)
         self._check_node_sources_defined(result)
         self._check_edge_nodes_exist(result)
+        self._check_target_reachable(result)
+        self._check_identity_deps_complete(result)
+        self._check_sink_nodes(result)
+        self._check_edge_id_syntax(result)
+        self._check_identity_formula_double_transform(result)
 
         return result
 
@@ -293,6 +298,161 @@ class DAGValidator:
                     message=f"Edge 'to' node '{to_node}' does not exist",
                     edge_id=edge_id,
                 ))
+
+    def _check_target_reachable(self, result: ValidationResult) -> None:
+        """Check that the target node is reachable from at least one root."""
+        result.checks_run.append("target_reachable")
+
+        target = self.dag.get("metadata", {}).get("target_node", "")
+        if not target or target not in self.nodes:
+            return
+
+        # Build reverse adjacency (to -> [from])
+        rev_adj: dict[str, list[str]] = {n: [] for n in self.nodes}
+        for edge in self.edges.values():
+            tn = edge.get("to", "")
+            fn = edge.get("from", "")
+            if tn in rev_adj:
+                rev_adj[tn].append(fn)
+
+        # BFS backward from target
+        visited: set[str] = set()
+        frontier = [target]
+        while frontier:
+            node = frontier.pop()
+            if node in visited:
+                continue
+            visited.add(node)
+            for pred in rev_adj.get(node, []):
+                if pred not in visited:
+                    frontier.append(pred)
+
+        # Roots are nodes with no incoming edges
+        incoming = {edge.get("to") for edge in self.edges.values()}
+        roots = [n for n in self.nodes if n not in incoming]
+
+        if not roots:
+            return  # degenerate
+
+        # Target itself doesn't count as a valid root
+        reachable_roots = [r for r in roots if r in visited and r != target]
+        if not reachable_roots:
+            result.add_issue(ValidationIssue(
+                check_id="target_reachable",
+                severity=ValidationSeverity.ERROR,
+                message=(
+                    f"Target node '{target}' is unreachable from any root node. "
+                    f"Roots: {roots}; reachable from target (backward): "
+                    f"{sorted(visited)}"
+                ),
+            ))
+
+    def _check_identity_deps_complete(self, result: ValidationResult) -> None:
+        """Check that all identity-formula dependencies have edges into derived nodes."""
+        result.checks_run.append("identity_deps_complete")
+
+        edge_pairs = {
+            (e.get("from"), e.get("to")) for e in self.edges.values()
+        }
+
+        for node_id, node in self.nodes.items():
+            if not node.get("derived"):
+                continue
+            identity = node.get("identity")
+            if not identity:
+                continue
+            deps = identity.get("depends_on") or node.get("depends_on", [])
+            for dep in deps:
+                if dep not in self.nodes:
+                    continue  # dependency not in DAG at all
+                if (dep, node_id) not in edge_pairs:
+                    result.add_issue(ValidationIssue(
+                        check_id="identity_deps_complete",
+                        severity=ValidationSeverity.ERROR,
+                        message=(
+                            f"Derived node '{node_id}' has identity dependency "
+                            f"'{dep}' but no edge {dep} -> {node_id} exists"
+                        ),
+                        node_id=node_id,
+                        details={"missing_dep": dep},
+                    ))
+
+    def _check_sink_nodes(self, result: ValidationResult) -> None:
+        """Check for non-target sink nodes (incoming edges but no outgoing)."""
+        result.checks_run.append("sink_node_not_target")
+
+        target = self.dag.get("metadata", {}).get("target_node", "")
+        outgoing: dict[str, int] = {n: 0 for n in self.nodes}
+        incoming: dict[str, int] = {n: 0 for n in self.nodes}
+
+        for edge in self.edges.values():
+            fn = edge.get("from", "")
+            tn = edge.get("to", "")
+            if fn in outgoing:
+                outgoing[fn] += 1
+            if tn in incoming:
+                incoming[tn] += 1
+
+        for node_id in self.nodes:
+            if node_id == target:
+                continue
+            if incoming[node_id] > 0 and outgoing[node_id] == 0:
+                result.add_issue(ValidationIssue(
+                    check_id="sink_node_not_target",
+                    severity=ValidationSeverity.WARNING,
+                    message=(
+                        f"Node '{node_id}' is a sink (has incoming edges but "
+                        f"no outgoing edges) and is not the target node"
+                    ),
+                    node_id=node_id,
+                ))
+
+    def _check_edge_id_syntax(self, result: ValidationResult) -> None:
+        """Check that edge IDs use valid snake_case syntax."""
+        result.checks_run.append("edge_id_syntax")
+
+        valid_pattern = re.compile(r'^[a-z0-9][a-z0-9_]*[a-z0-9]$|^[a-z0-9]$')
+        for edge_id in self.edges:
+            if not valid_pattern.match(edge_id):
+                result.add_issue(ValidationIssue(
+                    check_id="edge_id_syntax",
+                    severity=ValidationSeverity.ERROR,
+                    message=(
+                        f"Edge ID '{edge_id}' contains invalid characters. "
+                        f"Must be snake_case (lowercase, digits, underscores)"
+                    ),
+                    edge_id=edge_id,
+                ))
+
+    def _check_identity_formula_double_transform(self, result: ValidationResult) -> None:
+        """Warn when an identity formula applies log() to a node with transforms: [log]."""
+        result.checks_run.append("identity_formula_double_transform")
+
+        for node_id, node in self.nodes.items():
+            identity = node.get("identity")
+            if not identity:
+                continue
+            formula = identity.get("formula", "")
+            if not formula:
+                continue
+            deps = identity.get("depends_on") or node.get("depends_on", [])
+            for dep in deps:
+                dep_node = self.nodes.get(dep)
+                if not dep_node:
+                    continue
+                dep_transforms = dep_node.get("transforms", [])
+                if "log" in dep_transforms and f"log({dep})" in formula:
+                    result.add_issue(ValidationIssue(
+                        check_id="identity_formula_double_transform",
+                        severity=ValidationSeverity.WARNING,
+                        message=(
+                            f"Formula for '{node_id}' applies log() to '{dep}' "
+                            f"which already has transforms: [log]. "
+                            f"Risk of double-logging."
+                        ),
+                        node_id=node_id,
+                        details={"formula": formula, "dep": dep},
+                    ))
 
     # =========================================================================
     # POST-ESTIMATION CHECKS
