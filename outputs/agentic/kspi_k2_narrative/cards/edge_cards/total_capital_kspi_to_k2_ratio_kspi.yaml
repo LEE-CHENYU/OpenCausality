@@ -1,6 +1,6 @@
 edge_id: total_capital_kspi_to_k2_ratio_kspi
-dag_version_hash: d131ab06e0448ce0ca06e96cba9cbb5daa8404669ad95ba1b6630376a2728f3c
-created_at: '2026-02-11T11:52:16.267601'
+dag_version_hash: 26653d57356dd32eb34df1c02cad048b14bf6e9e53feb889643aa7d1ae6f233e
+created_at: '2026-02-11T12:10:04.133383'
 data_provenance:
   treatment_source:
     connector: parquet_file
@@ -330,7 +330,7 @@ literature:
   challenging: []
   methodological: []
   search_status: SEARCHED
-  search_timestamp: '2026-02-11T11:52:16.267653'
+  search_timestamp: '2026-02-11T12:10:04.133429'
   search_query: KSPI total capital KSPI K2 capital ratio causal effect
   total_results: 5
 companion_edge_id: null

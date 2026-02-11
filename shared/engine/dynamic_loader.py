@@ -416,66 +416,80 @@ class DynamicLoaderFactory:
     def try_build_loader(self, node: NodeSpec) -> Callable[[], pd.Series] | None:
         """Build a loader closure for a DAG node from its source spec.
 
+        Tries preferred sources first, then fallback sources.
         Returns None if no strategy exists or no source spec is available.
         """
         if not node.source or not node.source.preferred:
             return None
 
-        source = node.source.preferred[0]
-        connector = source.connector
-        dataset = source.dataset
-        series = source.series
+        # Build ordered list: preferred sources first, then fallbacks
+        all_sources = list(node.source.preferred)
+        if node.source.fallback:
+            all_sources.extend(node.source.fallback)
+
         node_id = node.id
         transforms = list(node.transforms)
 
-        strategy = self._connector_strategies.get(connector)
-        if strategy is None:
-            logger.debug(f"No connector strategy for '{connector}' (node {node_id})")
+        # Check at least one source has a known connector strategy
+        has_any_strategy = any(
+            self._connector_strategies.get(s.connector) is not None
+            for s in all_sources
+        )
+        if not has_any_strategy:
+            logger.debug(f"No connector strategies for any source of node {node_id}")
             return None
 
         # Special case: kspi_quarterly delegates to existing loader
-        if connector == "kspi_quarterly":
-            return self._build_kspi_loader(node_id, series, transforms)
+        primary = all_sources[0]
+        if primary.connector == "kspi_quarterly":
+            return self._build_kspi_loader(node_id, primary.series, transforms)
 
         def _loader(
-            _strategy=strategy,
-            _dataset=dataset,
-            _series=series,
+            _all_sources=all_sources,
             _node_id=node_id,
             _transforms=transforms,
-            _connector=connector,
+            _factory=self,
         ) -> pd.Series:
-            # Try local file paths
-            for template in _strategy.local_path_templates:
-                path = Path(template.format(
-                    series=_series,
-                    dataset=_dataset,
-                ))
-                if path.exists():
-                    logger.debug(f"DynamicLoader [{_node_id}]: loading from {path}")
-                    s = _load_series_from_file(path, _series, _node_id)
-                    return _apply_transforms(s, _transforms)
+            errors: list[str] = []
+            for src in _all_sources:
+                strategy = _factory._connector_strategies.get(src.connector)
+                if strategy is None:
+                    continue
 
-            # Try fuzzy directory scan: search for parquet files containing
-            # keywords from the series or dataset name
-            for scan_dir in _get_scan_dirs(_connector):
-                match = _fuzzy_find_file(scan_dir, _series, _dataset, _node_id)
-                if match is not None:
-                    logger.debug(f"DynamicLoader [{_node_id}]: fuzzy match {match}")
-                    s = _load_series_from_file(match, _series, _node_id)
-                    return _apply_transforms(s, _transforms)
+                # Try local file paths
+                for template in strategy.local_path_templates:
+                    path = Path(template.format(
+                        series=src.series,
+                        dataset=src.dataset,
+                    ))
+                    if path.exists():
+                        logger.debug(f"DynamicLoader [{_node_id}]: loading from {path}")
+                        s = _load_series_from_file(path, src.series, _node_id)
+                        return _apply_transforms(s, _transforms)
 
-            # Try API fallback
-            if _strategy.api_fallback:
-                s = self._try_api_fallback(
-                    _strategy.api_fallback, _dataset, _series, _node_id,
+                # Try fuzzy directory scan
+                for scan_dir in _get_scan_dirs(src.connector):
+                    match = _fuzzy_find_file(scan_dir, src.series, src.dataset, _node_id)
+                    if match is not None:
+                        logger.debug(f"DynamicLoader [{_node_id}]: fuzzy match {match}")
+                        s = _load_series_from_file(match, src.series, _node_id)
+                        return _apply_transforms(s, _transforms)
+
+                # Try API fallback
+                if strategy.api_fallback:
+                    s = _factory._try_api_fallback(
+                        strategy.api_fallback, src.dataset, src.series, _node_id,
+                    )
+                    if s is not None:
+                        return _apply_transforms(s, _transforms)
+
+                errors.append(
+                    f"connector={src.connector}, dataset={src.dataset}, series={src.series}"
                 )
-                if s is not None:
-                    return _apply_transforms(s, _transforms)
 
             raise FileNotFoundError(
-                f"DynamicLoader [{_node_id}]: no data found for "
-                f"connector={_connector}, dataset={_dataset}, series={_series}"
+                f"DynamicLoader [{_node_id}]: no data found. Tried: "
+                + "; ".join(errors)
             )
 
         return _loader

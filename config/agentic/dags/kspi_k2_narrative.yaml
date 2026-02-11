@@ -24,7 +24,11 @@ nodes:
     - connector: bns
       dataset: regional_accounts
       series: import_share
-    fallback: []
+    fallback:
+    - connector: world_bank
+      dataset: trade
+      series: import_share
+      notes: World Bank WDI NE.IMP.GNFS.ZS (imports % GDP), annual forward-filled to monthly
   role_constraints:
     never_control: false
     never_instrument: false

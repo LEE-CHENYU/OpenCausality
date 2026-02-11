@@ -1,6 +1,6 @@
 edge_id: real_income_to_real_expenditure
-dag_version_hash: d131ab06e0448ce0ca06e96cba9cbb5daa8404669ad95ba1b6630376a2728f3c
-created_at: '2026-02-11T11:52:16.120121'
+dag_version_hash: 26653d57356dd32eb34df1c02cad048b14bf6e9e53feb889643aa7d1ae6f233e
+created_at: '2026-02-11T12:10:04.003080'
 data_provenance:
   treatment_source:
     connector: parquet_file
@@ -9,9 +9,11 @@ data_provenance:
     retrieval_time: null
     file_path: null
     file_checksum: null
-    row_count: 0
+    row_count: 40
     column_count: null
-    date_range: null
+    date_range:
+    - '2011-03-01'
+    - '2024-06-01'
     cache_key: null
   outcome_source:
     connector: parquet_file
@@ -20,21 +22,25 @@ data_provenance:
     retrieval_time: null
     file_path: null
     file_checksum: null
-    row_count: 0
+    row_count: 40
     column_count: null
-    date_range: null
+    date_range:
+    - '2011-03-01'
+    - '2024-06-01'
     cache_key: null
   control_sources: {}
   instrument_sources: {}
-  combined_row_count: 0
-  combined_date_range: null
+  combined_row_count: 40
+  combined_date_range:
+  - '2011-03-01'
+  - '2024-06-01'
   missing_rate: null
   panel_dimensions: null
   entity_boundary_note: null
   kpi_definitions: null
-spec_hash: 01680b18cda1f01dfbd3f06a49c2803c68c79f6d179eeb330e7d4ff373b23b43
+spec_hash: b327b4b58bb76c861cb9ea83d801f78185de731f39d0cf1487f8bfe48ffdf5b0
 spec_details:
-  design: DATA_INSUFFICIENT
+  design: LOCAL_PROJECTIONS
   controls:
   - y_lag1
   - y_lag2
@@ -44,7 +50,7 @@ spec_details:
   fixed_effects: []
   se_method: HAC_newey_west
   sample_filter: null
-  horizon:
+  horizon: &id001
   - 0
   - 1
   - 2
@@ -53,19 +59,50 @@ spec_details:
   - 5
   - 6
   bandwidth: null
-estimates: null
+estimates:
+  point: 0.6950820896963353
+  se: 0.31900447977368895
+  ci_95:
+  - 0.06983330933990495
+  - 1.3203308700527656
+  pvalue: 0.029338345743874693
+  horizons: *id001
+  irf:
+  - 0.6950820896963353
+  - 0.2595155924053538
+  - -0.022754845176775833
+  - 0.6631651635803046
+  - 0.6277347439154694
+  - -0.15005996297253804
+  - 0.5872700535616995
+  irf_ci_lower:
+  - 0.06984479843296887
+  - -0.354296885356303
+  - -0.2815989156007901
+  - 0.06470132542055673
+  - 0.04699983649187289
+  - -0.5802374433801787
+  - 0.022815764880871114
+  irf_ci_upper:
+  - 1.3203193809597018
+  - 0.8733280701670106
+  - 0.2360892252472384
+  - 1.2616290017400527
+  - 1.2084696513390658
+  - 0.28011751743510266
+  - 1.1517243422425278
 diagnostics:
   hac_bandwidth:
     name: hac_bandwidth
     passed: true
-    value: 0.0
+    value: 3.0
     threshold: null
     pvalue: null
-    message: 'Newey-West bandwidth: 0'
+    message: 'Newey-West bandwidth: 3'
   effective_obs:
     name: effective_obs
-    passed: false
-    value: 0.0
+    passed: true
+    value: 38.0
     threshold: 20.0
     pvalue: null
     message: ''
@@ -76,6 +113,20 @@ diagnostics:
     threshold: null
     pvalue: null
     message: No expected sign specified
+  ts_leads_test:
+    name: ts_leads_test
+    passed: false
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: fail'
+  ts_residual_autocorr:
+    name: ts_residual_autocorr
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
   ts_hac_sensitivity:
     name: ts_hac_sensitivity
     passed: true
@@ -83,8 +134,22 @@ diagnostics:
     threshold: null
     pvalue: null
     message: 'TSGuard: pass'
+  ts_lag_sensitivity:
+    name: ts_lag_sensitivity
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
   ts_regime_stability:
     name: ts_regime_stability
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_shock_support:
+    name: ts_shock_support
     passed: true
     value: null
     threshold: null
@@ -106,44 +171,49 @@ failure_flags:
   potential_bad_control: false
   mechanical_identity_risk: false
   regime_break_detected: false
-  small_sample: true
+  small_sample: false
   high_missing_rate: false
   entity_boundary_change: false
   definition_inconsistency: false
-  data_insufficient: true
+  data_insufficient: false
 counterfactual:
   supports_shock_path: true
   supports_policy_intervention: false
   intervention_note: Reduced-form LP estimate
   external_validity: ''
-credibility_rating: D
-credibility_score: 0.0
+credibility_rating: A
+credibility_score: 0.8015555555555556
 identification:
-  claim_level: DESCRIPTIVE
+  claim_level: BLOCKED_ID
   risks:
     unmeasured_confounding: medium
     simultaneity: low
     weak_variation: low
     measurement_error: low
     selection: low
-  untestable_assumptions: []
+  untestable_assumptions:
+  - No omitted common cause of treatment and outcome
   testable_threats_passed:
   - hac_bandwidth
-  - sign_consistency
-  - ts_hac_sensitivity
-  - ts_regime_stability
-  testable_threats_failed:
   - effective_obs
+  - sign_consistency
+  - ts_residual_autocorr
+  - ts_hac_sensitivity
+  - ts_lag_sensitivity
+  - ts_regime_stability
+  - ts_shock_support
+  testable_threats_failed:
+  - ts_leads_test
   strategy_type: ''
   strategy_argument: ''
   strategy_key_assumption: ''
 counterfactual_block:
   shock_scenario_allowed: false
   policy_intervention_allowed: false
-  reason_shock_blocked: Shock CF requires REDUCED_FORM+, edge has DESCRIPTIVE
+  reason_shock_blocked: Shock CF requires REDUCED_FORM+, edge has BLOCKED_ID
   reason_policy_blocked: REDUCED_FORM mode does not allow policy interventions
   allowed: false
-  reason_blocked: Shock CF requires REDUCED_FORM+, edge has DESCRIPTIVE
+  reason_blocked: Shock CF requires REDUCED_FORM+, edge has BLOCKED_ID
 propagation_role:
   role: diagnostic_only
   overlapping_paths: []
@@ -252,7 +322,7 @@ literature:
   challenging: []
   methodological: []
   search_status: SEARCHED
-  search_timestamp: '2026-02-11T11:52:16.120180'
+  search_timestamp: '2026-02-11T12:10:04.003130'
   search_query: Real monetary income Real consumption expenditure causal effect
   total_results: 5
 companion_edge_id: null

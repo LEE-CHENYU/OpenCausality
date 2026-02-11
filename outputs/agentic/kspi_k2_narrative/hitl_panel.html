@@ -568,6 +568,48 @@ const ISSUES = {
     "severity": "HIGH",
     "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
     "message": "A-rating despite failed diagnostics."
+  },
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:imported_inflation_instrument_to_real_expenditure_negative": {
+    "status": "OPEN",
+    "opened_run": "1fc33ff0",
+    "severity": "CRITICAL",
+    "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+    "message": "p=0.0003 but claim_level=REDUCED_FORM. Significance does not establish causation."
+  },
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:kzt_usd_to_imported_inflation_instrument": {
+    "status": "OPEN",
+    "opened_run": "1fc33ff0",
+    "severity": "CRITICAL",
+    "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+    "message": "p=0.0000 but claim_level=REDUCED_FORM. Significance does not establish causation."
+  },
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:e_import_share_to_imported_inflation_instrument": {
+    "status": "OPEN",
+    "opened_run": "1fc33ff0",
+    "severity": "CRITICAL",
+    "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+    "message": "p=0.0492 but claim_level=REDUCED_FORM. Significance does not establish causation."
+  },
+  "RATING_DIAGNOSTICS_CONFLICT:e_import_share_to_imported_inflation_instrument": {
+    "status": "OPEN",
+    "opened_run": "1fc33ff0",
+    "severity": "HIGH",
+    "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
+    "message": "A-rating despite failed diagnostics."
+  },
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:real_income_to_real_expenditure": {
+    "status": "OPEN",
+    "opened_run": "f656908a",
+    "severity": "CRITICAL",
+    "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+    "message": "p=0.0293 but claim_level=BLOCKED_ID. Significance does not establish causation."
+  },
+  "RATING_DIAGNOSTICS_CONFLICT:real_income_to_real_expenditure": {
+    "status": "OPEN",
+    "opened_run": "f656908a",
+    "severity": "HIGH",
+    "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
+    "message": "A-rating despite failed diagnostics."
   }
 };
 const CLOSED_ISSUES_COUNT = 0;
@@ -820,6 +862,174 @@ const EDGES = {
     ],
     "propagation_role": "identity"
   },
+  "e_import_share_to_imported_inflation_instrument": {
+    "point": 55.96080616899593,
+    "se": 28.454866496208084,
+    "pvalue": 0.04922340067486691,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "A",
+    "score": 0.8655555555555556,
+    "claim_level": "REDUCED_FORM",
+    "all_pass": false,
+    "n_obs": 178,
+    "diagnostics": [
+      {
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": true
+      },
+      {
+        "name": "sign_consistency",
+        "passed": true
+      },
+      {
+        "name": "ts_leads_test",
+        "passed": true
+      },
+      {
+        "name": "ts_residual_autocorr",
+        "passed": true
+      },
+      {
+        "name": "ts_hac_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_lag_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_regime_stability",
+        "passed": false
+      },
+      {
+        "name": "ts_shock_support",
+        "passed": true
+      }
+    ],
+    "failure_flags": [
+      "regime_break_detected"
+    ],
+    "panel": null,
+    "estimand": "IRF of imported_inflation_instrument to a unit shock in E_import_share",
+    "is_not": "Structural causal effect under all interventions",
+    "allowed_uses": [],
+    "forbidden_uses": [],
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Counterfactual Use: BLOCKED\nReason: regime break risk\n\nEven if p<0.05, this does not establish a causal effect.",
+    "id_risks": {
+      "unmeasured_confounding": "medium",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "untestable_assumptions": [
+      "No omitted common cause of treatment and outcome"
+    ],
+    "testable_passed": [
+      "hac_bandwidth",
+      "effective_obs",
+      "sign_consistency",
+      "ts_leads_test",
+      "ts_residual_autocorr",
+      "ts_hac_sensitivity",
+      "ts_lag_sensitivity",
+      "ts_shock_support"
+    ],
+    "testable_failed": [
+      "ts_regime_stability"
+    ],
+    "propagation_role": "identity"
+  },
+  "imported_inflation_instrument_to_real_expenditure_negative": {
+    "point": -0.003046047436360451,
+    "se": 0.0008366316626613632,
+    "pvalue": 0.00027174315221028324,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "B",
+    "score": 0.7795555555555556,
+    "claim_level": "REDUCED_FORM",
+    "all_pass": false,
+    "n_obs": 57,
+    "diagnostics": [
+      {
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": true
+      },
+      {
+        "name": "sign_consistency",
+        "passed": true
+      },
+      {
+        "name": "ts_leads_test",
+        "passed": true
+      },
+      {
+        "name": "ts_residual_autocorr",
+        "passed": true
+      },
+      {
+        "name": "ts_hac_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_lag_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_regime_stability",
+        "passed": false
+      },
+      {
+        "name": "ts_shock_support",
+        "passed": true
+      }
+    ],
+    "failure_flags": [
+      "regime_break_detected"
+    ],
+    "panel": null,
+    "estimand": "IRF of real_expenditure to a unit shock in imported_inflation_instrument",
+    "is_not": "Structural causal effect under all interventions",
+    "allowed_uses": [],
+    "forbidden_uses": [],
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Counterfactual Use: BLOCKED\nReason: regime break risk\n\nEven if p<0.05, this does not establish a causal effect.",
+    "id_risks": {
+      "unmeasured_confounding": "medium",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "untestable_assumptions": [
+      "No omitted common cause of treatment and outcome"
+    ],
+    "testable_passed": [
+      "hac_bandwidth",
+      "effective_obs",
+      "sign_consistency",
+      "ts_leads_test",
+      "ts_residual_autocorr",
+      "ts_hac_sensitivity",
+      "ts_lag_sensitivity",
+      "ts_shock_support"
+    ],
+    "testable_failed": [
+      "ts_regime_stability"
+    ],
+    "propagation_role": "reduced_form"
+  },
   "kzt_usd_to_cpi_nontradable": {
     "point": 7.680517172265832e-05,
     "se": 3.3801146890145904e-05,
@@ -900,6 +1110,87 @@ const EDGES = {
     ],
     "testable_failed": [],
     "propagation_role": "structural"
+  },
+  "kzt_usd_to_imported_inflation_instrument": {
+    "point": 0.2643679548669966,
+    "se": 0.0025493606661942834,
+    "pvalue": 0.0,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "A",
+    "score": 0.97,
+    "claim_level": "REDUCED_FORM",
+    "all_pass": true,
+    "n_obs": 178,
+    "diagnostics": [
+      {
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": true
+      },
+      {
+        "name": "sign_consistency",
+        "passed": true
+      },
+      {
+        "name": "ts_leads_test",
+        "passed": true
+      },
+      {
+        "name": "ts_residual_autocorr",
+        "passed": true
+      },
+      {
+        "name": "ts_hac_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_lag_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_regime_stability",
+        "passed": true
+      },
+      {
+        "name": "ts_shock_support",
+        "passed": true
+      }
+    ],
+    "failure_flags": [],
+    "panel": null,
+    "estimand": "IRF of imported_inflation_instrument to a unit shock in kzt_usd",
+    "is_not": "Structural causal effect under all interventions",
+    "allowed_uses": [],
+    "forbidden_uses": [],
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Design LOCAL_PROJECTIONS provides REDUCED_FORM level only",
+    "id_risks": {
+      "unmeasured_confounding": "medium",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "untestable_assumptions": [
+      "No omitted common cause of treatment and outcome"
+    ],
+    "testable_passed": [
+      "hac_bandwidth",
+      "effective_obs",
+      "sign_consistency",
+      "ts_leads_test",
+      "ts_residual_autocorr",
+      "ts_hac_sensitivity",
+      "ts_lag_sensitivity",
+      "ts_regime_stability",
+      "ts_shock_support"
+    ],
+    "testable_failed": [],
+    "propagation_role": "identity"
   },
   "nominal_income_to_real_income": {
     "point": 0.9330544195797443,
@@ -1145,6 +1436,88 @@ const EDGES = {
       "ts_shock_support"
     ],
     "propagation_role": "reduced_form"
+  },
+  "real_income_to_real_expenditure": {
+    "point": 0.6950820896963353,
+    "se": 0.31900447977368895,
+    "pvalue": 0.029338345743874693,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "A",
+    "score": 0.8015555555555556,
+    "claim_level": "BLOCKED_ID",
+    "all_pass": false,
+    "n_obs": 38,
+    "diagnostics": [
+      {
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": true
+      },
+      {
+        "name": "sign_consistency",
+        "passed": true
+      },
+      {
+        "name": "ts_leads_test",
+        "passed": false
+      },
+      {
+        "name": "ts_residual_autocorr",
+        "passed": true
+      },
+      {
+        "name": "ts_hac_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_lag_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_regime_stability",
+        "passed": true
+      },
+      {
+        "name": "ts_shock_support",
+        "passed": true
+      }
+    ],
+    "failure_flags": [],
+    "panel": null,
+    "estimand": "IRF of real_expenditure to a unit shock in real_income",
+    "is_not": "Structural causal effect under all interventions",
+    "allowed_uses": [],
+    "forbidden_uses": [],
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Shock CF requires REDUCED_FORM+, edge has BLOCKED_ID",
+    "id_risks": {
+      "unmeasured_confounding": "medium",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "untestable_assumptions": [
+      "No omitted common cause of treatment and outcome"
+    ],
+    "testable_passed": [
+      "hac_bandwidth",
+      "effective_obs",
+      "sign_consistency",
+      "ts_residual_autocorr",
+      "ts_hac_sensitivity",
+      "ts_lag_sensitivity",
+      "ts_regime_stability",
+      "ts_shock_support"
+    ],
+    "testable_failed": [
+      "ts_leads_test"
+    ],
+    "propagation_role": "diagnostic_only"
   },
   "rwa_kspi_to_k2_ratio_kspi": {
     "point": -0.006058255436425573,
@@ -1975,7 +2348,7 @@ const RULE_DESCRIPTIONS = {
     "guidance": "The system will auto-populate units from the DAG spec. Verify that the inferred units match the actual estimation specification.\n"
   }
 };
-const GENERATED_AT = "2026-02-11 19:52:16 UTC";
+const GENERATED_AT = "2026-02-11 20:10:04 UTC";
 const DAG_EDGES = {
   "oil_supply_to_brent": {
     "from": "oil_supply_shock",

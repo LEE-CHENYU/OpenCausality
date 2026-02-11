@@ -1,0 +1,339 @@
+edge_id: imported_inflation_instrument_to_real_expenditure_negative
+dag_version_hash: 26653d57356dd32eb34df1c02cad048b14bf6e9e53feb889643aa7d1ae6f233e
+created_at: '2026-02-11T12:10:03.745718'
+data_provenance:
+  treatment_source:
+    connector: parquet_file
+    dataset: imported_inflation_instrument
+    series: null
+    retrieval_time: null
+    file_path: null
+    file_checksum: null
+    row_count: 59
+    column_count: null
+    date_range:
+    - '2010-02-01'
+    - '2024-04-01'
+    cache_key: null
+  outcome_source:
+    connector: parquet_file
+    dataset: real_expenditure
+    series: null
+    retrieval_time: null
+    file_path: null
+    file_checksum: null
+    row_count: 59
+    column_count: null
+    date_range:
+    - '2010-02-01'
+    - '2024-04-01'
+    cache_key: null
+  control_sources: {}
+  instrument_sources: {}
+  combined_row_count: 59
+  combined_date_range:
+  - '2010-02-01'
+  - '2024-04-01'
+  missing_rate: null
+  panel_dimensions: null
+  entity_boundary_note: null
+  kpi_definitions: null
+spec_hash: b327b4b58bb76c861cb9ea83d801f78185de731f39d0cf1487f8bfe48ffdf5b0
+spec_details:
+  design: LOCAL_PROJECTIONS
+  controls:
+  - y_lag1
+  - y_lag2
+  - x_lag1
+  - x_lag2
+  instruments: []
+  fixed_effects: []
+  se_method: HAC_newey_west
+  sample_filter: null
+  horizon: &id001
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  bandwidth: null
+estimates:
+  point: -0.003046047436360451
+  se: 0.0008366316626613632
+  ci_95:
+  - -0.004685845495176723
+  - -0.0014062493775441791
+  pvalue: 0.00027174315221028324
+  horizons: *id001
+  irf:
+  - -0.003046047436360451
+  - -0.0003922352266856569
+  - 0.0027878519749886125
+  - 0.0021407763878756435
+  - -0.001350112484190222
+  - -0.0022463784841457446
+  - 0.0010611794014361423
+  irf_ci_lower:
+  - -0.004685815363502587
+  - -0.004217607950629455
+  - 0.000526257290918495
+  - -0.00016870207220785922
+  - -0.0032022544252290758
+  - -0.006210511296905726
+  - -0.000788725705836886
+  irf_ci_upper:
+  - -0.0014062795092183152
+  - 0.003433137497258142
+  - 0.00504944665905873
+  - 0.004450254847959146
+  - 0.0005020294568486316
+  - 0.0017177543286142367
+  - 0.0029110845087091707
+diagnostics:
+  hac_bandwidth:
+    name: hac_bandwidth
+    passed: true
+    value: 3.0
+    threshold: null
+    pvalue: null
+    message: 'Newey-West bandwidth: 3'
+  effective_obs:
+    name: effective_obs
+    passed: true
+    value: 57.0
+    threshold: 20.0
+    pvalue: null
+    message: ''
+  sign_consistency:
+    name: sign_consistency
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: No expected sign specified
+  ts_leads_test:
+    name: ts_leads_test
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_residual_autocorr:
+    name: ts_residual_autocorr
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_hac_sensitivity:
+    name: ts_hac_sensitivity
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_lag_sensitivity:
+    name: ts_lag_sensitivity
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_regime_stability:
+    name: ts_regime_stability
+    passed: false
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: fail'
+  ts_shock_support:
+    name: ts_shock_support
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+all_diagnostics_pass: false
+interpretation:
+  estimand: IRF of real_expenditure to a unit shock in imported_inflation_instrument
+  is_not: Structural causal effect under all interventions
+  channels:
+  - direct
+  - indirect
+  population: ''
+  conditions: ''
+  allowed_uses: []
+  forbidden_uses: []
+failure_flags:
+  weak_identification: false
+  potential_bad_control: false
+  mechanical_identity_risk: false
+  regime_break_detected: true
+  small_sample: false
+  high_missing_rate: false
+  entity_boundary_change: false
+  definition_inconsistency: false
+  data_insufficient: false
+counterfactual:
+  supports_shock_path: true
+  supports_policy_intervention: false
+  intervention_note: Reduced-form LP estimate
+  external_validity: ''
+credibility_rating: B
+credibility_score: 0.7795555555555556
+identification:
+  claim_level: REDUCED_FORM
+  risks:
+    unmeasured_confounding: medium
+    simultaneity: low
+    weak_variation: low
+    measurement_error: low
+    selection: low
+  untestable_assumptions:
+  - No omitted common cause of treatment and outcome
+  testable_threats_passed:
+  - hac_bandwidth
+  - effective_obs
+  - sign_consistency
+  - ts_leads_test
+  - ts_residual_autocorr
+  - ts_hac_sensitivity
+  - ts_lag_sensitivity
+  - ts_shock_support
+  testable_threats_failed:
+  - ts_regime_stability
+  strategy_type: ''
+  strategy_argument: ''
+  strategy_key_assumption: ''
+counterfactual_block:
+  shock_scenario_allowed: false
+  policy_intervention_allowed: false
+  reason_shock_blocked: 'Counterfactual Use: BLOCKED
+
+    Reason: regime break risk
+
+
+    Even if p<0.05, this does not establish a causal effect.'
+  reason_policy_blocked: REDUCED_FORM mode does not allow policy interventions
+  allowed: false
+  reason_blocked: 'Counterfactual Use: BLOCKED
+
+    Reason: regime break risk
+
+
+    Even if p<0.05, this does not establish a causal effect.'
+propagation_role:
+  role: reduced_form
+  overlapping_paths: []
+  selected_for_counterfactual: true
+  mode_propagation_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: true
+    DESCRIPTIVE: true
+  mode_shock_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: true
+    DESCRIPTIVE: false
+  mode_policy_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: false
+    DESCRIPTIVE: false
+literature:
+  supporting:
+  - doi: 10.1111/1540-6261.00422
+    title: Government Ownership of Banks
+    authors:
+    - Rafael La Porta
+    - Florencio López‐de‐Silanes
+    - Andrei Shleifer
+    year: 2002
+    excerpt: ABSTRACT We assemble data on government ownership of banks around the
+      world. The data show that such ownership is large and pervasive, and higher
+      in countries with low levels of per capita income, backward financial systems,
+      interventionist and inefficient governments, and poor protection of propert
+    relevance: supporting
+    edge_id: imported_inflation_instrument_to_real_expenditure_negative
+    paper_id: ''
+    citation_count: 2501
+    search_query: Imported inflation IV Real consumption expenditure causal effect
+    source: openalex
+    pdf_url: https://onlinelibrary.wiley.com/doi/pdfdirect/10.1111/1540-6261.00422
+  - doi: 10.3386/w10766
+    title: 'Finance and Growth: Theory and Evidence'
+    authors:
+    - Ross Levine
+    year: 2004
+    excerpt: This paper reviews, appraises, and critiques theoretical and empirical
+      research on the connections between the operation of the financial system and
+      economic growth.While subject to ample qualifications and countervailing views,
+      the preponderance of evidence suggests that both financial intermediari
+    relevance: supporting
+    edge_id: imported_inflation_instrument_to_real_expenditure_negative
+    paper_id: ''
+    citation_count: 1650
+    search_query: Imported inflation IV Real consumption expenditure causal effect
+    source: openalex
+    pdf_url: https://doi.org/10.3386/w10766
+  - doi: 10.4102/SAJEMS.V11I2.310
+    title: 'Bank lending, expenditure components and inflation in South Africa: Assessment
+      from bounds testing approach'
+    authors:
+    - E. Ziramba
+    year: 2011
+    excerpt: This empirical study examines the long-run relationship between inflation
+      and its determinants in South Africa. Three models of inflation involving money
+      supply, bank credit and expenditure components are tested using the unrestricted
+      error correction models of Pesaran et al. (2001). Unlike other ex
+    relevance: supporting
+    edge_id: imported_inflation_instrument_to_real_expenditure_negative
+    paper_id: 08d85cf57264473e67e6d51c18fb7b11b6df7cb0
+    citation_count: 9
+    search_query: Imported inflation IV Real consumption expenditure causal effect
+    source: semantic_scholar
+    pdf_url: ''
+  - doi: 10.2139/SSRN.2940933
+    title: An Empirical Analysis in Effect of Macroeconomic Factors on Inflation for
+      Pakistan
+    authors:
+    - S. Hussain
+    year: 2017
+    excerpt: The current study is an effort to empirically assess the effect of various
+      macroeconomic factors on inflation in Pakistan by utilizing ordinary least squares
+      (OLS) method and Granger non-causality test in the time-series framework from
+      1973-Q3 to 2017-Q2. The empirical results confirm that real GDP,
+    relevance: supporting
+    edge_id: imported_inflation_instrument_to_real_expenditure_negative
+    paper_id: b196dd1773bcb90f201adc11efe84d2bf4454c32
+    citation_count: 3
+    search_query: Imported inflation IV Real consumption expenditure causal effect
+    source: semantic_scholar
+    pdf_url: ''
+  challenging: []
+  methodological:
+  - doi: 10.1257/jep.15.4.101
+    title: Vector Autoregressions
+    authors:
+    - James H. Stock
+    - Mark W. Watson
+    year: 2001
+    excerpt: 'This paper critically reviews the use of vector autoregressions (VARs)
+      for four tasks: data description, forecasting, structural inference, and policy
+      analysis. The paper begins with a review of VAR analysis, highlighting the differences
+      between reduced-form VARs, recursive VARs and structural VARs.'
+    relevance: methodological
+    edge_id: imported_inflation_instrument_to_real_expenditure_negative
+    paper_id: ''
+    citation_count: 1085
+    search_query: Imported inflation IV Real consumption expenditure causal effect
+    source: openalex
+    pdf_url: https://www.aeaweb.org/articles/pdf/doi/10.1257/jep.15.4.101
+  search_status: SEARCHED
+  search_timestamp: '2026-02-11T12:10:03.745787'
+  search_query: Imported inflation IV Real consumption expenditure causal effect
+  total_results: 5
+companion_edge_id: null
+variant_of: null
+is_precisely_null: false
+null_equivalence_bound: null

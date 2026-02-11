@@ -1,6 +1,6 @@
 edge_id: cor_kspi_to_total_capital_kspi
-dag_version_hash: d131ab06e0448ce0ca06e96cba9cbb5daa8404669ad95ba1b6630376a2728f3c
-created_at: '2026-02-11T11:52:16.157403'
+dag_version_hash: 26653d57356dd32eb34df1c02cad048b14bf6e9e53feb889643aa7d1ae6f233e
+created_at: '2026-02-11T12:10:04.042511'
 data_provenance:
   treatment_source:
     connector: parquet_file
@@ -319,7 +319,7 @@ literature:
     source: openalex
     pdf_url: http://hdl.handle.net/10261/81248
   search_status: SEARCHED
-  search_timestamp: '2026-02-11T11:52:16.157464'
+  search_timestamp: '2026-02-11T12:10:04.042571'
   search_query: KSPI cost of risk KSPI total capital causal effect
   total_results: 5
 companion_edge_id: null

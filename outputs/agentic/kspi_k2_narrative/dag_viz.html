@@ -901,12 +901,73 @@ const EDGES = [
     "notes": "NL-extracted: Imported inflation induced by exchange-rate depreciation-&gt;Households&#x27; purchasing power (negative)",
     "provenance_source": "",
     "provenance_detail": "",
+    "point": -0.0005775928907239527,
+    "se": 0.0015990401865153198,
+    "pvalue": 0.7179407913319331,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "B",
+    "score": 0.7755555555555556,
+    "claim_level": "REDUCED_FORM",
+    "all_pass": false,
+    "diagnostics": [
+      {
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": true
+      },
+      {
+        "name": "sign_consistency",
+        "passed": true
+      },
+      {
+        "name": "ts_leads_test",
+        "passed": true
+      },
+      {
+        "name": "ts_residual_autocorr",
+        "passed": true
+      },
+      {
+        "name": "ts_hac_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_lag_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_regime_stability",
+        "passed": false
+      },
+      {
+        "name": "ts_shock_support",
+        "passed": true
+      }
+    ],
+    "failure_flags": [
+      "regime_break_detected"
+    ],
+    "id_risks": {
+      "unmeasured_confounding": "medium",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Counterfactual Use: BLOCKED\nReason: regime break risk\n\nEven if p<0.05, this does not establish a causal effect.",
+    "n_obs": 55,
+    "strategy_type": "",
+    "strategy_argument": "",
+    "strategy_key_assumption": "",
     "issues": [],
     "has_critical_issue": false,
     "llm_annotation": "Imported inflation induced by exchange-rate depreciation causes real income to fall by reducing households\u2019 purchasing power: nominal wages and transfers typically adjust sluggishly while the prices of imported consumption goods and imported inputs (passed through into domestic prices) rise. The key risk is that exchange-rate depreciations often coincide with broader macro shocks\u2014monetary tightening, capital-flow reversals, financial distress, or terms-of-trade changes\u2014that directly affect real income, violating the exclusion restriction and making the instrument reflect more than \u201cpure\u201d imported inflation; heterogeneity in pass-through and consumption baskets can also blur the mapping from the instrument to households\u2019 effective inflation. Next, the researcher should test instrument relevance (first-stage pass-through to CPI components), probe exclusion via placebo outcomes and controls for concurrent macro/financial shocks, and check robustness across groups with different import shares (e.g., high vs. low imported-consumption exposure) to see if the implied channel matches the data.",
-    "causal_assessment": "**Strategy**: No explicit identification strategy is provided; the edge is asserted based on an economic narrative that exchange-rate\u2013driven imported inflation reduces households\u2019 purchasing power and thus real income.\n\n**Strengths**: The proposed direction is economically coherent (higher consumer prices mechanically reduce real purchasing power holding nominal income fixed), and the \u201cimported inflation\u201d construct plausibly targets an external price component rather than purely domestic demand-driven inflation.\n\n**Vulnerabilities**: Without a design (e.g., IV, natural experiment, or quasi-exogenous shock) this is vulnerable to endogeneity and omitted variables: exchange-rate depreciation and imported inflation can coincide with broader macro shocks (recessions, wage dynamics, policy responses) that also directly affect real income. The term \u201cinstrument\u201d suggests IV use, but no first-stage/weak-IV diagnostics, exclusion restriction argument, or falsification/placebo tests are provided, so the causal pathway is not empirically isolated.\n\n**Verdict**: **ABSENT**",
-    "blocked_reason": "DataScout exhausted: no data found for node &#x27;imported_inflation_instrument&#x27; after 2 passes",
-    "remediation": "Place a CSV with columns [date, imported_inflation_instrument] in data/downloaded/imported_inflation_instrument.csv, or add a source entry in the DAG YAML under nodes.imported_inflation_instrument.source."
+    "causal_assessment": "**Strategy**: No explicit identification strategy is provided; the edge is asserted based on an economic narrative that exchange-rate\u2013driven imported inflation reduces households\u2019 purchasing power and thus real income.\n\n**Strengths**: The proposed direction is economically coherent (higher consumer prices mechanically reduce real purchasing power holding nominal income fixed), and the \u201cimported inflation\u201d construct plausibly targets an external price component rather than purely domestic demand-driven inflation.\n\n**Vulnerabilities**: Without a design (e.g., IV, natural experiment, or quasi-exogenous shock) this is vulnerable to endogeneity and omitted variables: exchange-rate depreciation and imported inflation can coincide with broader macro shocks (recessions, wage dynamics, policy responses) that also directly affect real income. The term \u201cinstrument\u201d suggests IV use, but no first-stage/weak-IV diagnostics, exclusion restriction argument, or falsification/placebo tests are provided, so the causal pathway is not empirically isolated.\n\n**Verdict**: **ABSENT**"
   },
   {
     "id": "cpi_headline_to_real_income",
@@ -918,14 +979,14 @@ const EDGES = [
     "notes": "NL-extracted: Imported inflation (price level increase) with sticky incomes-&gt;Real disposable income (negative)",
     "provenance_source": "",
     "provenance_detail": "",
-    "point": null,
-    "se": null,
-    "pvalue": null,
-    "design": "DATA_INSUFFICIENT",
-    "rating": "D",
-    "score": 0.0,
-    "claim_level": "DESCRIPTIVE",
-    "all_pass": false,
+    "point": 1.4153252916031551,
+    "se": 0.880570819011491,
+    "pvalue": 0.10799260458969498,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "A",
+    "score": 0.886,
+    "claim_level": "REDUCED_FORM",
+    "all_pass": true,
     "diagnostics": [
       {
         "name": "hac_bandwidth",
@@ -933,10 +994,18 @@ const EDGES = [
       },
       {
         "name": "effective_obs",
-        "passed": false
+        "passed": true
       },
       {
         "name": "sign_consistency",
+        "passed": true
+      },
+      {
+        "name": "ts_leads_test",
+        "passed": true
+      },
+      {
+        "name": "ts_residual_autocorr",
         "passed": true
       },
       {
@@ -944,14 +1013,19 @@ const EDGES = [
         "passed": true
       },
       {
+        "name": "ts_lag_sensitivity",
+        "passed": true
+      },
+      {
         "name": "ts_regime_stability",
+        "passed": true
+      },
+      {
+        "name": "ts_shock_support",
         "passed": true
       }
     ],
-    "failure_flags": [
-      "small_sample",
-      "data_insufficient"
-    ],
+    "failure_flags": [],
     "id_risks": {
       "unmeasured_confounding": "medium",
       "simultaneity": "low",
@@ -961,8 +1035,8 @@ const EDGES = [
     },
     "cf_shock_allowed": false,
     "cf_policy_allowed": false,
-    "cf_reason_blocked": "Shock CF requires REDUCED_FORM+, edge has DESCRIPTIVE",
-    "n_obs": 0,
+    "cf_reason_blocked": "Design LOCAL_PROJECTIONS provides REDUCED_FORM level only",
+    "n_obs": 58,
     "strategy_type": "",
     "strategy_argument": "",
     "strategy_key_assumption": "",
@@ -981,12 +1055,80 @@ const EDGES = [
     "notes": "NL-extracted: Imported inflation (price level increase) with sticky incomes-&gt;Real household spending (consumption) (negative)",
     "provenance_source": "",
     "provenance_detail": "",
-    "issues": [],
-    "has_critical_issue": false,
+    "point": -0.003046047436360451,
+    "se": 0.0008366316626613632,
+    "pvalue": 0.00027174315221028324,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "B",
+    "score": 0.7795555555555556,
+    "claim_level": "REDUCED_FORM",
+    "all_pass": false,
+    "diagnostics": [
+      {
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": true
+      },
+      {
+        "name": "sign_consistency",
+        "passed": true
+      },
+      {
+        "name": "ts_leads_test",
+        "passed": true
+      },
+      {
+        "name": "ts_residual_autocorr",
+        "passed": true
+      },
+      {
+        "name": "ts_hac_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_lag_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_regime_stability",
+        "passed": false
+      },
+      {
+        "name": "ts_shock_support",
+        "passed": true
+      }
+    ],
+    "failure_flags": [
+      "regime_break_detected"
+    ],
+    "id_risks": {
+      "unmeasured_confounding": "medium",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Counterfactual Use: BLOCKED\nReason: regime break risk\n\nEven if p<0.05, this does not establish a causal effect.",
+    "n_obs": 57,
+    "strategy_type": "",
+    "strategy_argument": "",
+    "strategy_key_assumption": "",
+    "issues": [
+      {
+        "issue_key": "SIGNIFICANT_BUT_NOT_IDENTIFIED:imported_inflation_instrument_to_real_expenditure_negative",
+        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+        "severity": "CRITICAL",
+        "message": "p=0.0003 but claim_level=REDUCED_FORM. Significance does not establish causation."
+      }
+    ],
+    "has_critical_issue": true,
     "llm_annotation": "This edge represents the idea that an exogenous rise in imported inflation raises the prices of tradable consumption goods, and with nominal incomes adjusting sluggishly, households\u2019 real purchasing power falls, leading to lower real expenditure. The main risks are that the \u201cimported inflation\u201d instrument may not be truly exogenous\u2014e.g., it could proxy for domestic demand conditions, exchange-rate movements tied to local shocks, or policy responses that independently affect consumption\u2014creating omitted-variable bias. A researcher should check instrument relevance and exogeneity by documenting the pass-through to consumer prices, showing weak/limited correlation with domestic activity and policy shocks, and running placebo/balance tests (e.g., pre-trends, effects on clearly non-tradable components) to support the exclusion restriction.",
-    "causal_assessment": "**Strategy**: No identification strategy is provided; the edge asserts a negative causal effect of imported inflation on real expenditure based on narrative economic reasoning (sticky nominal incomes).\n\n**Strengths**: The sign is theoretically coherent: if nominal incomes are sticky in the short run, higher import prices raise the cost of consumption baskets and can reduce real purchasing power and real consumption. This mechanism is consistent with standard real-income/terms-of-trade channels in open-economy macro.\n\n**Vulnerabilities**: Without an exogenous source of variation in \u201cimported inflation,\u201d the relationship is highly confounded (e.g., global demand shocks, domestic monetary/fiscal responses, exchange-rate movements, and simultaneous recession dynamics can move both inflation and real spending). Reverse causality is also plausible: domestic demand conditions can affect exchange rates, pass-through, and measured import prices, and policy reactions can jointly determine inflation and consumption.\n\n**Verdict**: **ABSENT**",
-    "blocked_reason": "DataScout exhausted: no data found for node &#x27;imported_inflation_instrument&#x27; after 2 passes",
-    "remediation": "Place a CSV with columns [date, imported_inflation_instrument] in data/downloaded/imported_inflation_instrument.csv, or add a source entry in the DAG YAML under nodes.imported_inflation_instrument.source."
+    "causal_assessment": "**Strategy**: No identification strategy is provided; the edge asserts a negative causal effect of imported inflation on real expenditure based on narrative economic reasoning (sticky nominal incomes).\n\n**Strengths**: The sign is theoretically coherent: if nominal incomes are sticky in the short run, higher import prices raise the cost of consumption baskets and can reduce real purchasing power and real consumption. This mechanism is consistent with standard real-income/terms-of-trade channels in open-economy macro.\n\n**Vulnerabilities**: Without an exogenous source of variation in \u201cimported inflation,\u201d the relationship is highly confounded (e.g., global demand shocks, domestic monetary/fiscal responses, exchange-rate movements, and simultaneous recession dynamics can move both inflation and real spending). Reverse causality is also plausible: domestic demand conditions can affect exchange rates, pass-through, and measured import prices, and policy reactions can jointly determine inflation and consumption.\n\n**Verdict**: **ABSENT**"
   },
   {
     "id": "transfer_income_to_nominal_income_buffering",
@@ -1061,14 +1203,14 @@ const EDGES = [
     "notes": "NL-extracted: Household purchasing-power squeeze (real income/spending softening)-&gt;Kaspi balance-sheet pressure (positive); Household squeeze / reduced purchasing power-&gt;Repayment stress (delinquencies and provisions) (positive); Deterioration in macro conditions / household squeeze (stress)-&gt;Increase in &#x27;macro provisioning&#x27; ahead of realized defaults (positive)",
     "provenance_source": "",
     "provenance_detail": "",
-    "point": null,
-    "se": null,
-    "pvalue": null,
-    "design": "DATA_INSUFFICIENT",
-    "rating": "D",
-    "score": 0.0,
-    "claim_level": "DESCRIPTIVE",
-    "all_pass": false,
+    "point": 7.012128804851029,
+    "se": 3.8406255045461553,
+    "pvalue": 0.06788373779385015,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "A",
+    "score": 0.84,
+    "claim_level": "REDUCED_FORM",
+    "all_pass": true,
     "diagnostics": [
       {
         "name": "hac_bandwidth",
@@ -1076,10 +1218,18 @@ const EDGES = [
       },
       {
         "name": "effective_obs",
-        "passed": false
+        "passed": true
       },
       {
         "name": "sign_consistency",
+        "passed": true
+      },
+      {
+        "name": "ts_leads_test",
+        "passed": true
+      },
+      {
+        "name": "ts_residual_autocorr",
         "passed": true
       },
       {
@@ -1087,14 +1237,19 @@ const EDGES = [
         "passed": true
       },
       {
+        "name": "ts_lag_sensitivity",
+        "passed": true
+      },
+      {
         "name": "ts_regime_stability",
+        "passed": true
+      },
+      {
+        "name": "ts_shock_support",
         "passed": true
       }
     ],
-    "failure_flags": [
-      "small_sample",
-      "data_insufficient"
-    ],
+    "failure_flags": [],
     "id_risks": {
       "unmeasured_confounding": "medium",
       "simultaneity": "low",
@@ -1104,8 +1259,8 @@ const EDGES = [
     },
     "cf_shock_allowed": false,
     "cf_policy_allowed": false,
-    "cf_reason_blocked": "Shock CF requires REDUCED_FORM+, edge has DESCRIPTIVE",
-    "n_obs": 0,
+    "cf_reason_blocked": "Design LOCAL_PROJECTIONS provides REDUCED_FORM level only",
+    "n_obs": 35,
     "strategy_type": "",
     "strategy_argument": "",
     "strategy_key_assumption": "",
@@ -1532,12 +1687,78 @@ const EDGES = [
     "notes": "Auto-created identity edge from imported_inflation_iv",
     "provenance_source": "",
     "provenance_detail": "",
-    "issues": [],
-    "has_critical_issue": false,
+    "point": 0.2643679548669966,
+    "se": 0.0025493606661942834,
+    "pvalue": 0.0,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "A",
+    "score": 0.97,
+    "claim_level": "REDUCED_FORM",
+    "all_pass": true,
+    "diagnostics": [
+      {
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": true
+      },
+      {
+        "name": "sign_consistency",
+        "passed": true
+      },
+      {
+        "name": "ts_leads_test",
+        "passed": true
+      },
+      {
+        "name": "ts_residual_autocorr",
+        "passed": true
+      },
+      {
+        "name": "ts_hac_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_lag_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_regime_stability",
+        "passed": true
+      },
+      {
+        "name": "ts_shock_support",
+        "passed": true
+      }
+    ],
+    "failure_flags": [],
+    "id_risks": {
+      "unmeasured_confounding": "medium",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Design LOCAL_PROJECTIONS provides REDUCED_FORM level only",
+    "n_obs": 178,
+    "strategy_type": "",
+    "strategy_argument": "",
+    "strategy_key_assumption": "",
+    "issues": [
+      {
+        "issue_key": "SIGNIFICANT_BUT_NOT_IDENTIFIED:kzt_usd_to_imported_inflation_instrument",
+        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+        "severity": "CRITICAL",
+        "message": "p=0.0000 but claim_level=REDUCED_FORM. Significance does not establish causation."
+      }
+    ],
+    "has_critical_issue": true,
     "llm_annotation": "Movements in the KZT/USD exchange rate mechanically feed into the construction of the imported-inflation instrument (e.g., via the local-currency price of imported goods), so the instrument co-moves with KZT depreciation/appreciation by design. The main risk is that this \u201cidentity\u201d link embeds channels other than imported-price pass-through\u2014such as policy reactions, capital-flow shocks, or commodity-price co-movements that also move KZT/USD\u2014so the instrument may inherit endogeneity rather than isolate exogenous import-cost variation. A researcher should verify the instrument formula and weights, check how sensitive it is to exchange-rate-only variation versus foreign prices, and run balance/placebo tests to see whether KZT/USD-driven changes in the instrument also predict outcomes that should not respond to imported inflation.",
-    "causal_assessment": "**Strategy**: No causal identification is being claimed; this is an identity/construct edge where `imported_inflation_instrument` is mechanically derived from `kzt_usd` (auto-created from the IV construction).\n\n**Strengths**: If the instrument variable is explicitly defined as a deterministic function of `kzt_usd` (e.g., the FX rate itself or a component used in its calculation), then the relationship is tautologically true and does not require econometric identification.\n\n**Vulnerabilities**: This edge provides zero evidence that `kzt_usd` is exogenous with respect to the downstream outcome; any endogeneity of FX (policy responses, commodity shocks, capital flows) directly carries into the constructed instrument. If the \u201cidentity\u201d mapping is not exact (e.g., additional data sources, lags, transformations, or revisions), measurement error or undocumented processing could break the supposed determinism.\n\n**Verdict**: ABSENT",
-    "blocked_reason": "DataScout exhausted: no data found for node &#x27;imported_inflation_instrument&#x27; after 2 passes",
-    "remediation": "Place a CSV with columns [date, imported_inflation_instrument] in data/downloaded/imported_inflation_instrument.csv, or add a source entry in the DAG YAML under nodes.imported_inflation_instrument.source."
+    "causal_assessment": "**Strategy**: No causal identification is being claimed; this is an identity/construct edge where `imported_inflation_instrument` is mechanically derived from `kzt_usd` (auto-created from the IV construction).\n\n**Strengths**: If the instrument variable is explicitly defined as a deterministic function of `kzt_usd` (e.g., the FX rate itself or a component used in its calculation), then the relationship is tautologically true and does not require econometric identification.\n\n**Vulnerabilities**: This edge provides zero evidence that `kzt_usd` is exogenous with respect to the downstream outcome; any endogeneity of FX (policy responses, commodity shocks, capital flows) directly carries into the constructed instrument. If the \u201cidentity\u201d mapping is not exact (e.g., additional data sources, lags, transformations, or revisions), measurement error or undocumented processing could break the supposed determinism.\n\n**Verdict**: ABSENT"
   },
   {
     "id": "e_import_share_to_imported_inflation_instrument",
@@ -1552,12 +1773,83 @@ const EDGES = [
     "strategy_type": "accounting_identity",
     "strategy_argument": "IV = diff(log(kzt_usd)) * E_import_share is a deterministic construction.",
     "strategy_key_assumption": "Pre-period import shares are fixed exposure weights.",
-    "issues": [],
-    "has_critical_issue": false,
+    "point": 55.96080616899593,
+    "se": 28.454866496208084,
+    "pvalue": 0.04922340067486691,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "A",
+    "score": 0.8655555555555556,
+    "claim_level": "REDUCED_FORM",
+    "all_pass": false,
+    "diagnostics": [
+      {
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": true
+      },
+      {
+        "name": "sign_consistency",
+        "passed": true
+      },
+      {
+        "name": "ts_leads_test",
+        "passed": true
+      },
+      {
+        "name": "ts_residual_autocorr",
+        "passed": true
+      },
+      {
+        "name": "ts_hac_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_lag_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_regime_stability",
+        "passed": false
+      },
+      {
+        "name": "ts_shock_support",
+        "passed": true
+      }
+    ],
+    "failure_flags": [
+      "regime_break_detected"
+    ],
+    "id_risks": {
+      "unmeasured_confounding": "medium",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Counterfactual Use: BLOCKED\nReason: regime break risk\n\nEven if p<0.05, this does not establish a causal effect.",
+    "n_obs": 178,
+    "issues": [
+      {
+        "issue_key": "SIGNIFICANT_BUT_NOT_IDENTIFIED:e_import_share_to_imported_inflation_instrument",
+        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+        "severity": "CRITICAL",
+        "message": "p=0.0492 but claim_level=REDUCED_FORM. Significance does not establish causation."
+      },
+      {
+        "issue_key": "RATING_DIAGNOSTICS_CONFLICT:e_import_share_to_imported_inflation_instrument",
+        "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
+        "severity": "HIGH",
+        "message": "A-rating despite failed diagnostics."
+      }
+    ],
+    "has_critical_issue": true,
     "llm_annotation": "Higher import share mechanically enters the construction of the imported-inflation instrument as an exposure weight, so units with larger import shares receive a larger loading on the same external price shocks. The main risk is not causal misspecification but measurement and definitional error (e.g., time-varying import shares treated as static, mismeasured trade shares, mismatched sector/country aggregation) that can induce attenuation or spurious cross-sectional variation in the instrument. Next, a researcher should verify the exact formula and units, confirm the import-share measure is predetermined relative to the outcome window, and run robustness checks to alternative base years/definitions of import share and to allowing modest time variation.",
-    "causal_assessment": "**Strategy**: This edge is defined by an accounting identity: the \u201cimported_inflation_instrument\u201d is mechanically constructed as \\( \\Delta \\log(kzt\\_usd)\\times E\\_import\\_share\\), so \\(E\\_import\\_share\\) deterministically maps into the instrument.\n\n**Strengths**: Because it is a deterministic construction, there is no statistical identification problem for this mapping itself\u2014given the formula, changes in \\(E\\_import\\_share\\) translate one-for-one into the computed instrument holding the exchange-rate term fixed. Using *pre-period* import shares can reduce simultaneity with contemporaneous shocks (i.e., avoids using endogenous current shares).\n\n**Vulnerabilities**: This is not a causal relationship in the econometric sense; it\u2019s a definition, so it does not provide exogenous variation or a testable exclusion restriction relevant for downstream causal claims. If \u201cpre-period\u201d shares are not truly predetermined (e.g., influenced by anticipatory behavior, policy, or earlier trends correlated with outcomes), then even the intended interpretation of the instrument as exogenous \u201cexposure\u201d can be compromised in subsequent stages.\n\n**Verdict**: **ABSENT**",
-    "blocked_reason": "DataScout exhausted: no data found for node &#x27;E_import_share&#x27; after 2 passes",
-    "remediation": "Place a CSV with columns [date, E_import_share] in data/downloaded/E_import_share.csv, or add a source entry in the DAG YAML under nodes.E_import_share.source."
+    "causal_assessment": "**Strategy**: This edge is defined by an accounting identity: the \u201cimported_inflation_instrument\u201d is mechanically constructed as \\( \\Delta \\log(kzt\\_usd)\\times E\\_import\\_share\\), so \\(E\\_import\\_share\\) deterministically maps into the instrument.\n\n**Strengths**: Because it is a deterministic construction, there is no statistical identification problem for this mapping itself\u2014given the formula, changes in \\(E\\_import\\_share\\) translate one-for-one into the computed instrument holding the exchange-rate term fixed. Using *pre-period* import shares can reduce simultaneity with contemporaneous shocks (i.e., avoids using endogenous current shares).\n\n**Vulnerabilities**: This is not a causal relationship in the econometric sense; it\u2019s a definition, so it does not provide exogenous variation or a testable exclusion restriction relevant for downstream causal claims. If \u201cpre-period\u201d shares are not truly predetermined (e.g., influenced by anticipatory behavior, policy, or earlier trends correlated with outcomes), then even the intended interpretation of the instrument as exogenous \u201cexposure\u201d can be compromised in subsequent stages.\n\n**Verdict**: **ABSENT**"
   },
   {
     "id": "total_capital_kspi_to_k2_ratio_kspi",
@@ -2141,13 +2433,13 @@ const EDGES = [
     "notes": "When real income falls, households cut consumption expenditure",
     "provenance_source": "",
     "provenance_detail": "",
-    "point": null,
-    "se": null,
-    "pvalue": null,
-    "design": "DATA_INSUFFICIENT",
-    "rating": "D",
-    "score": 0.0,
-    "claim_level": "DESCRIPTIVE",
+    "point": 0.6950820896963353,
+    "se": 0.31900447977368895,
+    "pvalue": 0.029338345743874693,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "A",
+    "score": 0.8015555555555556,
+    "claim_level": "BLOCKED_ID",
     "all_pass": false,
     "diagnostics": [
       {
@@ -2156,10 +2448,18 @@ const EDGES = [
       },
       {
         "name": "effective_obs",
-        "passed": false
+        "passed": true
       },
       {
         "name": "sign_consistency",
+        "passed": true
+      },
+      {
+        "name": "ts_leads_test",
+        "passed": false
+      },
+      {
+        "name": "ts_residual_autocorr",
         "passed": true
       },
       {
@@ -2167,14 +2467,19 @@ const EDGES = [
         "passed": true
       },
       {
+        "name": "ts_lag_sensitivity",
+        "passed": true
+      },
+      {
         "name": "ts_regime_stability",
+        "passed": true
+      },
+      {
+        "name": "ts_shock_support",
         "passed": true
       }
     ],
-    "failure_flags": [
-      "small_sample",
-      "data_insufficient"
-    ],
+    "failure_flags": [],
     "id_risks": {
       "unmeasured_confounding": "medium",
       "simultaneity": "low",
@@ -2184,13 +2489,26 @@ const EDGES = [
     },
     "cf_shock_allowed": false,
     "cf_policy_allowed": false,
-    "cf_reason_blocked": "Shock CF requires REDUCED_FORM+, edge has DESCRIPTIVE",
-    "n_obs": 0,
+    "cf_reason_blocked": "Shock CF requires REDUCED_FORM+, edge has BLOCKED_ID",
+    "n_obs": 38,
     "strategy_type": "",
     "strategy_argument": "",
     "strategy_key_assumption": "",
-    "issues": [],
-    "has_critical_issue": false
+    "issues": [
+      {
+        "issue_key": "SIGNIFICANT_BUT_NOT_IDENTIFIED:real_income_to_real_expenditure",
+        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+        "severity": "CRITICAL",
+        "message": "p=0.0293 but claim_level=BLOCKED_ID. Significance does not establish causation."
+      },
+      {
+        "issue_key": "RATING_DIAGNOSTICS_CONFLICT:real_income_to_real_expenditure",
+        "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
+        "severity": "HIGH",
+        "message": "A-rating despite failed diagnostics."
+      }
+    ],
+    "has_critical_issue": true
   }
 ];
 const LATENTS = [];
@@ -2951,7 +3269,7 @@ const ACTIONS_BY_RULE = {
     ]
   }
 };
-const GENERATED_AT = "2026-02-11 19:52:25 UTC";
+const GENERATED_AT = "2026-02-11 20:10:14 UTC";
 const ISSUE_GUIDANCE = {
   "SIGNIFICANT_BUT_NOT_IDENTIFIED:rwa_kspi_to_k2_ratio_kspi": "**Finding**: The edge `rwa_kspi_to_k2_ratio_kspi` is statistically significant with a negative coefficient of **-0.00606** (SE **0.00205**, **p=0.00309**, **N=25**) under **LOCAL_PROJECTIONS**, but it is flagged **claim_level=BLOCKED_ID**.\n\n**Concern**: Despite the low p-value, causal interpretation is not credible because the edge **fails the `ts_leads_test`** (a key pre-trend/anticipation diagnostic), meaning the outcome appears to move **before** the purported shock and the estimated effect could reflect reverse causality or omitted time-varying confounding rather than `rwa_kspi` causing changes in `k2_ratio_kspi`.\n\n**Recommendation**: Keep the claim **blocked for causal use** and treat the estimate (**-0.00606**, p=0.00309) as **associational only** until you re-specify and re-estimate in a way that passes `ts_leads_test` (e.g., adjust timing/lag structure in the local projection, add relevant controls/time effects, or use an identification strategy like an IV or stronger quasi-experimental design); if you must act now, base decisions on robustness across specifications rather than this single significant-but-not-identified result.",
   "SIGNIFICANT_BUT_NOT_IDENTIFIED:cpi_nontradable_to_cpi_headline": "**Finding**: The edge **cpi_nontradable \u2192 cpi_headline** is statistically significant (**coef = 0.7221**, **SE = 0.2269**, **p = 0.001459**, **N = 176**, LOCAL_PROJECTIONS) but is marked **BLOCKED_ID** with a **failed ts_leads_test**.\n\n**Concern**: Despite the strong p-value (0.001459), the **failed ts_leads_test** indicates violations consistent with **non-causal timing/anticipation or residual confounding**, so treating 0.7221 as a causal effect risks attributing predictive correlation to causation, directly contradicting the **BLOCKED_ID** identification status.\n\n**Recommendation**: Keep the claim **blocked for causal interpretation** and either (i) **repair identification** by modifying the LP specification to pass the **ts_leads_test** (e.g., add/adjust leads/lags and controls until leads are jointly null), or (ii) if you must use it now, **downgrade the statement to predictive association** (\u201ca 1-unit increase in nontradable CPI is associated with +0.722 in headline CPI\u201d) and do not use it for policy/counterfactual decisions until the leads test passes.",

@@ -1,10 +1,23 @@
 {
   "dag_name": "kspi_k2_stress_narrative",
-  "dag_version_hash": "d131ab06e0448ce0ca06e96cba9cbb5daa8404669ad95ba1b6630376a2728f3c",
-  "created_at": "2026-02-11T11:52:16.864429",
+  "dag_version_hash": "26653d57356dd32eb34df1c02cad048b14bf6e9e53feb889643aa7d1ae6f233e",
+  "created_at": "2026-02-11T12:10:04.853942",
   "mode": "EXPLORATION",
   "iteration": 0,
   "edge_summaries": [
+    {
+      "edge_id": "imported_inflation_instrument_to_real_expenditure_negative",
+      "treatment": "y_lag1",
+      "outcome": "",
+      "design": "LOCAL_PROJECTIONS",
+      "estimate": -0.003046047436360451,
+      "se": 0.0008366316626613632,
+      "credibility_rating": "B",
+      "credibility_score": 0.7795555555555556,
+      "diagnostics_pass": false,
+      "is_precisely_null": false,
+      "status": "DONE"
+    },
     {
       "edge_id": "kzt_usd_to_cpi_tradable",
       "treatment": "y_lag1",
@@ -12,6 +25,19 @@
       "design": "LOCAL_PROJECTIONS",
       "estimate": 0.0001308707005012602,
       "se": 7.462327268926213e-05,
+      "credibility_rating": "A",
+      "credibility_score": 0.97,
+      "diagnostics_pass": true,
+      "is_precisely_null": false,
+      "status": "DONE"
+    },
+    {
+      "edge_id": "kzt_usd_to_imported_inflation_instrument",
+      "treatment": "y_lag1",
+      "outcome": "",
+      "design": "LOCAL_PROJECTIONS",
+      "estimate": 0.2643679548669966,
+      "se": 0.0025493606661942834,
       "credibility_rating": "A",
       "credibility_score": 0.97,
       "diagnostics_pass": true,
@@ -30,6 +56,19 @@
       "diagnostics_pass": false,
       "is_precisely_null": false,
       "status": "DONE_SUGGESTIVE"
+    },
+    {
+      "edge_id": "imported_inflation_instrument_to_real_income",
+      "treatment": "y_lag1",
+      "outcome": "",
+      "design": "LOCAL_PROJECTIONS",
+      "estimate": -0.0005775928907239527,
+      "se": 0.0015990401865153198,
+      "credibility_rating": "B",
+      "credibility_score": 0.7755555555555556,
+      "diagnostics_pass": false,
+      "is_precisely_null": true,
+      "status": "DONE"
     },
     {
       "edge_id": "rwa_kspi_to_k2_ratio_kspi",
@@ -74,14 +113,14 @@
       "edge_id": "cpi_headline_to_real_income",
       "treatment": "y_lag1",
       "outcome": "",
-      "design": "DATA_INSUFFICIENT",
-      "estimate": null,
-      "se": null,
-      "credibility_rating": "D",
-      "credibility_score": 0.0,
-      "diagnostics_pass": false,
-      "is_precisely_null": false,
-      "status": "DONE_SUGGESTIVE"
+      "design": "LOCAL_PROJECTIONS",
+      "estimate": 1.4153252916031551,
+      "se": 0.880570819011491,
+      "credibility_rating": "A",
+      "credibility_score": 0.886,
+      "diagnostics_pass": true,
+      "is_precisely_null": true,
+      "status": "DONE"
     },
     {
       "edge_id": "vix_shock_to_deposit_cost_kspi",
@@ -113,14 +152,14 @@
       "edge_id": "real_income_to_real_expenditure",
       "treatment": "y_lag1",
       "outcome": "",
-      "design": "DATA_INSUFFICIENT",
-      "estimate": null,
-      "se": null,
-      "credibility_rating": "D",
-      "credibility_score": 0.0,
+      "design": "LOCAL_PROJECTIONS",
+      "estimate": 0.6950820896963353,
+      "se": 0.31900447977368895,
+      "credibility_rating": "A",
+      "credibility_score": 0.8015555555555556,
       "diagnostics_pass": false,
       "is_precisely_null": false,
-      "status": "DONE_SUGGESTIVE"
+      "status": "DONE"
     },
     {
       "edge_id": "cor_kspi_to_total_capital_kspi",
@@ -188,6 +227,19 @@
       "status": "DONE"
     },
     {
+      "edge_id": "e_import_share_to_imported_inflation_instrument",
+      "treatment": "y_lag1",
+      "outcome": "",
+      "design": "LOCAL_PROJECTIONS",
+      "estimate": 55.96080616899593,
+      "se": 28.454866496208084,
+      "credibility_rating": "A",
+      "credibility_score": 0.8655555555555556,
+      "diagnostics_pass": false,
+      "is_precisely_null": false,
+      "status": "DONE"
+    },
+    {
       "edge_id": "total_capital_kspi_to_k2_ratio_kspi",
       "treatment": "y_lag1",
       "outcome": "",
@@ -217,14 +269,14 @@
       "edge_id": "real_income_to_cor_kspi",
       "treatment": "y_lag1",
       "outcome": "",
-      "design": "DATA_INSUFFICIENT",
-      "estimate": null,
-      "se": null,
-      "credibility_rating": "D",
-      "credibility_score": 0.0,
-      "diagnostics_pass": false,
+      "design": "LOCAL_PROJECTIONS",
+      "estimate": 7.012128804851029,
+      "se": 3.8406255045461553,
+      "credibility_rating": "A",
+      "credibility_score": 0.84,
+      "diagnostics_pass": true,
       "is_precisely_null": false,
-      "status": "DONE_SUGGESTIVE"
+      "status": "DONE"
     },
     {
       "edge_id": "nominal_income_to_real_income",
@@ -240,40 +292,35 @@
       "status": "DONE"
     }
   ],
-  "blocked_edges": {
-    "imported_inflation_instrument_to_real_income": "DataScout exhausted: no data found for node 'imported_inflation_instrument' after 2 passes",
-    "imported_inflation_instrument_to_real_expenditure_negative": "DataScout exhausted: no data found for node 'imported_inflation_instrument' after 2 passes",
-    "kzt_usd_to_imported_inflation_instrument": "DataScout exhausted: no data found for node 'imported_inflation_instrument' after 2 passes",
-    "e_import_share_to_imported_inflation_instrument": "DataScout exhausted: no data found for node 'E_import_share' after 2 passes"
-  },
+  "blocked_edges": {},
   "critical_path": {
     "target_node": "k2_ratio_kspi",
     "path_edges": [
-      "kzt_usd_to_cpi_nontradable",
-      "cpi_headline_to_real_expenditure",
-      "cpi_tradable_to_cpi_headline",
-      "real_income_to_real_expenditure",
-      "cpi_nontradable_to_cpi_headline",
-      "imported_inflation_instrument_to_real_income",
-      "rwa_kspi_to_k2_ratio_kspi",
-      "ppop_kspi_to_total_capital_kspi",
-      "cpi_headline_to_real_income",
-      "nominal_income_to_real_income",
-      "vix_shock_to_ppop_kspi",
-      "nominal_expenditure_to_real_expenditure",
       "real_expenditure_to_ppop_kspi",
-      "real_income_to_cor_kspi",
+      "rwa_kspi_to_k2_ratio_kspi",
+      "cor_kspi_to_total_capital_kspi",
+      "imported_inflation_instrument_to_real_income",
+      "kzt_usd_to_cpi_nontradable",
       "kzt_usd_to_imported_inflation_instrument",
-      "kzt_usd_to_cpi_tradable",
-      "transfer_income_to_nominal_income_buffering",
-      "e_import_share_to_imported_inflation_instrument",
+      "cpi_nontradable_to_cpi_headline",
       "total_capital_kspi_to_k2_ratio_kspi",
       "imported_inflation_instrument_to_real_expenditure_negative",
-      "cor_kspi_to_total_capital_kspi"
+      "vix_shock_to_ppop_kspi",
+      "real_income_to_cor_kspi",
+      "ppop_kspi_to_total_capital_kspi",
+      "cpi_tradable_to_cpi_headline",
+      "transfer_income_to_nominal_income_buffering",
+      "kzt_usd_to_cpi_tradable",
+      "e_import_share_to_imported_inflation_instrument",
+      "nominal_income_to_real_income",
+      "nominal_expenditure_to_real_expenditure",
+      "real_income_to_real_expenditure",
+      "cpi_headline_to_real_expenditure",
+      "cpi_headline_to_real_income"
     ],
     "path_complete": true,
     "min_credibility": 0.0,
-    "mean_credibility": 0.5426013071895425,
+    "mean_credibility": 0.7210687830687831,
     "blocking_edges": []
   },
   "all_edges_complete": true,
@@ -281,7 +328,7 @@
   "credibility_stats": {
     "min": 0.0,
     "max": 0.97,
-    "mean": 0.5464074074074073
+    "mean": 0.7160707070707071
   },
   "audit": {
     "total_iterations": 0,
