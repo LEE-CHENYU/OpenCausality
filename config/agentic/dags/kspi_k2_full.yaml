@@ -351,7 +351,7 @@ nodes:
   derived: true
   identity:
     name: imported_inflation_iv
-    formula: diff(log(kzt_usd)) * E_import_share
+    formula: diff(kzt_usd) * E_import_share
     depends_on:
     - kzt_usd
     - E_import_share
@@ -435,7 +435,7 @@ nodes:
   derived: true
   identity:
     name: real_income_identity
-    formula: log(nominal_income) - log(cpi_headline)
+    formula: nominal_income - cpi_headline
     depends_on:
     - nominal_income
     - cpi_headline
@@ -559,7 +559,7 @@ nodes:
   derived: true
   identity:
     name: real_expenditure_identity
-    formula: log(nominal_expenditure) - log(cpi_headline)
+    formula: nominal_expenditure - cpi_headline
     depends_on:
     - nominal_expenditure
     - cpi_headline

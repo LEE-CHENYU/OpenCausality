@@ -1,4 +1,4 @@
-\begin{thebibliography}{17}
+\begin{thebibliography}{16}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -44,14 +44,6 @@ David~Maxwell Chickering.
   2002.
 \newblock \doi{10.1162/153244303321897717}.
 \newblock URL \url{https://jmlr.org/papers/v3/chickering02b.html}.
-
-\bibitem[Dalgic(2024)]{dalgic2024dollarization}
-Husnu~C. Dalgic.
-\newblock Financial dollarization in emerging markets: An insurance
-  arrangement.
-\newblock \emph{International Economic Review}, 65\penalty0 (3):\penalty0
-  1189--1219, 2024.
-\newblock \doi{10.1111/iere.12686}.
 
 \bibitem[Ioannidis(2005)]{ioannidis2005why}
 John P.~A. Ioannidis.

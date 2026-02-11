@@ -45,6 +45,11 @@ Be conservative: only extract claims with clear causal language.
 "correlated with" is NOT causal. "leads to", "causes", "affects" ARE.
 Claims using "associated with" are causal ONLY if the paper uses a credible ID strategy.
 
+IMPORTANT: Also extract DOWNSTREAM TRANSMISSION claims. If the text states that
+variable A affects variable B, AND variable B affects variable C, extract BOTH
+the A->B and B->C claims. Do not stop at intermediate nodes — trace the full
+causal chain to terminal outcomes (e.g., capital adequacy, default rates, profits).
+
 Return a JSON array of claims."""
 
 CAUSAL_CLAIM_EXTRACTION_USER = """\
