@@ -1,0 +1,28 @@
+digraph us_oil_macro {
+  rankdir=LR;
+  node [shape=box, style=rounded, fontsize=11];
+  edge [fontsize=9];
+
+  oil_supply_shock [label="Oil supply shock (Baumeister)", fillcolor="#FFD700", style="filled,rounded"];
+  oil_price [label="Brent crude oil price", fillcolor="#87CEEB", style="filled,rounded"];
+  cpi_headline [label="US CPI All Items", fillcolor="#87CEEB", style="filled,rounded"];
+  cpi_core [label="US Core CPI (less food & energy)", fillcolor="#87CEEB", style="filled,rounded"];
+  industrial_production [label="US Industrial Production Index", fillcolor="#87CEEB", style="filled,rounded"];
+  vix [label="VIX Financial Stress Index", fillcolor="#87CEEB", style="filled,rounded"];
+  fed_funds_rate [label="Federal Funds Rate", fillcolor="#87CEEB", style="filled,rounded"];
+  unemployment [label="US Unemployment Rate", fillcolor="#90EE90", style="filled,rounded"];
+  consumer_sentiment [label="Michigan Consumer Sentiment", fillcolor="#FF6B6B", style="filled,rounded"];
+  nfci [label="National Financial Conditions Index", fillcolor="#87CEEB", style="filled,rounded"];
+
+  oil_supply_shock -> oil_price [label=" 0m (+)", style=solid];
+  oil_price -> cpi_headline [label=" 1m (+)", style=solid];
+  oil_price -> cpi_core [label=" 3m (+)", style=dashed];
+  oil_price -> industrial_production [label=" 2m (-)", style=solid];
+  oil_price -> vix [label=" 0m (+)", style=dashed];
+  oil_price -> consumer_sentiment [label=" 1m (-)", style=dashed];
+  cpi_headline -> fed_funds_rate [label=" 1m (+)", style=bold];
+  fed_funds_rate -> unemployment [label=" 6m (+)", style=solid];
+  vix -> industrial_production [label=" 1m (-)", style=dashed];
+  vix -> nfci [label=" 0m (+)", style=dotted];
+  industrial_production -> unemployment [label=" 3m (-)", style=dashed];
+}

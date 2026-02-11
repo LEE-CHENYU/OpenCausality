@@ -1,0 +1,170 @@
+{
+  "dag_name": "us_oil_shock_transmission",
+  "dag_version_hash": "e7b73592c7f1cd694cf5464692c2537dd2ba6f09693851f3bb0169fdb710a7d9",
+  "created_at": "2026-02-11T13:59:12.814870",
+  "mode": "EXPLORATION",
+  "iteration": 0,
+  "edge_summaries": [
+    {
+      "edge_id": "cpi_to_fed_funds",
+      "treatment": "y_lag1",
+      "outcome": "",
+      "design": "LOCAL_PROJECTIONS",
+      "estimate": -0.3189962346409807,
+      "se": 1.1142229065156979,
+      "credibility_rating": "A",
+      "credibility_score": 0.9255555555555555,
+      "diagnostics_pass": false,
+      "is_precisely_null": true,
+      "status": "DONE"
+    },
+    {
+      "edge_id": "oil_to_industrial",
+      "treatment": "y_lag1",
+      "outcome": "",
+      "design": "LOCAL_PROJECTIONS",
+      "estimate": 0.03692796801159097,
+      "se": 0.020089336682932123,
+      "credibility_rating": "A",
+      "credibility_score": 0.9255555555555555,
+      "diagnostics_pass": false,
+      "is_precisely_null": false,
+      "status": "DONE"
+    },
+    {
+      "edge_id": "fed_funds_to_unemployment",
+      "treatment": "y_lag1",
+      "outcome": "",
+      "design": "LOCAL_PROJECTIONS",
+      "estimate": -0.08681335285812589,
+      "se": 0.03247970142272697,
+      "credibility_rating": "A",
+      "credibility_score": 0.97,
+      "diagnostics_pass": true,
+      "is_precisely_null": false,
+      "status": "DONE"
+    },
+    {
+      "edge_id": "oil_shock_to_oil_price",
+      "treatment": "y_lag1",
+      "outcome": "",
+      "design": "LOCAL_PROJECTIONS",
+      "estimate": -0.05177017851853955,
+      "se": 0.005539800935442799,
+      "credibility_rating": "A",
+      "credibility_score": 0.97,
+      "diagnostics_pass": true,
+      "is_precisely_null": false,
+      "status": "DONE"
+    },
+    {
+      "edge_id": "oil_to_vix",
+      "treatment": "y_lag1",
+      "outcome": "",
+      "design": "LOCAL_PROJECTIONS",
+      "estimate": -0.533571520464672,
+      "se": 0.15742471020129933,
+      "credibility_rating": "A",
+      "credibility_score": 0.8655555555555556,
+      "diagnostics_pass": false,
+      "is_precisely_null": false,
+      "status": "DONE"
+    },
+    {
+      "edge_id": "vix_to_industrial",
+      "treatment": "y_lag1",
+      "outcome": "",
+      "design": "LOCAL_PROJECTIONS",
+      "estimate": -0.0017039418786865671,
+      "se": 0.0031604067998167585,
+      "credibility_rating": "A",
+      "credibility_score": 0.9255555555555555,
+      "diagnostics_pass": false,
+      "is_precisely_null": true,
+      "status": "DONE"
+    },
+    {
+      "edge_id": "oil_to_cpi_core",
+      "treatment": "y_lag1",
+      "outcome": "",
+      "design": "LOCAL_PROJECTIONS",
+      "estimate": 0.002276934120697647,
+      "se": 0.0008821076804271966,
+      "credibility_rating": "A",
+      "credibility_score": 0.9255555555555555,
+      "diagnostics_pass": false,
+      "is_precisely_null": false,
+      "status": "DONE"
+    },
+    {
+      "edge_id": "vix_to_nfci",
+      "treatment": "y_lag1",
+      "outcome": "",
+      "design": "LOCAL_PROJECTIONS",
+      "estimate": 0.7508949541735056,
+      "se": 0.22631413313493662,
+      "credibility_rating": "A",
+      "credibility_score": 0.8115555555555555,
+      "diagnostics_pass": false,
+      "is_precisely_null": false,
+      "status": "DONE"
+    },
+    {
+      "edge_id": "oil_to_cpi_headline",
+      "treatment": "y_lag1",
+      "outcome": "",
+      "design": "LOCAL_PROJECTIONS",
+      "estimate": 0.00028116173036042105,
+      "se": 0.003874109509563238,
+      "credibility_rating": "A",
+      "credibility_score": 0.8655555555555556,
+      "diagnostics_pass": false,
+      "is_precisely_null": true,
+      "status": "DONE"
+    },
+    {
+      "edge_id": "industrial_to_unemployment",
+      "treatment": "y_lag1",
+      "outcome": "",
+      "design": "LOCAL_PROJECTIONS",
+      "estimate": -29.03273769299728,
+      "se": 12.813505861214317,
+      "credibility_rating": "A",
+      "credibility_score": 0.97,
+      "diagnostics_pass": true,
+      "is_precisely_null": false,
+      "status": "DONE"
+    }
+  ],
+  "blocked_edges": {
+    "oil_to_sentiment": "No adapter for edge group 'UNKNOWN' (edge 'oil_to_sentiment'). Register in _GROUP_TO_DESIGN or add to EDGE_NODE_MAP."
+  },
+  "critical_path": {
+    "target_node": "unemployment",
+    "path_edges": [
+      "fed_funds_to_unemployment",
+      "vix_to_industrial",
+      "cpi_to_fed_funds",
+      "industrial_to_unemployment",
+      "oil_to_cpi_headline",
+      "oil_to_vix",
+      "oil_to_industrial",
+      "oil_shock_to_oil_price"
+    ],
+    "path_complete": true,
+    "min_credibility": 0.8655555555555556,
+    "mean_credibility": 0.9272222222222222,
+    "blocking_edges": []
+  },
+  "all_edges_complete": true,
+  "all_critical_edges_pass": false,
+  "credibility_stats": {
+    "min": 0.8115555555555555,
+    "max": 0.97,
+    "mean": 0.9154888888888889
+  },
+  "audit": {
+    "total_iterations": 0,
+    "refinements_applied": 0
+  }
+}

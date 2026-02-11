@@ -1,0 +1,345 @@
+edge_id: vix_to_industrial
+dag_version_hash: e7b73592c7f1cd694cf5464692c2537dd2ba6f09693851f3bb0169fdb710a7d9
+created_at: '2026-02-11T13:59:11.805114'
+data_provenance:
+  treatment_source:
+    connector: parquet_file
+    dataset: vix
+    series: null
+    retrieval_time: null
+    file_path: null
+    file_checksum: null
+    row_count: 312
+    column_count: null
+    date_range:
+    - '2000-01-01'
+    - '2025-12-01'
+    cache_key: null
+  outcome_source:
+    connector: parquet_file
+    dataset: industrial_production
+    series: null
+    retrieval_time: null
+    file_path: null
+    file_checksum: null
+    row_count: 312
+    column_count: null
+    date_range:
+    - '2000-01-01'
+    - '2025-12-01'
+    cache_key: null
+  control_sources: {}
+  instrument_sources: {}
+  combined_row_count: 312
+  combined_date_range:
+  - '2000-01-01'
+  - '2025-12-01'
+  missing_rate: null
+  panel_dimensions: null
+  entity_boundary_note: null
+  kpi_definitions: null
+spec_hash: b327b4b58bb76c861cb9ea83d801f78185de731f39d0cf1487f8bfe48ffdf5b0
+spec_details:
+  design: LOCAL_PROJECTIONS
+  controls:
+  - y_lag1
+  - y_lag2
+  - x_lag1
+  - x_lag2
+  instruments: []
+  fixed_effects: []
+  se_method: HAC_newey_west
+  sample_filter: null
+  horizon: &id001
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  bandwidth: null
+estimates:
+  point: -0.0017039418786865671
+  se: 0.0031604067998167585
+  ci_95:
+  - -0.007898339206327414
+  - 0.004490455448954279
+  pvalue: 0.5897814903946599
+  horizons: *id001
+  irf:
+  - -0.0017039418786865671
+  - -0.02678092298828675
+  - -0.035913382440267316
+  - -0.037000097337516566
+  - -0.03294660018621729
+  - -0.031447023320411396
+  - -0.03301329815467913
+  irf_ci_lower:
+  - -0.007898225382822902
+  - -0.06252758436584999
+  - -0.07522481211440044
+  - -0.06425094616549375
+  - -0.05460868162102271
+  - -0.054751185555893124
+  - -0.059364480578672316
+  irf_ci_upper:
+  - 0.0044903416254497685
+  - 0.008965738389276487
+  - 0.00339804723386581
+  - -0.009749248509539381
+  - -0.01128451875141187
+  - -0.008142861084929669
+  - -0.006662115730685935
+diagnostics:
+  hac_bandwidth:
+    name: hac_bandwidth
+    passed: true
+    value: 5.0
+    threshold: null
+    pvalue: null
+    message: 'Newey-West bandwidth: 5'
+  effective_obs:
+    name: effective_obs
+    passed: true
+    value: 310.0
+    threshold: 20.0
+    pvalue: null
+    message: ''
+  sign_consistency:
+    name: sign_consistency
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: No expected sign specified
+  ts_leads_test:
+    name: ts_leads_test
+    passed: false
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: fail'
+  ts_residual_autocorr:
+    name: ts_residual_autocorr
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_hac_sensitivity:
+    name: ts_hac_sensitivity
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_lag_sensitivity:
+    name: ts_lag_sensitivity
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_regime_stability:
+    name: ts_regime_stability
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_shock_support:
+    name: ts_shock_support
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+all_diagnostics_pass: false
+interpretation:
+  estimand: IRF of industrial_production to a unit shock in vix
+  is_not: Structural causal effect under all interventions
+  channels:
+  - direct
+  - indirect
+  population: ''
+  conditions: ''
+  allowed_uses: []
+  forbidden_uses: []
+failure_flags:
+  weak_identification: false
+  potential_bad_control: false
+  mechanical_identity_risk: false
+  regime_break_detected: false
+  small_sample: false
+  high_missing_rate: false
+  entity_boundary_change: false
+  definition_inconsistency: false
+  data_insufficient: false
+counterfactual:
+  supports_shock_path: true
+  supports_policy_intervention: false
+  intervention_note: Reduced-form LP estimate
+  external_validity: ''
+credibility_rating: A
+credibility_score: 0.9255555555555555
+identification:
+  claim_level: BLOCKED_ID
+  risks:
+    unmeasured_confounding: medium
+    simultaneity: low
+    weak_variation: low
+    measurement_error: low
+    selection: low
+  untestable_assumptions:
+  - No omitted common cause of treatment and outcome
+  testable_threats_passed:
+  - hac_bandwidth
+  - effective_obs
+  - sign_consistency
+  - ts_residual_autocorr
+  - ts_hac_sensitivity
+  - ts_lag_sensitivity
+  - ts_regime_stability
+  - ts_shock_support
+  testable_threats_failed:
+  - ts_leads_test
+  strategy_type: ''
+  strategy_argument: ''
+  strategy_key_assumption: ''
+counterfactual_block:
+  shock_scenario_allowed: false
+  policy_intervention_allowed: false
+  reason_shock_blocked: Shock CF requires REDUCED_FORM+, edge has BLOCKED_ID
+  reason_policy_blocked: REDUCED_FORM mode does not allow policy interventions
+  allowed: false
+  reason_blocked: Shock CF requires REDUCED_FORM+, edge has BLOCKED_ID
+propagation_role:
+  role: diagnostic_only
+  overlapping_paths: []
+  selected_for_counterfactual: false
+  mode_propagation_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: false
+    DESCRIPTIVE: true
+  mode_shock_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: false
+    DESCRIPTIVE: false
+  mode_policy_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: false
+    DESCRIPTIVE: false
+literature:
+  supporting:
+  - doi: 10.1016/j.jpubeco.2020.104274
+    title: Economic uncertainty before and during the COVID-19 pandemic
+    authors:
+    - Dave Altig
+    - Scott Baker
+    - Jose Maria Barrero
+    - Nicholas Bloom
+    - Philip Bunn
+    - Scarlet Chen
+    - Steven J. Davis
+    - Julia Leather
+    - Brent Meyer
+    - Emil Mihaylov
+    - Paul Mizen
+    - N. G. Parker
+    - Thomas Renault
+    - Pawel Smietanka
+    - Gregory Thwaites
+    year: 2020
+    excerpt: ''
+    relevance: supporting
+    edge_id: vix_to_industrial
+    paper_id: ''
+    citation_count: 962
+    search_query: VIX Financial Stress Index US Industrial Production Index causal
+      effect
+    source: openalex
+    pdf_url: https://nottingham-repository.worktribe.com/preview/4942009/Economic%20Uncertainty_Final.pdf
+  - doi: 10.3386/w21633
+    title: Measuring Economic Policy Uncertainty
+    authors:
+    - Scott Baker
+    - Nicholas Bloom
+    - Steven J. Davis
+    year: 2015
+    excerpt: We develop a new index of economic policy uncertainty (EPU) based on
+      newspaper coverage frequency.Several types of evidence -including human readings
+      of 12,000 newspaper articles -indicate that our index proxies for movements
+      in policy-related economic uncertainty.Our US index spikes near tight pres
+    relevance: supporting
+    edge_id: vix_to_industrial
+    paper_id: ''
+    citation_count: 496
+    search_query: VIX Financial Stress Index US Industrial Production Index causal
+      effect
+    source: openalex
+    pdf_url: https://doi.org/10.3386/w21633
+  - doi: 10.35808/ERSJ/923
+    title: 'The Effect of the Financial Crisis on Emerging Markets: A Comparative
+      Analysis of the Stock Market Situation Before and After'
+    authors:
+    - S. Grima
+    - Luca Caruana
+    year: 2017
+    excerpt: In this paper the authors present the findings of an analyses carried
+      out to establish whether the BRICâ€™s stock market returns were affected by
+      the U.S. financial stress during the 2008 Financial Crisis. To do this the authors
+      studied the relationship between the U.S. Stock Markets and the BRIC co
+    relevance: supporting
+    edge_id: vix_to_industrial
+    paper_id: c608f67525a4466c96059cc420f8ee785bf173cb
+    citation_count: 33
+    search_query: VIX Financial Stress Index US Industrial Production Index causal
+      effect
+    source: semantic_scholar
+    pdf_url: ''
+  challenging: []
+  methodological:
+  - doi: 10.1257/jep.15.4.101
+    title: Vector Autoregressions
+    authors:
+    - James H. Stock
+    - Mark W. Watson
+    year: 2001
+    excerpt: 'This paper critically reviews the use of vector autoregressions (VARs)
+      for four tasks: data description, forecasting, structural inference, and policy
+      analysis. The paper begins with a review of VAR analysis, highlighting the differences
+      between reduced-form VARs, recursive VARs and structural VARs.'
+    relevance: methodological
+    edge_id: vix_to_industrial
+    paper_id: ''
+    citation_count: 1085
+    search_query: VIX Financial Stress Index US Industrial Production Index causal
+      effect
+    source: openalex
+    pdf_url: https://www.aeaweb.org/articles/pdf/doi/10.1257/jep.15.4.101
+  - doi: 10.17323/1813-8691-2019-23-1-32-60
+    title: 'Constructing a Financial Stress Index for Russia: New Approaches'
+    authors:
+    - M. Stolbov
+    year: 2019
+    excerpt: The paper introduces a new monthly index of financial stress for Russia
+      for the March 2008 – March 2018 period. The index is based on 12 well-established
+      and mostly publicly available standalone metrics of financial instability, including
+      credit-to-GDP gap, debt-service-ratio and real estate price i
+    relevance: methodological
+    edge_id: vix_to_industrial
+    paper_id: 03c02f052f66d967e81cbbdf445d8acb43bccf90
+    citation_count: 6
+    search_query: VIX Financial Stress Index US Industrial Production Index causal
+      effect
+    source: semantic_scholar
+    pdf_url: ''
+  search_status: SEARCHED
+  search_timestamp: '2026-02-11T13:59:11.805165'
+  search_query: VIX Financial Stress Index US Industrial Production Index causal effect
+  total_results: 5
+companion_edge_id: null
+variant_of: null
+is_precisely_null: true
+null_equivalence_bound: 0.006320813599633517

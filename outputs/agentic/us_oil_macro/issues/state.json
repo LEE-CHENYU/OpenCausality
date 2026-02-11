@@ -1,0 +1,99 @@
+{
+  "last_updated": "2026-02-11T21:59:11.947311+00:00",
+  "baseline_run_id": "",
+  "baseline_mode": "",
+  "baseline_dag_hash": "",
+  "issues": {
+    "RATING_DIAGNOSTICS_CONFLICT:cpi_to_fed_funds": {
+      "status": "OPEN",
+      "opened_run": "b10d97a0",
+      "severity": "HIGH",
+      "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
+      "message": "A-rating despite failed diagnostics."
+    },
+    "RATING_DIAGNOSTICS_CONFLICT:oil_to_industrial": {
+      "status": "OPEN",
+      "opened_run": "b10d97a0",
+      "severity": "HIGH",
+      "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
+      "message": "A-rating despite failed diagnostics."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:fed_funds_to_unemployment": {
+      "status": "OPEN",
+      "opened_run": "b10d97a0",
+      "severity": "CRITICAL",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0075 but claim_level=DESCRIPTIVE. Significance does not establish causation."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:oil_shock_to_oil_price": {
+      "status": "OPEN",
+      "opened_run": "b10d97a0",
+      "severity": "CRITICAL",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0000 but claim_level=REDUCED_FORM. Significance does not establish causation."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:oil_to_vix": {
+      "status": "OPEN",
+      "opened_run": "b10d97a0",
+      "severity": "CRITICAL",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0007 but claim_level=REDUCED_FORM. Significance does not establish causation."
+    },
+    "RATING_DIAGNOSTICS_CONFLICT:oil_to_vix": {
+      "status": "OPEN",
+      "opened_run": "b10d97a0",
+      "severity": "HIGH",
+      "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
+      "message": "A-rating despite failed diagnostics."
+    },
+    "RATING_DIAGNOSTICS_CONFLICT:vix_to_industrial": {
+      "status": "OPEN",
+      "opened_run": "b10d97a0",
+      "severity": "HIGH",
+      "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
+      "message": "A-rating despite failed diagnostics."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:oil_to_cpi_core": {
+      "status": "OPEN",
+      "opened_run": "b10d97a0",
+      "severity": "CRITICAL",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0098 but claim_level=BLOCKED_ID. Significance does not establish causation."
+    },
+    "RATING_DIAGNOSTICS_CONFLICT:oil_to_cpi_core": {
+      "status": "OPEN",
+      "opened_run": "b10d97a0",
+      "severity": "HIGH",
+      "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
+      "message": "A-rating despite failed diagnostics."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:vix_to_nfci": {
+      "status": "OPEN",
+      "opened_run": "b10d97a0",
+      "severity": "CRITICAL",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0009 but claim_level=BLOCKED_ID. Significance does not establish causation."
+    },
+    "RATING_DIAGNOSTICS_CONFLICT:vix_to_nfci": {
+      "status": "OPEN",
+      "opened_run": "b10d97a0",
+      "severity": "HIGH",
+      "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
+      "message": "A-rating despite failed diagnostics."
+    },
+    "RATING_DIAGNOSTICS_CONFLICT:oil_to_cpi_headline": {
+      "status": "OPEN",
+      "opened_run": "b10d97a0",
+      "severity": "HIGH",
+      "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
+      "message": "A-rating despite failed diagnostics."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:industrial_to_unemployment": {
+      "status": "OPEN",
+      "opened_run": "b10d97a0",
+      "severity": "CRITICAL",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0235 but claim_level=DESCRIPTIVE. Significance does not establish causation."
+    }
+  }
+}

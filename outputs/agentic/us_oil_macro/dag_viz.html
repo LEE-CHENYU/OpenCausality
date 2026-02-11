@@ -1,0 +1,3208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>us_oil_shock_transmission</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background: #fff;
+            color: #000;
+        }
+        #graph { width: 100vw; height: 100vh; }
+        .node circle {
+            fill: #fff;
+            stroke: #000;
+            stroke-width: 1.5px;
+            cursor: grab;
+        }
+        .node circle:hover { stroke-width: 2.5px; }
+        .node circle.latent { stroke-dasharray: 4, 3; }
+        .node circle.id-risk { stroke: #c00; stroke-width: 2.5px; }
+        .node circle.orphan { stroke: #999; stroke-dasharray: 2, 2; fill: #f8f8f8; }
+        .node text {
+            font-size: 9px;
+            font-weight: 400;
+            pointer-events: none;
+            text-anchor: middle;
+        }
+        .link {
+            fill: none;
+            stroke-opacity: 0.7;
+        }
+        .link:hover { stroke-opacity: 1; stroke-width: 3px !important; }
+        .link.null { stroke-dasharray: 4, 3; stroke-opacity: 0.4; }
+        .link.critical-issue { stroke: #f59e0b; stroke-width: 3px; }
+        .label-bg {
+            fill: white;
+            stroke: none;
+        }
+        .link-label {
+            font-size: 9px;
+            font-weight: 500;
+            fill: #333;
+            pointer-events: none;
+            text-anchor: middle;
+            dominant-baseline: middle;
+        }
+        .tooltip {
+            position: absolute;
+            background: #fff;
+            border: 1px solid #000;
+            padding: 12px 16px;
+            font-size: 11px;
+            pointer-events: none;
+            opacity: 0;
+            max-width: 380px;
+            line-height: 1.5;
+            z-index: 1000;
+        }
+        .tooltip.visible { opacity: 1; }
+        .tooltip h3 { font-size: 12px; font-weight: 600; margin-bottom: 8px; border-bottom: 1px solid #000; padding-bottom: 6px; }
+        .tooltip-row { display: flex; justify-content: space-between; margin: 3px 0; gap: 12px; }
+        .tooltip-label { color: #666; white-space: nowrap; }
+        .tooltip-value { font-weight: 500; font-variant-numeric: tabular-nums; text-align: right; }
+        .tooltip-value.null { color: #999; }
+        .tooltip-annotation { margin-top: 8px; padding-top: 8px; border-top: 1px solid #eee; color: #444; font-style: italic; }
+        .tooltip-issues { margin-top: 6px; padding-top: 6px; border-top: 1px solid #eee; }
+        .tooltip-issue { font-size: 10px; margin: 2px 0; }
+        .tooltip-issue.critical { color: #c00; font-weight: 600; }
+        .tooltip-issue.high { color: #a16207; }
+        .tooltip-orphan { margin-top: 8px; padding-top: 8px; border-top: 1px solid #eee; }
+        .tooltip-orphan-tag {
+            display: inline-block; font-size: 9px; font-weight: 600;
+            padding: 1px 5px; background: #f8f8f8; border: 1px solid #999;
+            color: #666; margin-bottom: 6px;
+        }
+        .tooltip-orphan-section {
+            padding: 4px 6px; margin-bottom: 3px; font-size: 10px; line-height: 1.5;
+        }
+        .tooltip-orphan-section.role { background: #f8f8f8; }
+        .tooltip-orphan-section.blocker { background: #fff5f5; }
+        .tooltip-orphan-section.path-forward { background: #f0f4ff; }
+        .tooltip-orphan-label {
+            font-weight: 600; font-size: 9px; text-transform: uppercase;
+            letter-spacing: 0.3px; margin-bottom: 1px;
+        }
+        .tooltip-orphan-section.role .tooltip-orphan-label { color: #444; }
+        .tooltip-orphan-section.blocker .tooltip-orphan-label { color: #c00; }
+        .tooltip-orphan-section.path-forward .tooltip-orphan-label { color: #1e40af; }
+
+        /* Proposal banner */
+        .proposal-banner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 36px;
+            background: #000;
+            color: #fff;
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            z-index: 200;
+            letter-spacing: 0.5px;
+        }
+        .banner-sub {
+            font-weight: 400;
+            font-size: 10px;
+            color: #aaa;
+        }
+
+        .controls {
+            position: fixed;
+            top: 50px;
+            left: 20px;
+            font-size: 11px;
+            background: rgba(255,255,255,0.95);
+            padding: 16px;
+            border: 1px solid #000;
+            z-index: 100;
+            max-width: 220px;
+        }
+        .controls h1 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .controls .subtitle { color: #666; margin-bottom: 12px; font-size: 10px; }
+        .control-row { margin: 8px 0; }
+        .control-row label { color: #666; margin-right: 8px; }
+        .control-row select {
+            border: 1px solid #000;
+            background: #fff;
+            padding: 4px 8px;
+            font-size: 11px;
+            font-family: inherit;
+        }
+        .legend { margin-top: 12px; padding-top: 12px; border-top: 1px solid #ddd; }
+        .legend-title { font-weight: 600; font-size: 10px; margin-bottom: 6px; }
+        .legend-item { display: flex; align-items: center; margin: 4px 0; font-size: 10px; }
+        .legend-line { width: 20px; height: 2px; margin-right: 8px; }
+        .legend-line.dashed { border-top: 2px dashed; height: 0; }
+        .stats {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            font-size: 10px;
+            color: #666;
+        }
+        .stats span { margin-right: 16px; }
+        .stats strong { color: #000; }
+
+        /* Pitfall sidebar */
+        .pitfall-sidebar {
+            position: fixed;
+            top: 50px;
+            right: 20px;
+            width: 340px;
+            max-height: calc(100vh - 70px);
+            overflow-y: auto;
+            background: rgba(255,255,255,0.95);
+            border: 1px solid #000;
+            font-size: 11px;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+        }
+        .pitfall-header {
+            padding: 12px 16px 8px;
+            border-bottom: 1px solid #ddd;
+        }
+        .pitfall-header h2 { font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+        .pitfall-progress { margin-bottom: 4px; }
+        .pitfall-progress-bar {
+            width: 100%;
+            height: 6px;
+            border: 1px solid #000;
+            background: #fff;
+        }
+        .pitfall-progress-fill {
+            height: 100%;
+            background: #000;
+            transition: width 0.3s;
+        }
+        .pitfall-progress-label {
+            font-size: 10px;
+            color: #666;
+            margin-top: 2px;
+        }
+        #pitfallList {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 16px;
+        }
+        .pitfall-item {
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+        .pitfall-item:last-child { border-bottom: none; }
+        .pitfall-item:hover { background: #f8f8f8; }
+        .pitfall-item.active {
+            background: #f0f4ff;
+        }
+        .pitfall-item.resolved {
+            opacity: 0.5;
+        }
+        .pitfall-item.resolved .pitfall-msg { text-decoration: line-through; }
+        .pitfall-item-header {
+            padding: 8px 0 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .pitfall-edge { font-weight: 600; font-size: 10px; }
+        .pitfall-severity { font-size: 9px; font-weight: 600; padding: 1px 5px; border: 1px solid; display: inline-block; }
+        .pitfall-severity.CRITICAL { background: #000; color: #fff; border-color: #000; }
+        .pitfall-severity.HIGH { background: #fff; color: #000; border-color: #000; }
+        .pitfall-severity.MEDIUM { background: #eee; color: #000; border-color: #ccc; }
+        .pitfall-severity.LOW { background: #fff; color: #999; border-color: #ccc; }
+        .pitfall-resolved-check { color: #080; font-weight: 700; font-size: 11px; display: none; }
+        .pitfall-item.resolved .pitfall-resolved-check { display: inline; }
+        .pitfall-msg { font-size: 10px; color: #555; margin-bottom: 4px; }
+        .pitfall-empty { color: #999; font-style: italic; padding: 12px 0; }
+
+        /* Collapsible decision panel */
+        .pitfall-decision {
+            display: none;
+            padding: 8px 0 10px;
+            border-top: 1px solid #eee;
+            font-size: 10px;
+            line-height: 1.6;
+        }
+        .pitfall-decision.open { display: block; }
+        .pitfall-decision .pd-label {
+            font-weight: 600;
+            color: #444;
+            margin-top: 6px;
+            margin-bottom: 2px;
+        }
+        .pitfall-decision .pd-text {
+            color: #555;
+            margin-bottom: 4px;
+        }
+        .pitfall-decision .pd-guidance {
+            background: #f8f8f8;
+            border: 1px solid #ddd;
+            padding: 4px 8px;
+            margin-bottom: 6px;
+        }
+        .pitfall-decision select {
+            width: 100%;
+            border: 1px solid #000;
+            background: #fff;
+            padding: 3px 6px;
+            font-size: 10px;
+            font-family: inherit;
+        }
+        .pitfall-decision select.decided {
+            background: #000;
+            color: #fff;
+        }
+        .pitfall-decision .pd-tooltip-area {
+            font-size: 9px;
+            color: #666;
+            min-height: 14px;
+            margin-top: 2px;
+            padding: 2px 4px;
+            background: #fafafa;
+            border: 1px solid #eee;
+        }
+        .pitfall-decision input[type="text"] {
+            width: 100%;
+            border: 1px solid #ccc;
+            padding: 3px 6px;
+            font-size: 10px;
+            font-family: inherit;
+            margin-top: 4px;
+        }
+        .pitfall-decision input[type="text"]:focus {
+            border-color: #000;
+            outline: none;
+        }
+        .pitfall-decision .pd-llm-guidance {
+            margin-bottom: 6px;
+            font-size: 10px;
+            line-height: 1.6;
+            color: #333;
+        }
+        .pitfall-decision .pd-llm-guidance-title {
+            font-weight: 600;
+            color: #1e40af;
+            margin-bottom: 4px;
+            font-size: 10px;
+        }
+        .pd-section {
+            padding: 5px 8px;
+            margin-bottom: 4px;
+            font-size: 10px;
+            line-height: 1.6;
+        }
+        .pd-section-label {
+            font-weight: 600;
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            margin-bottom: 1px;
+        }
+        .pd-section.finding {
+            background: #f8f8f8;
+        }
+        .pd-section.finding .pd-section-label { color: #444; }
+        .pd-section.concern {
+            background: #fffbf0;
+        }
+        .pd-section.concern .pd-section-label { color: #7a6400; }
+        .pd-section.recommendation {
+            background: #f0f4ff;
+        }
+        .pd-section.recommendation .pd-section-label { color: #1e40af; }
+        .pd-static-ref { font-size: 9px; color: #888; margin-bottom: 4px; }
+        .pd-static-ref summary { cursor: pointer; font-weight: 500; }
+        .pitfall-decision .pd-buttons {
+            display: flex;
+            gap: 6px;
+            margin-top: 6px;
+        }
+        .pitfall-decision .pd-btn {
+            border: 1px solid #000;
+            background: #fff;
+            padding: 3px 12px;
+            font-size: 10px;
+            font-family: inherit;
+            cursor: pointer;
+        }
+        .pitfall-decision .pd-btn:hover { background: #000; color: #fff; }
+        .pitfall-decision .pd-btn.pd-btn-confirm { background: #000; color: #fff; }
+        .pitfall-decision .pd-btn.pd-btn-confirm:hover { background: #333; }
+
+        /* Sidebar footer */
+        .pitfall-footer {
+            padding: 10px 16px;
+            border-top: 1px solid #000;
+        }
+        .pitfall-footer label {
+            font-size: 10px;
+            color: #666;
+            display: block;
+            margin-bottom: 4px;
+        }
+        .pitfall-footer input[type="text"] {
+            width: 100%;
+            border: 1px solid #000;
+            padding: 4px 8px;
+            font-size: 10px;
+            font-family: inherit;
+            margin-bottom: 6px;
+        }
+        .pitfall-footer .btn-export {
+            width: 100%;
+            border: 1px solid #000;
+            background: #000;
+            color: #fff;
+            padding: 5px 12px;
+            font-size: 11px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+        }
+        .pitfall-footer .btn-export:hover { background: #333; }
+
+        /* Clean edge entries (no issues) */
+        .pitfall-divider {
+            padding: 8px 0 4px;
+            font-size: 10px;
+            font-weight: 600;
+            color: #999;
+            border-top: 1px solid #ddd;
+            margin-top: 4px;
+        }
+        .pitfall-item.clean-edge .pitfall-rating {
+            font-size: 9px;
+            font-weight: 600;
+            padding: 1px 5px;
+            border: 1px solid #059669;
+            color: #059669;
+            display: inline-block;
+        }
+        .pitfall-item.clean-edge .pitfall-stats {
+            font-size: 9px;
+            color: #888;
+            margin-bottom: 4px;
+        }
+
+        /* Edge highlight animation */
+        @keyframes edgeFlash {
+            0%, 100% { stroke-opacity: 1; }
+            50% { stroke-opacity: 0.3; }
+        }
+        .link.highlighted {
+            stroke: #2563eb !important;
+            stroke-width: 4px !important;
+            stroke-opacity: 1;
+            animation: edgeFlash 1s ease-in-out 3;
+        }
+        .link.edge-resolved {
+            stroke-dasharray: 6, 4;
+            stroke-opacity: 0.3;
+            stroke-width: 1px !important;
+        }
+
+        /* Identification badges */
+        .id-badge {
+            display: inline-block;
+            font-size: 8px;
+            font-weight: 700;
+            padding: 1px 4px;
+            border-radius: 2px;
+            letter-spacing: 0.3px;
+            margin-left: 4px;
+            vertical-align: middle;
+        }
+        .id-badge.STRONG { background: #059669; color: #fff; }
+        .id-badge.MODERATE { background: #2563eb; color: #fff; }
+        .id-badge.WEAK { background: #d97706; color: #fff; }
+        .id-badge.ABSENT { background: #dc2626; color: #fff; }
+        .strategy-tag {
+            display: inline-block;
+            font-size: 8px;
+            font-weight: 500;
+            padding: 1px 4px;
+            border: 1px solid #ccc;
+            color: #555;
+            margin-left: 4px;
+            vertical-align: middle;
+        }
+        /* Provenance badges */
+        .provenance-badge {
+            display: inline-block;
+            font-size: 8px;
+            font-weight: 600;
+            padding: 1px 5px;
+            border-radius: 2px;
+            letter-spacing: 0.3px;
+            margin-left: 4px;
+            vertical-align: middle;
+            color: #fff;
+        }
+        .provenance-badge.manual { background: #6b7280; }
+        .provenance-badge.paper_scout { background: #0d9488; }
+        .provenance-badge.data_scout { background: #4f46e5; }
+        .provenance-badge.discovery_agent { background: #ea580c; }
+        /* Causal assessment section in sidebar */
+        .causal-assessment {
+            margin-top: 6px;
+            padding-top: 6px;
+            border-top: 1px solid #eee;
+            font-size: 10px;
+            line-height: 1.6;
+        }
+        .causal-assessment-title {
+            font-weight: 600;
+            color: #059669;
+            margin-bottom: 4px;
+            font-size: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="proposal-banner">
+        DRAFT PROPOSAL &mdash; Requires analyst review before use
+        <span class="banner-sub">Resolve flagged issues or export decisions to proceed</span>
+    </div>
+    <svg id="graph"></svg>
+    <div class="controls">
+        <h1 id="dagTitle">us_oil_shock_transmission</h1>
+        <div class="subtitle" id="dagSubtitle"></div>
+        <div class="control-row">
+            <label>Edge type</label>
+            <select id="typeFilter">
+                <option value="all">All</option>
+            </select>
+        </div>
+        <div class="control-row">
+            <label>Rating</label>
+            <select id="ratingFilter">
+                <option value="all">All</option>
+                <option value="A">A</option>
+                <option value="B">B</option>
+                <option value="C">C</option>
+                <option value="D">D</option>
+            </select>
+        </div>
+        <div class="control-row">
+            <label><input type="checkbox" id="showNull" checked> Show null</label>
+        </div>
+        <div class="control-row">
+            <label><input type="checkbox" id="showLabels" checked> Show labels</label>
+        </div>
+        <div class="legend" id="legendContainer">
+            <div class="legend-title">Edge Types</div>
+        </div>
+    </div>
+    <div class="stats">
+        <span>Edges: <strong id="statEdges">0</strong></span>
+        <span>Nodes: <strong id="statNodes">0</strong></span>
+        <span>A: <strong id="statA">0</strong></span>
+        <span>B: <strong id="statB">0</strong></span>
+        <span>C: <strong id="statC">0</strong></span>
+        <span>Issues: <strong id="statIssues">0</strong></span>
+        <span>Identified: <strong id="statIdentified">0</strong></span>
+        <span style="color:#c00">Blocked: <strong id="statBlocked">0</strong></span>
+    </div>
+    <div class="pitfall-sidebar" id="pitfallSidebar">
+        <div class="pitfall-header">
+            <h2>Open Issues</h2>
+            <div class="pitfall-progress">
+                <div class="pitfall-progress-bar"><div class="pitfall-progress-fill" id="pitfallProgressFill"></div></div>
+                <div class="pitfall-progress-label" id="pitfallProgressLabel">0 / 0 resolved</div>
+            </div>
+        </div>
+        <div id="pitfallList"></div>
+        <div class="pitfall-footer">
+            <label>Analyst ID</label>
+            <input type="text" id="analystId" placeholder="Your name or initials">
+            <button class="btn-export" id="exportBtn">Export Decisions</button>
+        </div>
+    </div>
+    <div class="tooltip" id="tooltip"></div>
+
+    <script>
+// ── INJECTED DATA ────────────────────────────────────────────────────────
+const NODES = [
+  {
+    "id": "oil_supply_shock",
+    "label": "Oil supply shock (Baumeister)",
+    "description": "Structural oil supply shock from Baumeister decomposition.",
+    "unit": "sd",
+    "frequency": "monthly",
+    "observed": true,
+    "latent": false,
+    "orphan": false,
+    "provenance_source": ""
+  },
+  {
+    "id": "oil_price",
+    "label": "Brent crude oil price",
+    "description": "Europe Brent spot price FOB (DCOILBRENTEU), log level.",
+    "unit": "log",
+    "frequency": "daily",
+    "observed": true,
+    "latent": false,
+    "orphan": false,
+    "provenance_source": ""
+  },
+  {
+    "id": "cpi_headline",
+    "label": "US CPI All Items",
+    "description": "Consumer Price Index for All Urban Consumers (CPIAUCSL), log level.",
+    "unit": "log",
+    "frequency": "monthly",
+    "observed": true,
+    "latent": false,
+    "orphan": false,
+    "provenance_source": ""
+  },
+  {
+    "id": "cpi_core",
+    "label": "US Core CPI (less food &amp; energy)",
+    "description": "CPI for All Urban Consumers: All Items Less Food and Energy (CPILFESL), log level.",
+    "unit": "log",
+    "frequency": "monthly",
+    "observed": true,
+    "latent": false,
+    "orphan": false,
+    "provenance_source": ""
+  },
+  {
+    "id": "industrial_production",
+    "label": "US Industrial Production Index",
+    "description": "Industrial Production: Total Index (INDPRO), log level.",
+    "unit": "log",
+    "frequency": "monthly",
+    "observed": true,
+    "latent": false,
+    "orphan": false,
+    "provenance_source": ""
+  },
+  {
+    "id": "vix",
+    "label": "VIX Financial Stress Index",
+    "description": "CBOE Volatility Index (VIXCLS), log level.",
+    "unit": "log",
+    "frequency": "daily",
+    "observed": true,
+    "latent": false,
+    "orphan": false,
+    "provenance_source": ""
+  },
+  {
+    "id": "fed_funds_rate",
+    "label": "Federal Funds Rate",
+    "description": "Effective Federal Funds Rate (FEDFUNDS).",
+    "unit": "pct",
+    "frequency": "monthly",
+    "observed": true,
+    "latent": false,
+    "orphan": false,
+    "provenance_source": ""
+  },
+  {
+    "id": "unemployment",
+    "label": "US Unemployment Rate",
+    "description": "Civilian Unemployment Rate (UNRATE).",
+    "unit": "pct",
+    "frequency": "monthly",
+    "observed": true,
+    "latent": false,
+    "orphan": false,
+    "provenance_source": ""
+  },
+  {
+    "id": "consumer_sentiment",
+    "label": "Michigan Consumer Sentiment",
+    "description": "University of Michigan Consumer Sentiment Index. No source configured \u2014 should be auto-discovered by DataResolverAgent (FRED: UMCSENT).\n",
+    "unit": "index",
+    "frequency": "monthly",
+    "observed": true,
+    "latent": false,
+    "orphan": false,
+    "provenance_source": ""
+  },
+  {
+    "id": "nfci",
+    "label": "National Financial Conditions Index",
+    "description": "Chicago Fed National Financial Conditions Index (NFCI).",
+    "unit": "index",
+    "frequency": "monthly",
+    "observed": true,
+    "latent": false,
+    "orphan": false,
+    "provenance_source": ""
+  }
+];
+const EDGES = [
+  {
+    "id": "oil_shock_to_oil_price",
+    "source": "oil_supply_shock",
+    "target": "oil_price",
+    "edge_type": "causal",
+    "expected_sign": "positive",
+    "interpretation": "",
+    "notes": "Supply disruption raises oil prices. Contemporaneous impact.",
+    "provenance_source": "",
+    "provenance_detail": "",
+    "point": -0.05177017851853955,
+    "se": 0.005539800935442799,
+    "pvalue": 9.177374660649726e-21,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "A",
+    "score": 0.97,
+    "claim_level": "REDUCED_FORM",
+    "all_pass": true,
+    "diagnostics": [
+      {
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": true
+      },
+      {
+        "name": "sign_consistency",
+        "passed": true
+      },
+      {
+        "name": "ts_leads_test",
+        "passed": true
+      },
+      {
+        "name": "ts_residual_autocorr",
+        "passed": true
+      },
+      {
+        "name": "ts_hac_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_lag_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_regime_stability",
+        "passed": true
+      },
+      {
+        "name": "ts_shock_support",
+        "passed": true
+      }
+    ],
+    "failure_flags": [],
+    "id_risks": {
+      "unmeasured_confounding": "medium",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Design LOCAL_PROJECTIONS provides REDUCED_FORM level only",
+    "n_obs": 307,
+    "strategy_type": "",
+    "strategy_argument": "",
+    "strategy_key_assumption": "",
+    "issues": [
+      {
+        "issue_key": "SIGNIFICANT_BUT_NOT_IDENTIFIED:oil_shock_to_oil_price",
+        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+        "severity": "CRITICAL",
+        "message": "p=0.0000 but claim_level=REDUCED_FORM. Significance does not establish causation."
+      }
+    ],
+    "has_critical_issue": true,
+    "llm_annotation": "An oil supply shock is associated with an immediate change in the oil price, capturing how unexpected disruptions in production or distribution co-move with spot prices contemporaneously. A key risk is that the \u201csupply shock\u201d measure may be contaminated by endogenous responses to demand conditions or by simultaneous news about global activity, which would make the reduced-form coefficient reflect more than supply-side variation; measurement timing (e.g., using prices that already incorporate information) can also bias the contemporaneous estimate. Next, the researcher should validate the shock\u2019s exogeneity by checking whether it predicts pre-trends in global demand indicators and by confirming the timing with high-frequency event windows (e.g., around geopolitical disruptions) to ensure the price move is not driven by concurrent demand or policy news.",
+    "causal_assessment": "**Strategy**: Reduced-form local projections estimating the contemporaneous response of oil prices to an \u201coil supply shock,\u201d relying on time-series controls/lag structure and extensive robustness/diagnostic checks rather than an explicit exogenous-shock or IV/RCT design.\n\n**Strengths**: The effect is precisely estimated (\u03b2 = -0.052, SE = 0.0055, p \u2248 9e-21) and the time-series implementation appears technically well-behaved given the passed diagnostics (HAC bandwidth/sensitivity, residual autocorrelation checks, lead tests, lag sensitivity, regime stability, and shock support), which reduces concerns that the result is a fragile specification artifact.\n\n**Vulnerabilities**: The identification field is explicitly \u201cnone,\u201d so the key causal requirement\u2014exogeneity of the \u201coil supply shock\u201d with respect to contemporaneous demand/news, risk premia, or anticipatory behavior\u2014is not established; in oil markets, measured \u201csupply shocks\u201d often co-move with geopolitical and demand-related information that also moves prices, creating potential omitted-variable and simultaneity bias. Passing HAC/lead/autocorrelation diagnostics does not rule out endogeneity or violations of the structural interpretation (e.g., mismeasurement of the shock, expectation effects, or common shocks).\n\n**Verdict**: WEAK"
+  },
+  {
+    "id": "oil_to_cpi_headline",
+    "source": "oil_price",
+    "target": "cpi_headline",
+    "edge_type": "causal",
+    "expected_sign": "positive",
+    "interpretation": "",
+    "notes": "Energy component of CPI directly affected by oil prices.",
+    "provenance_source": "",
+    "provenance_detail": "",
+    "point": 0.00028116173036042105,
+    "se": 0.003874109509563238,
+    "pvalue": 0.9421446843775966,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "A",
+    "score": 0.8655555555555556,
+    "claim_level": "REDUCED_FORM",
+    "all_pass": false,
+    "diagnostics": [
+      {
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": true
+      },
+      {
+        "name": "sign_consistency",
+        "passed": true
+      },
+      {
+        "name": "ts_leads_test",
+        "passed": true
+      },
+      {
+        "name": "ts_residual_autocorr",
+        "passed": true
+      },
+      {
+        "name": "ts_hac_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_lag_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_regime_stability",
+        "passed": false
+      },
+      {
+        "name": "ts_shock_support",
+        "passed": true
+      }
+    ],
+    "failure_flags": [
+      "regime_break_detected"
+    ],
+    "id_risks": {
+      "unmeasured_confounding": "medium",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Counterfactual Use: BLOCKED\nReason: regime break risk\n\nEven if p<0.05, this does not establish a causal effect.",
+    "n_obs": 176,
+    "strategy_type": "",
+    "strategy_argument": "",
+    "strategy_key_assumption": "",
+    "issues": [
+      {
+        "issue_key": "RATING_DIAGNOSTICS_CONFLICT:oil_to_cpi_headline",
+        "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
+        "severity": "HIGH",
+        "message": "A-rating despite failed diagnostics."
+      }
+    ],
+    "has_critical_issue": false,
+    "llm_annotation": "Higher oil prices are associated with higher headline CPI because oil feeds directly into consumer energy prices (gasoline, heating oil) and indirectly into transportation and production costs that can pass through to retail prices. A key risk is that oil prices and CPI may co-move due to common global shocks (e.g., demand expansions, supply disruptions, exchange rate movements) or policy responses, so the reduced-form estimate may not reflect pure pass-through; additionally, timing/aggregation (monthly CPI vs. daily oil) and regulated/contracted energy pricing can attenuate the measured association, consistent with the near-zero, imprecise estimate here. Next, a researcher should check the dynamic response with distributed lags and energy vs. core CPI, and test robustness to controlling for global activity measures and exchange rates or using plausibly exogenous oil supply shocks as an instrument.",
+    "causal_assessment": "**Strategy**: Local projections of headline CPI responses to oil price movements, relying on time-series reduced-form dynamics without an explicit source of exogenous oil price variation.\n\n**Strengths**: The pass of multiple time-series diagnostics (HAC bandwidth adequacy, effective observations, leads/placebo-style test, residual autocorrelation checks, and sensitivity to HAC/lags) supports that the estimated impulse responses are not driven by obvious specification artifacts. The \u201cshock support\u201d and sign-consistency checks suggest the oil price series has sufficient variation and the estimated response is not erratic across horizons.\n\n**Vulnerabilities**: The identification is fundamentally not causal as stated: with \u201cType: none,\u201d oil prices are endogenous to macro conditions that also move CPI (global demand, monetary policy, supply disruptions correlated with broader conditions), so the LP coefficient is a correlation of joint equilibrium movements unless an exogenous oil shock is isolated. The failed **ts_regime_stability** diagnostic indicates structural breaks/time variation (e.g., changes in pass-through, inflation regimes), which can invalidate a single reduced-form mapping from oil to CPI and undermines transportability of the estimate; moreover the estimate is statistically null (p\u22480.94), offering no empirical support for a stable effect in this specification.\n\n**Verdict**: **ABSENT**"
+  },
+  {
+    "id": "oil_to_cpi_core",
+    "source": "oil_price",
+    "target": "cpi_core",
+    "edge_type": "reduced_form",
+    "expected_sign": "positive",
+    "interpretation": "",
+    "notes": "Indirect pass-through from oil to core inflation. Smaller and slower than headline.",
+    "provenance_source": "",
+    "provenance_detail": "",
+    "point": 0.002276934120697647,
+    "se": 0.0008821076804271966,
+    "pvalue": 0.009844530986099033,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "A",
+    "score": 0.9255555555555555,
+    "claim_level": "BLOCKED_ID",
+    "all_pass": false,
+    "diagnostics": [
+      {
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": true
+      },
+      {
+        "name": "sign_consistency",
+        "passed": true
+      },
+      {
+        "name": "ts_leads_test",
+        "passed": false
+      },
+      {
+        "name": "ts_residual_autocorr",
+        "passed": true
+      },
+      {
+        "name": "ts_hac_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_lag_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_regime_stability",
+        "passed": true
+      },
+      {
+        "name": "ts_shock_support",
+        "passed": true
+      }
+    ],
+    "failure_flags": [],
+    "id_risks": {
+      "unmeasured_confounding": "medium",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Shock CF requires REDUCED_FORM+, edge has BLOCKED_ID",
+    "n_obs": 309,
+    "strategy_type": "",
+    "strategy_argument": "",
+    "strategy_key_assumption": "",
+    "issues": [
+      {
+        "issue_key": "SIGNIFICANT_BUT_NOT_IDENTIFIED:oil_to_cpi_core",
+        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+        "severity": "CRITICAL",
+        "message": "p=0.0098 but claim_level=BLOCKED_ID. Significance does not establish causation."
+      },
+      {
+        "issue_key": "RATING_DIAGNOSTICS_CONFLICT:oil_to_cpi_core",
+        "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
+        "severity": "HIGH",
+        "message": "A-rating despite failed diagnostics."
+      }
+    ],
+    "has_critical_issue": true,
+    "llm_annotation": "Higher oil prices are associated with slightly higher core CPI, consistent with indirect pass-through via transportation and input costs, as well as firms\u2019 pricing responses that gradually show up beyond energy components; the small coefficient fits the idea that core inflation reacts less and with a lag compared to headline. A key risk is that oil prices may be proxying for broader macro conditions (global demand, supply-chain disruptions, exchange rates, monetary policy responses) that also move core inflation, so the estimate could reflect omitted variables or policy endogeneity rather than pass-through. Researchers should check robustness to controlling for aggregate demand and policy (e.g., output gap/unemployment, exchange rate, policy rate surprises), examine lag structures and impulse responses (distributed lags/VAR), and test whether the relationship weakens when using plausibly exogenous oil supply shocks instead of spot oil price movements.",
+    "causal_assessment": "**Strategy**: Reduced-form local projections of core CPI on oil price shocks/changes with HAC inference and time-series stability checks, but with no explicit exogenous-shock or quasi-experimental identification.\n\n**Strengths**: Many time-series diagnostics reportedly pass (HAC sensitivity, lag sensitivity, regime stability, residual autocorrelation checks), which supports that the estimated relationship (0.0023, p\u22480.01) is not purely an artifact of a particular bandwidth/lag/specification. The \u201csmaller and slower\u201d pass-through narrative is economically plausible for core inflation.\n\n**Vulnerabilities**: The strategy is explicitly \u201cnone\u201d for identification, so oil prices are likely endogenous to macro conditions that also move core inflation (global demand, monetary policy responses, risk shocks), implying omitted-variable and reverse-causality concerns. The failed leads test is a red flag for pre-trends/anticipation or model misspecification\u2014if future oil changes predict today\u2019s core CPI, the shock is not behaving as exogenous in the LP setup, undermining a causal interpretation.\n\n**Verdict**: ABSENT"
+  },
+  {
+    "id": "oil_to_industrial",
+    "source": "oil_price",
+    "target": "industrial_production",
+    "edge_type": "causal",
+    "expected_sign": "negative",
+    "interpretation": "",
+    "notes": "Oil price increase raises input costs, reducing industrial output (Hamilton channel).",
+    "provenance_source": "",
+    "provenance_detail": "",
+    "point": 0.03692796801159097,
+    "se": 0.020089336682932123,
+    "pvalue": 0.06603477787314382,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "A",
+    "score": 0.9255555555555555,
+    "claim_level": "BLOCKED_ID",
+    "all_pass": false,
+    "diagnostics": [
+      {
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": true
+      },
+      {
+        "name": "sign_consistency",
+        "passed": true
+      },
+      {
+        "name": "ts_leads_test",
+        "passed": false
+      },
+      {
+        "name": "ts_residual_autocorr",
+        "passed": true
+      },
+      {
+        "name": "ts_hac_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_lag_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_regime_stability",
+        "passed": true
+      },
+      {
+        "name": "ts_shock_support",
+        "passed": true
+      }
+    ],
+    "failure_flags": [],
+    "id_risks": {
+      "unmeasured_confounding": "medium",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Shock CF requires REDUCED_FORM+, edge has BLOCKED_ID",
+    "n_obs": 310,
+    "strategy_type": "",
+    "strategy_argument": "",
+    "strategy_key_assumption": "",
+    "issues": [
+      {
+        "issue_key": "RATING_DIAGNOSTICS_CONFLICT:oil_to_industrial",
+        "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
+        "severity": "HIGH",
+        "message": "A-rating despite failed diagnostics."
+      }
+    ],
+    "has_critical_issue": false,
+    "llm_annotation": "An increase in oil prices may reduce industrial production by raising energy and transportation input costs and compressing firms\u2019 margins, consistent with the Hamilton (oil shock) channel and demand spillovers from higher consumer fuel spending. A key risk is that the observed relationship could be driven by common shocks\u2014e.g., global demand expansions that raise both oil prices and industrial output, or monetary policy responses to inflation\u2014so the edge is plausibly blocked rather than a clean causal effect (and the estimate is only marginally significant at conventional levels). The researcher should check which paths are blocked in the DAG and whether conditioning choices open collider bias, then probe robustness with alternative oil shock measures (e.g., exogenous supply disruptions or \u201cnet oil price increases\u201d), different lags, and controls for global activity (e.g., Kilian index) and policy rates.",
+    "causal_assessment": "**Strategy**: Local projections estimate the dynamic association between oil-price changes and industrial production, but no explicit exogenous shock/IV/narrative identification is provided.\n\n**Strengths**: The time-series diagnostics you list mostly pass (HAC bandwidth adequacy, effective observations, residual autocorrelation checks, HAC/lag sensitivity, regime stability, and shock support), which supports that the LP specification is statistically stable rather than purely driven by a fragile choice of lags or covariance estimator. The proposed mechanism (input-cost \u201cHamilton channel\u201d) is economically coherent and aligns with prior literature.\n\n**Vulnerabilities**: Identification is effectively absent: oil prices are plausibly endogenous to global demand and contemporaneous macro conditions that also move industrial production, so the LP coefficient can reflect reverse causality and omitted variables (e.g., world activity, monetary policy, geopolitical shocks affecting both oil and output). The failed **ts_leads_test** is a red flag for pre-trends/anticipation or residual predictability (i.e., industrial production \u201cresponding\u201d before the oil-price movement), directly weakening a causal interpretation even if other stability diagnostics pass; additionally, the estimate is only marginally significant (p\u22480.066), consistent with sensitivity to specification or sampling variation.\n\n**Verdict**: **ABSENT**"
+  },
+  {
+    "id": "oil_to_vix",
+    "source": "oil_price",
+    "target": "vix",
+    "edge_type": "reduced_form",
+    "expected_sign": "positive",
+    "interpretation": "",
+    "notes": "Oil price spikes increase financial uncertainty.",
+    "provenance_source": "",
+    "provenance_detail": "",
+    "point": -0.533571520464672,
+    "se": 0.15742471020129933,
+    "pvalue": 0.0007005190637644158,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "A",
+    "score": 0.8655555555555556,
+    "claim_level": "REDUCED_FORM",
+    "all_pass": false,
+    "diagnostics": [
+      {
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": true
+      },
+      {
+        "name": "sign_consistency",
+        "passed": true
+      },
+      {
+        "name": "ts_leads_test",
+        "passed": true
+      },
+      {
+        "name": "ts_residual_autocorr",
+        "passed": true
+      },
+      {
+        "name": "ts_hac_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_lag_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_regime_stability",
+        "passed": false
+      },
+      {
+        "name": "ts_shock_support",
+        "passed": true
+      }
+    ],
+    "failure_flags": [
+      "regime_break_detected"
+    ],
+    "id_risks": {
+      "unmeasured_confounding": "medium",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Counterfactual Use: BLOCKED\nReason: regime break risk\n\nEven if p<0.05, this does not establish a causal effect.",
+    "n_obs": 311,
+    "strategy_type": "",
+    "strategy_argument": "",
+    "strategy_key_assumption": "",
+    "issues": [
+      {
+        "issue_key": "SIGNIFICANT_BUT_NOT_IDENTIFIED:oil_to_vix",
+        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+        "severity": "CRITICAL",
+        "message": "p=0.0007 but claim_level=REDUCED_FORM. Significance does not establish causation."
+      },
+      {
+        "issue_key": "RATING_DIAGNOSTICS_CONFLICT:oil_to_vix",
+        "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
+        "severity": "HIGH",
+        "message": "A-rating despite failed diagnostics."
+      }
+    ],
+    "has_critical_issue": true,
+    "llm_annotation": "Higher oil prices are associated with changes in the VIX, consistent with the idea that oil price spikes coincide with heightened macro/financial uncertainty and repricing of risk in equity markets. A key risk is that the estimate may reflect common shocks (e.g., global demand news, geopolitical events, or monetary policy surprises) that move both oil prices and risk sentiment, as well as reverse timing where rising risk aversion affects commodity prices; measurement/timing mismatches and omitted controls can also bias the reduced-form relationship. Next, the researcher should check sensitivity to controlling for major confounders (global activity indicators, policy rates, credit spreads, equity returns), examine lead\u2013lag structure (does oil predict future VIX or just co-move contemporaneously), and test stability across regimes (crisis vs. normal periods) and alternative oil benchmarks (WTI vs. Brent).",
+    "causal_assessment": "**Strategy**: Reduced-form local projections relating oil-price shocks/movements to subsequent VIX responses, but with **no stated source of exogenous variation** (no IV, no narrative shocks, no quasi-experiment).\n\n**Strengths**: The estimate is statistically precise (\u22120.53, SE 0.16, p\u22480.0007) and a number of time-series robustness checks pass (HAC bandwidth/sensitivity, lag sensitivity, residual autocorrelation tests, leads test, sign consistency, and shock support), which supports that the relationship is not a mechanical artifact of one specific specification.\n\n**Vulnerabilities**: With \u201cType: none,\u201d the design does not rule out **simultaneity and omitted global factors** (e.g., global demand news, geopolitical risk, broad risk-off episodes) that can move both oil prices and VIX, so the edge is not causally identified. The failure of **regime stability** is a major concern: it suggests the oil\u2013VIX relationship changes across subsamples/market regimes, undermining external validity and raising the possibility that the estimate is driven by particular crisis periods rather than a stable causal effect.\n\n**Verdict**: **ABSENT**"
+  },
+  {
+    "id": "oil_to_sentiment",
+    "source": "oil_price",
+    "target": "consumer_sentiment",
+    "edge_type": "reduced_form",
+    "expected_sign": "negative",
+    "interpretation": "",
+    "notes": "Rising gasoline prices erode consumer confidence.",
+    "provenance_source": "",
+    "provenance_detail": "",
+    "issues": [],
+    "has_critical_issue": false,
+    "llm_annotation": "Higher oil prices are associated with lower consumer sentiment, plausibly because they pass through to gasoline and other energy costs that squeeze real disposable income and raise perceived inflation, making households more pessimistic about finances and the macro outlook. A key risk is confounding from broader macro shocks (e.g., recessions, monetary tightening, geopolitical events) that both move oil prices and independently depress sentiment, as well as simultaneity if sentiment proxies expected economic activity that also predicts oil demand and prices. The researcher should check robustness to controlling for inflation, unemployment, interest rates, and recession indicators, and probe timing by using lags and/or high-frequency event-study variation around exogenous oil supply disruptions to see whether sentiment responds after oil moves rather than vice versa.",
+    "causal_assessment": "**Strategy**: No explicit identification strategy is provided; the edge relies on an informal reduced-form association between oil/gasoline prices and consumer sentiment.\n\n**Strengths**: The claim is economically plausible and consistent with a direct household budget channel (gasoline as a salient, frequent purchase) that could move sentiment contemporaneously. If the relationship were shown to be robust across time, regions, and alternative sentiment measures with appropriate controls, that would support the mechanism\u2014but none of that is documented here.\n\n**Vulnerabilities**: Oil prices are highly endogenous to macroeconomic conditions (global demand, recession risk, monetary policy expectations, geopolitical shocks) that also directly affect consumer sentiment, creating severe omitted-variable bias and reverse/bi-directional causality (e.g., macro news jointly moves oil and sentiment). Without a design (e.g., exogenous oil supply shocks, an IV, local price pass-through with fixed effects, event studies around plausibly exogenous disruptions) and diagnostics (pre-trends, balance, first-stage strength, exclusion restrictions), the causal direction and magnitude are not identified.\n\n**Verdict**: **ABSENT**",
+    "blocked_reason": "No adapter for edge group &#x27;UNKNOWN&#x27; (edge &#x27;oil_to_sentiment&#x27;). Register in _GROUP_TO_DESIGN or add to EDGE_NODE_MAP.",
+    "remediation": "Set edge_type in the DAG YAML to one of: causal, identity, immutable, mechanical. Then re-run the pipeline."
+  },
+  {
+    "id": "cpi_to_fed_funds",
+    "source": "cpi_headline",
+    "target": "fed_funds_rate",
+    "edge_type": "reaction_function",
+    "expected_sign": "positive",
+    "interpretation": "Taylor-rule-type reaction function estimate",
+    "notes": "Fed raises rates in response to inflation. Not a causal/structural estimate.",
+    "provenance_source": "",
+    "provenance_detail": "",
+    "point": -0.3189962346409807,
+    "se": 1.1142229065156979,
+    "pvalue": 0.7746523333312123,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "A",
+    "score": 0.9255555555555555,
+    "claim_level": "REDUCED_FORM",
+    "all_pass": false,
+    "diagnostics": [
+      {
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": true
+      },
+      {
+        "name": "sign_consistency",
+        "passed": true
+      },
+      {
+        "name": "ts_leads_test",
+        "passed": true
+      },
+      {
+        "name": "ts_residual_autocorr",
+        "passed": true
+      },
+      {
+        "name": "ts_hac_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_lag_sensitivity",
+        "passed": false
+      },
+      {
+        "name": "ts_regime_stability",
+        "passed": true
+      },
+      {
+        "name": "ts_shock_support",
+        "passed": true
+      }
+    ],
+    "failure_flags": [],
+    "id_risks": {
+      "unmeasured_confounding": "medium",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Design LOCAL_PROJECTIONS provides REDUCED_FORM level only",
+    "n_obs": 176,
+    "strategy_type": "",
+    "strategy_argument": "",
+    "strategy_key_assumption": "",
+    "issues": [
+      {
+        "issue_key": "RATING_DIAGNOSTICS_CONFLICT:cpi_to_fed_funds",
+        "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
+        "severity": "HIGH",
+        "message": "A-rating despite failed diagnostics."
+      }
+    ],
+    "has_critical_issue": false,
+    "llm_annotation": "",
+    "causal_assessment": "**Strategy**: No causal identification\u2014this is a reduced-form local-projections association intended to describe comovement in a \u201creaction function\u201d setting, not to isolate exogenous variation in inflation.\n\n**Strengths**: The time-series diagnostics largely pass (HAC bandwidth/effective observations, residual autocorrelation checks, leads test, regime stability, HAC sensitivity, shock support), which supports basic model adequacy for describing correlations and dynamic responses in-sample. The framing (\u201cFed raises rates in response to inflation\u201d) is institutionally plausible as a narrative.\n\n**Vulnerabilities**: With \u201cType: none,\u201d there is no source of exogenous variation in CPI, so reverse causality (policy affects inflation) and omitted variables (e.g., output gap, financial conditions, supply shocks, expectations) can drive the estimate; in a monetary policy context, simultaneity is first-order. The effect is statistically indistinguishable from zero (p=0.775; SE large relative to estimate), and the failed lag sensitivity diagnostic indicates the estimated response is not robust to reasonable lag-specification changes\u2014further undermining any causal interpretation.\n\n**Verdict**: **ABSENT**"
+  },
+  {
+    "id": "fed_funds_to_unemployment",
+    "source": "fed_funds_rate",
+    "target": "unemployment",
+    "edge_type": "causal",
+    "expected_sign": "positive",
+    "interpretation": "",
+    "notes": "Monetary tightening increases unemployment with long lag.",
+    "provenance_source": "",
+    "provenance_detail": "",
+    "point": -0.08681335285812589,
+    "se": 0.03247970142272697,
+    "pvalue": 0.007520998990305605,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "A",
+    "score": 0.97,
+    "claim_level": "DESCRIPTIVE",
+    "all_pass": true,
+    "diagnostics": [
+      {
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": true
+      },
+      {
+        "name": "sign_consistency",
+        "passed": true
+      },
+      {
+        "name": "ts_leads_test",
+        "passed": true
+      },
+      {
+        "name": "ts_residual_autocorr",
+        "passed": true
+      },
+      {
+        "name": "ts_hac_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_lag_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_regime_stability",
+        "passed": true
+      },
+      {
+        "name": "ts_shock_support",
+        "passed": true
+      }
+    ],
+    "failure_flags": [],
+    "id_risks": {
+      "unmeasured_confounding": "medium",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Shock CF requires REDUCED_FORM+, edge has DESCRIPTIVE",
+    "n_obs": 789,
+    "strategy_type": "",
+    "strategy_argument": "",
+    "strategy_key_assumption": "",
+    "issues": [
+      {
+        "issue_key": "SIGNIFICANT_BUT_NOT_IDENTIFIED:fed_funds_to_unemployment",
+        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+        "severity": "CRITICAL",
+        "message": "p=0.0075 but claim_level=DESCRIPTIVE. Significance does not establish causation."
+      }
+    ],
+    "has_critical_issue": true,
+    "llm_annotation": "A higher fed funds rate co-moves with higher unemployment over subsequent quarters, consistent with the idea that tighter monetary conditions reduce aggregate demand and hiring with a lag. The main risk is that the fed funds rate is set in response to anticipated labor-market conditions (policy endogeneity), so the correlation may partly reflect the Fed reacting to forecasts of unemployment rather than unemployment responding to rates; omitted macro shocks (productivity, fiscal policy, global demand) and regime changes (ZLB/forward guidance) can also distort the relationship and lag structure. Next, the researcher should check whether the estimate is robust to using an exogenous monetary policy shock measure (e.g., high-frequency surprises or narrative shocks), alternative lag lengths, and controlling for real activity and inflation to reduce confounding from systematic policy rules.",
+    "causal_assessment": "**Strategy**: Local projections estimate the dynamic association between changes in the fed funds rate and future unemployment, but no explicit exogenous shock/IV/RCT-style source of variation is specified.\n\n**Strengths**: The time-series diagnostics you report (HAC bandwidth/robustness, residual autocorrelation checks, lead tests, lag/HAC sensitivity, regime stability, and shock support) support that the estimated impulse-response pattern is statistically stable and not obviously driven by mechanical serial correlation or arbitrary specification choices. The effect is precisely estimated (p\u22480.0075), and \u201csign consistency\u201d/stability checks increase confidence in the *descriptive* dynamic relationship.\n\n**Vulnerabilities**: With \u201cIdentification strategy: none,\u201d the fed funds rate is likely endogenous to macro conditions and expectations (policy reacts to labor-market and inflation forecasts), so reverse causality and omitted-variable bias remain central threats; standard LP diagnostics do not solve policy endogeneity. Without an identified monetary policy shock (e.g., high-frequency surprises, narrative shocks, or a validated IV) and without explicit controls/structure guaranteeing sequential exogeneity, the estimate cannot be interpreted as a causal effect of tightening on unemployment.\n\n**Verdict**: **ABSENT**"
+  },
+  {
+    "id": "vix_to_industrial",
+    "source": "vix",
+    "target": "industrial_production",
+    "edge_type": "reduced_form",
+    "expected_sign": "negative",
+    "interpretation": "",
+    "notes": "Financial uncertainty depresses investment and production.",
+    "provenance_source": "",
+    "provenance_detail": "",
+    "point": -0.0017039418786865671,
+    "se": 0.0031604067998167585,
+    "pvalue": 0.5897814903946599,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "A",
+    "score": 0.9255555555555555,
+    "claim_level": "BLOCKED_ID",
+    "all_pass": false,
+    "diagnostics": [
+      {
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": true
+      },
+      {
+        "name": "sign_consistency",
+        "passed": true
+      },
+      {
+        "name": "ts_leads_test",
+        "passed": false
+      },
+      {
+        "name": "ts_residual_autocorr",
+        "passed": true
+      },
+      {
+        "name": "ts_hac_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_lag_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_regime_stability",
+        "passed": true
+      },
+      {
+        "name": "ts_shock_support",
+        "passed": true
+      }
+    ],
+    "failure_flags": [],
+    "id_risks": {
+      "unmeasured_confounding": "medium",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Shock CF requires REDUCED_FORM+, edge has BLOCKED_ID",
+    "n_obs": 310,
+    "strategy_type": "",
+    "strategy_argument": "",
+    "strategy_key_assumption": "",
+    "issues": [
+      {
+        "issue_key": "RATING_DIAGNOSTICS_CONFLICT:vix_to_industrial",
+        "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
+        "severity": "HIGH",
+        "message": "A-rating despite failed diagnostics."
+      }
+    ],
+    "has_critical_issue": false,
+    "llm_annotation": "Higher VIX is associated with lower subsequent industrial production, consistent with the idea that elevated financial uncertainty and risk premia coincide with weaker investment, tighter financial conditions, and more cautious production decisions. A key risk is that this reduced-form link may be washed out or biased by confounding macro shocks (e.g., demand contractions, monetary policy surprises, or global stress) that move both VIX and output, as well as timing/aggregation issues if VIX spikes are short-lived relative to monthly IP. Given the imprecise, statistically insignificant estimate, the researcher should check robustness to alternative lags and horizons, control for common shocks (policy rate, credit spreads, oil prices, global activity), and test stability across regimes (crisis vs. normal times) and nonlinear effects (large VIX spikes vs. small changes).",
+    "causal_assessment": "**Strategy**: None\u2014this is a reduced-form local projections association of industrial production on VIX with no exogenous shock, instrument, or quasi-experimental variation.\n\n**Strengths**: The time-series diagnostics you list (HAC bandwidth/effective obs, residual autocorrelation checks, HAC/lag sensitivity, regime stability, shock support, sign consistency) support that the *time-series specification is not obviously fragile* to standard implementation choices. The estimate is also statistically indistinguishable from zero (p\u22480.59), which reduces concern about overstating a large causal effect from noisy correlations.\n\n**Vulnerabilities**: With \u201cType: none,\u201d the VIX is highly likely endogenous to macro conditions (reverse causality from industrial production expectations to VIX, and omitted common shocks like monetary policy, global risk, or news), so the edge is not causally identified. The failed **ts_leads_test** is an additional red flag: detectable lead effects are consistent with anticipation/simultaneity or pre-trends, directly undermining a causal interpretation even within the reduced-form LP framework.\n\n**Verdict**: **ABSENT**"
+  },
+  {
+    "id": "vix_to_nfci",
+    "source": "vix",
+    "target": "nfci",
+    "edge_type": "mechanical",
+    "expected_sign": "positive",
+    "interpretation": "",
+    "notes": "VIX is a component / correlate of financial conditions. Near-mechanical.",
+    "provenance_source": "",
+    "provenance_detail": "",
+    "point": 0.7508949541735056,
+    "se": 0.22631413313493662,
+    "pvalue": 0.000906864878427209,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "A",
+    "score": 0.8115555555555555,
+    "claim_level": "BLOCKED_ID",
+    "all_pass": false,
+    "diagnostics": [
+      {
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": true
+      },
+      {
+        "name": "sign_consistency",
+        "passed": true
+      },
+      {
+        "name": "ts_leads_test",
+        "passed": false
+      },
+      {
+        "name": "ts_residual_autocorr",
+        "passed": true
+      },
+      {
+        "name": "ts_hac_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_lag_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_regime_stability",
+        "passed": true
+      },
+      {
+        "name": "ts_shock_support",
+        "passed": true
+      }
+    ],
+    "failure_flags": [],
+    "id_risks": {
+      "unmeasured_confounding": "medium",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Shock CF requires REDUCED_FORM+, edge has BLOCKED_ID",
+    "n_obs": 43,
+    "strategy_type": "",
+    "strategy_argument": "",
+    "strategy_key_assumption": "",
+    "issues": [
+      {
+        "issue_key": "SIGNIFICANT_BUT_NOT_IDENTIFIED:vix_to_nfci",
+        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+        "severity": "CRITICAL",
+        "message": "p=0.0009 but claim_level=BLOCKED_ID. Significance does not establish causation."
+      },
+      {
+        "issue_key": "RATING_DIAGNOSTICS_CONFLICT:vix_to_nfci",
+        "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
+        "severity": "HIGH",
+        "message": "A-rating despite failed diagnostics."
+      }
+    ],
+    "has_critical_issue": true,
+    "llm_annotation": "Higher VIX mechanically feeds into (or closely tracks) tighter financial conditions, since many NFCI-style indexes incorporate market volatility and risk premia measures that rise when VIX spikes. The main risk is tautology/overlap: the estimate may largely reflect shared construction or common measurement rather than an economically meaningful transmission channel, and any remaining movement could be jointly driven by broad risk-off shocks. Next, verify the index methodology and compute the contribution/loading of VIX (or related volatility series) to NFCI; re-estimate using an NFCI variant with volatility components removed or replaced, and check whether the relationship survives after controlling for common risk factors (e.g., credit spreads, term premium, liquidity).",
+    "causal_assessment": "**Strategy**: No causal identification is provided; the local projections estimate is treated as a time-series association between two tightly related financial stress indices (near-mechanical linkage).\n\n**Strengths**: Several time-series robustness checks pass (HAC bandwidth adequacy, effective sample size, residual autocorrelation handling, HAC/lag sensitivity, regime stability, and \u201cshock support\u201d), and the effect is statistically strong (0.75, SE 0.23, p\u22480.001), consistent with contemporaneous co-movement. The \u201cmechanical\u201d edge type plus the note that VIX is a component/correlate of financial conditions makes the positive association unsurprising and stable.\n\n**Vulnerabilities**: With \u201cType: none,\u201d there is no exogenous variation\u2014VIX and NFCI likely share common drivers (risk appetite, monetary/credit shocks) and may embed overlapping information, so the coefficient can reflect simultaneity/common-factor measurement rather than a causal effect of VIX on broader conditions. The failed **ts_leads_test** is a direct red flag for causal ordering/exogeneity in LPs (e.g., evidence consistent with anticipation, reverse causality, or omitted dynamics), undermining the interpretation of the LP impulse as a causal shock transmission.\n\n**Verdict**: **ABSENT**"
+  },
+  {
+    "id": "industrial_to_unemployment",
+    "source": "industrial_production",
+    "target": "unemployment",
+    "edge_type": "reduced_form",
+    "expected_sign": "negative",
+    "interpretation": "",
+    "notes": "Okun&#x27;s law: output decline precedes rising unemployment.",
+    "provenance_source": "",
+    "provenance_detail": "",
+    "point": -29.03273769299728,
+    "se": 12.813505861214317,
+    "pvalue": 0.02346412802845881,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "A",
+    "score": 0.97,
+    "claim_level": "DESCRIPTIVE",
+    "all_pass": true,
+    "diagnostics": [
+      {
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": true
+      },
+      {
+        "name": "sign_consistency",
+        "passed": true
+      },
+      {
+        "name": "ts_leads_test",
+        "passed": true
+      },
+      {
+        "name": "ts_residual_autocorr",
+        "passed": true
+      },
+      {
+        "name": "ts_hac_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_lag_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_regime_stability",
+        "passed": true
+      },
+      {
+        "name": "ts_shock_support",
+        "passed": true
+      }
+    ],
+    "failure_flags": [],
+    "id_risks": {
+      "unmeasured_confounding": "medium",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Shock CF requires REDUCED_FORM+, edge has DESCRIPTIVE",
+    "n_obs": 789,
+    "strategy_type": "",
+    "strategy_argument": "",
+    "strategy_key_assumption": "",
+    "issues": [
+      {
+        "issue_key": "SIGNIFICANT_BUT_NOT_IDENTIFIED:industrial_to_unemployment",
+        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+        "severity": "CRITICAL",
+        "message": "p=0.0235 but claim_level=DESCRIPTIVE. Significance does not establish causation."
+      }
+    ],
+    "has_critical_issue": true,
+    "llm_annotation": "Higher industrial production co-moves with lower unemployment, consistent with Okun-style dynamics where expansions raise labor demand and contractions precede layoffs. A key risk is reverse timing and measurement: unemployment can also feed back into production (via demand), and both series share business-cycle shocks, policy responses, and common trends that can induce spurious correlation if not properly detrended and timed. Next, check robustness to alternative lags/leads (does production lead unemployment?), stationarity/detrending choices (levels vs growth rates), and inclusion of common-cycle controls (e.g., monetary policy, inflation, recession indicators) or a VAR/Granger-style analysis to assess directionality.",
+    "causal_assessment": "**Strategy**: No causal identification is claimed or implemented; this is a reduced-form time-series local-projections association between industrial production movements and subsequent unemployment.\n\n**Strengths**: The LOCAL_PROJECTIONS setup with extensive time-series diagnostics passed (HAC bandwidth adequacy, residual autocorrelation checks, lead tests, lag/HAC sensitivity, regime stability, and sign consistency) supports that the estimated dynamic relationship is statistically and temporally stable in-sample (estimate \u221229.0, SE 12.8, p=0.023). The \u201cts_leads_test\u201d passing is consistent with (though not proof of) limited reverse-timing from unemployment innovations to prior industrial production within the tested horizons.\n\n**Vulnerabilities**: Without an exogenous shock, IV, RDD, or randomized variation, the edge is vulnerable to omitted macro shocks (monetary/fiscal policy, financial conditions, demand shocks, productivity shocks) that jointly move output and unemployment, so the coefficient generally mixes multiple structural channels rather than isolating \\( \\text{IP} \\rightarrow \\text{Unemp} \\). Okun\u2019s law provides a descriptive regularity, but it does not establish the key exogeneity assumption needed for causal interpretation; passing time-series diagnostics does not rule out confounding or simultaneity driven by common shocks.\n\n**Verdict**: **ABSENT**"
+  }
+];
+const LATENTS = [
+  {
+    "id": "global_demand",
+    "description": "Global aggregate demand drives both oil prices and US macro outcomes. Partially addressed by using Baumeister structural shocks.\n",
+    "affects": [
+      "oil_price",
+      "industrial_production",
+      "unemployment"
+    ]
+  },
+  {
+    "id": "monetary_expectations",
+    "description": "Forward-looking expectations about monetary policy affect both financial conditions and real activity simultaneously.\n",
+    "affects": [
+      "fed_funds_rate",
+      "vix",
+      "nfci"
+    ]
+  }
+];
+const METADATA = {
+  "name": "us_oil_shock_transmission",
+  "description": "Oil supply shocks transmit through the US economy via inflation, financial conditions, industrial production, and labor markets. Tests full agentic pipeline including DataResolverAgent discovery.\n",
+  "target_node": "unemployment",
+  "created": "2026-02-11",
+  "owner": "research_team",
+  "tags": [
+    "us_macro",
+    "oil",
+    "transmission",
+    "test_dag"
+  ]
+};
+const EDGE_TYPE_COLORS = {"causal": "#2563eb", "reaction_function": "#059669", "bridge": "#9333ea", "identity": "#9333ea", "mechanical": "#9333ea", "immutable": "#d97706"};
+const EDGE_TYPE_LABELS = {"causal": "Causal", "reaction_function": "Reaction Function", "bridge": "Accounting Bridge", "identity": "Identity", "mechanical": "Mechanical", "immutable": "Immutable (Validated)"};
+const RULE_DESCRIPTIONS = {
+  "ENTITY_BOUNDARY_DRIFT": {
+    "description": "Mixing entity scopes (bank vs group) breaks comparability",
+    "explanation": "When different observations mix entity scopes (e.g., bank-level vs consolidated group-level), the treatment and outcome variables become incomparable across units. Capital ratios at bank level differ systematically from group level due to intra-group transfers and double counting. Ignoring this produces biased panel estimates because the variation being exploited is partly definitional, not economic.\n",
+    "guidance": "Harmonize all observations to the same scope (preferably unconsolidated bank-level for Kazakhstan data). If harmonization is impossible, add a scope dummy and note the caveat in the report.\n"
+  },
+  "KPI_DEFINITION_MISMATCH_CROSS_BANK": {
+    "description": "NPL/CoR definitions differ across banks causing sign conflicts",
+    "explanation": "Banks may use different definitions for key performance indicators (e.g., NPL includes/excludes restructured loans, CoR uses different provisioning rules). Cross-bank panel estimation treats these as comparable, but definitional differences create measurement error correlated with bank characteristics. This can flip coefficient signs between runs and invalidate pooled estimates.\n",
+    "guidance": "Check if the definition mismatch is economically meaningful. If yes, harmonize definitions or estimate separately by definition group. Document any remaining heterogeneity as a limitation.\n"
+  },
+  "SHOCK_CONSTRUCT_AMBIGUOUS": {
+    "description": "EdgeCard must include shock_node_id, shock_unit, shock_scale",
+    "explanation": "Without explicit shock metadata (which node is shocked, in what units, at what scale), counterfactual scenarios become ambiguous. A &quot;10% depreciation&quot; could mean 10 percentage points or 10% of the current level, leading to order-of-magnitude errors in propagation. This metadata is required for reproducible counterfactuals.\n",
+    "guidance": "The system will auto-populate shock metadata from the DAG spec. Verify that the inferred shock_unit and shock_scale match your intended scenario.\n"
+  },
+  "FREQUENCY_ALIGNMENT_ERROR": {
+    "description": "Mixing frequencies without explicit aggregation rule",
+    "explanation": "Mixing monthly treatment with quarterly outcome (or vice versa) without a declared aggregation method (end-of-period, average, sum) introduces temporal misalignment. The estimator may silently interpolate or drop observations, changing the effective sample and potentially biasing results. This is auto-fixable but must be logged.\n",
+    "guidance": "The system will apply the aggregation rule from the DAG spec. If no rule is specified, it defaults to end-of-period for stocks and average for flows.\n"
+  },
+  "FREQUENCY_SCALING_MISMATCH": {
+    "description": "Annual vs quarterly estimates not normalized to common unit",
+    "explanation": "When comparing estimates across runs with different frequencies, a quarterly coefficient is not directly comparable to an annual one. Failing to normalize (e.g., annualize quarterly or quarterly-ize annual) leads to incorrect propagation multipliers and misleading cross-run convergence assessments.\n",
+    "guidance": "Normalize all estimates to a common time unit before comparison. The preferred convention is quarterly for macro variables and annual for structural parameters.\n"
+  },
+  "EXTRACTION_PROVENANCE_GAPS": {
+    "description": "Missing source document/page reference for extracted data",
+    "explanation": "Data extracted from PDFs, reports, or regulatory filings should carry provenance (source document, page, table number) so that results can be independently verified. Missing provenance makes reproduction impossible and raises audit risk, especially for regulatory submissions.\n",
+    "guidance": "Add the source reference to the data extraction metadata. For low-risk variables (e.g., public market data), this can be accepted with a note.\n"
+  },
+  "REACTION_FUNCTION_EDGE": {
+    "description": "Policy reaction edge cannot be used for shock propagation",
+    "explanation": "A policy reaction function (e.g., central bank raises rates in response to inflation) captures endogenous behavior, not a causal effect of an exogenous shock. Using it for shock propagation would double-count the policy response or create circular logic. The edge should be classified as diagnostic or informational only.\n",
+    "guidance": "Reclassify as diagnostic-only if this is purely a reaction function. If you believe there is an exogenous component, document the identification strategy and accept with a caveat.\n"
+  },
+  "TIME_FE_ABSORBS_SHOCK": {
+    "description": "Panel with time FE and common shock requires Exposure x Shock",
+    "explanation": "Time fixed effects absorb all common time-varying shocks (including the treatment of interest if it is a macro shock common to all units). To identify the effect, the design must exploit cross-sectional variation in exposure (Exposure x Shock interaction). Without this, the coefficient is mechanically zero or identified only from noise.\n",
+    "guidance": "The system will suggest adding an Exposure x Shock interaction term. This is the standard diff-in-diff approach for common shocks in panel data.\n"
+  },
+  "EXPOSURE_NOT_PREDETERMINED": {
+    "description": "Exposure variable must be measured strictly pre-treatment",
+    "explanation": "If the exposure variable (e.g., bank&#x27;s FX share) is measured contemporaneously with or after the shock, it may itself be affected by the shock, creating a &quot;bad controls&quot; problem. This violates the exclusion restriction in diff-in-diff designs and biases the estimated causal effect, typically attenuating it toward zero.\n",
+    "guidance": "Lag the exposure variable to a pre-treatment period. If pre-treatment measurement is unavailable, accept with a caveat noting potential attenuation bias.\n"
+  },
+  "MECHANICAL_EDGE_ESTIMATED": {
+    "description": "Accounting identity should be bridge, not regression",
+    "explanation": "Regressing an identity (e.g., CAR = Capital / RWA) produces tautological results with near-perfect fit, inflating credibility scores and wasting estimation budget. Mechanical edges should be treated as deterministic bridges that pass through shocks via calculus (partial derivatives), not statistical estimation.\n",
+    "guidance": "The system will convert this to a bridge edge with deterministic sensitivity. Accept as regression only if you need to test whether the identity holds empirically.\n"
+  },
+  "PATH_DOUBLE_COUNTING": {
+    "description": "Direct reduced-form + indirect chain both used for propagation",
+    "explanation": "If both a direct reduced-form edge (A -&gt; C) and a structural chain (A -&gt; B -&gt; C) are included in propagation, the total effect is double-counted. This inflates counterfactual predictions, potentially by 100% or more. The system detects overlapping paths and requires the analyst to choose one.\n",
+    "guidance": "Prefer the structural chain if all intermediate edges are IDENTIFIED_CAUSAL, as it provides more granular policy levers. Use reduced-form if intermediate edges are weak or if you only need the total effect.\n"
+  },
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED": {
+    "description": "Significant result but claim_level != IDENTIFIED_CAUSAL",
+    "explanation": "This edge shows a statistically significant result (low p-value), but the identification strategy has not been validated as causal. A significant correlation is not the same as a causal effect \u2014 without proper identification (e.g., IV, RDD, DiD), the estimate may reflect reverse causation, omitted variable bias, or spurious correlation. Accepting this as causal without acknowledgement constitutes overclaiming.\n",
+    "guidance": "If you have a credible identification strategy, upgrade to IDENTIFIED_CAUSAL and document it. Otherwise, accept as REDUCED_FORM \u2014 informative but not usable for counterfactual predictions without caveats.\n"
+  },
+  "SMALL_SAMPLE_INFERENCE": {
+    "description": "N &lt; 30 with HAC SEs; inference fragile",
+    "explanation": "With fewer than 30 observations, HAC (Newey-West) standard errors rely on asymptotic approximations that perform poorly in small samples. Confidence intervals may be too narrow, leading to false rejections of the null. The credibility rating is capped to reflect this uncertainty.\n",
+    "guidance": "Consider wild bootstrap for more reliable small-sample inference. The rating cap to B is automatic; override only if you have strong justification for asymptotic validity.\n"
+  },
+  "PANEL_TOO_FEW_UNITS": {
+    "description": "&lt; 5 units; cluster-robust unreliable",
+    "explanation": "Cluster-robust standard errors require a sufficient number of clusters (units) to be reliable. With fewer than 5 units, the cluster-robust variance estimator is severely biased downward, leading to over-rejection. This is a well-known problem in the panel econometrics literature (Cameron, Gelbach, Miller 2008).\n",
+    "guidance": "Use wild cluster bootstrap (Webb weights) for valid inference with few clusters. The rating cap to B is automatic. Accept with caveat if bootstrap is infeasible.\n"
+  },
+  "LOO_INSTABILITY": {
+    "description": "Leave-one-out shows sign flip or &gt;50% magnitude change",
+    "explanation": "Leave-one-out (LOO) analysis drops each unit in turn and re-estimates. If the coefficient flips sign or changes magnitude by more than 50%, the result is driven by a single influential unit rather than a systematic pattern. Such fragility undermines confidence in the estimate as a general causal effect.\n",
+    "guidance": "Identify the influential unit and investigate whether it is an outlier or represents a genuine subgroup effect. Consider winsorizing, trimming, or reporting results with and without the influential unit.\n"
+  },
+  "BREAKS_UNMODELED": {
+    "description": "Regime changes not accounted for in estimation",
+    "explanation": "Structural breaks (e.g., policy changes, crises) can cause coefficient instability. If breaks are present but not modeled, the estimated coefficient is a weighted average across regimes, which may not represent either regime accurately. This is especially problematic for counterfactual scenarios that project beyond a break date.\n",
+    "guidance": "Add a regime dummy or split the sample at the break date. If the break is recent and data post-break is insufficient, restrict counterfactual scope to the pre-break regime.\n"
+  },
+  "MULTIPLE_TESTING_DRIFT": {
+    "description": "Spec search exceeded pre-registered budget",
+    "explanation": "Running many specifications and reporting only the significant one inflates the false discovery rate. The pre-registered specification budget limits this. If the budget is exceeded, the analyst must either apply a multiple testing correction (e.g., Bonferroni) or justify the additional specifications as pre-planned robustness checks.\n",
+    "guidance": "Apply Bonferroni correction to the p-values if the budget was exceeded due to exploratory analysis. If the additional specs were planned robustness checks, document them and reset the budget.\n"
+  },
+  "NONSTATIONARY_LEVELS_RISK": {
+    "description": "Both variables in levels and trending; require transformation or ECM",
+    "explanation": "Regressing two trending (non-stationary) variables in levels produces spurious regression \u2014 high R-squared and significant t-statistics that reflect shared trends, not causal relationships. The solution is to first-difference, use an ECM if cointegrated, or apply appropriate transformations (log-differences for growth rates).\n",
+    "guidance": "The system will apply first-differencing by default. If you believe the variables are cointegrated, select ECM specification to preserve the long-run relationship.\n"
+  },
+  "RESIDUAL_AUTOCORR_DETECTED": {
+    "description": "Serial correlation in residuals; HAC SEs may be inadequate",
+    "explanation": "Serial correlation in residuals indicates that the model is missing dynamic structure. While HAC standard errors adjust for this, they may be inadequate if the autocorrelation is strong or persistent, leading to under-estimated standard errors and over-rejection.\n",
+    "guidance": "Consider increasing the HAC bandwidth or adding lagged dependent variables. If autocorrelation is mild (DW close to 2), accept with a caveat.\n"
+  },
+  "REGIME_BREAK_SUSPECTED": {
+    "description": "Coefficient instability across regime splits",
+    "explanation": "TSGuard detected statistically significant coefficient differences across time sub-samples, suggesting a structural break. Using a single coefficient for the full sample masks regime-specific effects and produces unreliable counterfactuals for periods after the break.\n",
+    "guidance": "Split the sample at the detected break date and estimate separately. If the break is too recent for reliable post-break estimation, restrict counterfactual scope to the pre-break regime.\n"
+  },
+  "LEADS_SIGNIFICANT_TIMING_FAIL": {
+    "description": "Effects appear before shock; reverse causation or omitted factor",
+    "explanation": "If the outcome responds significantly BEFORE the treatment shock, the causal interpretation fails. This indicates either reverse causation (outcome causes treatment), an omitted common factor driving both, or anticipation effects that violate the parallel trends assumption. The edge is blocked from propagation automatically.\n",
+    "guidance": "Investigate whether leads reflect anticipation (expected policy changes) or reverse causation. If anticipation, consider adjusting the shock timing. If reverse causation, reclassify the edge direction or remove from the DAG.\n"
+  },
+  "HAC_LAG_SENSITIVITY_HIGH": {
+    "description": "Estimate changes materially with HAC lag length",
+    "explanation": "If the point estimate or its significance changes substantially when varying the HAC bandwidth (number of lags in the Newey-West kernel), the inference is fragile to the choice of bandwidth. This suggests that the serial correlation structure is complex and the standard errors are not robust to bandwidth selection.\n",
+    "guidance": "Report results across multiple bandwidths. Use a data-driven bandwidth selector (e.g., Andrews 1991) rather than ad hoc choice. Accept with caveat if the sign is stable across bandwidths.\n"
+  },
+  "SELECTION_PUBLIC_BANK_ONLY": {
+    "description": "Panel uses only public banks; results may not generalize to full banking sector",
+    "explanation": "Public (listed) banks differ systematically from private banks in size, governance, risk appetite, and regulatory scrutiny. Estimates from public-only samples may not generalize to the full banking sector. Counterfactuals applied to the full sector using these estimates would be unreliable for the private bank segment.\n",
+    "guidance": "Add a disclaimer noting the sample restriction. Cap the counterfactual scope to public banks only, or accept with a clear caveat about external validity limitations.\n"
+  },
+  "SURVIVORSHIP_BIAS_RISK": {
+    "description": "Sample excludes failed/merged banks; survival conditioning biases estimates",
+    "explanation": "If banks that failed, merged, or exited the sample are excluded, the remaining sample is conditioned on survival. This creates survivorship bias \u2014 the estimated effects reflect only the experience of survivors, typically underestimating the negative effects of shocks (since the most affected banks disappeared).\n",
+    "guidance": "Run a sensitivity check including failed/merged banks up to their last observation. Add a disclaimer about survivorship bias. If data on exits is unavailable, accept with a clear caveat.\n"
+  },
+  "COVERAGE_GAP_EXTERNAL_VALIDITY": {
+    "description": "Sample covers &lt;50% of system assets or &lt;50% of institutions in target population",
+    "explanation": "When the sample covers less than half of the target population (by assets or count), the estimated effects may not represent the system as a whole. Small or mid-sized banks excluded from the sample may have different exposure patterns and response mechanisms than the included banks.\n",
+    "guidance": "Add a disclaimer noting the coverage gap. If the coverage gap is due to data availability, document which segments are missing and their likely direction of bias.\n"
+  },
+  "RATING_DIAGNOSTICS_CONFLICT": {
+    "description": "A-rating despite failed diagnostics or missing requirements",
+    "explanation": "An A-rating signals high credibility, but one or more diagnostics have failed or required checks are missing. This inconsistency undermines the rating system&#x27;s integrity. The system auto-downgrades to B to maintain consistency between the rating and the underlying evidence.\n",
+    "guidance": "The auto-downgrade to B is applied. Override to A only if you can document why the failed diagnostic does not affect the estimate&#x27;s credibility for your specific use case.\n"
+  },
+  "N_REPORTING_INCONSISTENT": {
+    "description": "Report N header != EdgeCard N_eff",
+    "explanation": "The sample size reported in the system report header differs from the effective observations in the EdgeCard. This inconsistency confuses reviewers and may indicate a data processing error (e.g., missing values were dropped but not reflected in the header count).\n",
+    "guidance": "The system will auto-fix by aligning the report N to the EdgeCard N_eff. Accept the auto-fix unless you have a specific reason for the discrepancy.\n"
+  },
+  "CROSS_EVIDENCE_CONFLICT": {
+    "description": "Two edges measuring same relationship have conflicting signs",
+    "explanation": "When two edges estimate the same causal relationship (e.g., one reduced-form and one structural) but produce opposite signs, at least one is biased or misspecified. Using both in propagation would produce contradictory counterfactuals. The analyst must adjudicate which estimate is more credible.\n",
+    "guidance": "Prefer the structural edge if its identification strategy is stronger. If both designs are equally credible, report the conflict as a limitation and consider averaging with appropriate uncertainty.\n"
+  },
+  "ORPHAN_NODE_UNCONNECTED": {
+    "description": "Node not connected to any edge; unreachable in propagation",
+    "explanation": "A node exists in the DAG but does not appear in any edge&#x27;s from/to or latent&#x27;s affects list. If the node has an identity formula whose components are all present in the DAG, an identity edge can be auto-created. Otherwise, human intervention is required to either add a causal edge with estimation backing or remove the node.\n",
+    "guidance": "For identity-resolvable orphans, the system creates a deterministic identity edge and edge card. For others, add an edge with proper estimation or remove the orphan node from the DAG.\n"
+  },
+  "TARGET_UNREACHABLE": {
+    "description": "Target node is unreachable from any root node in the DAG",
+    "explanation": "The target node (the variable the DAG is designed to explain) cannot be reached by following edges from any exogenous root node. This means the causal narrative is structurally broken \u2014 shocks cannot propagate to the target. Common causes include missing identity edges, disconnected components, or incomplete narrative extraction.\n",
+    "guidance": "Add the missing edges that connect the exogenous shock chain to the target. For identity nodes (e.g., K2 = Capital / RWA), ensure both identity component edges exist.\n"
+  },
+  "IDENTITY_DEPS_INCOMPLETE": {
+    "description": "Derived node&#x27;s identity formula has dependencies without edges",
+    "explanation": "A derived node has an identity formula (e.g., K2 = Capital / RWA) that references dependency nodes, but one or more of those dependencies lack an edge pointing to the derived node. This breaks the accounting identity chain and prevents correct propagation through the identity relationship.\n",
+    "guidance": "The system will auto-create identity edges from each dependency to the derived node. Accept if the dependencies are correctly specified in the formula.\n"
+  },
+  "SINK_NODE_NOT_TARGET": {
+    "description": "Non-target node absorbs information but does not transmit downstream",
+    "explanation": "A node has incoming edges but no outgoing edges, yet it is not the DAG&#x27;s target node. This means information (shocks) flow into this node but are absorbed without transmitting further. If the node is meant to influence downstream variables, the missing outgoing edge represents a gap in the causal narrative.\n",
+    "guidance": "Either add an outgoing edge to connect this node downstream, or accept this as a terminal diagnostic node that is not part of the propagation chain.\n"
+  },
+  "EDGE_ID_SYNTAX_INVALID": {
+    "description": "Edge ID contains spaces, arrows, or other invalid characters",
+    "explanation": "Edge IDs must be valid snake_case identifiers (lowercase letters, digits, underscores only). IDs containing spaces, arrows (-&gt;), parentheses, or other special characters cause filesystem errors when saving EdgeCards and break downstream tooling that expects clean identifiers.\n",
+    "guidance": "The system will auto-sanitize the edge ID by converting arrows to _to_, removing special characters, and collapsing consecutive underscores.\n"
+  },
+  "IDENTITY_FORMULA_DOUBLE_TRANSFORM": {
+    "description": "Identity formula applies log() to a node already stored in log form",
+    "explanation": "A derived node&#x27;s identity formula contains log(X) where X already has transforms: [log], meaning the data is already in log levels. Applying log() again would double-log the variable, producing incorrect results. This is usually a documentation convention issue rather than a runtime bug, but it creates ambiguity about whether the formula represents a mathematical operation or a label.\n",
+    "guidance": "If the convention is that transforms: [log] means &quot;data stored in log form&quot;, then the formula should use the variable name directly (e.g., X - Y instead of log(X) - log(Y)). Update the formula to match.\n"
+  },
+  "LOADER_FAILED": {
+    "description": "Primary and fallback data loaders both failed for a node",
+    "explanation": "The DynamicLoaderFactory could not build a loader for a DAG node from any of its declared source specs (preferred + fallback). This prevents estimation of all edges involving this node. The DataResolverAgent can attempt to discover and download data from external APIs.\n",
+    "guidance": "The system will dispatch to the DataResolverAgent, which uses LLM tool-use to search data catalogs (World Bank, FRED, IMF, DBnomics), fetch matching indicators, and register loaders. If automated resolution fails, drop a data file into data/raw/ and re-run.\n"
+  },
+  "DATA_INSUFFICIENT_EDGE": {
+    "description": "Edge estimation produced fewer than 5 observations after alignment",
+    "explanation": "After aligning treatment and outcome series in time, fewer than 5 usable observations remain. This is typically caused by frequency mismatch (annual vs monthly), non-overlapping date ranges, or excessive NaN values. The estimate is unreliable and marked with rating D.\n",
+    "guidance": "The DataResolverAgent can attempt to find a higher-frequency version of the data or a longer time series from an alternative provider. If this fails, the edge should be excluded from propagation.\n"
+  },
+  "ALIGNMENT_FAILURE": {
+    "description": "Treatment and outcome series have no overlapping date range",
+    "explanation": "The two series for an edge have completely disjoint date ranges, making estimation impossible. This often happens when one series is annual (e.g., from World Bank) and the other is monthly, or when one series ends before the other begins.\n",
+    "guidance": "The system will attempt frequency resampling (forward-fill annual to monthly) or search for an alternative series with better coverage. If alignment is impossible, the edge is excluded from estimation.\n"
+  },
+  "UNIT_MISSING_IN_EDGECARD": {
+    "description": "EdgeCard missing treatment_unit/outcome_unit",
+    "explanation": "Without explicit units (e.g., &quot;pp&quot;, &quot;%&quot;, &quot;log points&quot;), the coefficient is uninterpretable. A coefficient of 0.5 could mean 0.5 percentage points, 50%, or 0.5 log points \u2014 a potential 100x difference in the implied effect. Units are required for any meaningful propagation or reporting.\n",
+    "guidance": "The system will auto-populate units from the DAG spec. Verify that the inferred units match the actual estimation specification.\n"
+  }
+};
+const ACTIONS_BY_RULE = {
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED": {
+    "action_type": "set_claim_level",
+    "options": [
+      {
+        "value": "IDENTIFIED_CAUSAL",
+        "label": "IDENTIFIED_CAUSAL",
+        "tooltip": "Asserts credible identification strategy (IV, RDD, DiD). Requires documentation. Unlocks counterfactual propagation at full weight."
+      },
+      {
+        "value": "REDUCED_FORM",
+        "label": "REDUCED_FORM",
+        "tooltip": "Informative but not causally identified. Flagged in reports, excluded from causal counterfactuals. Useful for suggestive evidence."
+      },
+      {
+        "value": "DESCRIPTIVE",
+        "label": "DESCRIPTIVE",
+        "tooltip": "Descriptive association only. No causal weight in propagation or counterfactuals. Kept for reporting and context."
+      },
+      {
+        "value": "BLOCKED_ID",
+        "label": "BLOCKED_ID",
+        "tooltip": "Blocks identification claim entirely. Edge remains in DAG but cannot be used for propagation until resolved."
+      }
+    ]
+  },
+  "REACTION_FUNCTION_EDGE": {
+    "action_type": "set_propagation",
+    "options": [
+      {
+        "value": "RECLASSIFY_DIAGNOSTIC",
+        "label": "Reclassify as diagnostic",
+        "tooltip": "Moves edge to diagnostic-only role. It will appear in reports but not participate in shock propagation or counterfactuals."
+      },
+      {
+        "value": "ACCEPT_WITH_CAVEAT",
+        "label": "Accept with caveat",
+        "tooltip": "Keeps edge in propagation but adds an explicit caveat about endogeneity to all downstream counterfactuals."
+      },
+      {
+        "value": "BLOCK_PROPAGATION",
+        "label": "Block from propagation",
+        "tooltip": "Removes edge from all propagation paths. It remains visible in the DAG for documentation but has zero causal weight."
+      }
+    ]
+  },
+  "TIME_FE_ABSORBS_SHOCK": {
+    "action_type": "set_design_fix",
+    "options": [
+      {
+        "value": "ADD_INTERACTION",
+        "label": "Add Exposure x Shock",
+        "tooltip": "Adds cross-sectional exposure interaction to identify effects absorbed by time FE. Standard DiD approach for common macro shocks."
+      },
+      {
+        "value": "DROP_TIME_FE",
+        "label": "Drop time FE",
+        "tooltip": "Removes time fixed effects to allow common shock identification. Risks confounding from other time-varying factors."
+      },
+      {
+        "value": "ACCEPT",
+        "label": "Accept (document)",
+        "tooltip": "Keeps current specification. Documents that the common shock effect is absorbed and the estimate captures only cross-sectional variation."
+      }
+    ]
+  },
+  "EXPOSURE_NOT_PREDETERMINED": {
+    "action_type": "set_exposure_action",
+    "options": [
+      {
+        "value": "LAG_EXPOSURE",
+        "label": "Lag exposure variable",
+        "tooltip": "Uses pre-treatment period exposure measurement to avoid bad controls bias. Recommended if pre-treatment data is available."
+      },
+      {
+        "value": "ACCEPT_CAVEAT",
+        "label": "Accept with caveat",
+        "tooltip": "Keeps contemporaneous exposure with a documented caveat about potential attenuation bias from endogenous exposure."
+      },
+      {
+        "value": "BLOCK_ID",
+        "label": "Block identification claim",
+        "tooltip": "Downgrades identification to REDUCED_FORM. The edge cannot claim causal identification without predetermined exposure."
+      }
+    ]
+  },
+  "MECHANICAL_EDGE_ESTIMATED": {
+    "action_type": "set_edge_type",
+    "options": [
+      {
+        "value": "CONVERT_BRIDGE",
+        "label": "Convert to bridge edge",
+        "tooltip": "Replaces regression with deterministic sensitivity (partial derivative). Eliminates wasted estimation budget on tautological relationships."
+      },
+      {
+        "value": "ACCEPT",
+        "label": "Accept as regression",
+        "tooltip": "Keeps the regression estimate. Useful if you want to empirically test whether the identity holds (e.g., detecting measurement error)."
+      }
+    ]
+  },
+  "PATH_DOUBLE_COUNTING": {
+    "action_type": "set_path_choice",
+    "options": [
+      {
+        "value": "USE_STRUCTURAL",
+        "label": "Use structural chain",
+        "tooltip": "Uses the full structural decomposition (A-&gt;B-&gt;C). Provides more granular policy levers but requires all intermediate edges to be credible."
+      },
+      {
+        "value": "USE_REDUCED_FORM",
+        "label": "Use reduced-form shortcut",
+        "tooltip": "Uses the direct reduced-form edge (A-&gt;C). Simpler and more robust if intermediate edges are weak, but loses structural detail."
+      },
+      {
+        "value": "ACCEPT_BOTH",
+        "label": "Accept both (document)",
+        "tooltip": "Keeps both paths with documentation. Only valid if paths measure different aspects (e.g., short-run vs long-run effects)."
+      }
+    ]
+  },
+  "ENTITY_BOUNDARY_DRIFT": {
+    "action_type": "set_boundary_action",
+    "options": [
+      {
+        "value": "HARMONIZE",
+        "label": "Harmonize to common scope",
+        "tooltip": "Converts all observations to the same entity scope (bank-level or group-level). May require data adjustments."
+      },
+      {
+        "value": "ACCEPT_CAVEAT",
+        "label": "Accept with caveat",
+        "tooltip": "Keeps mixed scopes with a documented caveat. Appropriate when scope differences are small or unavoidable."
+      },
+      {
+        "value": "EXCLUDE_EDGE",
+        "label": "Exclude edge",
+        "tooltip": "Removes the edge from estimation entirely. Use when scope mixing makes the estimate unreliable."
+      }
+    ]
+  },
+  "KPI_DEFINITION_MISMATCH_CROSS_BANK": {
+    "action_type": "set_kpi_action",
+    "options": [
+      {
+        "value": "HARMONIZE",
+        "label": "Harmonize definitions",
+        "tooltip": "Adjusts data to use consistent definitions across banks. May require recalculation from raw components."
+      },
+      {
+        "value": "ACCEPT_CAVEAT",
+        "label": "Accept with caveat",
+        "tooltip": "Keeps heterogeneous definitions with documentation. Appropriate if differences are minor or well-understood."
+      },
+      {
+        "value": "EXCLUDE_EDGE",
+        "label": "Exclude edge",
+        "tooltip": "Removes the edge. Use when definition differences are fundamental and cannot be reconciled."
+      }
+    ]
+  },
+  "SHOCK_CONSTRUCT_AMBIGUOUS": {
+    "action_type": "set_shock_action",
+    "options": [
+      {
+        "value": "ADD_METADATA",
+        "label": "Add shock metadata",
+        "tooltip": "Populates missing shock_node_id, shock_unit, and shock_scale from DAG spec. Required for counterfactual scenarios."
+      },
+      {
+        "value": "ACCEPT",
+        "label": "Accept as-is",
+        "tooltip": "Keeps edge without shock metadata. Edge will not be usable in counterfactual scenarios."
+      }
+    ]
+  },
+  "FREQUENCY_ALIGNMENT_ERROR": {
+    "action_type": "set_freq_action",
+    "options": [
+      {
+        "value": "AGGREGATE_Q",
+        "label": "Aggregate to quarterly",
+        "tooltip": "Aggregates higher-frequency data to quarterly using the DAG-specified method (average for flows, end-of-period for stocks)."
+      },
+      {
+        "value": "AGGREGATE_A",
+        "label": "Aggregate to annual",
+        "tooltip": "Aggregates to annual frequency. Loses short-run dynamics but may be necessary for data availability reasons."
+      },
+      {
+        "value": "ACCEPT",
+        "label": "Accept (document)",
+        "tooltip": "Keeps mixed frequencies with documentation. Only appropriate if the estimator handles mixed frequencies natively."
+      }
+    ]
+  },
+  "FREQUENCY_SCALING_MISMATCH": {
+    "action_type": "set_scaling_action",
+    "options": [
+      {
+        "value": "NORMALIZE",
+        "label": "Normalize to common unit",
+        "tooltip": "Rescales coefficients to a common time unit (quarterly convention). Ensures cross-run comparability."
+      },
+      {
+        "value": "ACCEPT_CAVEAT",
+        "label": "Accept with caveat",
+        "tooltip": "Keeps different time units with documentation. Cross-run comparisons will include unit conversion caveats."
+      }
+    ]
+  },
+  "EXTRACTION_PROVENANCE_GAPS": {
+    "action_type": "set_provenance_action",
+    "options": [
+      {
+        "value": "ADD_SOURCE",
+        "label": "Add source reference",
+        "tooltip": "Adds source document, page, and table reference to the data extraction metadata for audit trail."
+      },
+      {
+        "value": "ACCEPT",
+        "label": "Accept (low risk)",
+        "tooltip": "Accepts without provenance. Appropriate for public market data or well-known statistical series."
+      }
+    ]
+  },
+  "SMALL_SAMPLE_INFERENCE": {
+    "action_type": "set_sample_action",
+    "options": [
+      {
+        "value": "CAP_B",
+        "label": "Cap rating to B",
+        "tooltip": "Limits credibility rating to B, reflecting asymptotic approximation risk with N &lt; 30. Automatic default action."
+      },
+      {
+        "value": "ACCEPT_CAVEAT",
+        "label": "Accept with caveat",
+        "tooltip": "Keeps current rating with documented small-sample caveat. Only if you have justification for asymptotic validity."
+      },
+      {
+        "value": "RE_ESTIMATE",
+        "label": "Flag for re-estimation",
+        "tooltip": "Queues re-estimation with wild bootstrap standard errors for more reliable small-sample inference."
+      }
+    ]
+  },
+  "PANEL_TOO_FEW_UNITS": {
+    "action_type": "set_panel_action",
+    "options": [
+      {
+        "value": "CAP_B",
+        "label": "Cap rating to B",
+        "tooltip": "Limits rating to B due to cluster-robust SE unreliability with &lt; 5 units. Automatic default action."
+      },
+      {
+        "value": "WILD_BOOTSTRAP",
+        "label": "Use wild cluster bootstrap",
+        "tooltip": "Re-estimates with wild cluster bootstrap (Webb weights) for valid few-cluster inference. May widen confidence intervals."
+      },
+      {
+        "value": "ACCEPT_CAVEAT",
+        "label": "Accept with caveat",
+        "tooltip": "Keeps current estimate with documented caveat about few-cluster inference fragility."
+      }
+    ]
+  },
+  "LOO_INSTABILITY": {
+    "action_type": "set_loo_action",
+    "options": [
+      {
+        "value": "CAP_C",
+        "label": "Cap rating to C",
+        "tooltip": "Limits rating to C reflecting result fragility to single-unit exclusion. Signals low confidence in generalizability."
+      },
+      {
+        "value": "ACCEPT_CAVEAT",
+        "label": "Accept with caveat",
+        "tooltip": "Keeps current rating with documented LOO instability caveat. Identify the influential unit in the rationale."
+      },
+      {
+        "value": "RE_ESTIMATE",
+        "label": "Flag for re-estimation",
+        "tooltip": "Queues re-estimation with the influential unit excluded or winsorized. Produces a robustness comparison."
+      }
+    ]
+  },
+  "BREAKS_UNMODELED": {
+    "action_type": "set_breaks_action",
+    "options": [
+      {
+        "value": "ADD_REGIME",
+        "label": "Add regime dummy",
+        "tooltip": "Adds a structural break dummy at the detected break date. Allows coefficient to differ across regimes."
+      },
+      {
+        "value": "SPLIT_SAMPLE",
+        "label": "Split sample estimation",
+        "tooltip": "Estimates separately for each regime. Provides regime-specific coefficients for targeted counterfactuals."
+      },
+      {
+        "value": "ACCEPT_CAVEAT",
+        "label": "Accept with caveat",
+        "tooltip": "Keeps pooled estimate with caveat about coefficient averaging across regimes."
+      }
+    ]
+  },
+  "MULTIPLE_TESTING_DRIFT": {
+    "action_type": "set_testing_action",
+    "options": [
+      {
+        "value": "BONFERRONI",
+        "label": "Apply Bonferroni correction",
+        "tooltip": "Adjusts p-values for the number of specifications tested. Conservative but protects against false discoveries."
+      },
+      {
+        "value": "ACCEPT_CAVEAT",
+        "label": "Accept with caveat",
+        "tooltip": "Keeps unadjusted p-values with documentation of the specification search. Appropriate for pre-planned robustness."
+      },
+      {
+        "value": "RESET_BUDGET",
+        "label": "Reset spec budget",
+        "tooltip": "Resets the specification budget counter. Use only if the additional specs were pre-planned and documented."
+      }
+    ]
+  },
+  "NONSTATIONARY_LEVELS_RISK": {
+    "action_type": "set_stationarity_action",
+    "options": [
+      {
+        "value": "DIFFERENCE",
+        "label": "First-difference",
+        "tooltip": "Applies first-differencing to both variables. Removes trends but loses long-run level information."
+      },
+      {
+        "value": "ECM",
+        "label": "Use ECM specification",
+        "tooltip": "Uses Error Correction Model to preserve long-run relationship while modeling short-run dynamics. Requires cointegration."
+      },
+      {
+        "value": "ACCEPT",
+        "label": "Accept (document)",
+        "tooltip": "Keeps levels specification with documentation. Only valid if you have theoretical reasons for level relationships."
+      }
+    ]
+  },
+  "RESIDUAL_AUTOCORR_DETECTED": {
+    "action_type": "set_autocorr_action",
+    "options": [
+      {
+        "value": "INCREASE_HAC",
+        "label": "Increase HAC bandwidth",
+        "tooltip": "Increases Newey-West kernel bandwidth to better capture serial correlation. May widen standard errors."
+      },
+      {
+        "value": "ACCEPT_CAVEAT",
+        "label": "Accept with caveat",
+        "tooltip": "Keeps current HAC bandwidth with documented autocorrelation caveat. Appropriate for mild autocorrelation."
+      }
+    ]
+  },
+  "REGIME_BREAK_SUSPECTED": {
+    "action_type": "set_regime_action",
+    "options": [
+      {
+        "value": "ADD_BREAK",
+        "label": "Add structural break",
+        "tooltip": "Adds break dummy and interaction terms at the detected break date. Allows before/after comparison."
+      },
+      {
+        "value": "SPLIT_SAMPLE",
+        "label": "Split sample",
+        "tooltip": "Estimates separately for pre-break and post-break periods. Provides regime-specific coefficients."
+      },
+      {
+        "value": "ACCEPT_CAVEAT",
+        "label": "Accept with caveat",
+        "tooltip": "Keeps pooled estimate with documented regime instability caveat."
+      }
+    ]
+  },
+  "LEADS_SIGNIFICANT_TIMING_FAIL": {
+    "action_type": "set_timing_action",
+    "options": [
+      {
+        "value": "BLOCK_PROPAGATION",
+        "label": "Block from propagation",
+        "tooltip": "Removes edge from all propagation paths. Automatic action for timing failures. Edge kept for diagnostic purposes."
+      },
+      {
+        "value": "ACCEPT_CAVEAT",
+        "label": "Accept with caveat (document)",
+        "tooltip": "Keeps edge with documented timing failure. Only valid if leads reflect anticipated policy changes, not reverse causation."
+      },
+      {
+        "value": "RE_ESTIMATE",
+        "label": "Flag for re-estimation",
+        "tooltip": "Queues re-estimation with adjusted shock timing or additional lead/lag structure to investigate timing failure."
+      }
+    ]
+  },
+  "HAC_LAG_SENSITIVITY_HIGH": {
+    "action_type": "set_hac_action",
+    "options": [
+      {
+        "value": "USE_FIXED_BW",
+        "label": "Fix HAC bandwidth",
+        "tooltip": "Uses a fixed, data-driven bandwidth (Andrews 1991). Removes sensitivity to ad hoc bandwidth choice."
+      },
+      {
+        "value": "ACCEPT_CAVEAT",
+        "label": "Accept with caveat",
+        "tooltip": "Keeps current estimate with documented bandwidth sensitivity caveat. Report results across multiple bandwidths."
+      }
+    ]
+  },
+  "SELECTION_PUBLIC_BANK_ONLY": {
+    "action_type": "set_selection_action",
+    "options": [
+      {
+        "value": "ADD_DISCLAIMER",
+        "label": "Add report disclaimer",
+        "tooltip": "Adds explicit sample restriction disclaimer to the system report. Results clearly labeled as public-bank-only."
+      },
+      {
+        "value": "CAP_SCOPE",
+        "label": "Cap counterfactual scope",
+        "tooltip": "Restricts counterfactual predictions to public banks only. Prevents extrapolation to non-sampled bank types."
+      },
+      {
+        "value": "ACCEPT",
+        "label": "Accept as-is",
+        "tooltip": "No action taken. Use only if the target population is specifically public banks."
+      }
+    ]
+  },
+  "SURVIVORSHIP_BIAS_RISK": {
+    "action_type": "set_survivorship_action",
+    "options": [
+      {
+        "value": "ADD_DISCLAIMER",
+        "label": "Add report disclaimer",
+        "tooltip": "Adds survivorship bias disclaimer. Notes that estimates may understate negative effects due to exit selection."
+      },
+      {
+        "value": "SENSITIVITY_CHECK",
+        "label": "Run sensitivity check",
+        "tooltip": "Re-estimates including failed/merged banks up to their last observation. Compares with survivor-only estimates."
+      },
+      {
+        "value": "ACCEPT_CAVEAT",
+        "label": "Accept with caveat",
+        "tooltip": "Keeps survivor-only estimate with documented caveat about potential downward bias in negative effect estimates."
+      }
+    ]
+  },
+  "COVERAGE_GAP_EXTERNAL_VALIDITY": {
+    "action_type": "set_coverage_action",
+    "options": [
+      {
+        "value": "ADD_DISCLAIMER",
+        "label": "Add report disclaimer",
+        "tooltip": "Adds coverage gap disclaimer. Documents which segments of the target population are missing from the sample."
+      },
+      {
+        "value": "ACCEPT_CAVEAT",
+        "label": "Accept with caveat",
+        "tooltip": "Accepts with documented coverage limitation. Notes direction of likely bias from missing segments."
+      }
+    ]
+  },
+  "RATING_DIAGNOSTICS_CONFLICT": {
+    "action_type": "set_rating",
+    "options": [
+      {
+        "value": "DOWNGRADE_B",
+        "label": "Downgrade to B",
+        "tooltip": "Downgrades from A to B due to failed diagnostics. Standard action to maintain rating-evidence consistency."
+      },
+      {
+        "value": "DOWNGRADE_C",
+        "label": "Downgrade to C",
+        "tooltip": "Downgrades to C for severe diagnostic failures (multiple failed checks or critical timing failure)."
+      },
+      {
+        "value": "ACCEPT",
+        "label": "Accept (document)",
+        "tooltip": "Keeps A rating despite diagnostic issues. Requires strong justification documented in rationale."
+      }
+    ]
+  },
+  "N_REPORTING_INCONSISTENT": {
+    "action_type": "set_n_action",
+    "options": [
+      {
+        "value": "FIX_REPORT",
+        "label": "Fix report N",
+        "tooltip": "Updates the system report header to match EdgeCard N_eff. Standard fix for reporting inconsistencies."
+      },
+      {
+        "value": "FIX_EDGECARD",
+        "label": "Fix EdgeCard N_eff",
+        "tooltip": "Updates EdgeCard N_eff to match report header. Use only if the report header is the authoritative source."
+      },
+      {
+        "value": "ACCEPT",
+        "label": "Accept (document)",
+        "tooltip": "Keeps inconsistency with documentation. Only if the discrepancy reflects a deliberate methodological choice."
+      }
+    ]
+  },
+  "CROSS_EVIDENCE_CONFLICT": {
+    "action_type": "set_conflict_action",
+    "options": [
+      {
+        "value": "PREFER_STRUCTURAL",
+        "label": "Prefer structural edge",
+        "tooltip": "Uses the structural (better-identified) edge estimate. The conflicting reduced-form edge is demoted to diagnostic-only."
+      },
+      {
+        "value": "PREFER_REDUCED",
+        "label": "Prefer reduced-form edge",
+        "tooltip": "Uses the reduced-form edge estimate. The structural edge is demoted. Appropriate if structural identification is suspect."
+      },
+      {
+        "value": "ACCEPT_BOTH",
+        "label": "Accept both (document)",
+        "tooltip": "Keeps both estimates with documented conflict. Reports will show both with an explicit conflict warning."
+      }
+    ]
+  },
+  "UNIT_MISSING_IN_EDGECARD": {
+    "action_type": "set_unit_action",
+    "options": [
+      {
+        "value": "ADD_UNITS",
+        "label": "Add units from spec",
+        "tooltip": "Auto-populates treatment_unit and outcome_unit from the DAG node specifications. Standard auto-fix."
+      },
+      {
+        "value": "ACCEPT",
+        "label": "Accept (not critical)",
+        "tooltip": "Keeps edge without explicit units. Only for edges not used in propagation where unit ambiguity is acceptable."
+      }
+    ]
+  },
+  "_default": {
+    "action_type": "resolve",
+    "options": [
+      {
+        "value": "ACCEPT",
+        "label": "Accept",
+        "tooltip": "Accepts the issue without further action. The issue is marked as resolved."
+      },
+      {
+        "value": "REJECT",
+        "label": "Reject",
+        "tooltip": "Rejects the flagged finding. The edge remains as-is but the rejection is logged for audit."
+      },
+      {
+        "value": "ESCALATE",
+        "label": "Escalate",
+        "tooltip": "Escalates to senior reviewer or domain expert. Issue remains open until resolved by escalation target."
+      }
+    ]
+  }
+};
+const GENERATED_AT = "2026-02-11 22:13:14 UTC";
+const ISSUE_GUIDANCE = {
+  "RATING_DIAGNOSTICS_CONFLICT:cpi_to_fed_funds": "**Finding**: The edge **cpi_to_fed_funds** has an estimated coefficient of **-0.319** (SE **1.114**), is **statistically insignificant (p = 0.775, N = 176)**, yet is rated **A** despite a **failed ts_lag_sensitivity** diagnostic.\n\n**Concern**: Because **ts_lag_sensitivity failed**, the estimated reduced-form local-projections effect (**-0.319**) may not be robust to reasonable lag-length choices, so the **A rating overstates causal reliability** even though the result is already weakly identified statistically (**p = 0.775**).\n\n**Recommendation**: **Downgrade the rating (at least to B/C) and re-estimate** the local projections across a pre-specified lag grid (and/or select lags via a transparent rule) and only restore a high rating if the sign/magnitude of **-0.319** remains stable; otherwise treat this edge as **non-credible/undetermined** rather than causal evidence.",
+  "RATING_DIAGNOSTICS_CONFLICT:oil_to_industrial": "**Finding**: The edge **oil_to_industrial** has an estimated coefficient of **0.03693** (SE **0.02009**) with **p = 0.0660** on **N = 310**, yet it is assigned a **Rating = A** despite a failed **ts_leads_test**.\n\n**Concern**: Failing **ts_leads_test** indicates evidence of pre-trends/anticipation (lead effects), which directly threatens the causal interpretation of the **0.03693** estimate\u2014especially given the effect is only marginally significant at conventional levels (**p = 0.066**, not < 0.05), making the \u201cA\u201d rating inconsistent with the diagnostics.\n\n**Recommendation**: **Do not treat this edge as A-quality for causal claims**; downgrade (e.g., to **B/C or \u201cneeds review\u201d**) and rerun/modify the LOCAL_PROJECTIONS specification to address the failed lead test (e.g., add controls for differential trends, adjust horizon/lag structure, include stronger fixed effects, or restrict to a window where leads are null) before unblocking or using the estimate for decision-making.",
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:fed_funds_to_unemployment": "**Finding**: The edge **fed_funds_to_unemployment** has a statistically significant estimate (**\u03b2 = -0.0868**, **SE = 0.0325**, **p = 0.0075**, **N = 789**) from **LOCAL_PROJECTIONS**, but it is currently labeled **claim_level = DESCRIPTIVE**.\n\n**Concern**: With **p = 0.0075** you have strong evidence of association, but since the claim is **DESCRIPTIVE** (and no causal identification strategy is asserted), interpreting **\u03b2 = -0.0868** as a causal effect would be invalid even though **no diagnostics failed**.\n\n**Recommendation**: Keep the claim **DESCRIPTIVE** unless you can explicitly justify a causal design (e.g., clearly stated exogeneity/IV/valid counterfactual for fed funds shocks in the local projections); otherwise, communicate this as \u201ca significant negative association\u201d and, if causal language is needed, upgrade only after adding an identification argument consistent with the LP specification and documenting why it rules out confounding/reverse causality.",
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:oil_shock_to_oil_price": "**Finding**: The edge **oil_shock_to_oil_price** is highly statistically significant (**coef = -0.05177**, **SE = 0.00554**, **p = 9.18e-21**, **N = 307**) but is currently labeled **claim_level = REDUCED_FORM**, not identified causal.\n\n**Concern**: Even with no failed diagnostics, **p = 9.18e-21** only establishes a precise reduced-form association in your local projections setup, so treating **-0.05177** as a causal effect of an exogenous \u201coil shock\u201d on oil prices risks invalid causal interpretation due to potential endogeneity or mis-specified shock construction not ruled out by the current checks.\n\n**Recommendation**: Keep this edge as **reduced-form (do not use it for causal policy conclusions)** unless you can explicitly justify identification (e.g., clearly exogenous shock series, timing/ordering restrictions, or an instrument), in which case **upgrade the claim level only after adding and passing identification-relevant tests** (pre-trends/placebo leads, alternative shock definitions, and robustness to controls) that support interpreting **-0.05177** as causal.",
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:oil_to_vix": "**Finding**: The reduced-form LOCAL_PROJECTIONS estimate on **oil_to_vix** is **-0.5336** (SE **0.1574**), statistically significant with **p = 0.0007005** (N = **311**), despite a **failed ts_regime_stability** diagnostic.\n\n**Concern**: Because the claim level is **REDUCED_FORM**, the highly significant coefficient (**p = 0.0007**) can reflect correlation driven by omitted variables, reverse causality, or time-varying relationships\u2014made more acute by **ts_regime_stability failing**, which indicates the **-0.5336** effect may not be stable across time/regimes and thus is not causally interpretable.\n\n**Recommendation**: Treat this edge as **predictive reduced-form evidence only** (do not use for causal claims) and either **(i)** re-estimate with explicit regime handling (e.g., split-sample around candidate breakpoints / rolling or time-varying LP / include interactions) to see whether **-0.5336** persists, or **(ii)** upgrade identification (instrument/structural shock for oil) before making causal statements\u2014otherwise keep the claim level at **REDUCED_FORM** and downgrade decision weight given the stability failure.",
+  "RATING_DIAGNOSTICS_CONFLICT:oil_to_vix": "**Finding**: The edge **oil_to_vix** is rated **A** even though it **fails ts_regime_stability**, despite a statistically strong estimate (**coef = -0.5336**, **SE = 0.1574**, **p = 0.0007005**, **N = 311**) from **LOCAL_PROJECTIONS** (reduced form).\n\n**Concern**: A failure of **ts_regime_stability** means the **-0.5336** effect may not be stable over time (i.e., could be driven by structural breaks or changing regimes), so the very low **p-value (0.0007)** can reflect averaging across heterogeneous periods rather than a credible, policy-relevant causal relationship.\n\n**Recommendation**: **Do not keep an A-rating as-is**\u2014either **downgrade to B/C** and qualify the claim as **regime-dependent**, or **re-estimate with explicit break/regime handling** (e.g., sub-sample estimates around suspected breakpoints or a model allowing time-varying coefficients) and only restore **A** if the effect remains consistently negative and similar in magnitude across regimes.",
+  "RATING_DIAGNOSTICS_CONFLICT:vix_to_industrial": "**Finding**: The estimated effect on edge **vix_to_industrial** is small and statistically unsupported (**\u03b2 = -0.00170**, **SE = 0.00316**, **p = 0.5898**, **N = 310**) yet it received an **A rating** despite a failed **ts_leads_test**.\n\n**Concern**: A failed **ts_leads_test** directly flags potential violations of the \u201cno anticipatory effects / correct timing\u201d assumption in this **LOCAL_PROJECTIONS** setup, so the A rating is not credible for causal interpretation even though the current estimate is already non-significant (**p = 0.5898**).\n\n**Recommendation**: **Downgrade the rating (at least to B/C) and block causal claims until ts_leads_test passes**, or, if you must keep it, explicitly relabel the edge as *non-causal/associational* and prioritize fixing timing/specification (e.g., re-check lead/lag structure and event timing) because the combination of **failed leads test** and **p = 0.5898** provides no defensible basis for an A-grade causal conclusion.",
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:oil_to_cpi_core": "**Finding**: The edge **oil_to_cpi_core** is statistically significant (**\u03b2 = 0.00228**, **SE = 0.000882**, **p = 0.00984**, **N = 309**, Local Projections) but is currently **BLOCKED_ID**, and it **failed the ts_leads_test** despite a high overall rating (A).\n\n**Concern**: Because **ts_leads_test failed**, the result is consistent with **pre-trends / reverse causality / anticipation effects** (i.e., CPI core \u201cleads\u201d oil shocks in the data), so the **p = 0.00984** significance is not credible evidence of a causal effect, justifying the **BLOCKED_ID** identification status.\n\n**Recommendation**: Keep this edge **blocked for causal claims** and either (i) **re-specify the identification** (adjust the shock construction, add controls, change horizons/lags, or restrict the sample) until the **ts_leads_test passes**, or (ii) if you must use it, **downgrade to associative evidence only** and do not interpret **\u03b2 = 0.00228** as a causal effect.",
+  "RATING_DIAGNOSTICS_CONFLICT:oil_to_cpi_core": "**Finding**: The LOCAL_PROJECTIONS estimate for **oil \u2192 cpi_core** is **0.00228** (SE **0.000882**), statistically significant (**p = 0.00984**, **N = 309**), yet it received an **A rating** while failing the **ts_leads_test** diagnostic.\n\n**Concern**: Failing **ts_leads_test** indicates evidence of **pre-trends / reverse timing (leads of oil predicting prior movements in core CPI)**, which directly threatens causal interpretation despite the significant coefficient and makes the **A rating** inconsistent with the diagnostic evidence.\n\n**Recommendation**: **Downgrade the rating (at least to B/C) or block causal use** unless you can re-specify to pass the leads test (e.g., strengthen controls/lag structure, adjust the event/timing window, or add additional pre-trend-absorbing terms); otherwise treat **0.00228 (p = 0.00984)** as **associational** rather than causal.",
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:vix_to_nfci": "**Finding**: The estimated effect on the edge **vix_to_nfci** is **0.7509** (SE **0.2263**) with **p=0.0009069** (N=**43**) under **LOCAL_PROJECTIONS**, but the claim is **BLOCKED_ID** due to a failed **ts_leads_test**.\n\n**Concern**: Even with strong statistical significance, failing the **ts_leads_test** indicates evidence of pre-trends/lead effects (i.e., movement in **NFCI** before the VIX shock), which undermines the timing/exogeneity needed for a causal interpretation and is why the identification status is blocked.\n\n**Recommendation**: Treat **0.7509 (p=0.0009)** as predictive/correlational and **do not make a causal claim** unless you can fix the identification failure\u2014re-specify the LP with additional controls and/or different shock construction, include/adjust lags, reassess the horizon/lead structure, and only unblock if the **ts_leads_test** passes; otherwise keep the edge blocked despite the \u201cA\u201d rating.",
+  "RATING_DIAGNOSTICS_CONFLICT:vix_to_nfci": "**Finding**: The edge **vix_to_nfci** has a large positive coefficient (**0.7509**) that is statistically significant (**p = 0.0009069**, **SE = 0.2263**, **N = 43**) but is still rated **A** despite a failed **ts_leads_test**.\n\n**Concern**: Failing the **ts_leads_test** indicates evidence of **lead effects (pre-trends / reverse timing)**, which threatens causal interpretation even with a low p-value, so an **A rating** is inconsistent with the diagnostic evidence and risks endorsing a biased effect.\n\n**Recommendation**: **Downgrade the rating (at least to B/C) and treat the edge as non-causal unless the lead violation is resolved**, e.g., re-specify the local projections to address timing/anticipation (adjust horizons, add stronger lags/controls, or restrict the sample), and only restore a high rating if the **ts_leads_test passes** while the estimate remains near **0.7509** and significant.",
+  "RATING_DIAGNOSTICS_CONFLICT:oil_to_cpi_headline": "**Finding**: The edge **oil_to_cpi_headline** has a near-zero estimated effect (**\u03b2 = 0.000281**) with a very large p-value (**p = 0.942**, SE = 0.00387, N = 176) but is still assigned an **A rating** despite a failed **ts_regime_stability** diagnostic.\n\n**Concern**: The failed **ts_regime_stability** indicates the relationship may not be stable over time, so even though the reduced-form estimate is statistically indistinguishable from zero (**p = 0.942**), the model\u2019s causal/structural interpretability and transportability are compromised and the **A rating** overstates evidential strength under a HIGH-severity diagnostic conflict.\n\n**Recommendation**: **Downgrade the rating (at least to B/C) or flag as \u201cinconclusive/unstable\u201d** and rerun the local projections with explicit regime handling (e.g., pre/post break splits or time-varying coefficients) to verify whether the null result (**\u03b2 \u2248 0, p = 0.942**) is robust across regimes before using this edge for causal claims or policy simulation.",
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:industrial_to_unemployment": "**Finding**: The estimated effect on the edge *industrial_to_unemployment* is **-29.03** (SE **12.81**) with **p = 0.02346** (N = **789**) under **LOCAL_PROJECTIONS**, despite the claim level being **DESCRIPTIVE**.\n\n**Concern**: Because the current claim level is **DESCRIPTIVE** and **p = 0.02346** only establishes statistical association (not identification), interpreting **-29.03** as causal would be invalid even though **no diagnostics failed** and the rating is **A**.\n\n**Recommendation**: Keep the claim **DESCRIPTIVE** and explicitly label the estimate as \u201cstatistically significant association\u201d (reporting **-29.03, p=0.02346**) unless you can add and document an identification strategy (e.g., credible exogeneity/IV/event study assumptions for the LP shocks), in which case you may upgrade the claim level\u2014but only with the added design justification."
+};
+const ORPHAN_EXPLANATIONS = {};
+const CAUSAL_ASSESSMENTS = {
+  "oil_shock_to_oil_price": "**Strategy**: Reduced-form local projections estimating the contemporaneous response of oil prices to an \u201coil supply shock,\u201d relying on time-series controls/lag structure and extensive robustness/diagnostic checks rather than an explicit exogenous-shock or IV/RCT design.\n\n**Strengths**: The effect is precisely estimated (\u03b2 = -0.052, SE = 0.0055, p \u2248 9e-21) and the time-series implementation appears technically well-behaved given the passed diagnostics (HAC bandwidth/sensitivity, residual autocorrelation checks, lead tests, lag sensitivity, regime stability, and shock support), which reduces concerns that the result is a fragile specification artifact.\n\n**Vulnerabilities**: The identification field is explicitly \u201cnone,\u201d so the key causal requirement\u2014exogeneity of the \u201coil supply shock\u201d with respect to contemporaneous demand/news, risk premia, or anticipatory behavior\u2014is not established; in oil markets, measured \u201csupply shocks\u201d often co-move with geopolitical and demand-related information that also moves prices, creating potential omitted-variable and simultaneity bias. Passing HAC/lead/autocorrelation diagnostics does not rule out endogeneity or violations of the structural interpretation (e.g., mismeasurement of the shock, expectation effects, or common shocks).\n\n**Verdict**: WEAK",
+  "oil_to_cpi_headline": "**Strategy**: Local projections of headline CPI responses to oil price movements, relying on time-series reduced-form dynamics without an explicit source of exogenous oil price variation.\n\n**Strengths**: The pass of multiple time-series diagnostics (HAC bandwidth adequacy, effective observations, leads/placebo-style test, residual autocorrelation checks, and sensitivity to HAC/lags) supports that the estimated impulse responses are not driven by obvious specification artifacts. The \u201cshock support\u201d and sign-consistency checks suggest the oil price series has sufficient variation and the estimated response is not erratic across horizons.\n\n**Vulnerabilities**: The identification is fundamentally not causal as stated: with \u201cType: none,\u201d oil prices are endogenous to macro conditions that also move CPI (global demand, monetary policy, supply disruptions correlated with broader conditions), so the LP coefficient is a correlation of joint equilibrium movements unless an exogenous oil shock is isolated. The failed **ts_regime_stability** diagnostic indicates structural breaks/time variation (e.g., changes in pass-through, inflation regimes), which can invalidate a single reduced-form mapping from oil to CPI and undermines transportability of the estimate; moreover the estimate is statistically null (p\u22480.94), offering no empirical support for a stable effect in this specification.\n\n**Verdict**: **ABSENT**",
+  "oil_to_cpi_core": "**Strategy**: Reduced-form local projections of core CPI on oil price shocks/changes with HAC inference and time-series stability checks, but with no explicit exogenous-shock or quasi-experimental identification.\n\n**Strengths**: Many time-series diagnostics reportedly pass (HAC sensitivity, lag sensitivity, regime stability, residual autocorrelation checks), which supports that the estimated relationship (0.0023, p\u22480.01) is not purely an artifact of a particular bandwidth/lag/specification. The \u201csmaller and slower\u201d pass-through narrative is economically plausible for core inflation.\n\n**Vulnerabilities**: The strategy is explicitly \u201cnone\u201d for identification, so oil prices are likely endogenous to macro conditions that also move core inflation (global demand, monetary policy responses, risk shocks), implying omitted-variable and reverse-causality concerns. The failed leads test is a red flag for pre-trends/anticipation or model misspecification\u2014if future oil changes predict today\u2019s core CPI, the shock is not behaving as exogenous in the LP setup, undermining a causal interpretation.\n\n**Verdict**: ABSENT",
+  "oil_to_industrial": "**Strategy**: Local projections estimate the dynamic association between oil-price changes and industrial production, but no explicit exogenous shock/IV/narrative identification is provided.\n\n**Strengths**: The time-series diagnostics you list mostly pass (HAC bandwidth adequacy, effective observations, residual autocorrelation checks, HAC/lag sensitivity, regime stability, and shock support), which supports that the LP specification is statistically stable rather than purely driven by a fragile choice of lags or covariance estimator. The proposed mechanism (input-cost \u201cHamilton channel\u201d) is economically coherent and aligns with prior literature.\n\n**Vulnerabilities**: Identification is effectively absent: oil prices are plausibly endogenous to global demand and contemporaneous macro conditions that also move industrial production, so the LP coefficient can reflect reverse causality and omitted variables (e.g., world activity, monetary policy, geopolitical shocks affecting both oil and output). The failed **ts_leads_test** is a red flag for pre-trends/anticipation or residual predictability (i.e., industrial production \u201cresponding\u201d before the oil-price movement), directly weakening a causal interpretation even if other stability diagnostics pass; additionally, the estimate is only marginally significant (p\u22480.066), consistent with sensitivity to specification or sampling variation.\n\n**Verdict**: **ABSENT**",
+  "oil_to_vix": "**Strategy**: Reduced-form local projections relating oil-price shocks/movements to subsequent VIX responses, but with **no stated source of exogenous variation** (no IV, no narrative shocks, no quasi-experiment).\n\n**Strengths**: The estimate is statistically precise (\u22120.53, SE 0.16, p\u22480.0007) and a number of time-series robustness checks pass (HAC bandwidth/sensitivity, lag sensitivity, residual autocorrelation tests, leads test, sign consistency, and shock support), which supports that the relationship is not a mechanical artifact of one specific specification.\n\n**Vulnerabilities**: With \u201cType: none,\u201d the design does not rule out **simultaneity and omitted global factors** (e.g., global demand news, geopolitical risk, broad risk-off episodes) that can move both oil prices and VIX, so the edge is not causally identified. The failure of **regime stability** is a major concern: it suggests the oil\u2013VIX relationship changes across subsamples/market regimes, undermining external validity and raising the possibility that the estimate is driven by particular crisis periods rather than a stable causal effect.\n\n**Verdict**: **ABSENT**",
+  "oil_to_sentiment": "**Strategy**: No explicit identification strategy is provided; the edge relies on an informal reduced-form association between oil/gasoline prices and consumer sentiment.\n\n**Strengths**: The claim is economically plausible and consistent with a direct household budget channel (gasoline as a salient, frequent purchase) that could move sentiment contemporaneously. If the relationship were shown to be robust across time, regions, and alternative sentiment measures with appropriate controls, that would support the mechanism\u2014but none of that is documented here.\n\n**Vulnerabilities**: Oil prices are highly endogenous to macroeconomic conditions (global demand, recession risk, monetary policy expectations, geopolitical shocks) that also directly affect consumer sentiment, creating severe omitted-variable bias and reverse/bi-directional causality (e.g., macro news jointly moves oil and sentiment). Without a design (e.g., exogenous oil supply shocks, an IV, local price pass-through with fixed effects, event studies around plausibly exogenous disruptions) and diagnostics (pre-trends, balance, first-stage strength, exclusion restrictions), the causal direction and magnitude are not identified.\n\n**Verdict**: **ABSENT**",
+  "cpi_to_fed_funds": "**Strategy**: No causal identification\u2014this is a reduced-form local-projections association intended to describe comovement in a \u201creaction function\u201d setting, not to isolate exogenous variation in inflation.\n\n**Strengths**: The time-series diagnostics largely pass (HAC bandwidth/effective observations, residual autocorrelation checks, leads test, regime stability, HAC sensitivity, shock support), which supports basic model adequacy for describing correlations and dynamic responses in-sample. The framing (\u201cFed raises rates in response to inflation\u201d) is institutionally plausible as a narrative.\n\n**Vulnerabilities**: With \u201cType: none,\u201d there is no source of exogenous variation in CPI, so reverse causality (policy affects inflation) and omitted variables (e.g., output gap, financial conditions, supply shocks, expectations) can drive the estimate; in a monetary policy context, simultaneity is first-order. The effect is statistically indistinguishable from zero (p=0.775; SE large relative to estimate), and the failed lag sensitivity diagnostic indicates the estimated response is not robust to reasonable lag-specification changes\u2014further undermining any causal interpretation.\n\n**Verdict**: **ABSENT**",
+  "fed_funds_to_unemployment": "**Strategy**: Local projections estimate the dynamic association between changes in the fed funds rate and future unemployment, but no explicit exogenous shock/IV/RCT-style source of variation is specified.\n\n**Strengths**: The time-series diagnostics you report (HAC bandwidth/robustness, residual autocorrelation checks, lead tests, lag/HAC sensitivity, regime stability, and shock support) support that the estimated impulse-response pattern is statistically stable and not obviously driven by mechanical serial correlation or arbitrary specification choices. The effect is precisely estimated (p\u22480.0075), and \u201csign consistency\u201d/stability checks increase confidence in the *descriptive* dynamic relationship.\n\n**Vulnerabilities**: With \u201cIdentification strategy: none,\u201d the fed funds rate is likely endogenous to macro conditions and expectations (policy reacts to labor-market and inflation forecasts), so reverse causality and omitted-variable bias remain central threats; standard LP diagnostics do not solve policy endogeneity. Without an identified monetary policy shock (e.g., high-frequency surprises, narrative shocks, or a validated IV) and without explicit controls/structure guaranteeing sequential exogeneity, the estimate cannot be interpreted as a causal effect of tightening on unemployment.\n\n**Verdict**: **ABSENT**",
+  "vix_to_industrial": "**Strategy**: None\u2014this is a reduced-form local projections association of industrial production on VIX with no exogenous shock, instrument, or quasi-experimental variation.\n\n**Strengths**: The time-series diagnostics you list (HAC bandwidth/effective obs, residual autocorrelation checks, HAC/lag sensitivity, regime stability, shock support, sign consistency) support that the *time-series specification is not obviously fragile* to standard implementation choices. The estimate is also statistically indistinguishable from zero (p\u22480.59), which reduces concern about overstating a large causal effect from noisy correlations.\n\n**Vulnerabilities**: With \u201cType: none,\u201d the VIX is highly likely endogenous to macro conditions (reverse causality from industrial production expectations to VIX, and omitted common shocks like monetary policy, global risk, or news), so the edge is not causally identified. The failed **ts_leads_test** is an additional red flag: detectable lead effects are consistent with anticipation/simultaneity or pre-trends, directly undermining a causal interpretation even within the reduced-form LP framework.\n\n**Verdict**: **ABSENT**",
+  "vix_to_nfci": "**Strategy**: No causal identification is provided; the local projections estimate is treated as a time-series association between two tightly related financial stress indices (near-mechanical linkage).\n\n**Strengths**: Several time-series robustness checks pass (HAC bandwidth adequacy, effective sample size, residual autocorrelation handling, HAC/lag sensitivity, regime stability, and \u201cshock support\u201d), and the effect is statistically strong (0.75, SE 0.23, p\u22480.001), consistent with contemporaneous co-movement. The \u201cmechanical\u201d edge type plus the note that VIX is a component/correlate of financial conditions makes the positive association unsurprising and stable.\n\n**Vulnerabilities**: With \u201cType: none,\u201d there is no exogenous variation\u2014VIX and NFCI likely share common drivers (risk appetite, monetary/credit shocks) and may embed overlapping information, so the coefficient can reflect simultaneity/common-factor measurement rather than a causal effect of VIX on broader conditions. The failed **ts_leads_test** is a direct red flag for causal ordering/exogeneity in LPs (e.g., evidence consistent with anticipation, reverse causality, or omitted dynamics), undermining the interpretation of the LP impulse as a causal shock transmission.\n\n**Verdict**: **ABSENT**",
+  "industrial_to_unemployment": "**Strategy**: No causal identification is claimed or implemented; this is a reduced-form time-series local-projections association between industrial production movements and subsequent unemployment.\n\n**Strengths**: The LOCAL_PROJECTIONS setup with extensive time-series diagnostics passed (HAC bandwidth adequacy, residual autocorrelation checks, lead tests, lag/HAC sensitivity, regime stability, and sign consistency) supports that the estimated dynamic relationship is statistically and temporally stable in-sample (estimate \u221229.0, SE 12.8, p=0.023). The \u201cts_leads_test\u201d passing is consistent with (though not proof of) limited reverse-timing from unemployment innovations to prior industrial production within the tested horizons.\n\n**Vulnerabilities**: Without an exogenous shock, IV, RDD, or randomized variation, the edge is vulnerable to omitted macro shocks (monetary/fiscal policy, financial conditions, demand shocks, productivity shocks) that jointly move output and unemployment, so the coefficient generally mixes multiple structural channels rather than isolating \\( \\text{IP} \\rightarrow \\text{Unemp} \\). Okun\u2019s law provides a descriptive regularity, but it does not establish the key exogeneity assumption needed for causal interpretation; passing time-series diagnostics does not rule out confounding or simultaneity driven by common shocks.\n\n**Verdict**: **ABSENT**"
+};
+
+// ── Helpers ──────────────────────────────────────────────────────────────
+function escHtml(s) {
+    if (!s) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+var PROVENANCE_LABELS = {
+    'manual': 'Manual',
+    'paper_scout': 'PaperScout',
+    'data_scout': 'DataScout',
+    'discovery_agent': 'Discovery'
+};
+
+function provenanceBadge(src) {
+    if (!src) return '';
+    var label = PROVENANCE_LABELS[src] || src;
+    return '<span class="provenance-badge ' + escHtml(src) + '">' + escHtml(label) + '</span>';
+}
+
+function renderMarkdown(s) {
+    if (!s) return '';
+    var h = escHtml(s);
+    // Bold: **text** or __text__
+    h = h.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    h = h.replace(/__(.+?)__/g, '<strong>$1</strong>');
+    // Italic: *text* or _text_ (but not inside already-converted strong)
+    h = h.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, '<em>$1</em>');
+    h = h.replace(/(?<!_)_(?!_)(.+?)(?<!_)_(?!_)/g, '<em>$1</em>');
+    // Inline code: `text`
+    h = h.replace(/`([^`]+)`/g, '<code style="background:#e8e8e8;padding:1px 3px;font-size:9px;">$1</code>');
+    // Bullet lists: lines starting with - or *
+    h = h.replace(/^[\-\*]\s+(.+)$/gm, '<li>$1</li>');
+    h = h.replace(/((?:<li>.*<\/li>\s*)+)/g, '<ul style="margin:4px 0 4px 16px;padding:0;">$1</ul>');
+    // Numbered lists: lines starting with 1. 2. etc
+    h = h.replace(/^\d+\.\s+(.+)$/gm, '<li>$1</li>');
+    // Line breaks: double newline -> paragraph break, single newline -> <br>
+    h = h.replace(/\n\n+/g, '</p><p style="margin:4px 0;">');
+    h = h.replace(/\n/g, '<br>');
+    h = '<p style="margin:4px 0;">' + h + '</p>';
+    return h;
+}
+
+function renderGuidanceSections(s) {
+    if (!s) return '';
+    // Split into Finding / Concern / Recommendation sections
+    var sections = [
+        {key: 'finding', re: /\*\*Finding\*\*:\s*/i},
+        {key: 'concern', re: /\*\*Concern\*\*:\s*/i},
+        {key: 'recommendation', re: /\*\*Recommendation\*\*:\s*/i}
+    ];
+    // Find section boundaries
+    var parts = [];
+    var text = s;
+    var indices = [];
+    sections.forEach(function(sec) {
+        var m = text.match(sec.re);
+        if (m) indices.push({key: sec.key, idx: text.indexOf(m[0]), len: m[0].length, label: sec.key.charAt(0).toUpperCase() + sec.key.slice(1)});
+    });
+    indices.sort(function(a, b) { return a.idx - b.idx; });
+
+    if (indices.length === 0) {
+        // No structured sections found, fall back to plain markdown
+        return renderMarkdown(s);
+    }
+
+    var html = '';
+    for (var i = 0; i < indices.length; i++) {
+        var start = indices[i].idx + indices[i].len;
+        var end = (i + 1 < indices.length) ? indices[i + 1].idx : text.length;
+        var body = text.substring(start, end).trim();
+        html += '<div class="pd-section ' + indices[i].key + '">' +
+            '<div class="pd-section-label">' + escHtml(indices[i].label) + '</div>' +
+            renderMarkdown(body) +
+            '</div>';
+    }
+    return html;
+}
+
+function formatBeta(beta) {
+    if (beta === null || beta === undefined) return '--';
+    if (beta === 0) return '0';
+    var abs = Math.abs(beta);
+    if (abs >= 10000) return (beta / 1000).toFixed(0) + 'k';
+    if (abs >= 1000) return (beta / 1000).toFixed(1) + 'k';
+    if (abs >= 100) return beta.toFixed(0);
+    if (abs >= 10) return beta.toFixed(1);
+    if (abs >= 1) return beta.toFixed(1);
+    if (abs >= 0.01) return beta.toFixed(2);
+    if (abs >= 0.001) return beta.toFixed(3);
+    return beta.toExponential(1);
+}
+function fmtP(p) {
+    if (p === null || p === undefined) return '--';
+    if (p < 0.0001) return p.toExponential(2);
+    return p.toFixed(4);
+}
+
+function getEdgeColor(d) {
+    var isNull = d.pvalue !== null && d.pvalue !== undefined && d.pvalue >= 0.05;
+    if (isNull) return '#999';
+    return EDGE_TYPE_COLORS[d.edge_type] || '#2563eb';
+}
+function isEdgeNull(d) {
+    return d.pvalue !== null && d.pvalue !== undefined && d.pvalue >= 0.05;
+}
+
+// ── Decision state ───────────────────────────────────────────────────────
+var decisions = {}; // issue_key -> {value, rationale}
+
+// Flatten all issues across edges for the sidebar
+var allIssues = [];
+var SEVERITY_ORDER = {CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3};
+EDGES.forEach(function(e) {
+    if (e.issues && e.issues.length > 0) {
+        e.issues.forEach(function(issue) {
+            allIssues.push({
+                edge_id: e.id,
+                issue_key: issue.issue_key || (issue.rule_id + ':' + e.id),
+                rule_id: issue.rule_id,
+                severity: issue.severity,
+                message: issue.message
+            });
+        });
+    }
+});
+allIssues.sort(function(a, b) {
+    var sa = SEVERITY_ORDER[a.severity] || 99;
+    var sb = SEVERITY_ORDER[b.severity] || 99;
+    if (sa !== sb) return sa - sb;
+    return a.edge_id.localeCompare(b.edge_id);
+});
+var totalIssues = allIssues.length;
+
+function countResolved() {
+    var c = 0;
+    for (var k in decisions) {
+        if (decisions[k] && decisions[k].value) c++;
+    }
+    return c;
+}
+
+function updateProgress() {
+    var resolved = countResolved();
+    var pct = totalIssues > 0 ? (resolved / totalIssues * 100) : 0;
+    document.getElementById('pitfallProgressFill').style.width = pct + '%';
+    document.getElementById('pitfallProgressLabel').textContent = resolved + ' / ' + totalIssues + ' resolved';
+}
+
+// ── Setup ────────────────────────────────────────────────────────────────
+document.getElementById('dagSubtitle').textContent =
+    NODES.length + ' nodes, ' + EDGES.length + ' edges';
+document.getElementById('statNodes').textContent = NODES.length;
+
+// Compute node layers via topological distance from roots
+var inDegree = {};
+NODES.forEach(function(n) { inDegree[n.id] = 0; });
+EDGES.forEach(function(e) { inDegree[e.target] = (inDegree[e.target] || 0) + 1; });
+
+var layers = {};
+var visited = {};
+function computeLayer(nodeId) {
+    if (visited[nodeId]) return layers[nodeId] || 0;
+    visited[nodeId] = true;
+    var incoming = EDGES.filter(function(e) { return e.target === nodeId; });
+    if (incoming.length === 0) { layers[nodeId] = 0; return 0; }
+    var maxParent = 0;
+    incoming.forEach(function(e) {
+        var pLayer = computeLayer(e.source);
+        if (pLayer + 1 > maxParent) maxParent = pLayer + 1;
+    });
+    layers[nodeId] = maxParent;
+    return maxParent;
+}
+NODES.forEach(function(n) { computeLayer(n.id); });
+NODES.forEach(function(n) { n.layer = layers[n.id] || 0; });
+
+// Populate type filter
+var typeSet = {};
+EDGES.forEach(function(e) { typeSet[e.edge_type || 'causal'] = true; });
+var typeFilter = document.getElementById('typeFilter');
+Object.keys(typeSet).sort().forEach(function(t) {
+    var opt = document.createElement('option');
+    opt.value = t;
+    opt.textContent = EDGE_TYPE_LABELS[t] || t;
+    typeFilter.appendChild(opt);
+});
+
+// Build legend
+var legendContainer = document.getElementById('legendContainer');
+Object.keys(typeSet).sort().forEach(function(t) {
+    var color = EDGE_TYPE_COLORS[t] || '#2563eb';
+    var div = document.createElement('div');
+    div.className = 'legend-item';
+    div.innerHTML = '<div class="legend-line" style="background:' + color + '"></div>' +
+        (EDGE_TYPE_LABELS[t] || t);
+    legendContainer.appendChild(div);
+});
+var nullLeg = document.createElement('div');
+nullLeg.className = 'legend-item';
+nullLeg.innerHTML = '<div class="legend-line dashed" style="border-color:#999"></div>Null / Insig.';
+legendContainer.appendChild(nullLeg);
+
+// ── Build pitfall sidebar ────────────────────────────────────────────────
+var pitfallList = document.getElementById('pitfallList');
+
+if (allIssues.length === 0) {
+    pitfallList.innerHTML = '<div class="pitfall-empty">No open issues.</div>';
+} else {
+    allIssues.forEach(function(issue) {
+        var ruleInfo = RULE_DESCRIPTIONS[issue.rule_id] || {};
+        var actCfg = ACTIONS_BY_RULE[issue.rule_id] || ACTIONS_BY_RULE['_default'] || {};
+        var options = actCfg.options || [];
+
+        var div = document.createElement('div');
+        div.className = 'pitfall-item';
+        div.setAttribute('data-issue-key', issue.issue_key);
+        div.setAttribute('data-edge-id', issue.edge_id);
+
+        // Build options HTML
+        var optHtml = '<option value="">-- select action --</option>';
+        options.forEach(function(o) {
+            optHtml += '<option value="' + escHtml(o.value) + '" data-tooltip="' + escHtml(o.tooltip || '') + '">' + escHtml(o.label) + '</option>';
+        });
+
+        var llmText = ISSUE_GUIDANCE[issue.issue_key] || '';
+        var llmHtml = llmText ?
+            '<div class="pd-llm-guidance"><div class="pd-llm-guidance-title">AI Analysis</div>' +
+            renderGuidanceSections(llmText) + '</div>' : '';
+
+        // Build static text (Why it matters + Decision guidance)
+        var staticHtml = '';
+        if (ruleInfo.explanation || ruleInfo.guidance) {
+            var staticContent =
+                (ruleInfo.explanation ? '<div class="pd-label">Why it matters:</div><div class="pd-text">' + ruleInfo.explanation + '</div>' : '') +
+                (ruleInfo.guidance ? '<div class="pd-label">Decision guidance:</div><div class="pd-guidance">' + ruleInfo.guidance + '</div>' : '');
+            if (llmText) {
+                // Collapse when AI Analysis is present
+                staticHtml = '<details class="pd-static-ref"><summary>Reference</summary>' + staticContent + '</details>';
+            } else {
+                staticHtml = staticContent;
+            }
+        }
+
+        // Strategy tag and verdict badge for pitfall items
+        var edgeObj = EDGES.find(function(e2) { return e2.id === issue.edge_id; });
+        var stratTag = (edgeObj && edgeObj.strategy_type) ?
+            '<span class="strategy-tag">' + escHtml(edgeObj.strategy_type.replace(/_/g, ' ')) + '</span>' : '';
+        var provBadge = (edgeObj && edgeObj.provenance_source) ? provenanceBadge(edgeObj.provenance_source) : '';
+        var caText = (edgeObj && edgeObj.causal_assessment) ? edgeObj.causal_assessment :
+            (CAUSAL_ASSESSMENTS[issue.edge_id] || '');
+        var verdict = extractVerdict(caText);
+        var verdictBadge = verdict ?
+            '<span class="id-badge ' + verdict + '">' + verdict + '</span>' : '';
+        var caHtml = caText ?
+            '<div class="causal-assessment"><div class="causal-assessment-title">Causal Assessment</div>' +
+            renderCausalAssessment(caText) + '</div>' : '';
+
+        div.innerHTML =
+            '<div class="pitfall-item-header" data-header="1">' +
+                '<span class="pitfall-edge">' + escHtml(issue.edge_id) + '</span>' +
+                '<span class="pitfall-severity ' + issue.severity + '">' + issue.severity + '</span>' +
+                verdictBadge + provBadge + stratTag +
+                '<span class="pitfall-resolved-check">&#10003;</span>' +
+            '</div>' +
+            '<div class="pitfall-msg">' + escHtml(issue.message) + '</div>' +
+            '<div class="pitfall-decision" data-decision-key="' + escHtml(issue.issue_key) + '">' +
+                llmHtml +
+                caHtml +
+                staticHtml +
+                '<div class="pd-label">Action:</div>' +
+                '<select data-key="' + escHtml(issue.issue_key) + '">' + optHtml + '</select>' +
+                '<div class="pd-tooltip-area" data-tip-for="' + escHtml(issue.issue_key) + '"></div>' +
+                '<input type="text" data-rationale="' + escHtml(issue.issue_key) + '" placeholder="Justification (optional)...">' +
+                '<div class="pd-buttons">' +
+                    '<button class="pd-btn pd-btn-confirm" data-confirm="' + escHtml(issue.issue_key) + '">Confirm</button>' +
+                    '<button class="pd-btn" data-defer="' + escHtml(issue.issue_key) + '">Defer</button>' +
+                '</div>' +
+            '</div>';
+
+        pitfallList.appendChild(div);
+    });
+}
+
+// ── Add clean-edge entries (edges without issues) ────────────────────────
+var edgesWithIssues = {};
+allIssues.forEach(function(i) { edgesWithIssues[i.edge_id] = true; });
+
+var cleanEdges = EDGES.filter(function(e) { return !edgesWithIssues[e.id]; });
+if (cleanEdges.length > 0) {
+    var divider = document.createElement('div');
+    divider.className = 'pitfall-divider';
+    divider.textContent = 'Assessed Edges (' + cleanEdges.length + ')';
+    pitfallList.appendChild(divider);
+
+    cleanEdges.forEach(function(edge) {
+        var div = document.createElement('div');
+        div.className = 'pitfall-item clean-edge';
+        div.setAttribute('data-edge-id', edge.id);
+
+        var ratingHtml = edge.rating ? '<span class="pitfall-rating">' + escHtml(edge.rating) + '</span>' : '';
+        var statsHtml = '';
+        if (edge.point !== null && edge.point !== undefined) {
+            statsHtml = '<div class="pitfall-stats">' +
+                '\u03B2=' + formatBeta(edge.point) +
+                (edge.pvalue !== null && edge.pvalue !== undefined ? '  p=' + fmtP(edge.pvalue) : '') +
+                (edge.design ? '  ' + escHtml(edge.design) : '') +
+                '</div>';
+        }
+
+        var annText = edge.llm_annotation || '';
+        var annHtml = annText ?
+            '<div class="pd-llm-guidance"><div class="pd-llm-guidance-title">AI Analysis</div>' +
+            renderMarkdown(annText) + '</div>' : '';
+
+        // Strategy tag, provenance badge, and verdict badge for clean edges
+        var cleanStratTag = edge.strategy_type ?
+            '<span class="strategy-tag">' + escHtml(edge.strategy_type.replace(/_/g, ' ')) + '</span>' : '';
+        var cleanProvBadge = edge.provenance_source ? provenanceBadge(edge.provenance_source) : '';
+        var cleanCaText = edge.causal_assessment || CAUSAL_ASSESSMENTS[edge.id] || '';
+        var cleanVerdict = extractVerdict(cleanCaText);
+        var cleanVerdictBadge = cleanVerdict ?
+            '<span class="id-badge ' + cleanVerdict + '">' + cleanVerdict + '</span>' : '';
+        var cleanCaHtml = cleanCaText ?
+            '<div class="causal-assessment"><div class="causal-assessment-title">Causal Assessment</div>' +
+            renderCausalAssessment(cleanCaText) + '</div>' : '';
+
+        div.innerHTML =
+            '<div class="pitfall-item-header" data-header="1">' +
+                '<span class="pitfall-edge">' + escHtml(edge.id) + '</span>' +
+                ratingHtml + cleanVerdictBadge + cleanProvBadge + cleanStratTag +
+            '</div>' +
+            statsHtml +
+            '<div class="pitfall-decision" data-decision-key="edge:' + escHtml(edge.id) + '">' +
+                annHtml +
+                cleanCaHtml +
+            '</div>';
+
+        pitfallList.appendChild(div);
+    });
+}
+
+updateProgress();
+
+// ── Click-to-highlight + expand ──────────────────────────────────────────
+var currentHighlightEdge = null;
+
+function highlightEdge(edgeId) {
+    // Remove previous highlight
+    links.classed('highlighted', false);
+    // Apply highlight to matching link
+    links.each(function(d) {
+        if (d.id === edgeId) {
+            d3.select(this).classed('highlighted', true);
+        }
+    });
+    currentHighlightEdge = edgeId;
+
+    // Pan/zoom to edge midpoint
+    var edgeData = EDGES.find(function(e) { return e.id === edgeId; });
+    if (edgeData && edgeData.source && edgeData.target) {
+        var sx = edgeData.source.x || edgeData.source;
+        var sy = edgeData.source.y || edgeData.source;
+        var tx = edgeData.target.x || edgeData.target;
+        var ty = edgeData.target.y || edgeData.target;
+        if (typeof sx === 'number' && typeof tx === 'number') {
+            var mx = (sx + tx) / 2;
+            var my = (sy + ty) / 2;
+            var svgEl = document.getElementById('graph');
+            var w = svgEl.clientWidth;
+            var h = svgEl.clientHeight;
+            var t = d3.zoomIdentity.translate(w/2 - mx, h/2 - my);
+            svg.transition().duration(500).call(zoomBehavior.transform, t);
+        }
+    }
+}
+
+function markEdgeResolved(edgeId) {
+    // Check if ALL issues for this edge are resolved
+    var edgeIssues = allIssues.filter(function(i) { return i.edge_id === edgeId; });
+    var allResolved = edgeIssues.every(function(i) {
+        return decisions[i.issue_key] && decisions[i.issue_key].value;
+    });
+    if (allResolved) {
+        links.each(function(d) {
+            if (d.id === edgeId) {
+                d3.select(this).classed('edge-resolved', true).classed('critical-issue', false).classed('highlighted', false);
+            }
+        });
+    }
+}
+
+// Event delegation on pitfall list
+pitfallList.addEventListener('click', function(e) {
+    var target = e.target;
+
+    // Confirm button
+    if (target.hasAttribute('data-confirm')) {
+        e.stopPropagation();
+        var key = target.getAttribute('data-confirm');
+        if (!decisions[key] || !decisions[key].value) {
+            alert('Please select an action before confirming.');
+            return;
+        }
+        var item = pitfallList.querySelector('[data-issue-key="' + key + '"]');
+        if (item) {
+            item.classList.add('resolved');
+            var sel = item.querySelector('select[data-key="' + key + '"]');
+            if (sel) sel.classList.add('decided');
+        }
+        var edgeId = null;
+        allIssues.forEach(function(i) { if (i.issue_key === key) edgeId = i.edge_id; });
+        if (edgeId) markEdgeResolved(edgeId);
+        updateProgress();
+        return;
+    }
+
+    // Defer button
+    if (target.hasAttribute('data-defer')) {
+        e.stopPropagation();
+        var key2 = target.getAttribute('data-defer');
+        var item2 = pitfallList.querySelector('[data-issue-key="' + key2 + '"]');
+        if (item2) {
+            item2.classList.remove('active');
+            var panel = item2.querySelector('.pitfall-decision');
+            if (panel) panel.classList.remove('open');
+        }
+        links.classed('highlighted', false);
+        return;
+    }
+
+    // Don't toggle when clicking inside decision panel controls
+    if (target.tagName === 'SELECT' || target.tagName === 'INPUT' || target.tagName === 'OPTION') return;
+
+    // Find the pitfall-item
+    var pitfallItem = target.closest('.pitfall-item');
+    if (!pitfallItem) return;
+
+    // Toggle active state
+    var wasActive = pitfallItem.classList.contains('active');
+
+    // Deactivate all
+    pitfallList.querySelectorAll('.pitfall-item').forEach(function(el) {
+        el.classList.remove('active');
+        var p = el.querySelector('.pitfall-decision');
+        if (p) p.classList.remove('open');
+    });
+    links.classed('highlighted', false);
+
+    if (!wasActive) {
+        pitfallItem.classList.add('active');
+        var decPanel = pitfallItem.querySelector('.pitfall-decision');
+        if (decPanel) decPanel.classList.add('open');
+        var eid = pitfallItem.getAttribute('data-edge-id');
+        if (eid) highlightEdge(eid);
+    }
+});
+
+// Action dropdown change
+pitfallList.addEventListener('change', function(e) {
+    if (e.target.tagName !== 'SELECT' || !e.target.hasAttribute('data-key')) return;
+    var key = e.target.getAttribute('data-key');
+    var val = e.target.value;
+    if (!decisions[key]) decisions[key] = {value: '', rationale: ''};
+    decisions[key].value = val;
+
+    if (val) {
+        e.target.classList.add('decided');
+    } else {
+        e.target.classList.remove('decided');
+    }
+
+    // Show tooltip for selected option
+    var tipArea = pitfallList.querySelector('[data-tip-for="' + key + '"]');
+    if (tipArea) {
+        var selectedOpt = e.target.options[e.target.selectedIndex];
+        tipArea.textContent = selectedOpt ? (selectedOpt.getAttribute('data-tooltip') || '') : '';
+    }
+});
+
+// Rationale input
+pitfallList.addEventListener('input', function(e) {
+    if (e.target.tagName !== 'INPUT' || !e.target.hasAttribute('data-rationale')) return;
+    var key = e.target.getAttribute('data-rationale');
+    if (!decisions[key]) decisions[key] = {value: '', rationale: ''};
+    decisions[key].rationale = e.target.value;
+});
+
+// ── Export ────────────────────────────────────────────────────────────────
+document.getElementById('exportBtn').addEventListener('click', function() {
+    var analystId = document.getElementById('analystId').value.trim();
+    var now = new Date().toISOString();
+    var decisionList = [];
+
+    for (var key in decisions) {
+        var dec = decisions[key];
+        if (!dec.value) continue;
+        var parts = key.split(':', 1);
+        var ruleId = parts[0] || '';
+        var edgeId = key.substring(ruleId.length + 1);
+        var actCfg = ACTIONS_BY_RULE[ruleId] || ACTIONS_BY_RULE['_default'] || {};
+        decisionList.push({
+            issue_key: key,
+            edge_id: edgeId,
+            rule_id: ruleId,
+            action: actCfg.action_type || 'unknown',
+            value: dec.value,
+            rationale: dec.rationale || '',
+            status: 'CLOSED',
+            source: 'dag_visualization'
+        });
+    }
+
+    var output = {
+        generated_at: now,
+        analyst_id: analystId || 'anonymous',
+        panel_built_at: GENERATED_AT,
+        decisions: decisionList
+    };
+
+    var blob = new Blob([JSON.stringify(output, null, 2)], {type: 'application/json'});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    var dateStr = now.slice(0,10).replace(/-/g,'');
+    a.href = url;
+    a.download = 'dag_viz_decisions_' + dateStr + '.json';
+    a.click();
+    URL.revokeObjectURL(url);
+});
+
+// ── D3 Graph ─────────────────────────────────────────────────────────────
+var svg = d3.select('#graph');
+var width = window.innerWidth;
+var height = window.innerHeight;
+svg.attr('width', width).attr('height', height);
+
+// Arrow markers
+var defs = svg.append('defs');
+var defaultColors = Object.values(EDGE_TYPE_COLORS).concat(['#999']);
+var colorSet = {};
+defaultColors.forEach(function(c) { colorSet[c] = true; });
+Object.keys(colorSet).forEach(function(color) {
+    defs.append('marker')
+        .attr('id', 'arrow-' + color.replace('#', ''))
+        .attr('viewBox', '0 -3 6 6')
+        .attr('refX', 18)
+        .attr('refY', 0)
+        .attr('markerWidth', 5)
+        .attr('markerHeight', 5)
+        .attr('orient', 'auto')
+        .append('path')
+        .attr('d', 'M0,-3L6,0L0,3')
+        .attr('fill', color);
+});
+
+var g = svg.append('g');
+var zoomBehavior = d3.zoom().scaleExtent([0.3, 3]).on('zoom', function(e) { g.attr('transform', e.transform); });
+svg.call(zoomBehavior);
+
+var simulation = d3.forceSimulation(NODES)
+    .force('link', d3.forceLink(EDGES).id(function(d) { return d.id; }).distance(120).strength(0.3))
+    .force('charge', d3.forceManyBody().strength(-400))
+    .force('center', d3.forceCenter(width / 2, height / 2))
+    .force('y', d3.forceY(function(d) { return 80 + d.layer * 90; }).strength(0.7))
+    .force('x', d3.forceX(width / 2).strength(0.02))
+    .force('collision', d3.forceCollide(40));
+
+var linkGroup = g.append('g');
+var links = linkGroup.selectAll('path')
+    .data(EDGES)
+    .enter()
+    .append('path')
+    .attr('class', function(d) { return 'link' + (isEdgeNull(d) ? ' null' : '') + (d.has_critical_issue ? ' critical-issue' : ''); })
+    .attr('stroke', function(d) { return getEdgeColor(d); })
+    .attr('stroke-width', function(d) { return d.pvalue !== null && d.pvalue < 0.05 ? 2.5 : 1.5; })
+    .attr('marker-end', function(d) { return 'url(#arrow-' + getEdgeColor(d).replace('#', '') + ')'; })
+    .on('mouseover', showEdgeTooltip)
+    .on('mouseout', hideTooltip);
+
+var labelGroup = g.append('g');
+var labelBgs = labelGroup.selectAll('rect')
+    .data(EDGES)
+    .enter()
+    .append('rect')
+    .attr('class', 'label-bg')
+    .attr('rx', 2)
+    .attr('ry', 2);
+
+var linkLabels = labelGroup.selectAll('text')
+    .data(EDGES)
+    .enter()
+    .append('text')
+    .attr('class', 'link-label')
+    .text(function(d) { return formatBeta(d.point); });
+
+var nodeGroup = g.append('g');
+var node = nodeGroup.selectAll('g')
+    .data(NODES)
+    .enter()
+    .append('g')
+    .attr('class', 'node')
+    .call(d3.drag()
+        .on('start', function(e, d) { if (!e.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
+        .on('drag', function(e, d) { d.fx = e.x; d.fy = e.y; })
+        .on('end', function(e, d) { if (!e.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; }))
+    .on('mouseover', showNodeTooltip)
+    .on('mouseout', hideTooltip);
+
+// Check if node has ID risks from any edge
+var nodeIdRisks = {};
+EDGES.forEach(function(e) {
+    if (e.id_risks && Object.keys(e.id_risks).length > 0) {
+        nodeIdRisks[e.source] = true;
+        nodeIdRisks[e.target] = true;
+    }
+});
+
+node.append('circle')
+    .attr('r', 18)
+    .attr('class', function(d) {
+        var cls = '';
+        if (d.latent) cls += ' latent';
+        if (d.orphan) cls += ' orphan';
+        if (nodeIdRisks[d.id]) cls += ' id-risk';
+        return cls;
+    });
+node.append('text').attr('dy', 4).text(function(d) { return d.label; });
+
+var tooltip = d3.select('#tooltip');
+
+function showEdgeTooltip(e, d) {
+    var html = '<h3>' + d.source.id.replace(/_/g, ' ') + ' &rarr; ' + d.target.id.replace(/_/g, ' ') + '</h3>';
+    html += '<div class="tooltip-row"><span class="tooltip-label">Edge ID</span><span class="tooltip-value">' + d.id + '</span></div>';
+    html += '<div class="tooltip-row"><span class="tooltip-label">Type</span><span class="tooltip-value">' + (EDGE_TYPE_LABELS[d.edge_type] || d.edge_type) + '</span></div>';
+    var hasEstimate = (d.point !== null && d.point !== undefined) || d.design;
+    if (d.point !== null && d.point !== undefined) {
+        html += '<div class="tooltip-row"><span class="tooltip-label">&beta;</span><span class="tooltip-value">' + d.point.toFixed(4) + '</span></div>';
+    }
+    if (d.se !== null && d.se !== undefined) {
+        html += '<div class="tooltip-row"><span class="tooltip-label">SE</span><span class="tooltip-value">' + d.se.toFixed(4) + '</span></div>';
+    }
+    if (d.pvalue !== null && d.pvalue !== undefined) {
+        html += '<div class="tooltip-row"><span class="tooltip-label">p-value</span><span class="tooltip-value ' + (isEdgeNull(d) ? 'null' : '') + '">' + fmtP(d.pvalue) + '</span></div>';
+    }
+    if (d.claim_level) html += '<div class="tooltip-row"><span class="tooltip-label">Claim</span><span class="tooltip-value">' + d.claim_level + '</span></div>';
+    if (d.rating) html += '<div class="tooltip-row"><span class="tooltip-label">Rating</span><span class="tooltip-value">' + d.rating + '</span></div>';
+    if (d.design) html += '<div class="tooltip-row"><span class="tooltip-label">Design</span><span class="tooltip-value">' + d.design + '</span></div>';
+    if (d.design === 'DATA_INSUFFICIENT') {
+        html += '<div style="margin-top:8px;padding:6px 8px;background:#f8d7da;border:1px solid #f5c2c7;border-radius:4px;font-size:10px">';
+        html += '<div style="font-weight:600;color:#842029;margin-bottom:4px">Insufficient Data</div>';
+        html += '<div style="color:#842029;margin-bottom:4px">This edge has fewer than 5 overlapping observations after data alignment. No reliable estimate can be produced.</div>';
+        var ffList = d.failure_flags || [];
+        if (ffList.indexOf('data_insufficient') >= 0) {
+            html += '<div style="color:#555;margin-top:4px"><strong>Common causes:</strong> Date format mismatch between series, missing time periods in downloaded data, or derived node dependencies that fail to compute.</div>';
+        }
+        if (d.blocked_reason) html += '<div style="color:#555;margin-top:4px">' + escHtml(d.blocked_reason) + '</div>';
+        if (d.remediation) html += '<div style="color:#555;margin-top:4px">' + escHtml(d.remediation) + '</div>';
+        html += '</div>';
+    } else if (!hasEstimate) {
+        html += '<div style="margin-top:8px;padding:6px 8px;background:#fff3cd;border:1px solid #ffc107;border-radius:4px;font-size:10px">';
+        html += '<div style="font-weight:600;color:#856404;margin-bottom:4px">Not Estimated</div>';
+        if (d.blocked_reason) {
+            html += '<div style="color:#856404;margin-bottom:4px">' + escHtml(d.blocked_reason) + '</div>';
+        }
+        if (d.remediation) {
+            html += '<div style="color:#555">' + escHtml(d.remediation) + '</div>';
+        } else {
+            html += '<div style="color:#555">Run the pipeline to estimate this edge, or check that required data is available for both endpoints.</div>';
+        }
+        html += '</div>';
+    }
+    if (d.strategy_type) html += '<div class="tooltip-row"><span class="tooltip-label">ID Strategy</span><span class="tooltip-value">' + d.strategy_type.replace(/_/g, ' ') + '</span></div>';
+    if (d.strategy_argument) html += '<div class="tooltip-row"><span class="tooltip-label">Argument</span><span class="tooltip-value" style="text-align:left;font-weight:400;font-size:10px">' + d.strategy_argument + '</span></div>';
+    if (d.provenance_source) {
+        var srcLabel = PROVENANCE_LABELS[d.provenance_source] || d.provenance_source;
+        var srcExtra = d.provenance_detail ? ' (' + escHtml(d.provenance_detail) + ')' : '';
+        html += '<div class="tooltip-row"><span class="tooltip-label">Source</span><span class="tooltip-value">' + escHtml(srcLabel) + srcExtra + '</span></div>';
+    }
+    if (d.diagnostics && d.diagnostics.length > 0) {
+        var passed = d.diagnostics.filter(function(x) { return x.passed; }).length;
+        html += '<div class="tooltip-row"><span class="tooltip-label">Diagnostics</span><span class="tooltip-value">' + passed + '/' + d.diagnostics.length + ' pass</span></div>';
+    }
+    if (d.interpretation) html += '<div class="tooltip-row"><span class="tooltip-label">Interpretation</span><span class="tooltip-value" style="text-align:left;font-weight:400">' + d.interpretation + '</span></div>';
+    if (d.llm_annotation) {
+        html += '<div class="tooltip-annotation">' + d.llm_annotation + '</div>';
+    }
+    if (d.issues && d.issues.length > 0) {
+        html += '<div class="tooltip-issues">';
+        d.issues.forEach(function(issue) {
+            html += '<div class="tooltip-issue ' + (issue.severity || '').toLowerCase() + '">[' + issue.severity + '] ' + escHtml(issue.message) + '</div>';
+        });
+        html += '</div>';
+    }
+    tooltip.html(html).style('left', (e.pageX + 15) + 'px').style('top', (e.pageY - 15) + 'px').classed('visible', true);
+}
+
+function renderOrphanSections(s) {
+    if (!s) return '';
+    // Match **Role**, **Blocker**, **Blocker (TYPE)**, **Path forward**
+    var sections = [
+        {key: 'role', re: /\*\*Role\*\*:\s*/i},
+        {key: 'blocker', re: /\*\*Blocker(?:\s*\([^)]*\))?\*\*:\s*/i},
+        {key: 'path-forward', re: /\*\*Path\s+forward\*\*:\s*/i}
+    ];
+    var indices = [];
+    sections.forEach(function(sec) {
+        var m = s.match(sec.re);
+        if (m) {
+            // Extract label from matched text (e.g. "Blocker (DATA)")
+            var raw = m[0].replace(/\*\*/g, '').replace(/:\s*$/, '').trim();
+            indices.push({key: sec.key, idx: s.indexOf(m[0]), len: m[0].length, label: raw});
+        }
+    });
+    indices.sort(function(a, b) { return a.idx - b.idx; });
+    if (indices.length === 0) return '<div style="font-size:10px;color:#555">' + escHtml(s) + '</div>';
+    var html = '';
+    for (var i = 0; i < indices.length; i++) {
+        var start = indices[i].idx + indices[i].len;
+        var end = (i + 1 < indices.length) ? indices[i + 1].idx : s.length;
+        var body = s.substring(start, end).trim();
+        html += '<div class="tooltip-orphan-section ' + indices[i].key + '">' +
+            '<div class="tooltip-orphan-label">' + escHtml(indices[i].label) + '</div>' +
+            '<div style="font-size:10px">' + escHtml(body) + '</div></div>';
+    }
+    return html;
+}
+
+function extractVerdict(s) {
+    if (!s) return '';
+    var m = s.match(/\*\*Verdict\*\*:\s*(STRONG|MODERATE|WEAK|ABSENT)/i);
+    return m ? m[1].toUpperCase() : '';
+}
+
+function renderCausalAssessment(s) {
+    if (!s) return '';
+    var sections = [
+        {key: 'finding', re: /\*\*Strategy\*\*:\s*/i, label: 'Strategy'},
+        {key: 'concern', re: /\*\*Strengths\*\*:\s*/i, label: 'Strengths'},
+        {key: 'recommendation', re: /\*\*Vulnerabilities\*\*:\s*/i, label: 'Vulnerabilities'},
+        {key: 'finding', re: /\*\*Verdict\*\*:\s*/i, label: 'Verdict'}
+    ];
+    var indices = [];
+    sections.forEach(function(sec) {
+        var m = s.match(sec.re);
+        if (m) indices.push({key: sec.key, idx: s.indexOf(m[0]), len: m[0].length, label: sec.label});
+    });
+    indices.sort(function(a, b) { return a.idx - b.idx; });
+    if (indices.length === 0) return renderMarkdown(s);
+    var html = '';
+    for (var i = 0; i < indices.length; i++) {
+        var start = indices[i].idx + indices[i].len;
+        var end = (i + 1 < indices.length) ? indices[i + 1].idx : s.length;
+        var body = s.substring(start, end).trim();
+        var cls = indices[i].key;
+        if (indices[i].label === 'Strengths') cls = 'recommendation';
+        if (indices[i].label === 'Vulnerabilities') cls = 'concern';
+        html += '<div class="pd-section ' + cls + '">' +
+            '<div class="pd-section-label">' + escHtml(indices[i].label) + '</div>' +
+            renderMarkdown(body) + '</div>';
+    }
+    return html;
+}
+
+function showNodeTooltip(e, d) {
+    var html = '<h3>' + d.label + '</h3>';
+    html += '<div class="tooltip-row"><span class="tooltip-label">ID</span><span class="tooltip-value">' + d.id + '</span></div>';
+    if (d.description) html += '<div class="tooltip-row"><span class="tooltip-label">Description</span><span class="tooltip-value" style="text-align:left;font-weight:400">' + d.description + '</span></div>';
+    if (d.unit) html += '<div class="tooltip-row"><span class="tooltip-label">Unit</span><span class="tooltip-value">' + d.unit + '</span></div>';
+    if (d.frequency) html += '<div class="tooltip-row"><span class="tooltip-label">Frequency</span><span class="tooltip-value">' + d.frequency + '</span></div>';
+    if (d.latent) html += '<div class="tooltip-row"><span class="tooltip-label">Observed</span><span class="tooltip-value null">Latent (unobserved)</span></div>';
+    if (d.provenance_source) {
+        var nodeSrcLabel = PROVENANCE_LABELS[d.provenance_source] || d.provenance_source;
+        html += '<div class="tooltip-row"><span class="tooltip-label">Source</span><span class="tooltip-value">' + escHtml(nodeSrcLabel) + '</span></div>';
+    }
+    if (d.orphan) {
+        var orphanText = ORPHAN_EXPLANATIONS[d.id] || '';
+        html += '<div class="tooltip-orphan">';
+        html += '<span class="tooltip-orphan-tag">UNWIRED</span>';
+        if (d.provenance_source) html += provenanceBadge(d.provenance_source);
+        if (orphanText) {
+            html += renderOrphanSections(orphanText);
+        } else {
+            html += '<div style="font-size:10px;color:#999;font-style:italic">No edges connect this node. Run with --llm-annotate for analysis.</div>';
+        }
+        html += '</div>';
+    }
+    tooltip.html(html).style('left', (e.pageX + 15) + 'px').style('top', (e.pageY - 15) + 'px').classed('visible', true);
+}
+
+function hideTooltip() { tooltip.classed('visible', false); }
+
+function getLabelPos(d) {
+    var dx = d.target.x - d.source.x;
+    var dy = d.target.y - d.source.y;
+    var dist = Math.sqrt(dx*dx + dy*dy) || 1;
+    var t = 0.4;
+    var mx = d.source.x + dx * t;
+    var my = d.source.y + dy * t;
+    var offset = 12;
+    var px = -dy / dist * offset;
+    var py = dx / dist * offset;
+    return { x: mx + px, y: my + py };
+}
+
+simulation.on('tick', function() {
+    links.attr('d', function(d) {
+        var dx = d.target.x - d.source.x, dy = d.target.y - d.source.y;
+        var dr = Math.sqrt(dx * dx + dy * dy) * 1.8;
+        return 'M' + d.source.x + ',' + d.source.y + 'A' + dr + ',' + dr + ' 0 0,1 ' + d.target.x + ',' + d.target.y;
+    });
+    linkLabels.each(function(d) {
+        var pos = getLabelPos(d);
+        d3.select(this).attr('x', pos.x).attr('y', pos.y);
+    });
+    labelBgs.each(function(d, i) {
+        var pos = getLabelPos(d);
+        var textNode = linkLabels.nodes()[i];
+        var bbox = textNode.getBBox();
+        d3.select(this)
+            .attr('x', pos.x - bbox.width/2 - 2)
+            .attr('y', pos.y - bbox.height/2 - 1)
+            .attr('width', bbox.width + 4)
+            .attr('height', bbox.height + 2);
+    });
+    node.attr('transform', function(d) { return 'translate(' + d.x + ',' + d.y + ')'; });
+});
+
+// ── Filters ──────────────────────────────────────────────────────────────
+function applyFilters() {
+    var typeVal = document.getElementById('typeFilter').value;
+    var ratVal = document.getElementById('ratingFilter').value;
+    var showNullVal = document.getElementById('showNull').checked;
+    var showLabelsVal = document.getElementById('showLabels').checked;
+
+    var isVisible = function(d) {
+        if (typeVal !== 'all' && d.edge_type !== typeVal) return false;
+        if (ratVal !== 'all' && d.rating !== ratVal) return false;
+        if (!showNullVal && isEdgeNull(d)) return false;
+        return true;
+    };
+
+    links.style('display', function(d) { return isVisible(d) ? null : 'none'; });
+    linkLabels.style('display', function(d) { return (isVisible(d) && showLabelsVal) ? null : 'none'; });
+    labelBgs.style('display', function(d) { return (isVisible(d) && showLabelsVal) ? null : 'none'; });
+
+    var visible = EDGES.filter(isVisible);
+    document.getElementById('statEdges').textContent = visible.length;
+    document.getElementById('statA').textContent = visible.filter(function(e) { return e.rating === 'A'; }).length;
+    document.getElementById('statB').textContent = visible.filter(function(e) { return e.rating === 'B'; }).length;
+    document.getElementById('statC').textContent = visible.filter(function(e) { return e.rating === 'C'; }).length;
+    var visibleIssues = visible.reduce(function(s, e) { return s + (e.issues ? e.issues.length : 0); }, 0);
+    document.getElementById('statIssues').textContent = visibleIssues;
+    var identified = visible.filter(function(e) { return e.claim_level === 'IDENTIFIED_CAUSAL'; }).length;
+    document.getElementById('statIdentified').textContent = identified;
+    var blocked = visible.filter(function(e) { return e.blocked_reason; }).length;
+    var nodata = visible.filter(function(e) { return e.design === 'DATA_INSUFFICIENT'; }).length;
+    document.getElementById('statBlocked').textContent = blocked + (nodata ? ' + ' + nodata + ' no data' : '');
+}
+
+document.getElementById('typeFilter').addEventListener('change', applyFilters);
+document.getElementById('ratingFilter').addEventListener('change', applyFilters);
+document.getElementById('showNull').addEventListener('change', applyFilters);
+document.getElementById('showLabels').addEventListener('change', applyFilters);
+
+applyFilters();
+    </script>
+</body>
+</html>

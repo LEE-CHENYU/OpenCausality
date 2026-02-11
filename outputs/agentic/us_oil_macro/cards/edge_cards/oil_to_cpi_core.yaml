@@ -1,0 +1,334 @@
+edge_id: oil_to_cpi_core
+dag_version_hash: e7b73592c7f1cd694cf5464692c2537dd2ba6f09693851f3bb0169fdb710a7d9
+created_at: '2026-02-11T13:59:11.674501'
+data_provenance:
+  treatment_source:
+    connector: parquet_file
+    dataset: oil_price
+    series: null
+    retrieval_time: null
+    file_path: null
+    file_checksum: null
+    row_count: 311
+    column_count: null
+    date_range:
+    - '2000-01-01'
+    - '2025-12-01'
+    cache_key: null
+  outcome_source:
+    connector: parquet_file
+    dataset: cpi_core
+    series: null
+    retrieval_time: null
+    file_path: null
+    file_checksum: null
+    row_count: 311
+    column_count: null
+    date_range:
+    - '2000-01-01'
+    - '2025-12-01'
+    cache_key: null
+  control_sources: {}
+  instrument_sources: {}
+  combined_row_count: 311
+  combined_date_range:
+  - '2000-01-01'
+  - '2025-12-01'
+  missing_rate: null
+  panel_dimensions: null
+  entity_boundary_note: null
+  kpi_definitions: null
+spec_hash: b327b4b58bb76c861cb9ea83d801f78185de731f39d0cf1487f8bfe48ffdf5b0
+spec_details:
+  design: LOCAL_PROJECTIONS
+  controls:
+  - y_lag1
+  - y_lag2
+  - x_lag1
+  - x_lag2
+  instruments: []
+  fixed_effects: []
+  se_method: HAC_newey_west
+  sample_filter: null
+  horizon: &id001
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  bandwidth: null
+estimates:
+  point: 0.002276934120697647
+  se: 0.0008821076804271966
+  ci_95:
+  - 0.0005480030670603419
+  - 0.004005865174334953
+  pvalue: 0.009844530986099033
+  horizons: *id001
+  irf:
+  - 0.002276934120697647
+  - 0.004915641690477868
+  - 0.007468847375240155
+  - 0.007778098694680352
+  - 0.007520389865028012
+  - 0.0077948262725968664
+  - 0.008441060385847009
+  irf_ci_lower:
+  - 0.0005480348365741743
+  - 0.00038541873609016647
+  - 0.0007928187950758218
+  - 0.0005142298217443086
+  - 0.001054590164819129
+  - 0.0015442980321229306
+  - 0.0013173781888005196
+  irf_ci_upper:
+  - 0.00400583340482112
+  - 0.009445864644865569
+  - 0.014144875955404488
+  - 0.015041967567616395
+  - 0.013986189565236895
+  - 0.014045354513070802
+  - 0.015564742582893499
+diagnostics:
+  hac_bandwidth:
+    name: hac_bandwidth
+    passed: true
+    value: 5.0
+    threshold: null
+    pvalue: null
+    message: 'Newey-West bandwidth: 5'
+  effective_obs:
+    name: effective_obs
+    passed: true
+    value: 309.0
+    threshold: 20.0
+    pvalue: null
+    message: ''
+  sign_consistency:
+    name: sign_consistency
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: No expected sign specified
+  ts_leads_test:
+    name: ts_leads_test
+    passed: false
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: fail'
+  ts_residual_autocorr:
+    name: ts_residual_autocorr
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_hac_sensitivity:
+    name: ts_hac_sensitivity
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_lag_sensitivity:
+    name: ts_lag_sensitivity
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_regime_stability:
+    name: ts_regime_stability
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_shock_support:
+    name: ts_shock_support
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+all_diagnostics_pass: false
+interpretation:
+  estimand: IRF of cpi_core to a unit shock in oil_price
+  is_not: Structural causal effect under all interventions
+  channels:
+  - direct
+  - indirect
+  population: ''
+  conditions: ''
+  allowed_uses: []
+  forbidden_uses: []
+failure_flags:
+  weak_identification: false
+  potential_bad_control: false
+  mechanical_identity_risk: false
+  regime_break_detected: false
+  small_sample: false
+  high_missing_rate: false
+  entity_boundary_change: false
+  definition_inconsistency: false
+  data_insufficient: false
+counterfactual:
+  supports_shock_path: true
+  supports_policy_intervention: false
+  intervention_note: Reduced-form LP estimate
+  external_validity: ''
+credibility_rating: A
+credibility_score: 0.9255555555555555
+identification:
+  claim_level: BLOCKED_ID
+  risks:
+    unmeasured_confounding: medium
+    simultaneity: low
+    weak_variation: low
+    measurement_error: low
+    selection: low
+  untestable_assumptions:
+  - No omitted common cause of treatment and outcome
+  testable_threats_passed:
+  - hac_bandwidth
+  - effective_obs
+  - sign_consistency
+  - ts_residual_autocorr
+  - ts_hac_sensitivity
+  - ts_lag_sensitivity
+  - ts_regime_stability
+  - ts_shock_support
+  testable_threats_failed:
+  - ts_leads_test
+  strategy_type: ''
+  strategy_argument: ''
+  strategy_key_assumption: ''
+counterfactual_block:
+  shock_scenario_allowed: false
+  policy_intervention_allowed: false
+  reason_shock_blocked: Shock CF requires REDUCED_FORM+, edge has BLOCKED_ID
+  reason_policy_blocked: REDUCED_FORM mode does not allow policy interventions
+  allowed: false
+  reason_blocked: Shock CF requires REDUCED_FORM+, edge has BLOCKED_ID
+propagation_role:
+  role: diagnostic_only
+  overlapping_paths: []
+  selected_for_counterfactual: false
+  mode_propagation_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: false
+    DESCRIPTIVE: true
+  mode_shock_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: false
+    DESCRIPTIVE: false
+  mode_policy_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: false
+    DESCRIPTIVE: false
+literature:
+  supporting:
+  - doi: 10.2139/ssrn.1707103
+    title: Speculators, Commodities and Cross-Market Linkages
+    authors:
+    - Bahattin Büyükşahin
+    - Michel A. Robe
+    year: 2010
+    excerpt: ''
+    relevance: supporting
+    edge_id: oil_to_cpi_core
+    paper_id: ''
+    citation_count: 121
+    search_query: Brent crude oil price US Core CPI (less food & energy) causal effect
+    source: openalex
+    pdf_url: https://papers.ssrn.com/sol3/Delivery.cfm?abstractid=1707103
+  - doi: 10.24149/wp2116
+    title: The Impact of Rising Oil Prices on U.S. Inflation and Inflation Expectations
+      in 2020-23
+    authors:
+    - Lutz Kilian
+    - Xiaoqing Zhou
+    - Xiaoqing Zhou
+    - Federal Reserve Bank of Dallas
+    year: 2021
+    excerpt: Predictions of oil prices reaching $100 per barrel during the winter
+      of 2021/22 have raised fears of persistently high inflation and rising inflation
+      expectations for years to come.We show that these concerns have been overstated.A
+      $100 oil scenario of the type discussed by many observers, would onl
+    relevance: supporting
+    edge_id: oil_to_cpi_core
+    paper_id: ''
+    citation_count: 37
+    search_query: Brent crude oil price US Core CPI (less food & energy) causal effect
+    source: openalex
+    pdf_url: https://doi.org/10.24149/wp2116
+  - doi: 10.1186/s40064-016-2661-z
+    title: 'The impact of relative energy prices on industrial energy consumption
+      in China: a consideration of inflation costs'
+    authors:
+    - Ling‐Yun He
+    - Zhihua Ding
+    - Fang Yin
+    - Meng Wu
+    year: 2016
+    excerpt: 'Significant effort has been exerted on the study of economic variables
+      such as absolute energy prices to understand energy consumption and economic
+      growth. However, this approach ignores general inflation effects, whereby the
+      prices of baskets of goods may rise or fall at different rates from those '
+    relevance: supporting
+    edge_id: oil_to_cpi_core
+    paper_id: ''
+    citation_count: 28
+    search_query: Brent crude oil price US Core CPI (less food & energy) causal effect
+    source: openalex
+    pdf_url: https://springerplus.springeropen.com/track/pdf/10.1186/s40064-016-2661-z
+  - doi: 10.2139/ssrn.2624398
+    title: 'The great plunge in oil prices: Causes, consequences, and policy responses'
+    authors:
+    - Baffes, John
+    - Kose, M. Ayhan
+    - Ohnsorge, Franziska
+    - Stocker, Marc
+    year: 2015
+    excerpt: Following four years of relative stability at around $105 per barrel,
+      oil prices have declined sharply since June 2014. This paper presents a comprehensive
+      analysis of the sources of the recent decline in prices, and examines its macroeconomic,
+      financial and policy implications. The recent drop in p
+    relevance: supporting
+    edge_id: oil_to_cpi_core
+    paper_id: ''
+    citation_count: 0
+    search_query: Brent crude oil price US Core CPI (less food & energy) causal effect
+    source: core
+    pdf_url: https://www.econstor.eu/bitstream/10419/129351/1/823791513.pdf
+  - doi: 10.1090/S0025-5718-2015-02931-7
+    title: A bound for the error term in the Brent-McMillan algorithm
+    authors:
+    - Richard P. Brent
+    - Fredrik Johansson
+    year: 2013
+    excerpt: The Brent-McMillan algorithm B3 (1980), when implemented with binary
+      splitting, is the fastest known algorithm for high-precision computation of
+      Euler's constant. However, no rigorous error bound for the algorithm has ever
+      been published. We provide such a bound and justify the empirical observation
+    relevance: supporting
+    edge_id: oil_to_cpi_core
+    paper_id: 1312.0039v1
+    citation_count: 0
+    search_query: Brent crude oil price US Core CPI (less food & energy) causal effect
+    source: arxiv
+    pdf_url: https://arxiv.org/pdf/1312.0039v1
+  challenging: []
+  methodological: []
+  search_status: SEARCHED
+  search_timestamp: '2026-02-11T13:59:11.674576'
+  search_query: Brent crude oil price US Core CPI (less food & energy) causal effect
+  total_results: 5
+companion_edge_id: null
+variant_of: null
+is_precisely_null: false
+null_equivalence_bound: null

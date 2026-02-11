@@ -1,0 +1,341 @@
+edge_id: oil_to_vix
+dag_version_hash: e7b73592c7f1cd694cf5464692c2537dd2ba6f09693851f3bb0169fdb710a7d9
+created_at: '2026-02-11T13:59:11.589844'
+data_provenance:
+  treatment_source:
+    connector: parquet_file
+    dataset: oil_price
+    series: null
+    retrieval_time: null
+    file_path: null
+    file_checksum: null
+    row_count: 313
+    column_count: null
+    date_range:
+    - '2000-01-01'
+    - '2026-01-01'
+    cache_key: null
+  outcome_source:
+    connector: parquet_file
+    dataset: vix
+    series: null
+    retrieval_time: null
+    file_path: null
+    file_checksum: null
+    row_count: 313
+    column_count: null
+    date_range:
+    - '2000-01-01'
+    - '2026-01-01'
+    cache_key: null
+  control_sources: {}
+  instrument_sources: {}
+  combined_row_count: 313
+  combined_date_range:
+  - '2000-01-01'
+  - '2026-01-01'
+  missing_rate: null
+  panel_dimensions: null
+  entity_boundary_note: null
+  kpi_definitions: null
+spec_hash: b327b4b58bb76c861cb9ea83d801f78185de731f39d0cf1487f8bfe48ffdf5b0
+spec_details:
+  design: LOCAL_PROJECTIONS
+  controls:
+  - y_lag1
+  - y_lag2
+  - x_lag1
+  - x_lag2
+  instruments: []
+  fixed_effects: []
+  se_method: HAC_newey_west
+  sample_filter: null
+  horizon: &id001
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  bandwidth: null
+estimates:
+  point: -0.533571520464672
+  se: 0.15742471020129933
+  ci_95:
+  - -0.8421239524592188
+  - -0.22501908847012536
+  pvalue: 0.0007005190637644158
+  horizons: *id001
+  irf:
+  - -0.533571520464672
+  - -0.5610009626836324
+  - -0.4871183704560609
+  - -0.38542965227091786
+  - -0.10637919478732837
+  - -0.08604307818110207
+  - -0.11432305381463176
+  irf_ci_lower:
+  - -0.842118282735874
+  - -0.911763916808215
+  - -0.8526178641121431
+  - -0.743030769350418
+  - -0.4548732417552614
+  - -0.40281307704996233
+  - -0.46860999846498846
+  irf_ci_upper:
+  - -0.22502475819347012
+  - -0.21023800855904978
+  - -0.12161887679997868
+  - -0.027828535191417703
+  - 0.24211485218060463
+  - 0.23072692068775819
+  - 0.23996389083572495
+diagnostics:
+  hac_bandwidth:
+    name: hac_bandwidth
+    passed: true
+    value: 5.0
+    threshold: null
+    pvalue: null
+    message: 'Newey-West bandwidth: 5'
+  effective_obs:
+    name: effective_obs
+    passed: true
+    value: 311.0
+    threshold: 20.0
+    pvalue: null
+    message: ''
+  sign_consistency:
+    name: sign_consistency
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: No expected sign specified
+  ts_leads_test:
+    name: ts_leads_test
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_residual_autocorr:
+    name: ts_residual_autocorr
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_hac_sensitivity:
+    name: ts_hac_sensitivity
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_lag_sensitivity:
+    name: ts_lag_sensitivity
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_regime_stability:
+    name: ts_regime_stability
+    passed: false
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: fail'
+  ts_shock_support:
+    name: ts_shock_support
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+all_diagnostics_pass: false
+interpretation:
+  estimand: IRF of vix to a unit shock in oil_price
+  is_not: Structural causal effect under all interventions
+  channels:
+  - direct
+  - indirect
+  population: ''
+  conditions: ''
+  allowed_uses: []
+  forbidden_uses: []
+failure_flags:
+  weak_identification: false
+  potential_bad_control: false
+  mechanical_identity_risk: false
+  regime_break_detected: true
+  small_sample: false
+  high_missing_rate: false
+  entity_boundary_change: false
+  definition_inconsistency: false
+  data_insufficient: false
+counterfactual:
+  supports_shock_path: true
+  supports_policy_intervention: false
+  intervention_note: Reduced-form LP estimate
+  external_validity: ''
+credibility_rating: A
+credibility_score: 0.8655555555555556
+identification:
+  claim_level: REDUCED_FORM
+  risks:
+    unmeasured_confounding: medium
+    simultaneity: low
+    weak_variation: low
+    measurement_error: low
+    selection: low
+  untestable_assumptions:
+  - No omitted common cause of treatment and outcome
+  testable_threats_passed:
+  - hac_bandwidth
+  - effective_obs
+  - sign_consistency
+  - ts_leads_test
+  - ts_residual_autocorr
+  - ts_hac_sensitivity
+  - ts_lag_sensitivity
+  - ts_shock_support
+  testable_threats_failed:
+  - ts_regime_stability
+  strategy_type: ''
+  strategy_argument: ''
+  strategy_key_assumption: ''
+counterfactual_block:
+  shock_scenario_allowed: false
+  policy_intervention_allowed: false
+  reason_shock_blocked: 'Counterfactual Use: BLOCKED
+
+    Reason: regime break risk
+
+
+    Even if p<0.05, this does not establish a causal effect.'
+  reason_policy_blocked: REDUCED_FORM mode does not allow policy interventions
+  allowed: false
+  reason_blocked: 'Counterfactual Use: BLOCKED
+
+    Reason: regime break risk
+
+
+    Even if p<0.05, this does not establish a causal effect.'
+propagation_role:
+  role: reduced_form
+  overlapping_paths: []
+  selected_for_counterfactual: true
+  mode_propagation_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: true
+    DESCRIPTIVE: true
+  mode_shock_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: true
+    DESCRIPTIVE: false
+  mode_policy_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: false
+    DESCRIPTIVE: false
+literature:
+  supporting:
+  - doi: 10.1016/j.jenvman.2021.113511
+    title: 'The effect of green energy, global environmental indexes, and stock markets
+      in predicting oil price crashes: Evidence from explainable machine learning'
+    authors:
+    - Sami Ben Jabeur
+    - Rabeh Khalfaoui
+    - Wissal Ben Arfi
+    year: 2021
+    excerpt: ''
+    relevance: supporting
+    edge_id: oil_to_vix
+    paper_id: ''
+    citation_count: 134
+    search_query: Brent crude oil price VIX Financial Stress Index causal effect
+    source: openalex
+    pdf_url: https://www.sciencedirect.com/science/article/am/pii/S0301479721015735?via%3Dihub
+  - doi: 10.3386/w24571
+    title: The Finance Uncertainty Multiplier
+    authors:
+    - Iván Alfaro
+    - Nicholas Bloom
+    - Xiaoji Lin
+    year: 2018
+    excerpt: ''
+    relevance: supporting
+    edge_id: oil_to_vix
+    paper_id: ''
+    citation_count: 107
+    search_query: Brent crude oil price VIX Financial Stress Index causal effect
+    source: openalex
+    pdf_url: https://doi.org/10.3386/w24571
+  - doi: 10.3389/fenrg.2020.00035
+    title: 'Oil Price Pass-Through Into Consumer and Producer Prices With Monetary
+      Policy in China: Are There Non-linear and Mediating Effects'
+    authors:
+    - Shuanglian Chen
+    - Shengyin Ouyang
+    - Hao Dong
+    year: 2020
+    excerpt: Balancing the oil pass-through to consumer and producer prices is crucial
+      for policymakers. This study aimed to advance associated thinking by examining
+      how consumer and producer prices in China related to changes in global oil prices
+      from 2006 to 2018. First, we investigated the pass-through of oil
+    relevance: supporting
+    edge_id: oil_to_vix
+    paper_id: 3e71541ba9761acddfcc210f7c076fb6eaa5262a
+    citation_count: 14
+    search_query: Brent crude oil price VIX Financial Stress Index causal effect
+    source: semantic_scholar
+    pdf_url: ''
+  - doi: 10.31410/eman.2023.101
+    title: 'Interconnections between Clean Energy and Traditional Commodities: Analysis
+      of Energy Fuels, S&P Global Clean Energy Index, and Ishares Global Clean Energy
+      ETF Compared to Oil, Gold, and Natural Gas Prices'
+    authors:
+    - N. Horta
+    - Mariana Chambino
+    - Rui Dias
+    year: 2023
+    excerpt: The study of the changes between the Energy Fuels Index, S&P Global Clean
+      Energy Index, iShares Global Clean Energy ETF, iShares Global Energy (SWX) ETF,
+      as well as the changes in the prices of crude oil (BRENT), gold (DJ), and natural
+      gas (DG) was deemed extremely relevant given the im­portance and
+    relevance: supporting
+    edge_id: oil_to_vix
+    paper_id: 41fd0e736d887d9a1971751f7aac12fff5451b8b
+    citation_count: 1
+    search_query: Brent crude oil price VIX Financial Stress Index causal effect
+    source: semantic_scholar
+    pdf_url: ''
+  challenging: []
+  methodological:
+  - doi: 10.1257/jep.15.4.101
+    title: Vector Autoregressions
+    authors:
+    - James H. Stock
+    - Mark W. Watson
+    year: 2001
+    excerpt: 'This paper critically reviews the use of vector autoregressions (VARs)
+      for four tasks: data description, forecasting, structural inference, and policy
+      analysis. The paper begins with a review of VAR analysis, highlighting the differences
+      between reduced-form VARs, recursive VARs and structural VARs.'
+    relevance: methodological
+    edge_id: oil_to_vix
+    paper_id: ''
+    citation_count: 1085
+    search_query: Brent crude oil price VIX Financial Stress Index causal effect
+    source: openalex
+    pdf_url: https://www.aeaweb.org/articles/pdf/doi/10.1257/jep.15.4.101
+  search_status: SEARCHED
+  search_timestamp: '2026-02-11T13:59:11.589909'
+  search_query: Brent crude oil price VIX Financial Stress Index causal effect
+  total_results: 5
+companion_edge_id: null
+variant_of: null
+is_precisely_null: false
+null_equivalence_bound: null

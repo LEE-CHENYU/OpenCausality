@@ -1,0 +1,364 @@
+edge_id: industrial_to_unemployment
+dag_version_hash: e7b73592c7f1cd694cf5464692c2537dd2ba6f09693851f3bb0169fdb710a7d9
+created_at: '2026-02-11T13:59:11.936360'
+data_provenance:
+  treatment_source:
+    connector: parquet_file
+    dataset: industrial_production
+    series: null
+    retrieval_time: null
+    file_path: null
+    file_checksum: null
+    row_count: 791
+    column_count: null
+    date_range:
+    - '1960-01-01'
+    - '2025-12-01'
+    cache_key: null
+  outcome_source:
+    connector: parquet_file
+    dataset: unemployment
+    series: null
+    retrieval_time: null
+    file_path: null
+    file_checksum: null
+    row_count: 791
+    column_count: null
+    date_range:
+    - '1960-01-01'
+    - '2025-12-01'
+    cache_key: null
+  control_sources: {}
+  instrument_sources: {}
+  combined_row_count: 791
+  combined_date_range:
+  - '1960-01-01'
+  - '2025-12-01'
+  missing_rate: null
+  panel_dimensions: null
+  entity_boundary_note: null
+  kpi_definitions: null
+spec_hash: b327b4b58bb76c861cb9ea83d801f78185de731f39d0cf1487f8bfe48ffdf5b0
+spec_details:
+  design: LOCAL_PROJECTIONS
+  controls:
+  - y_lag1
+  - y_lag2
+  - x_lag1
+  - x_lag2
+  instruments: []
+  fixed_effects: []
+  se_method: HAC_newey_west
+  sample_filter: null
+  horizon: &id001
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  bandwidth: null
+estimates:
+  point: -29.03273769299728
+  se: 12.813505861214317
+  ci_95:
+  - -54.14720918097734
+  - -3.9182662050172183
+  pvalue: 0.02346412802845881
+  horizons: *id001
+  irf:
+  - -29.03273769299728
+  - -38.653174216567564
+  - -37.465290175392944
+  - -39.4319397798955
+  - -39.95336965861651
+  - -39.05783266858442
+  - -39.803763074901255
+  irf_ci_lower:
+  - -54.14674769667023
+  - -64.47316747724531
+  - -54.46257415893497
+  - -52.81342816546754
+  - -49.01903144133691
+  - -48.08044430173225
+  - -49.805400492196746
+  irf_ci_upper:
+  - -3.9187276893243315
+  - -12.833180955889823
+  - -20.468006191850915
+  - -26.05045139432346
+  - -30.88770787589611
+  - -30.035221035436585
+  - -29.802125657605764
+diagnostics:
+  hac_bandwidth:
+    name: hac_bandwidth
+    passed: true
+    value: 6.0
+    threshold: null
+    pvalue: null
+    message: 'Newey-West bandwidth: 6'
+  effective_obs:
+    name: effective_obs
+    passed: true
+    value: 789.0
+    threshold: 20.0
+    pvalue: null
+    message: ''
+  sign_consistency:
+    name: sign_consistency
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: No expected sign specified
+  ts_leads_test:
+    name: ts_leads_test
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_residual_autocorr:
+    name: ts_residual_autocorr
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_hac_sensitivity:
+    name: ts_hac_sensitivity
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_lag_sensitivity:
+    name: ts_lag_sensitivity
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_regime_stability:
+    name: ts_regime_stability
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_shock_support:
+    name: ts_shock_support
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+all_diagnostics_pass: true
+interpretation:
+  estimand: IRF of unemployment to a unit shock in industrial_production
+  is_not: Structural causal effect under all interventions
+  channels:
+  - direct
+  - indirect
+  population: ''
+  conditions: ''
+  allowed_uses: []
+  forbidden_uses: []
+failure_flags:
+  weak_identification: false
+  potential_bad_control: false
+  mechanical_identity_risk: false
+  regime_break_detected: false
+  small_sample: false
+  high_missing_rate: false
+  entity_boundary_change: false
+  definition_inconsistency: false
+  data_insufficient: false
+counterfactual:
+  supports_shock_path: true
+  supports_policy_intervention: false
+  intervention_note: Reduced-form LP estimate
+  external_validity: ''
+credibility_rating: A
+credibility_score: 0.97
+identification:
+  claim_level: DESCRIPTIVE
+  risks:
+    unmeasured_confounding: medium
+    simultaneity: low
+    weak_variation: low
+    measurement_error: low
+    selection: low
+  untestable_assumptions:
+  - No omitted common cause of treatment and outcome
+  testable_threats_passed:
+  - hac_bandwidth
+  - effective_obs
+  - sign_consistency
+  - ts_leads_test
+  - ts_residual_autocorr
+  - ts_hac_sensitivity
+  - ts_lag_sensitivity
+  - ts_regime_stability
+  - ts_shock_support
+  testable_threats_failed: []
+  strategy_type: ''
+  strategy_argument: ''
+  strategy_key_assumption: ''
+counterfactual_block:
+  shock_scenario_allowed: false
+  policy_intervention_allowed: false
+  reason_shock_blocked: Shock CF requires REDUCED_FORM+, edge has DESCRIPTIVE
+  reason_policy_blocked: REDUCED_FORM mode does not allow policy interventions
+  allowed: false
+  reason_blocked: Shock CF requires REDUCED_FORM+, edge has DESCRIPTIVE
+propagation_role:
+  role: diagnostic_only
+  overlapping_paths: []
+  selected_for_counterfactual: false
+  mode_propagation_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: false
+    DESCRIPTIVE: true
+  mode_shock_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: false
+    DESCRIPTIVE: false
+  mode_policy_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: false
+    DESCRIPTIVE: false
+literature:
+  supporting:
+  - doi: 10.1257/jel.47.1.5
+    title: Recent Developments in the Econometrics of Program Evaluation
+    authors:
+    - Guido W. Imbens
+    - Jeffrey M. Wooldridge
+    year: 2009
+    excerpt: Many empirical questions in economics and other social sciences depend
+      on causal effects of programs or policies. In the last two decades, much research
+      has been done on the econometric and statistical analysis of such causal effects.
+      This recent theoretical literature has built on, and combined fea
+    relevance: supporting
+    edge_id: industrial_to_unemployment
+    paper_id: ''
+    citation_count: 4735
+    search_query: US Industrial Production Index US Unemployment Rate causal effect
+    source: openalex
+    pdf_url: https://www.aeaweb.org/articles/pdf/doi/10.1257/jel.47.1.5
+  - doi: 10.1016/j.ijinfomgt.2019.08.002
+    title: 'Artificial Intelligence (AI): Multidisciplinary perspectives on emerging
+      challenges, opportunities, and agenda for research, practice and policy'
+    authors:
+    - Yogesh K. Dwivedi
+    - Laurie Hughes
+    - Elvira Ismagilova
+    - Gert Aarts
+    - Crispin Coombs
+    - Tom Crick
+    - Yanqing Duan
+    - Rohita Dwivedi
+    - John S. Edwards
+    - Aled Eirug
+    - Vassilis Galanos
+    - P. Vigneswara Ilavarasan
+    - Marijn Janssen
+    - Paul Jones
+    - Arpan Kumar Kar
+    - Hatice Kizgin
+    - Bianca Kronemann
+    - Banita Lal
+    - Biagio Lucini
+    - Rony Medaglia
+    - Kenneth Le Meunier‐FitzHugh
+    - Leslie Caroline Le Meunier-FitzHugh
+    - Santosh K. Misra
+    - Emmanuel Mogaji
+    - Sujeet Kumar Sharma
+    - Jang Bahadur Singh
+    - Vishnupriya Raghavan
+    - Ramakrishnan Raman
+    - Nripendra P. Rana
+    - Spyridon Samothrakis
+    - Jak Spencer
+    - Kuttimani Tamilmani
+    - Annie Tubadji
+    - Paul Walton
+    - Michael D. Williams
+    year: 2019
+    excerpt: ''
+    relevance: supporting
+    edge_id: industrial_to_unemployment
+    paper_id: ''
+    citation_count: 3661
+    search_query: US Industrial Production Index US Unemployment Rate causal effect
+    source: openalex
+    pdf_url: https://www.sciencedirect.com/science/article/pii/S026840121930917X
+  - doi: 10.1136/jech.2004.023531
+    title: 'Indicators of socioeconomic position (part 1): Figure 1'
+    authors:
+    - Bruna Galobardes
+    - Mary Shaw
+    - Debbie A Lawlor
+    - John W Lynch
+    - George Davey Smith
+    year: 2005
+    excerpt: This glossary presents a comprehensive list of indicators of socioeconomic
+      position used in health research. A description of what they intend to measure
+      is given together with how data are elicited and the advantages and limitation
+      of the indicators. The glossary is divided into two parts for journ
+    relevance: supporting
+    edge_id: industrial_to_unemployment
+    paper_id: ''
+    citation_count: 2799
+    search_query: US Industrial Production Index US Unemployment Rate causal effect
+    source: openalex
+    pdf_url: https://jech.bmj.com/content/jech/60/1/7.full.pdf
+  - doi: 10.2139/ssrn.3321549
+    title: Multiple Linear Regressions Market Index, Industrial Production
+    authors:
+    - Lawrence Olorungbohunmi
+    year: 2019
+    excerpt: This study presents the multiple regression between Wilshire 5000 which
+      is the independent variable used in this project and the IP (industry production
+      of US), CPI (consumer price index of US), FED FUND (federal fund rate of US),
+      Unemployment rate data and the government rated bond, Took the monthl
+    relevance: supporting
+    edge_id: industrial_to_unemployment
+    paper_id: 878157a4549ef5fcb816b333e97f7f1ad0164a10
+    citation_count: 0
+    search_query: US Industrial Production Index US Unemployment Rate causal effect
+    source: semantic_scholar
+    pdf_url: ''
+  challenging:
+  - doi: 10.32342/2616-3853-2021-1-14-7
+    title: HOW ETHNIC GROUPS IN THE UNEMPLOYMENT STRUCTURE AFFECT INFLATION AND INDUSTRIAL
+      PRODUCTION INDEX IN USA
+    authors:
+    - Olha K. Nezhgoda
+    - Vasyl S. Serko
+    year: 2021
+    excerpt: The article explores the impact of unemployment in the United States
+      on inflation and the industrial production index. This research is relevant
+      in view of how the most economically developed country in the world overcomes
+      the problems associated with the crisis (financial crisis, pandemic) of the
+      l
+    relevance: challenging
+    edge_id: industrial_to_unemployment
+    paper_id: 72bc610d6fe350e3a684f395e93a533f61058fed
+    citation_count: 0
+    search_query: US Industrial Production Index US Unemployment Rate causal effect
+    source: semantic_scholar
+    pdf_url: ''
+  methodological: []
+  search_status: SEARCHED
+  search_timestamp: '2026-02-11T13:59:11.936416'
+  search_query: US Industrial Production Index US Unemployment Rate causal effect
+  total_results: 5
+companion_edge_id: null
+variant_of: null
+is_precisely_null: false
+null_equivalence_bound: null

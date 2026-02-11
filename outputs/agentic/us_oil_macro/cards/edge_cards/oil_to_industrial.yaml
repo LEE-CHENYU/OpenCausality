@@ -1,0 +1,331 @@
+edge_id: oil_to_industrial
+dag_version_hash: e7b73592c7f1cd694cf5464692c2537dd2ba6f09693851f3bb0169fdb710a7d9
+created_at: '2026-02-11T13:59:11.538601'
+data_provenance:
+  treatment_source:
+    connector: parquet_file
+    dataset: oil_price
+    series: null
+    retrieval_time: null
+    file_path: null
+    file_checksum: null
+    row_count: 312
+    column_count: null
+    date_range:
+    - '2000-01-01'
+    - '2025-12-01'
+    cache_key: null
+  outcome_source:
+    connector: parquet_file
+    dataset: industrial_production
+    series: null
+    retrieval_time: null
+    file_path: null
+    file_checksum: null
+    row_count: 312
+    column_count: null
+    date_range:
+    - '2000-01-01'
+    - '2025-12-01'
+    cache_key: null
+  control_sources: {}
+  instrument_sources: {}
+  combined_row_count: 312
+  combined_date_range:
+  - '2000-01-01'
+  - '2025-12-01'
+  missing_rate: null
+  panel_dimensions: null
+  entity_boundary_note: null
+  kpi_definitions: null
+spec_hash: b327b4b58bb76c861cb9ea83d801f78185de731f39d0cf1487f8bfe48ffdf5b0
+spec_details:
+  design: LOCAL_PROJECTIONS
+  controls:
+  - y_lag1
+  - y_lag2
+  - x_lag1
+  - x_lag2
+  instruments: []
+  fixed_effects: []
+  se_method: HAC_newey_west
+  sample_filter: null
+  horizon: &id001
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  bandwidth: null
+estimates:
+  point: 0.03692796801159097
+  se: 0.020089336682932123
+  ci_95:
+  - -0.002447131886955993
+  - 0.07630306791013794
+  pvalue: 0.06603477787314382
+  horizons: *id001
+  irf:
+  - 0.03692796801159097
+  - 0.08380813030552255
+  - 0.09237112310935458
+  - 0.08547402752934367
+  - 0.08010796152625893
+  - 0.08323691120988128
+  - 0.0820852685434097
+  irf_ci_lower:
+  - -0.0024464083602553505
+  - 0.0071800245671302665
+  - 0.02176016503302719
+  - 0.03249176166564677
+  - 0.03616728650966899
+  - 0.03365314862856558
+  - 0.029459563236392344
+  irf_ci_upper:
+  - 0.07630234438343729
+  - 0.16043623604391483
+  - 0.16298208118568197
+  - 0.13845629339304058
+  - 0.12404863654284887
+  - 0.13282067379119697
+  - 0.13471097385042705
+diagnostics:
+  hac_bandwidth:
+    name: hac_bandwidth
+    passed: true
+    value: 5.0
+    threshold: null
+    pvalue: null
+    message: 'Newey-West bandwidth: 5'
+  effective_obs:
+    name: effective_obs
+    passed: true
+    value: 310.0
+    threshold: 20.0
+    pvalue: null
+    message: ''
+  sign_consistency:
+    name: sign_consistency
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: No expected sign specified
+  ts_leads_test:
+    name: ts_leads_test
+    passed: false
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: fail'
+  ts_residual_autocorr:
+    name: ts_residual_autocorr
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_hac_sensitivity:
+    name: ts_hac_sensitivity
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_lag_sensitivity:
+    name: ts_lag_sensitivity
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_regime_stability:
+    name: ts_regime_stability
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_shock_support:
+    name: ts_shock_support
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+all_diagnostics_pass: false
+interpretation:
+  estimand: IRF of industrial_production to a unit shock in oil_price
+  is_not: Structural causal effect under all interventions
+  channels:
+  - direct
+  - indirect
+  population: ''
+  conditions: ''
+  allowed_uses: []
+  forbidden_uses: []
+failure_flags:
+  weak_identification: false
+  potential_bad_control: false
+  mechanical_identity_risk: false
+  regime_break_detected: false
+  small_sample: false
+  high_missing_rate: false
+  entity_boundary_change: false
+  definition_inconsistency: false
+  data_insufficient: false
+counterfactual:
+  supports_shock_path: true
+  supports_policy_intervention: false
+  intervention_note: Reduced-form LP estimate
+  external_validity: ''
+credibility_rating: A
+credibility_score: 0.9255555555555555
+identification:
+  claim_level: BLOCKED_ID
+  risks:
+    unmeasured_confounding: medium
+    simultaneity: low
+    weak_variation: low
+    measurement_error: low
+    selection: low
+  untestable_assumptions:
+  - No omitted common cause of treatment and outcome
+  testable_threats_passed:
+  - hac_bandwidth
+  - effective_obs
+  - sign_consistency
+  - ts_residual_autocorr
+  - ts_hac_sensitivity
+  - ts_lag_sensitivity
+  - ts_regime_stability
+  - ts_shock_support
+  testable_threats_failed:
+  - ts_leads_test
+  strategy_type: ''
+  strategy_argument: ''
+  strategy_key_assumption: ''
+counterfactual_block:
+  shock_scenario_allowed: false
+  policy_intervention_allowed: false
+  reason_shock_blocked: Shock CF requires REDUCED_FORM+, edge has BLOCKED_ID
+  reason_policy_blocked: REDUCED_FORM mode does not allow policy interventions
+  allowed: false
+  reason_blocked: Shock CF requires REDUCED_FORM+, edge has BLOCKED_ID
+propagation_role:
+  role: diagnostic_only
+  overlapping_paths: []
+  selected_for_counterfactual: false
+  mode_propagation_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: false
+    DESCRIPTIVE: true
+  mode_shock_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: false
+    DESCRIPTIVE: false
+  mode_policy_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: false
+    DESCRIPTIVE: false
+literature:
+  supporting:
+  - doi: 10.1093/qje/qjaa004
+    title: The Fall of the Labor Share and the Rise of Superstar Firms*
+    authors:
+    - David Autor
+    - David Dorn
+    - Lawrence F. Katz
+    - Christina Patterson
+    - John Van Reenen
+    year: 2020
+    excerpt: Abstract The fall of labor’s share of GDP in the United States and many
+      other countries in recent decades is well documented but its causes remain uncertain.
+      Existing empirical assessments typically rely on industry or macro data, obscuring
+      heterogeneity among firms. In this article, we analyze micr
+    relevance: supporting
+    edge_id: oil_to_industrial
+    paper_id: ''
+    citation_count: 1940
+    search_query: Brent crude oil price US Industrial Production Index causal effect
+    source: openalex
+    pdf_url: https://academic.oup.com/qje/article-pdf/135/2/645/32994954/qjaa004.pdf
+  - doi: 10.1257/jep.6.3.3
+    title: 'Medical Care Costs: How Much Welfare Loss?'
+    authors:
+    - Joseph P. Newhouse
+    year: 1992
+    excerpt: 'Hardly a week goes by without a front-page newspaper article on rising
+      health care costs and the uninsured. In this article, I focus mainly on costs,
+      arguing that the issue has been somewhat misconceived: while the level of medical
+      care spending in the U.S. is a cause for concern, the welfare losses'
+    relevance: supporting
+    edge_id: oil_to_industrial
+    paper_id: ''
+    citation_count: 1208
+    search_query: Brent crude oil price US Industrial Production Index causal effect
+    source: openalex
+    pdf_url: https://www.aeaweb.org/articles/pdf/doi/10.1257/jep.6.3.3
+  - doi: 10.1007/s12076-024-00393-9
+    title: Unveiling an asymmetric relationship between global crude oil and local
+      food prices in an oil-importing economy
+    authors:
+    - Sergei Kharin
+    - Zuzana Kapustova
+    - Ivan Lichner
+    year: 2024
+    excerpt: ''
+    relevance: supporting
+    edge_id: oil_to_industrial
+    paper_id: cfaf75956f85022db2e50d4439c348627c13555b
+    citation_count: 2
+    search_query: Brent crude oil price US Industrial Production Index causal effect
+    source: semantic_scholar
+    pdf_url: ''
+  challenging:
+  - doi: 10.20527/ecoplan.v8i2.1276
+    title: Determinan Ekspor Komoditas Crude Palm Oil (CPO) Indonesia ke Kawasan Uni
+      Eropa Periode 2013-2023
+    authors:
+    - Nadia Fazira
+    - Putri Ayu
+    year: 2025
+    excerpt: This study aims to analyze the factors influencing Indonesia’s crude
+      palm oil (CPO) exports to the European Union during the 2013–2023 period. The
+      research gap arises because most previous studies focused primarily on price
+      and exchange rate factors without considering the impact of the European Uni
+    relevance: challenging
+    edge_id: oil_to_industrial
+    paper_id: f81f70db1fc045104333c5f6e94211efb72521c9
+    citation_count: 0
+    search_query: Brent crude oil price US Industrial Production Index causal effect
+    source: semantic_scholar
+    pdf_url: ''
+  methodological:
+  - doi: 10.1257/jep.15.4.101
+    title: Vector Autoregressions
+    authors:
+    - James H. Stock
+    - Mark W. Watson
+    year: 2001
+    excerpt: 'This paper critically reviews the use of vector autoregressions (VARs)
+      for four tasks: data description, forecasting, structural inference, and policy
+      analysis. The paper begins with a review of VAR analysis, highlighting the differences
+      between reduced-form VARs, recursive VARs and structural VARs.'
+    relevance: methodological
+    edge_id: oil_to_industrial
+    paper_id: ''
+    citation_count: 1085
+    search_query: Brent crude oil price US Industrial Production Index causal effect
+    source: openalex
+    pdf_url: https://www.aeaweb.org/articles/pdf/doi/10.1257/jep.15.4.101
+  search_status: SEARCHED
+  search_timestamp: '2026-02-11T13:59:11.538678'
+  search_query: Brent crude oil price US Industrial Production Index causal effect
+  total_results: 5
+companion_edge_id: null
+variant_of: null
+is_precisely_null: false
+null_equivalence_bound: null

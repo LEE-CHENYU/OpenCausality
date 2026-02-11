@@ -1,0 +1,339 @@
+edge_id: vix_to_nfci
+dag_version_hash: e7b73592c7f1cd694cf5464692c2537dd2ba6f09693851f3bb0169fdb710a7d9
+created_at: '2026-02-11T13:59:11.853745'
+data_provenance:
+  treatment_source:
+    connector: parquet_file
+    dataset: vix
+    series: null
+    retrieval_time: null
+    file_path: null
+    file_checksum: null
+    row_count: 45
+    column_count: null
+    date_range:
+    - '2000-09-01'
+    - '2025-08-01'
+    cache_key: null
+  outcome_source:
+    connector: parquet_file
+    dataset: nfci
+    series: null
+    retrieval_time: null
+    file_path: null
+    file_checksum: null
+    row_count: 45
+    column_count: null
+    date_range:
+    - '2000-09-01'
+    - '2025-08-01'
+    cache_key: null
+  control_sources: {}
+  instrument_sources: {}
+  combined_row_count: 45
+  combined_date_range:
+  - '2000-09-01'
+  - '2025-08-01'
+  missing_rate: null
+  panel_dimensions: null
+  entity_boundary_note: null
+  kpi_definitions: null
+spec_hash: b327b4b58bb76c861cb9ea83d801f78185de731f39d0cf1487f8bfe48ffdf5b0
+spec_details:
+  design: LOCAL_PROJECTIONS
+  controls:
+  - y_lag1
+  - y_lag2
+  - x_lag1
+  - x_lag2
+  instruments: []
+  fixed_effects: []
+  se_method: HAC_newey_west
+  sample_filter: null
+  horizon: &id001
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  bandwidth: null
+estimates:
+  point: 0.7508949541735056
+  se: 0.22631413313493662
+  ci_95:
+  - 0.30731925322902987
+  - 1.1944706551179813
+  pvalue: 0.000906864878427209
+  horizons: *id001
+  irf:
+  - 0.7508949541735056
+  - 0.28830854472451595
+  - 0.334706393578032
+  - 0.055486645762797354
+  - -0.2649955679211042
+  - -0.38371197061498924
+  - -0.50295865611352
+  irf_ci_lower:
+  - 0.30732740403662695
+  - -0.2217061035448512
+  - -0.23893393503181592
+  - -0.16416209843961396
+  - -0.7947934503129208
+  - -0.8295205274517573
+  - -1.0821366185239156
+  irf_ci_upper:
+  - 1.1944625043103843
+  - 0.7983231929938831
+  - 0.9083467221878799
+  - 0.2751353899652087
+  - 0.2648023144707124
+  - 0.06209658622177883
+  - 0.07621930629687568
+diagnostics:
+  hac_bandwidth:
+    name: hac_bandwidth
+    passed: true
+    value: 3.0
+    threshold: null
+    pvalue: null
+    message: 'Newey-West bandwidth: 3'
+  effective_obs:
+    name: effective_obs
+    passed: true
+    value: 43.0
+    threshold: 20.0
+    pvalue: null
+    message: ''
+  sign_consistency:
+    name: sign_consistency
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: No expected sign specified
+  ts_leads_test:
+    name: ts_leads_test
+    passed: false
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: fail'
+  ts_residual_autocorr:
+    name: ts_residual_autocorr
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_hac_sensitivity:
+    name: ts_hac_sensitivity
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_lag_sensitivity:
+    name: ts_lag_sensitivity
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_regime_stability:
+    name: ts_regime_stability
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_shock_support:
+    name: ts_shock_support
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+all_diagnostics_pass: false
+interpretation:
+  estimand: IRF of nfci to a unit shock in vix
+  is_not: Structural causal effect under all interventions
+  channels:
+  - direct
+  - indirect
+  population: ''
+  conditions: ''
+  allowed_uses: []
+  forbidden_uses: []
+failure_flags:
+  weak_identification: false
+  potential_bad_control: false
+  mechanical_identity_risk: false
+  regime_break_detected: false
+  small_sample: false
+  high_missing_rate: false
+  entity_boundary_change: false
+  definition_inconsistency: false
+  data_insufficient: false
+counterfactual:
+  supports_shock_path: true
+  supports_policy_intervention: false
+  intervention_note: Reduced-form LP estimate
+  external_validity: ''
+credibility_rating: A
+credibility_score: 0.8115555555555555
+identification:
+  claim_level: BLOCKED_ID
+  risks:
+    unmeasured_confounding: medium
+    simultaneity: low
+    weak_variation: low
+    measurement_error: low
+    selection: low
+  untestable_assumptions:
+  - No omitted common cause of treatment and outcome
+  testable_threats_passed:
+  - hac_bandwidth
+  - effective_obs
+  - sign_consistency
+  - ts_residual_autocorr
+  - ts_hac_sensitivity
+  - ts_lag_sensitivity
+  - ts_regime_stability
+  - ts_shock_support
+  testable_threats_failed:
+  - ts_leads_test
+  strategy_type: ''
+  strategy_argument: ''
+  strategy_key_assumption: ''
+counterfactual_block:
+  shock_scenario_allowed: false
+  policy_intervention_allowed: false
+  reason_shock_blocked: Shock CF requires REDUCED_FORM+, edge has BLOCKED_ID
+  reason_policy_blocked: REDUCED_FORM mode does not allow policy interventions
+  allowed: false
+  reason_blocked: Shock CF requires REDUCED_FORM+, edge has BLOCKED_ID
+propagation_role:
+  role: bridge
+  overlapping_paths: []
+  selected_for_counterfactual: false
+  mode_propagation_allowed:
+    STRUCTURAL: true
+    REDUCED_FORM: true
+    DESCRIPTIVE: true
+  mode_shock_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: false
+    DESCRIPTIVE: false
+  mode_policy_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: false
+    DESCRIPTIVE: false
+literature:
+  supporting:
+  - doi: 10.3386/w21162
+    title: 'Dilemma not Trilemma: The Global Financial Cycle and Monetary Policy Independence'
+    authors:
+    - Hélène Rey
+    year: 2015
+    excerpt: There is a global financial cycle in capital flows, asset prices and
+      in credit growth.This cycle co moves with the VIX, a measure of uncertainty
+      and risk aversion of the markets.Asset markets in countries with more credit
+      inflows are more sensitive to the global cycle.The global financial cycle is
+      n
+    relevance: supporting
+    edge_id: vix_to_nfci
+    paper_id: ''
+    citation_count: 1875
+    search_query: VIX Financial Stress Index National Financial Conditions Index causal
+      effect
+    source: openalex
+    pdf_url: https://doi.org/10.3386/w21162
+  - doi: 10.3386/w21633
+    title: Measuring Economic Policy Uncertainty
+    authors:
+    - Scott Baker
+    - Nicholas Bloom
+    - Steven J. Davis
+    year: 2015
+    excerpt: We develop a new index of economic policy uncertainty (EPU) based on
+      newspaper coverage frequency.Several types of evidence -including human readings
+      of 12,000 newspaper articles -indicate that our index proxies for movements
+      in policy-related economic uncertainty.Our US index spikes near tight pres
+    relevance: supporting
+    edge_id: vix_to_nfci
+    paper_id: ''
+    citation_count: 496
+    search_query: VIX Financial Stress Index National Financial Conditions Index causal
+      effect
+    source: openalex
+    pdf_url: https://doi.org/10.3386/w21633
+  - doi: 10.61954/2616-7107/2025.9.1-3
+    title: Financial Market Regulation and Monetary Policy on Financial Stress Management
+      in the National Economy
+    authors:
+    - Iryna Kononova
+    - Anton Baranov
+    - O. Aksyonova
+    - Roman Anzin
+    year: 2025
+    excerpt: Introduction. Neutralising the dynamic threats of war and economic crises
+      and reducing the stress index for the country's financial system requires prompt
+      action from the regulator. This allows financial market participants to reduce
+      the stress index of the country's financial system. However, dynam
+    relevance: supporting
+    edge_id: vix_to_nfci
+    paper_id: ef66f4f082b0ff0989ccb734699d4fcd70d1dc0d
+    citation_count: 0
+    search_query: VIX Financial Stress Index National Financial Conditions Index causal
+      effect
+    source: semantic_scholar
+    pdf_url: ''
+  challenging:
+  - doi: 10.31767/su.2(97)2022.02.01
+    title: Financial Stress Index as an Indicator of Financial Stability of Ukraine
+      in War Conditions
+    authors:
+    - H. Holubova
+    year: 2022
+    excerpt: The importance of proper statistical support of the financial and banking
+      system of the country is substantiated. It was noted that the statistics of
+      the financial sector forms indicators of monetary and credit statistics, statistics
+      of financial markets, statistics of financial accounts and indicat
+    relevance: challenging
+    edge_id: vix_to_nfci
+    paper_id: b713437c48cc9c822d54e548285da1032c52a066
+    citation_count: 3
+    search_query: VIX Financial Stress Index National Financial Conditions Index causal
+      effect
+    source: semantic_scholar
+    pdf_url: ''
+  methodological:
+  - doi: 10.1257/jep.15.4.101
+    title: Vector Autoregressions
+    authors:
+    - James H. Stock
+    - Mark W. Watson
+    year: 2001
+    excerpt: 'This paper critically reviews the use of vector autoregressions (VARs)
+      for four tasks: data description, forecasting, structural inference, and policy
+      analysis. The paper begins with a review of VAR analysis, highlighting the differences
+      between reduced-form VARs, recursive VARs and structural VARs.'
+    relevance: methodological
+    edge_id: vix_to_nfci
+    paper_id: ''
+    citation_count: 1085
+    search_query: VIX Financial Stress Index National Financial Conditions Index causal
+      effect
+    source: openalex
+    pdf_url: https://www.aeaweb.org/articles/pdf/doi/10.1257/jep.15.4.101
+  search_status: SEARCHED
+  search_timestamp: '2026-02-11T13:59:11.853800'
+  search_query: VIX Financial Stress Index National Financial Conditions Index causal
+    effect
+  total_results: 5
+companion_edge_id: null
+variant_of: null
+is_precisely_null: false
+null_equivalence_bound: null

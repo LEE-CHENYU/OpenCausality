@@ -1,0 +1,1064 @@
+[
+  {
+    "edge_id": "oil_shock_to_oil_price",
+    "citations": [
+      {
+        "doi": "10.2139/ssrn.1093702",
+        "title": "Time-Varying Effects of Oil Supply Shocks on the US Economy",
+        "authors": [
+          "C. Baumeister",
+          "G. Peersman"
+        ],
+        "year": 2008,
+        "excerpt": "",
+        "relevance": "supporting",
+        "edge_id": "oil_shock_to_oil_price",
+        "paper_id": "6313d65cc0a3b284bc91886a1a567126a9e2eb91",
+        "citation_count": 577,
+        "search_query": "Oil supply shock (Baumeister) Brent crude oil price causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      },
+      {
+        "doi": "10.1017/s1365100516000353",
+        "title": "HOW DOES STOCK MARKET VOLATILITY REACT TO OIL PRICE SHOCKS?",
+        "authors": [
+          "Andrea Bastianin",
+          "Matteo Manera"
+        ],
+        "year": 2017,
+        "excerpt": "We study the impact of oil price shocks on the U.S. stock market volatility. We jointly analyze three different structural oil market shocks (i.e., aggregate demand, oil supply, and oil-specific demand shocks) and stock market volatility using a structural vector autoregressive model. Identification",
+        "relevance": "supporting",
+        "edge_id": "oil_shock_to_oil_price",
+        "paper_id": "",
+        "citation_count": 66,
+        "search_query": "Oil supply shock (Baumeister) Brent crude oil price causal effect",
+        "source": "openalex",
+        "pdf_url": "https://arxiv.org/pdf/1811.03820"
+      },
+      {
+        "doi": "10.3390/economies7010012",
+        "title": "Does Oil Price Drive World Food Prices? Evidence from Linear and Nonlinear ARDL Modeling",
+        "authors": [
+          "Mourad Zmami",
+          "Ousama Ben\u2010Salha"
+        ],
+        "year": 2019,
+        "excerpt": "The macroeconomic outcomes of oil price fluctuations have been at the forefront of the debate among economists, financial analysts and policymakers over the last decades. Among others, the oil price\u2013food price nexus has particularly received a great deal of attention. While an abundant body of liter",
+        "relevance": "supporting",
+        "edge_id": "oil_shock_to_oil_price",
+        "paper_id": "",
+        "citation_count": 57,
+        "search_query": "Oil supply shock (Baumeister) Brent crude oil price causal effect",
+        "source": "openalex",
+        "pdf_url": "https://www.mdpi.com/2227-7099/7/1/12/pdf?version=1549968658"
+      },
+      {
+        "doi": "10.3390/en12071344",
+        "title": "Modeling the Relationship between Crude Oil and Agricultural Commodity Prices",
+        "authors": [
+          "Duc Hong Vo",
+          "Tan Ngoc Vu",
+          "Anh The Vo",
+          "Michael McAleer"
+        ],
+        "year": 2019,
+        "excerpt": "The food-energy nexus has attracted great attention from policymakers, practitioners, and academia since the food price crisis during the 2007\u20132008 Global Financial Crisis (GFC), and new policies that aim to increase ethanol production. This paper incorporates aggregate demand and alternative oil sh",
+        "relevance": "methodological",
+        "edge_id": "oil_shock_to_oil_price",
+        "paper_id": "",
+        "citation_count": 51,
+        "search_query": "Oil supply shock (Baumeister) Brent crude oil price causal effect",
+        "source": "openalex",
+        "pdf_url": "https://www.mdpi.com/1996-1073/12/7/1344/pdf?version=1554982504"
+      },
+      {
+        "doi": "10.47312/aefr.v6i2.334",
+        "title": "Relationship Between Crude Oil Price Fluctuations, Economic Growth, Inflation, and Exchange Rate in Indonesia 1967-2019",
+        "authors": [
+          "Salwinar Aprin Nitami",
+          "B. Hayati"
+        ],
+        "year": 2021,
+        "excerpt": "Economic fluctuations can be caused by demand shocks and supply shocks. One of the supply shocks is caused by changes in world crude oil prices. As a net importer of crude oil, any change in crude oil prices makes domestic economic activity vulnerable to these shocks. The purpose of this study is to",
+        "relevance": "supporting",
+        "edge_id": "oil_shock_to_oil_price",
+        "paper_id": "a0f1c50129ea71872b4d27a9f43877c89600b0a0",
+        "citation_count": 7,
+        "search_query": "Oil supply shock (Baumeister) Brent crude oil price causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      }
+    ]
+  },
+  {
+    "edge_id": "oil_to_cpi_headline",
+    "citations": [
+      {
+        "doi": "10.2139/ssrn.1032834",
+        "title": "Are There Oil Currencies? The Real Exchange Rate of Oil Exporting Countries",
+        "authors": [
+          "Maurizio Michael Habib",
+          "Margarita Kalamova"
+        ],
+        "year": 2007,
+        "excerpt": "",
+        "relevance": "supporting",
+        "edge_id": "oil_to_cpi_headline",
+        "paper_id": "",
+        "citation_count": 132,
+        "search_query": "Brent crude oil price US CPI All Items causal effect",
+        "source": "openalex",
+        "pdf_url": "https://papers.ssrn.com/sol3/Delivery.cfm?abstractid=1032834"
+      },
+      {
+        "doi": "10.1111/ecot.12062",
+        "title": "Oil shocks, policy uncertainty and stock returns in China",
+        "authors": [
+          "Wensheng Kang",
+          "Ronald A. Ratti"
+        ],
+        "year": 2015,
+        "excerpt": "Abstract This paper examines the interdependence of China's policy uncertainty, the global oil market and stock market returns in China. A structural VAR model is estimated that shows that a positive shock to economic policy uncertainty in China has a delayed negative effect on global oil production",
+        "relevance": "methodological",
+        "edge_id": "oil_to_cpi_headline",
+        "paper_id": "",
+        "citation_count": 129,
+        "search_query": "Brent crude oil price US CPI All Items causal effect",
+        "source": "openalex",
+        "pdf_url": "https://onlinelibrary.wiley.com/doi/pdfdirect/10.1111/ecot.12062"
+      },
+      {
+        "doi": "10.1186/s40064-016-2661-z",
+        "title": "The impact of relative energy prices on industrial energy consumption in China: a consideration of inflation costs",
+        "authors": [
+          "Ling\u2010Yun He",
+          "Zhihua Ding",
+          "Fang Yin",
+          "Meng Wu"
+        ],
+        "year": 2016,
+        "excerpt": "Significant effort has been exerted on the study of economic variables such as absolute energy prices to understand energy consumption and economic growth. However, this approach ignores general inflation effects, whereby the prices of baskets of goods may rise or fall at different rates from those ",
+        "relevance": "supporting",
+        "edge_id": "oil_to_cpi_headline",
+        "paper_id": "",
+        "citation_count": 28,
+        "search_query": "Brent crude oil price US CPI All Items causal effect",
+        "source": "openalex",
+        "pdf_url": "https://springerplus.springeropen.com/track/pdf/10.1186/s40064-016-2661-z"
+      },
+      {
+        "doi": "10.1090/S0025-5718-2015-02931-7",
+        "title": "A bound for the error term in the Brent-McMillan algorithm",
+        "authors": [
+          "Richard P. Brent",
+          "Fredrik Johansson"
+        ],
+        "year": 2013,
+        "excerpt": "The Brent-McMillan algorithm B3 (1980), when implemented with binary splitting, is the fastest known algorithm for high-precision computation of Euler's constant. However, no rigorous error bound for the algorithm has ever been published. We provide such a bound and justify the empirical observation",
+        "relevance": "supporting",
+        "edge_id": "oil_to_cpi_headline",
+        "paper_id": "1312.0039v1",
+        "citation_count": 0,
+        "search_query": "Brent crude oil price US CPI All Items causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/1312.0039v1"
+      },
+      {
+        "doi": "10.1109/ACCESS.2021.3124802",
+        "title": "Forecasting Crude Oil Price Using Event Extraction",
+        "authors": [
+          "Jiangwei Liu",
+          "Xiaohong Huang"
+        ],
+        "year": 2021,
+        "excerpt": "Research on crude oil price forecasting has attracted tremendous attention from scholars and policymakers due to its significant effect on the global economy. Besides supply and demand, crude oil prices are largely influenced by various factors, such as economic development, financial markets, confl",
+        "relevance": "supporting",
+        "edge_id": "oil_to_cpi_headline",
+        "paper_id": "2111.09111v1",
+        "citation_count": 0,
+        "search_query": "Brent crude oil price US CPI All Items causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/2111.09111v1"
+      }
+    ]
+  },
+  {
+    "edge_id": "oil_to_cpi_core",
+    "citations": [
+      {
+        "doi": "10.2139/ssrn.1707103",
+        "title": "Speculators, Commodities and Cross-Market Linkages",
+        "authors": [
+          "Bahattin B\u00fcy\u00fck\u015fahin",
+          "Michel A. Robe"
+        ],
+        "year": 2010,
+        "excerpt": "",
+        "relevance": "supporting",
+        "edge_id": "oil_to_cpi_core",
+        "paper_id": "",
+        "citation_count": 121,
+        "search_query": "Brent crude oil price US Core CPI (less food & energy) causal effect",
+        "source": "openalex",
+        "pdf_url": "https://papers.ssrn.com/sol3/Delivery.cfm?abstractid=1707103"
+      },
+      {
+        "doi": "10.24149/wp2116",
+        "title": "The Impact of Rising Oil Prices on U.S. Inflation and Inflation Expectations in 2020-23",
+        "authors": [
+          "Lutz Kilian",
+          "Xiaoqing Zhou",
+          "Xiaoqing Zhou",
+          "Federal Reserve Bank of Dallas"
+        ],
+        "year": 2021,
+        "excerpt": "Predictions of oil prices reaching $100 per barrel during the winter of 2021/22 have raised fears of persistently high inflation and rising inflation expectations for years to come.We show that these concerns have been overstated.A $100 oil scenario of the type discussed by many observers, would onl",
+        "relevance": "supporting",
+        "edge_id": "oil_to_cpi_core",
+        "paper_id": "",
+        "citation_count": 37,
+        "search_query": "Brent crude oil price US Core CPI (less food & energy) causal effect",
+        "source": "openalex",
+        "pdf_url": "https://doi.org/10.24149/wp2116"
+      },
+      {
+        "doi": "10.1186/s40064-016-2661-z",
+        "title": "The impact of relative energy prices on industrial energy consumption in China: a consideration of inflation costs",
+        "authors": [
+          "Ling\u2010Yun He",
+          "Zhihua Ding",
+          "Fang Yin",
+          "Meng Wu"
+        ],
+        "year": 2016,
+        "excerpt": "Significant effort has been exerted on the study of economic variables such as absolute energy prices to understand energy consumption and economic growth. However, this approach ignores general inflation effects, whereby the prices of baskets of goods may rise or fall at different rates from those ",
+        "relevance": "supporting",
+        "edge_id": "oil_to_cpi_core",
+        "paper_id": "",
+        "citation_count": 28,
+        "search_query": "Brent crude oil price US Core CPI (less food & energy) causal effect",
+        "source": "openalex",
+        "pdf_url": "https://springerplus.springeropen.com/track/pdf/10.1186/s40064-016-2661-z"
+      },
+      {
+        "doi": "10.2139/ssrn.2624398",
+        "title": "The great plunge in oil prices: Causes, consequences, and policy responses",
+        "authors": [
+          "Baffes, John",
+          "Kose, M. Ayhan",
+          "Ohnsorge, Franziska",
+          "Stocker, Marc"
+        ],
+        "year": 2015,
+        "excerpt": "Following four years of relative stability at around $105 per barrel, oil prices have declined sharply since June 2014. This paper presents a comprehensive analysis of the sources of the recent decline in prices, and examines its macroeconomic, financial and policy implications. The recent drop in p",
+        "relevance": "supporting",
+        "edge_id": "oil_to_cpi_core",
+        "paper_id": "",
+        "citation_count": 0,
+        "search_query": "Brent crude oil price US Core CPI (less food & energy) causal effect",
+        "source": "core",
+        "pdf_url": "https://www.econstor.eu/bitstream/10419/129351/1/823791513.pdf"
+      },
+      {
+        "doi": "10.1090/S0025-5718-2015-02931-7",
+        "title": "A bound for the error term in the Brent-McMillan algorithm",
+        "authors": [
+          "Richard P. Brent",
+          "Fredrik Johansson"
+        ],
+        "year": 2013,
+        "excerpt": "The Brent-McMillan algorithm B3 (1980), when implemented with binary splitting, is the fastest known algorithm for high-precision computation of Euler's constant. However, no rigorous error bound for the algorithm has ever been published. We provide such a bound and justify the empirical observation",
+        "relevance": "supporting",
+        "edge_id": "oil_to_cpi_core",
+        "paper_id": "1312.0039v1",
+        "citation_count": 0,
+        "search_query": "Brent crude oil price US Core CPI (less food & energy) causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/1312.0039v1"
+      }
+    ]
+  },
+  {
+    "edge_id": "oil_to_industrial",
+    "citations": [
+      {
+        "doi": "10.1093/qje/qjaa004",
+        "title": "The Fall of the Labor Share and the Rise of Superstar Firms*",
+        "authors": [
+          "David Autor",
+          "David Dorn",
+          "Lawrence F. Katz",
+          "Christina Patterson",
+          "John Van Reenen"
+        ],
+        "year": 2020,
+        "excerpt": "Abstract The fall of labor\u2019s share of GDP in the United States and many other countries in recent decades is well documented but its causes remain uncertain. Existing empirical assessments typically rely on industry or macro data, obscuring heterogeneity among firms. In this article, we analyze micr",
+        "relevance": "supporting",
+        "edge_id": "oil_to_industrial",
+        "paper_id": "",
+        "citation_count": 1940,
+        "search_query": "Brent crude oil price US Industrial Production Index causal effect",
+        "source": "openalex",
+        "pdf_url": "https://academic.oup.com/qje/article-pdf/135/2/645/32994954/qjaa004.pdf"
+      },
+      {
+        "doi": "10.1257/jep.6.3.3",
+        "title": "Medical Care Costs: How Much Welfare Loss?",
+        "authors": [
+          "Joseph P. Newhouse"
+        ],
+        "year": 1992,
+        "excerpt": "Hardly a week goes by without a front-page newspaper article on rising health care costs and the uninsured. In this article, I focus mainly on costs, arguing that the issue has been somewhat misconceived: while the level of medical care spending in the U.S. is a cause for concern, the welfare losses",
+        "relevance": "supporting",
+        "edge_id": "oil_to_industrial",
+        "paper_id": "",
+        "citation_count": 1208,
+        "search_query": "Brent crude oil price US Industrial Production Index causal effect",
+        "source": "openalex",
+        "pdf_url": "https://www.aeaweb.org/articles/pdf/doi/10.1257/jep.6.3.3"
+      },
+      {
+        "doi": "10.1257/jep.15.4.101",
+        "title": "Vector Autoregressions",
+        "authors": [
+          "James H. Stock",
+          "Mark W. Watson"
+        ],
+        "year": 2001,
+        "excerpt": "This paper critically reviews the use of vector autoregressions (VARs) for four tasks: data description, forecasting, structural inference, and policy analysis. The paper begins with a review of VAR analysis, highlighting the differences between reduced-form VARs, recursive VARs and structural VARs.",
+        "relevance": "methodological",
+        "edge_id": "oil_to_industrial",
+        "paper_id": "",
+        "citation_count": 1085,
+        "search_query": "Brent crude oil price US Industrial Production Index causal effect",
+        "source": "openalex",
+        "pdf_url": "https://www.aeaweb.org/articles/pdf/doi/10.1257/jep.15.4.101"
+      },
+      {
+        "doi": "10.1007/s12076-024-00393-9",
+        "title": "Unveiling an asymmetric relationship between global crude oil and local food prices in an oil-importing economy",
+        "authors": [
+          "Sergei Kharin",
+          "Zuzana Kapustova",
+          "Ivan Lichner"
+        ],
+        "year": 2024,
+        "excerpt": "",
+        "relevance": "supporting",
+        "edge_id": "oil_to_industrial",
+        "paper_id": "cfaf75956f85022db2e50d4439c348627c13555b",
+        "citation_count": 2,
+        "search_query": "Brent crude oil price US Industrial Production Index causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      },
+      {
+        "doi": "10.20527/ecoplan.v8i2.1276",
+        "title": "Determinan Ekspor Komoditas Crude Palm Oil (CPO) Indonesia ke Kawasan Uni Eropa Periode 2013-2023",
+        "authors": [
+          "Nadia Fazira",
+          "Putri Ayu"
+        ],
+        "year": 2025,
+        "excerpt": "This study aims to analyze the factors influencing Indonesia\u2019s crude palm oil (CPO) exports to the European Union during the 2013\u20132023 period. The research gap arises because most previous studies focused primarily on price and exchange rate factors without considering the impact of the European Uni",
+        "relevance": "challenging",
+        "edge_id": "oil_to_industrial",
+        "paper_id": "f81f70db1fc045104333c5f6e94211efb72521c9",
+        "citation_count": 0,
+        "search_query": "Brent crude oil price US Industrial Production Index causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      }
+    ]
+  },
+  {
+    "edge_id": "oil_to_vix",
+    "citations": [
+      {
+        "doi": "10.1257/jep.15.4.101",
+        "title": "Vector Autoregressions",
+        "authors": [
+          "James H. Stock",
+          "Mark W. Watson"
+        ],
+        "year": 2001,
+        "excerpt": "This paper critically reviews the use of vector autoregressions (VARs) for four tasks: data description, forecasting, structural inference, and policy analysis. The paper begins with a review of VAR analysis, highlighting the differences between reduced-form VARs, recursive VARs and structural VARs.",
+        "relevance": "methodological",
+        "edge_id": "oil_to_vix",
+        "paper_id": "",
+        "citation_count": 1085,
+        "search_query": "Brent crude oil price VIX Financial Stress Index causal effect",
+        "source": "openalex",
+        "pdf_url": "https://www.aeaweb.org/articles/pdf/doi/10.1257/jep.15.4.101"
+      },
+      {
+        "doi": "10.1016/j.jenvman.2021.113511",
+        "title": "The effect of green energy, global environmental indexes, and stock markets in predicting oil price crashes: Evidence from explainable machine learning",
+        "authors": [
+          "Sami Ben Jabeur",
+          "Rabeh Khalfaoui",
+          "Wissal Ben Arfi"
+        ],
+        "year": 2021,
+        "excerpt": "",
+        "relevance": "supporting",
+        "edge_id": "oil_to_vix",
+        "paper_id": "",
+        "citation_count": 134,
+        "search_query": "Brent crude oil price VIX Financial Stress Index causal effect",
+        "source": "openalex",
+        "pdf_url": "https://www.sciencedirect.com/science/article/am/pii/S0301479721015735?via%3Dihub"
+      },
+      {
+        "doi": "10.3386/w24571",
+        "title": "The Finance Uncertainty Multiplier",
+        "authors": [
+          "Iv\u00e1n Alfaro",
+          "Nicholas Bloom",
+          "Xiaoji Lin"
+        ],
+        "year": 2018,
+        "excerpt": "",
+        "relevance": "supporting",
+        "edge_id": "oil_to_vix",
+        "paper_id": "",
+        "citation_count": 107,
+        "search_query": "Brent crude oil price VIX Financial Stress Index causal effect",
+        "source": "openalex",
+        "pdf_url": "https://doi.org/10.3386/w24571"
+      },
+      {
+        "doi": "10.3389/fenrg.2020.00035",
+        "title": "Oil Price Pass-Through Into Consumer and Producer Prices With Monetary Policy in China: Are There Non-linear and Mediating Effects",
+        "authors": [
+          "Shuanglian Chen",
+          "Shengyin Ouyang",
+          "Hao Dong"
+        ],
+        "year": 2020,
+        "excerpt": "Balancing the oil pass-through to consumer and producer prices is crucial for policymakers. This study aimed to advance associated thinking by examining how consumer and producer prices in China related to changes in global oil prices from 2006 to 2018. First, we investigated the pass-through of oil",
+        "relevance": "supporting",
+        "edge_id": "oil_to_vix",
+        "paper_id": "3e71541ba9761acddfcc210f7c076fb6eaa5262a",
+        "citation_count": 14,
+        "search_query": "Brent crude oil price VIX Financial Stress Index causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      },
+      {
+        "doi": "10.31410/eman.2023.101",
+        "title": "Interconnections between Clean Energy and Traditional Commodities: Analysis of Energy Fuels, S&P Global Clean Energy Index, and Ishares Global Clean Energy ETF Compared to Oil, Gold, and Natural Gas Prices",
+        "authors": [
+          "N. Horta",
+          "Mariana Chambino",
+          "Rui Dias"
+        ],
+        "year": 2023,
+        "excerpt": "The study of the changes between the Energy Fuels Index, S&P Global Clean Energy Index, iShares Global Clean Energy ETF, iShares Global Energy (SWX) ETF, as well as the changes in the prices of crude oil (BRENT), gold (DJ), and natural gas (DG) was deemed extremely relevant given the im\u00adportance and",
+        "relevance": "supporting",
+        "edge_id": "oil_to_vix",
+        "paper_id": "41fd0e736d887d9a1971751f7aac12fff5451b8b",
+        "citation_count": 1,
+        "search_query": "Brent crude oil price VIX Financial Stress Index causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      }
+    ]
+  },
+  {
+    "edge_id": "oil_to_sentiment",
+    "citations": [
+      {
+        "doi": "10.1017/s1365100516000353",
+        "title": "HOW DOES STOCK MARKET VOLATILITY REACT TO OIL PRICE SHOCKS?",
+        "authors": [
+          "Andrea Bastianin",
+          "Matteo Manera"
+        ],
+        "year": 2017,
+        "excerpt": "We study the impact of oil price shocks on the U.S. stock market volatility. We jointly analyze three different structural oil market shocks (i.e., aggregate demand, oil supply, and oil-specific demand shocks) and stock market volatility using a structural vector autoregressive model. Identification",
+        "relevance": "supporting",
+        "edge_id": "oil_to_sentiment",
+        "paper_id": "",
+        "citation_count": 66,
+        "search_query": "Brent crude oil price Michigan Consumer Sentiment causal effect",
+        "source": "openalex",
+        "pdf_url": "https://arxiv.org/pdf/1811.03820"
+      },
+      {
+        "doi": "10.1111/JMCB.12512",
+        "title": "The Effects of Oil Supply and Demand Shocks on U.S. Consumer Sentiment",
+        "authors": [
+          "J. G\u00fcntner",
+          "K. Linsbauer"
+        ],
+        "year": 2018,
+        "excerpt": "This paper investigates how the University of Michigan\u2019s Index of Consumer Sentiment (ICS) \u2013 a survey measure of U.S. households\u2019 expectations about current and future economic conditions \u2013 responds to structural oil supply and demand shocks. We find that the response to an observed increase in the ",
+        "relevance": "supporting",
+        "edge_id": "oil_to_sentiment",
+        "paper_id": "d8e89ff0b6381894a1c5f365906e262a6d5f14e0",
+        "citation_count": 56,
+        "search_query": "Brent crude oil price Michigan Consumer Sentiment causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      },
+      {
+        "doi": "10.24149/wp2116",
+        "title": "The Impact of Rising Oil Prices on U.S. Inflation and Inflation Expectations in 2020-23",
+        "authors": [
+          "Lutz Kilian",
+          "Xiaoqing Zhou",
+          "Xiaoqing Zhou",
+          "Federal Reserve Bank of Dallas"
+        ],
+        "year": 2021,
+        "excerpt": "Predictions of oil prices reaching $100 per barrel during the winter of 2021/22 have raised fears of persistently high inflation and rising inflation expectations for years to come.We show that these concerns have been overstated.A $100 oil scenario of the type discussed by many observers, would onl",
+        "relevance": "supporting",
+        "edge_id": "oil_to_sentiment",
+        "paper_id": "",
+        "citation_count": 37,
+        "search_query": "Brent crude oil price Michigan Consumer Sentiment causal effect",
+        "source": "openalex",
+        "pdf_url": "https://doi.org/10.24149/wp2116"
+      },
+      {
+        "doi": "10.3389/fenrg.2020.00035",
+        "title": "Oil Price Pass-Through Into Consumer and Producer Prices With Monetary Policy in China: Are There Non-linear and Mediating Effects",
+        "authors": [
+          "Shuanglian Chen",
+          "Shengyin Ouyang",
+          "Hao Dong"
+        ],
+        "year": 2020,
+        "excerpt": "Balancing the oil pass-through to consumer and producer prices is crucial for policymakers. This study aimed to advance associated thinking by examining how consumer and producer prices in China related to changes in global oil prices from 2006 to 2018. First, we investigated the pass-through of oil",
+        "relevance": "supporting",
+        "edge_id": "oil_to_sentiment",
+        "paper_id": "3e71541ba9761acddfcc210f7c076fb6eaa5262a",
+        "citation_count": 14,
+        "search_query": "Brent crude oil price Michigan Consumer Sentiment causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      },
+      {
+        "doi": "10.1007/s00181-023-02413-x",
+        "title": "Oil price shocks and China\u2019s consumer and entrepreneur sentiment: a Bayesian structural VAR approach",
+        "authors": [
+          "Peng Li",
+          "Yaofu Ouyang"
+        ],
+        "year": 2023,
+        "excerpt": "",
+        "relevance": "supporting",
+        "edge_id": "oil_to_sentiment",
+        "paper_id": "",
+        "citation_count": 5,
+        "search_query": "Brent crude oil price Michigan Consumer Sentiment causal effect",
+        "source": "openalex",
+        "pdf_url": "https://link.springer.com/content/pdf/10.1007/s00181-023-02413-x.pdf"
+      }
+    ]
+  },
+  {
+    "edge_id": "cpi_to_fed_funds",
+    "citations": [
+      {
+        "doi": "10.1093/qje/qjs020",
+        "title": "The Oregon Health Insurance Experiment: Evidence from the First Year*",
+        "authors": [
+          "Amy Finkelstein",
+          "Sarah Taubman",
+          "Bill Wright",
+          "Mira Bernstein",
+          "Jonathan Gruber",
+          "Joseph P. Newhouse",
+          "Heidi Allen",
+          "Katherine Baicker",
+          "Oregon Health Study Group"
+        ],
+        "year": 2012,
+        "excerpt": "Abstract In 2008, a group of uninsured low-income adults in Oregon was selected by lottery to be given the chance to apply for Medicaid. This lottery provides an opportunity to gauge the effects of expanding access to public health insurance on the health care use, financial strain, and health of lo",
+        "relevance": "supporting",
+        "edge_id": "cpi_to_fed_funds",
+        "paper_id": "",
+        "citation_count": 1609,
+        "search_query": "US CPI All Items Federal Funds Rate causal effect",
+        "source": "openalex",
+        "pdf_url": "https://academic.oup.com/qje/article-pdf/127/3/1057/30456845/qjs020.pdf"
+      },
+      {
+        "doi": "10.3386/w15002",
+        "title": "Causes and Consequences of the Oil Shock of 2007-08",
+        "authors": [
+          "James Hamilton"
+        ],
+        "year": 2009,
+        "excerpt": "This paper explores similarities and differences between the run-up of oil prices in 2007-08 and earlier oil price shocks, looking at what caused the price increase and what effects it had on the economy.Whereas historical oil price shocks were primarily caused by physical disruptions of supply, the",
+        "relevance": "supporting",
+        "edge_id": "cpi_to_fed_funds",
+        "paper_id": "",
+        "citation_count": 983,
+        "search_query": "US CPI All Items Federal Funds Rate causal effect",
+        "source": "openalex",
+        "pdf_url": "https://doi.org/10.3386/w15002"
+      },
+      {
+        "doi": "10.3386/w11467",
+        "title": "Implications of Dynamic Factor Models for VAR Analysis",
+        "authors": [
+          "James H. Stock",
+          "Mark Watson"
+        ],
+        "year": 2005,
+        "excerpt": "This paper considers VAR models incorporating many time series that interact through a few dynamic factors.Several econometric issues are addressed including estimation of the number of dynamic factors and tests for the factor restrictions imposed on the VAR.Structural VAR identification based on ti",
+        "relevance": "methodological",
+        "edge_id": "cpi_to_fed_funds",
+        "paper_id": "",
+        "citation_count": 784,
+        "search_query": "US CPI All Items Federal Funds Rate causal effect",
+        "source": "openalex",
+        "pdf_url": "https://doi.org/10.3386/w11467"
+      },
+      {
+        "doi": "",
+        "title": "Winning the War : Poverty from the Great Society to the Great Recession",
+        "authors": [
+          "T. Smeeding"
+        ],
+        "year": 2013,
+        "excerpt": "",
+        "relevance": "supporting",
+        "edge_id": "cpi_to_fed_funds",
+        "paper_id": "a4f34470ebcc10c4b7e795df1271ce3d032154de",
+        "citation_count": 3,
+        "search_query": "US CPI All Items Federal Funds Rate causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      },
+      {
+        "doi": "10.1353/eca.2016.0028",
+        "title": "Macroeconomic effects of  disruptions in global food commodity markets",
+        "authors": [
+          "De Winne, Jasmien",
+          "Peersman, Gert"
+        ],
+        "year": 2016,
+        "excerpt": "We use two approaches to examine the macroeconomic consequences of disruptions in global food commodity markets. First, we embed a novel quarterly composite global production index for the four basic staples (corn, wheat, rice and soybeans) in a standard vector autoregression (VAR) model, and we est",
+        "relevance": "supporting",
+        "edge_id": "cpi_to_fed_funds",
+        "paper_id": "",
+        "citation_count": 0,
+        "search_query": "US CPI All Items Federal Funds Rate causal effect",
+        "source": "core",
+        "pdf_url": "https://core.ac.uk/download/84045602.pdf"
+      }
+    ]
+  },
+  {
+    "edge_id": "fed_funds_to_unemployment",
+    "citations": [
+      {
+        "doi": "10.1353/eca.2000.0008",
+        "title": "Raising the Speed Limit: U.S. Economic Growth in the Information Age",
+        "authors": [
+          "Dale W. Jorgenson",
+          "Kevin J. Stiroh"
+        ],
+        "year": 2000,
+        "excerpt": "Raising the Speed Limit:U.S. Economic Growth in the Information Age Dale W. Jorgenson and Kevin J. Stiroh The continued strength and vitality of the U.S. economy continue to astonish economic forecasters.1 A consensus is now emerging that something fundamental has changed, with \"new economy\" propone",
+        "relevance": "supporting",
+        "edge_id": "fed_funds_to_unemployment",
+        "paper_id": "",
+        "citation_count": 1484,
+        "search_query": "Federal Funds Rate US Unemployment Rate causal effect",
+        "source": "openalex",
+        "pdf_url": "https://muse.jhu.edu/article/10319/pdf"
+      },
+      {
+        "doi": "10.1257/jep.15.4.101",
+        "title": "Vector Autoregressions",
+        "authors": [
+          "James H. Stock",
+          "Mark W. Watson"
+        ],
+        "year": 2001,
+        "excerpt": "This paper critically reviews the use of vector autoregressions (VARs) for four tasks: data description, forecasting, structural inference, and policy analysis. The paper begins with a review of VAR analysis, highlighting the differences between reduced-form VARs, recursive VARs and structural VARs.",
+        "relevance": "methodological",
+        "edge_id": "fed_funds_to_unemployment",
+        "paper_id": "",
+        "citation_count": 1085,
+        "search_query": "Federal Funds Rate US Unemployment Rate causal effect",
+        "source": "openalex",
+        "pdf_url": "https://www.aeaweb.org/articles/pdf/doi/10.1257/jep.15.4.101"
+      },
+      {
+        "doi": "10.3386/w3487",
+        "title": "The Federal Funds Rate and the Channels of Monetary Transnission",
+        "authors": [
+          "Ben Bernanke"
+        ],
+        "year": 1990,
+        "excerpt": "QIANNELS OF )flEIARY ThANCSS1CnFirst, we sini tint the Interest rate on Feleral fuels is extrenely informative atciut future ncverents of real macroannnlc variables, sore so than nnnetary aggregates or other interest rates.Next, we argue that the reason for this foreastin ss i tji the fist rate sens",
+        "relevance": "supporting",
+        "edge_id": "fed_funds_to_unemployment",
+        "paper_id": "",
+        "citation_count": 677,
+        "search_query": "Federal Funds Rate US Unemployment Rate causal effect",
+        "source": "openalex",
+        "pdf_url": "https://doi.org/10.3386/w3487"
+      },
+      {
+        "doi": "10.3982/ECTA17388",
+        "title": "Identification at the Zero Lower Bound",
+        "authors": [
+          "Sophocles Mavroeidis"
+        ],
+        "year": 2021,
+        "excerpt": "I show that the zero lower bound (ZLB) on interest rates can be used to identify the causal effects of monetary policy. Identification depends on the extent to which the ZLB limits the efficacy of monetary policy. I propose a simple way to test the efficacy of unconventional policies, modeled via a ",
+        "relevance": "challenging",
+        "edge_id": "fed_funds_to_unemployment",
+        "paper_id": "3d818ce9b1cafa3a9efaf4c9ca2b9fe2ad57cf35",
+        "citation_count": 38,
+        "search_query": "Federal Funds Rate US Unemployment Rate causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      },
+      {
+        "doi": "",
+        "title": "DO CHANGES IN THE FEDERAL FUNDS RATE CAUSE CHANGES IN THE UNEMPLOYMENT RATE?",
+        "authors": [
+          "Nelson C. Modeste",
+          "Mu\u1e25ammad Mu\u1e63\u1e6daf\u00e1"
+        ],
+        "year": null,
+        "excerpt": "",
+        "relevance": "supporting",
+        "edge_id": "fed_funds_to_unemployment",
+        "paper_id": "076928940c54768e00e585ca9ef0c2389b6c5d4f",
+        "citation_count": 4,
+        "search_query": "Federal Funds Rate US Unemployment Rate causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      }
+    ]
+  },
+  {
+    "edge_id": "vix_to_industrial",
+    "citations": [
+      {
+        "doi": "10.1257/jep.15.4.101",
+        "title": "Vector Autoregressions",
+        "authors": [
+          "James H. Stock",
+          "Mark W. Watson"
+        ],
+        "year": 2001,
+        "excerpt": "This paper critically reviews the use of vector autoregressions (VARs) for four tasks: data description, forecasting, structural inference, and policy analysis. The paper begins with a review of VAR analysis, highlighting the differences between reduced-form VARs, recursive VARs and structural VARs.",
+        "relevance": "methodological",
+        "edge_id": "vix_to_industrial",
+        "paper_id": "",
+        "citation_count": 1085,
+        "search_query": "VIX Financial Stress Index US Industrial Production Index causal effect",
+        "source": "openalex",
+        "pdf_url": "https://www.aeaweb.org/articles/pdf/doi/10.1257/jep.15.4.101"
+      },
+      {
+        "doi": "10.1016/j.jpubeco.2020.104274",
+        "title": "Economic uncertainty before and during the COVID-19 pandemic",
+        "authors": [
+          "Dave Altig",
+          "Scott Baker",
+          "Jose Maria Barrero",
+          "Nicholas Bloom",
+          "Philip Bunn",
+          "Scarlet Chen",
+          "Steven J. Davis",
+          "Julia Leather",
+          "Brent Meyer",
+          "Emil Mihaylov",
+          "Paul Mizen",
+          "N. G. Parker",
+          "Thomas Renault",
+          "Pawel Smietanka",
+          "Gregory Thwaites"
+        ],
+        "year": 2020,
+        "excerpt": "",
+        "relevance": "supporting",
+        "edge_id": "vix_to_industrial",
+        "paper_id": "",
+        "citation_count": 962,
+        "search_query": "VIX Financial Stress Index US Industrial Production Index causal effect",
+        "source": "openalex",
+        "pdf_url": "https://nottingham-repository.worktribe.com/preview/4942009/Economic%20Uncertainty_Final.pdf"
+      },
+      {
+        "doi": "10.3386/w21633",
+        "title": "Measuring Economic Policy Uncertainty",
+        "authors": [
+          "Scott Baker",
+          "Nicholas Bloom",
+          "Steven J. Davis"
+        ],
+        "year": 2015,
+        "excerpt": "We develop a new index of economic policy uncertainty (EPU) based on newspaper coverage frequency.Several types of evidence -including human readings of 12,000 newspaper articles -indicate that our index proxies for movements in policy-related economic uncertainty.Our US index spikes near tight pres",
+        "relevance": "supporting",
+        "edge_id": "vix_to_industrial",
+        "paper_id": "",
+        "citation_count": 496,
+        "search_query": "VIX Financial Stress Index US Industrial Production Index causal effect",
+        "source": "openalex",
+        "pdf_url": "https://doi.org/10.3386/w21633"
+      },
+      {
+        "doi": "10.35808/ERSJ/923",
+        "title": "The Effect of the Financial Crisis on Emerging Markets: A Comparative Analysis of the Stock Market Situation Before and After",
+        "authors": [
+          "S. Grima",
+          "Luca Caruana"
+        ],
+        "year": 2017,
+        "excerpt": "In this paper the authors present the findings of an analyses carried out to establish whether the BRIC\u00e2\u20ac\u2122s stock market returns were affected by the U.S. financial stress during the 2008 Financial Crisis. To do this the authors studied the relationship between the U.S. Stock Markets and the BRIC co",
+        "relevance": "supporting",
+        "edge_id": "vix_to_industrial",
+        "paper_id": "c608f67525a4466c96059cc420f8ee785bf173cb",
+        "citation_count": 33,
+        "search_query": "VIX Financial Stress Index US Industrial Production Index causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      },
+      {
+        "doi": "10.17323/1813-8691-2019-23-1-32-60",
+        "title": "Constructing a Financial Stress Index for Russia: New Approaches",
+        "authors": [
+          "M. Stolbov"
+        ],
+        "year": 2019,
+        "excerpt": "The paper introduces a new monthly index of financial stress for Russia for the March 2008 \u2013 March 2018 period. The index is based on 12 well-established and mostly publicly available standalone metrics of financial instability, including credit-to-GDP gap, debt-service-ratio and real estate price i",
+        "relevance": "methodological",
+        "edge_id": "vix_to_industrial",
+        "paper_id": "03c02f052f66d967e81cbbdf445d8acb43bccf90",
+        "citation_count": 6,
+        "search_query": "VIX Financial Stress Index US Industrial Production Index causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      }
+    ]
+  },
+  {
+    "edge_id": "vix_to_nfci",
+    "citations": [
+      {
+        "doi": "10.3386/w21162",
+        "title": "Dilemma not Trilemma: The Global Financial Cycle and Monetary Policy Independence",
+        "authors": [
+          "H\u00e9l\u00e8ne Rey"
+        ],
+        "year": 2015,
+        "excerpt": "There is a global financial cycle in capital flows, asset prices and in credit growth.This cycle co moves with the VIX, a measure of uncertainty and risk aversion of the markets.Asset markets in countries with more credit inflows are more sensitive to the global cycle.The global financial cycle is n",
+        "relevance": "supporting",
+        "edge_id": "vix_to_nfci",
+        "paper_id": "",
+        "citation_count": 1875,
+        "search_query": "VIX Financial Stress Index National Financial Conditions Index causal effect",
+        "source": "openalex",
+        "pdf_url": "https://doi.org/10.3386/w21162"
+      },
+      {
+        "doi": "10.1257/jep.15.4.101",
+        "title": "Vector Autoregressions",
+        "authors": [
+          "James H. Stock",
+          "Mark W. Watson"
+        ],
+        "year": 2001,
+        "excerpt": "This paper critically reviews the use of vector autoregressions (VARs) for four tasks: data description, forecasting, structural inference, and policy analysis. The paper begins with a review of VAR analysis, highlighting the differences between reduced-form VARs, recursive VARs and structural VARs.",
+        "relevance": "methodological",
+        "edge_id": "vix_to_nfci",
+        "paper_id": "",
+        "citation_count": 1085,
+        "search_query": "VIX Financial Stress Index National Financial Conditions Index causal effect",
+        "source": "openalex",
+        "pdf_url": "https://www.aeaweb.org/articles/pdf/doi/10.1257/jep.15.4.101"
+      },
+      {
+        "doi": "10.3386/w21633",
+        "title": "Measuring Economic Policy Uncertainty",
+        "authors": [
+          "Scott Baker",
+          "Nicholas Bloom",
+          "Steven J. Davis"
+        ],
+        "year": 2015,
+        "excerpt": "We develop a new index of economic policy uncertainty (EPU) based on newspaper coverage frequency.Several types of evidence -including human readings of 12,000 newspaper articles -indicate that our index proxies for movements in policy-related economic uncertainty.Our US index spikes near tight pres",
+        "relevance": "supporting",
+        "edge_id": "vix_to_nfci",
+        "paper_id": "",
+        "citation_count": 496,
+        "search_query": "VIX Financial Stress Index National Financial Conditions Index causal effect",
+        "source": "openalex",
+        "pdf_url": "https://doi.org/10.3386/w21633"
+      },
+      {
+        "doi": "10.31767/su.2(97)2022.02.01",
+        "title": "Financial Stress Index as an Indicator of Financial Stability of Ukraine in War Conditions",
+        "authors": [
+          "H. Holubova"
+        ],
+        "year": 2022,
+        "excerpt": "The importance of proper statistical support of the financial and banking system of the country is substantiated. It was noted that the statistics of the financial sector forms indicators of monetary and credit statistics, statistics of financial markets, statistics of financial accounts and indicat",
+        "relevance": "challenging",
+        "edge_id": "vix_to_nfci",
+        "paper_id": "b713437c48cc9c822d54e548285da1032c52a066",
+        "citation_count": 3,
+        "search_query": "VIX Financial Stress Index National Financial Conditions Index causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      },
+      {
+        "doi": "10.61954/2616-7107/2025.9.1-3",
+        "title": "Financial Market Regulation and Monetary Policy on Financial Stress Management in the National Economy",
+        "authors": [
+          "Iryna Kononova",
+          "Anton Baranov",
+          "O. Aksyonova",
+          "Roman Anzin"
+        ],
+        "year": 2025,
+        "excerpt": "Introduction. Neutralising the dynamic threats of war and economic crises and reducing the stress index for the country's financial system requires prompt action from the regulator. This allows financial market participants to reduce the stress index of the country's financial system. However, dynam",
+        "relevance": "supporting",
+        "edge_id": "vix_to_nfci",
+        "paper_id": "ef66f4f082b0ff0989ccb734699d4fcd70d1dc0d",
+        "citation_count": 0,
+        "search_query": "VIX Financial Stress Index National Financial Conditions Index causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      }
+    ]
+  },
+  {
+    "edge_id": "industrial_to_unemployment",
+    "citations": [
+      {
+        "doi": "10.1257/jel.47.1.5",
+        "title": "Recent Developments in the Econometrics of Program Evaluation",
+        "authors": [
+          "Guido W. Imbens",
+          "Jeffrey M. Wooldridge"
+        ],
+        "year": 2009,
+        "excerpt": "Many empirical questions in economics and other social sciences depend on causal effects of programs or policies. In the last two decades, much research has been done on the econometric and statistical analysis of such causal effects. This recent theoretical literature has built on, and combined fea",
+        "relevance": "supporting",
+        "edge_id": "industrial_to_unemployment",
+        "paper_id": "",
+        "citation_count": 4735,
+        "search_query": "US Industrial Production Index US Unemployment Rate causal effect",
+        "source": "openalex",
+        "pdf_url": "https://www.aeaweb.org/articles/pdf/doi/10.1257/jel.47.1.5"
+      },
+      {
+        "doi": "10.1016/j.ijinfomgt.2019.08.002",
+        "title": "Artificial Intelligence (AI): Multidisciplinary perspectives on emerging challenges, opportunities, and agenda for research, practice and policy",
+        "authors": [
+          "Yogesh K. Dwivedi",
+          "Laurie Hughes",
+          "Elvira Ismagilova",
+          "Gert Aarts",
+          "Crispin Coombs",
+          "Tom Crick",
+          "Yanqing Duan",
+          "Rohita Dwivedi",
+          "John S. Edwards",
+          "Aled Eirug",
+          "Vassilis Galanos",
+          "P. Vigneswara Ilavarasan",
+          "Marijn Janssen",
+          "Paul Jones",
+          "Arpan Kumar Kar",
+          "Hatice Kizgin",
+          "Bianca Kronemann",
+          "Banita Lal",
+          "Biagio Lucini",
+          "Rony Medaglia",
+          "Kenneth Le Meunier\u2010FitzHugh",
+          "Leslie Caroline Le Meunier-FitzHugh",
+          "Santosh K. Misra",
+          "Emmanuel Mogaji",
+          "Sujeet Kumar Sharma",
+          "Jang Bahadur Singh",
+          "Vishnupriya Raghavan",
+          "Ramakrishnan Raman",
+          "Nripendra P. Rana",
+          "Spyridon Samothrakis",
+          "Jak Spencer",
+          "Kuttimani Tamilmani",
+          "Annie Tubadji",
+          "Paul Walton",
+          "Michael D. Williams"
+        ],
+        "year": 2019,
+        "excerpt": "",
+        "relevance": "supporting",
+        "edge_id": "industrial_to_unemployment",
+        "paper_id": "",
+        "citation_count": 3661,
+        "search_query": "US Industrial Production Index US Unemployment Rate causal effect",
+        "source": "openalex",
+        "pdf_url": "https://www.sciencedirect.com/science/article/pii/S026840121930917X"
+      },
+      {
+        "doi": "10.1136/jech.2004.023531",
+        "title": "Indicators of socioeconomic position (part 1): Figure 1",
+        "authors": [
+          "Bruna Galobardes",
+          "Mary Shaw",
+          "Debbie A Lawlor",
+          "John W Lynch",
+          "George Davey Smith"
+        ],
+        "year": 2005,
+        "excerpt": "This glossary presents a comprehensive list of indicators of socioeconomic position used in health research. A description of what they intend to measure is given together with how data are elicited and the advantages and limitation of the indicators. The glossary is divided into two parts for journ",
+        "relevance": "supporting",
+        "edge_id": "industrial_to_unemployment",
+        "paper_id": "",
+        "citation_count": 2799,
+        "search_query": "US Industrial Production Index US Unemployment Rate causal effect",
+        "source": "openalex",
+        "pdf_url": "https://jech.bmj.com/content/jech/60/1/7.full.pdf"
+      },
+      {
+        "doi": "10.32342/2616-3853-2021-1-14-7",
+        "title": "HOW ETHNIC GROUPS IN THE UNEMPLOYMENT STRUCTURE AFFECT INFLATION AND INDUSTRIAL PRODUCTION INDEX IN USA",
+        "authors": [
+          "Olha K. Nezhgoda",
+          "Vasyl S. Serko"
+        ],
+        "year": 2021,
+        "excerpt": "The article explores the impact of unemployment in the United States on inflation and the industrial production index. This research is relevant in view of how the most economically developed country in the world overcomes the problems associated with the crisis (financial crisis, pandemic) of the l",
+        "relevance": "challenging",
+        "edge_id": "industrial_to_unemployment",
+        "paper_id": "72bc610d6fe350e3a684f395e93a533f61058fed",
+        "citation_count": 0,
+        "search_query": "US Industrial Production Index US Unemployment Rate causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      },
+      {
+        "doi": "10.2139/ssrn.3321549",
+        "title": "Multiple Linear Regressions Market Index, Industrial Production",
+        "authors": [
+          "Lawrence Olorungbohunmi"
+        ],
+        "year": 2019,
+        "excerpt": "This study presents the multiple regression between Wilshire 5000 which is the independent variable used in this project and the IP (industry production of US), CPI (consumer price index of US), FED FUND (federal fund rate of US), Unemployment rate data and the government rated bond, Took the monthl",
+        "relevance": "supporting",
+        "edge_id": "industrial_to_unemployment",
+        "paper_id": "878157a4549ef5fcb816b333e97f7f1ad0164a10",
+        "citation_count": 0,
+        "search_query": "US Industrial Production Index US Unemployment Rate causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      }
+    ]
+  }
+]
