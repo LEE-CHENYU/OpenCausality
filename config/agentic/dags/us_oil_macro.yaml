@@ -1,0 +1,799 @@
+# US Oil Shock Transmission DAG
+# How oil supply shocks transmit through the US economy to inflation,
+# financial conditions, output, and labor markets.
+#
+# 10 nodes, 11 edges. Node 9 (consumer_sentiment) intentionally has no
+# source spec — this exercises the DataResolverAgent for auto-discovery.
+
+schema_version: 2
+metadata:
+  name: "us_oil_shock_transmission"
+  description: >
+    Oil supply shocks transmit through the US economy via inflation,
+    financial conditions, industrial production, and labor markets.
+    Tests full agentic pipeline including DataResolverAgent discovery.
+  target_node: "unemployment"
+  created: "2026-02-11"
+  owner: "research_team"
+  tags: ["us_macro", "oil", "transmission", "test_dag"]
+
+# =============================================================================
+# NODES
+# =============================================================================
+
+nodes:
+  # 1. Oil supply shock (Baumeister)
+  - id: "oil_supply_shock"
+    name: "Oil supply shock (Baumeister)"
+    description: "Structural oil supply shock from Baumeister decomposition."
+    unit: "sd"
+    frequency: "monthly"
+    type: "continuous"
+    observed: true
+    latent: false
+    scope: "global"
+    source:
+      preferred:
+        - connector: "baumeister"
+          dataset: "oil_shocks"
+          series: "oil_supply_shock"
+      fallback: []
+    role_constraints:
+      never_control: true
+      never_instrument: false
+    tags: ["oil", "shock", "exogenous"]
+
+  # 2. Brent crude oil price
+  - id: "oil_price"
+    name: "Brent crude oil price"
+    description: "Europe Brent spot price FOB (DCOILBRENTEU), log level."
+    unit: "log"
+    frequency: "daily"
+    type: "continuous"
+    observed: true
+    latent: false
+    scope: "global"
+    release_lag:
+      periods: 1
+      lag_unit: "day"
+    source:
+      preferred:
+        - connector: "fred"
+          dataset: "commodities"
+          series: "DCOILBRENTEU"
+      fallback: []
+    transforms: ["log", "aggregate_mean_to_month"]
+    aggregation:
+      method: "average"
+      seasonal_adjust: false
+    role_constraints:
+      never_control: false
+      never_instrument: false
+    tags: ["oil", "price", "commodity"]
+
+  # 3. US CPI All Items
+  - id: "cpi_headline"
+    name: "US CPI All Items"
+    description: "Consumer Price Index for All Urban Consumers (CPIAUCSL), log level."
+    unit: "log"
+    frequency: "monthly"
+    type: "index"
+    observed: true
+    latent: false
+    scope: "global"
+    release_lag:
+      periods: 1
+      lag_unit: "month"
+    source:
+      preferred:
+        - connector: "fred"
+          dataset: "prices"
+          series: "CPIAUCSL"
+      fallback: []
+    transforms: ["log"]
+    aggregation:
+      method: "end_of_period"
+      seasonal_adjust: true
+    role_constraints:
+      never_control: false
+      never_instrument: false
+    tags: ["prices", "inflation", "cpi"]
+
+  # 4. US Core CPI (less food & energy)
+  - id: "cpi_core"
+    name: "US Core CPI (less food & energy)"
+    description: "CPI for All Urban Consumers: All Items Less Food and Energy (CPILFESL), log level."
+    unit: "log"
+    frequency: "monthly"
+    type: "index"
+    observed: true
+    latent: false
+    scope: "global"
+    release_lag:
+      periods: 1
+      lag_unit: "month"
+    source:
+      preferred:
+        - connector: "fred"
+          dataset: "prices"
+          series: "CPILFESL"
+      fallback: []
+    transforms: ["log"]
+    aggregation:
+      method: "end_of_period"
+      seasonal_adjust: true
+    role_constraints:
+      never_control: false
+      never_instrument: false
+    tags: ["prices", "inflation", "cpi", "core"]
+
+  # 5. US Industrial Production Index
+  - id: "industrial_production"
+    name: "US Industrial Production Index"
+    description: "Industrial Production: Total Index (INDPRO), log level."
+    unit: "log"
+    frequency: "monthly"
+    type: "index"
+    observed: true
+    latent: false
+    scope: "global"
+    release_lag:
+      periods: 1
+      lag_unit: "month"
+    source:
+      preferred:
+        - connector: "fred"
+          dataset: "production"
+          series: "INDPRO"
+      fallback: []
+    transforms: ["log"]
+    aggregation:
+      method: "end_of_period"
+      seasonal_adjust: true
+    role_constraints:
+      never_control: false
+      never_instrument: false
+    tags: ["output", "production", "real_activity"]
+
+  # 6. VIX Financial Stress Index
+  - id: "vix"
+    name: "VIX Financial Stress Index"
+    description: "CBOE Volatility Index (VIXCLS), log level."
+    unit: "log"
+    frequency: "daily"
+    type: "continuous"
+    observed: true
+    latent: false
+    scope: "global"
+    release_lag:
+      periods: 0
+      lag_unit: "day"
+    source:
+      preferred:
+        - connector: "fred"
+          dataset: "financial"
+          series: "VIXCLS"
+      fallback: []
+    transforms: ["log", "aggregate_mean_to_month"]
+    aggregation:
+      method: "average"
+      seasonal_adjust: false
+    role_constraints:
+      never_control: false
+      never_instrument: false
+    tags: ["financial", "volatility", "stress"]
+
+  # 7. Federal Funds Rate
+  - id: "fed_funds_rate"
+    name: "Federal Funds Rate"
+    description: "Effective Federal Funds Rate (FEDFUNDS)."
+    unit: "pct"
+    frequency: "monthly"
+    type: "continuous"
+    observed: true
+    latent: false
+    scope: "global"
+    release_lag:
+      periods: 1
+      lag_unit: "month"
+    source:
+      preferred:
+        - connector: "fred"
+          dataset: "monetary"
+          series: "FEDFUNDS"
+      fallback: []
+    aggregation:
+      method: "average"
+      seasonal_adjust: false
+    role_constraints:
+      never_control: false
+      never_instrument: false
+    tags: ["monetary_policy", "interest_rate"]
+
+  # 8. US Unemployment Rate
+  - id: "unemployment"
+    name: "US Unemployment Rate"
+    description: "Civilian Unemployment Rate (UNRATE)."
+    unit: "pct"
+    frequency: "monthly"
+    type: "continuous"
+    observed: true
+    latent: false
+    scope: "global"
+    release_lag:
+      periods: 1
+      lag_unit: "month"
+    source:
+      preferred:
+        - connector: "fred"
+          dataset: "labor"
+          series: "UNRATE"
+      fallback: []
+    aggregation:
+      method: "average"
+      seasonal_adjust: true
+    role_constraints:
+      never_control: false
+      never_instrument: false
+    tags: ["labor", "unemployment", "outcome"]
+
+  # 9. Consumer Sentiment — NO SOURCE (DataResolverAgent test)
+  - id: "consumer_sentiment"
+    name: "Michigan Consumer Sentiment"
+    description: >
+      University of Michigan Consumer Sentiment Index. No source configured —
+      should be auto-discovered by DataResolverAgent (FRED: UMCSENT).
+    unit: "index"
+    frequency: "monthly"
+    type: "index"
+    observed: true
+    latent: false
+    scope: "global"
+    release_lag:
+      periods: 1
+      lag_unit: "month"
+    # source intentionally omitted — exercises DataResolverAgent
+    aggregation:
+      method: "average"
+      seasonal_adjust: false
+    role_constraints:
+      never_control: false
+      never_instrument: false
+    tags: ["sentiment", "household", "survey"]
+
+  # 10. National Financial Conditions Index
+  - id: "nfci"
+    name: "National Financial Conditions Index"
+    description: "Chicago Fed National Financial Conditions Index (NFCI)."
+    unit: "index"
+    frequency: "monthly"  # weekly published, but used monthly
+    type: "continuous"
+    observed: true
+    latent: false
+    scope: "global"
+    release_lag:
+      periods: 1
+      lag_unit: "month"
+    source:
+      preferred:
+        - connector: "fred"
+          dataset: "financial"
+          series: "NFCI"
+      fallback: []
+    aggregation:
+      method: "average"
+      seasonal_adjust: false
+    role_constraints:
+      never_control: false
+      never_instrument: false
+    tags: ["financial", "conditions"]
+
+# =============================================================================
+# EDGES
+# =============================================================================
+
+edges:
+  # 1. Oil supply shock → Oil price
+  - id: "oil_shock_to_oil_price"
+    from: "oil_supply_shock"
+    to: "oil_price"
+    edge_type: "causal"
+    timing:
+      lag: 0
+      lag_unit: "month"
+      contemporaneous: true
+      max_anticipation: 0
+    estimand:
+      type: "elasticity"
+      horizon: [0, 1, 2, 3]
+      scale: "log"
+    allowed_designs: ["LOCAL_PROJECTIONS"]
+    design_priority: ["LOCAL_PROJECTIONS"]
+    diagnostics_required:
+      - "pre_trends"
+      - "stability"
+    acceptance_criteria:
+      diagnostics:
+        pretrend_p_min: 0.10
+        first_stage_f_min: 10.0
+        placebo_p_min: 0.10
+      data:
+        max_missing_rate: 0.05
+        min_obs: 80
+        min_pre_periods: 12
+      plausibility:
+        expected_sign: "positive"
+        magnitude_range: [0.01, 1.0]
+      stability:
+        regime_split_date: "2020-03"
+        max_coefficient_change: 0.5
+      null_acceptance:
+        enabled: true
+        equivalence_bound: 0.05
+    unit_specification:
+      treatment_unit: "sd"
+      outcome_unit: "log"
+    notes: "Supply disruption raises oil prices. Contemporaneous impact."
+
+  # 2. Oil price → CPI headline
+  - id: "oil_to_cpi_headline"
+    from: "oil_price"
+    to: "cpi_headline"
+    edge_type: "causal"
+    timing:
+      lag: 1
+      lag_unit: "month"
+      contemporaneous: false
+      max_anticipation: 0
+    estimand:
+      type: "elasticity"
+      horizon: [0, 1, 2, 3, 6]
+      scale: "log"
+    allowed_designs: ["LOCAL_PROJECTIONS"]
+    design_priority: ["LOCAL_PROJECTIONS"]
+    diagnostics_required:
+      - "pre_trends"
+      - "placebo"
+      - "stability"
+    acceptance_criteria:
+      diagnostics:
+        pretrend_p_min: 0.10
+        first_stage_f_min: 10.0
+        placebo_p_min: 0.10
+      data:
+        max_missing_rate: 0.05
+        min_obs: 80
+        min_pre_periods: 12
+      plausibility:
+        expected_sign: "positive"
+        magnitude_range: [0.001, 0.15]
+      stability:
+        regime_split_date: "2020-03"
+        max_coefficient_change: 0.5
+      null_acceptance:
+        enabled: true
+        equivalence_bound: 0.02
+    unit_specification:
+      treatment_unit: "log"
+      outcome_unit: "log"
+    notes: "Energy component of CPI directly affected by oil prices."
+
+  # 3. Oil price → Core CPI
+  - id: "oil_to_cpi_core"
+    from: "oil_price"
+    to: "cpi_core"
+    edge_type: "reduced_form"
+    timing:
+      lag: 3
+      lag_unit: "month"
+      contemporaneous: false
+      max_anticipation: 0
+    estimand:
+      type: "elasticity"
+      horizon: [0, 3, 6, 12]
+      scale: "log"
+    allowed_designs: ["LOCAL_PROJECTIONS"]
+    design_priority: ["LOCAL_PROJECTIONS"]
+    diagnostics_required:
+      - "pre_trends"
+      - "stability"
+    acceptance_criteria:
+      diagnostics:
+        pretrend_p_min: 0.10
+        first_stage_f_min: 10.0
+        placebo_p_min: 0.10
+      data:
+        max_missing_rate: 0.05
+        min_obs: 80
+        min_pre_periods: 12
+      plausibility:
+        expected_sign: "positive"
+        magnitude_range: [0.0, 0.08]
+      stability:
+        regime_split_date: "2020-03"
+        max_coefficient_change: 0.5
+      null_acceptance:
+        enabled: true
+        equivalence_bound: 0.02
+    unit_specification:
+      treatment_unit: "log"
+      outcome_unit: "log"
+    notes: "Indirect pass-through from oil to core inflation. Smaller and slower than headline."
+
+  # 4. Oil price → Industrial production
+  - id: "oil_to_industrial"
+    from: "oil_price"
+    to: "industrial_production"
+    edge_type: "causal"
+    timing:
+      lag: 2
+      lag_unit: "month"
+      contemporaneous: false
+      max_anticipation: 0
+    estimand:
+      type: "elasticity"
+      horizon: [0, 1, 3, 6, 12]
+      scale: "log"
+    allowed_designs: ["LOCAL_PROJECTIONS"]
+    design_priority: ["LOCAL_PROJECTIONS"]
+    diagnostics_required:
+      - "pre_trends"
+      - "stability"
+    acceptance_criteria:
+      diagnostics:
+        pretrend_p_min: 0.10
+        first_stage_f_min: 10.0
+        placebo_p_min: 0.10
+      data:
+        max_missing_rate: 0.05
+        min_obs: 80
+        min_pre_periods: 12
+      plausibility:
+        expected_sign: "negative"
+        magnitude_range: [-0.15, 0.0]
+      stability:
+        regime_split_date: "2020-03"
+        max_coefficient_change: 0.5
+      null_acceptance:
+        enabled: true
+        equivalence_bound: 0.03
+    unit_specification:
+      treatment_unit: "log"
+      outcome_unit: "log"
+    notes: "Oil price increase raises input costs, reducing industrial output (Hamilton channel)."
+
+  # 5. Oil price → VIX
+  - id: "oil_to_vix"
+    from: "oil_price"
+    to: "vix"
+    edge_type: "reduced_form"
+    timing:
+      lag: 0
+      lag_unit: "month"
+      contemporaneous: true
+      max_anticipation: 0
+    estimand:
+      type: "elasticity"
+      horizon: [0, 1, 3]
+      scale: "log"
+    allowed_designs: ["LOCAL_PROJECTIONS"]
+    design_priority: ["LOCAL_PROJECTIONS"]
+    diagnostics_required:
+      - "stability"
+    acceptance_criteria:
+      diagnostics:
+        pretrend_p_min: 0.10
+        first_stage_f_min: 10.0
+        placebo_p_min: 0.10
+      data:
+        max_missing_rate: 0.05
+        min_obs: 80
+        min_pre_periods: 12
+      plausibility:
+        expected_sign: "positive"
+        magnitude_range: [0.0, 1.0]
+      stability:
+        regime_split_date: "2020-03"
+        max_coefficient_change: 0.5
+      null_acceptance:
+        enabled: true
+        equivalence_bound: 0.1
+    unit_specification:
+      treatment_unit: "log"
+      outcome_unit: "log"
+    notes: "Oil price spikes increase financial uncertainty."
+
+  # 6. Oil price → Consumer sentiment
+  - id: "oil_to_sentiment"
+    from: "oil_price"
+    to: "consumer_sentiment"
+    edge_type: "reduced_form"
+    timing:
+      lag: 1
+      lag_unit: "month"
+      contemporaneous: false
+      max_anticipation: 0
+    estimand:
+      type: "elasticity"
+      horizon: [0, 1, 3, 6]
+      scale: "log"
+    allowed_designs: ["LOCAL_PROJECTIONS"]
+    design_priority: ["LOCAL_PROJECTIONS"]
+    diagnostics_required:
+      - "pre_trends"
+      - "stability"
+    acceptance_criteria:
+      diagnostics:
+        pretrend_p_min: 0.10
+        first_stage_f_min: 10.0
+        placebo_p_min: 0.10
+      data:
+        max_missing_rate: 0.05
+        min_obs: 80
+        min_pre_periods: 12
+      plausibility:
+        expected_sign: "negative"
+        magnitude_range: [-0.5, 0.0]
+      stability:
+        regime_split_date: "2020-03"
+        max_coefficient_change: 0.5
+      null_acceptance:
+        enabled: true
+        equivalence_bound: 0.05
+    unit_specification:
+      treatment_unit: "log"
+      outcome_unit: "index"
+    notes: "Rising gasoline prices erode consumer confidence."
+
+  # 7. CPI headline → Fed funds rate (Taylor rule)
+  - id: "cpi_to_fed_funds"
+    from: "cpi_headline"
+    to: "fed_funds_rate"
+    edge_type: "reaction_function"
+    timing:
+      lag: 1
+      lag_unit: "month"
+      contemporaneous: false
+      max_anticipation: 0
+    estimand:
+      type: "elasticity"
+      horizon: [0, 1, 3, 6]
+      scale: "level"
+    allowed_designs: ["LOCAL_PROJECTIONS"]
+    design_priority: ["LOCAL_PROJECTIONS"]
+    diagnostics_required:
+      - "stability"
+    acceptance_criteria:
+      diagnostics:
+        pretrend_p_min: 0.10
+        first_stage_f_min: 10.0
+        placebo_p_min: 0.10
+      data:
+        max_missing_rate: 0.05
+        min_obs: 80
+        min_pre_periods: 12
+      plausibility:
+        expected_sign: "positive"
+        magnitude_range: [0.0, 3.0]
+      stability:
+        regime_split_date: "2008-12"
+        max_coefficient_change: 0.5
+      null_acceptance:
+        enabled: true
+        equivalence_bound: 0.1
+    interpretation:
+      is: "Taylor-rule-type reaction function estimate"
+      is_not:
+        - "Structural monetary policy shock"
+        - "Policy counterfactual"
+      allowed_uses:
+        - "scenario_only"
+      forbidden_uses:
+        - "policy_counterfactual"
+    unit_specification:
+      treatment_unit: "log"
+      outcome_unit: "pct"
+    notes: "Fed raises rates in response to inflation. Not a causal/structural estimate."
+
+  # 8. Fed funds rate → Unemployment
+  - id: "fed_funds_to_unemployment"
+    from: "fed_funds_rate"
+    to: "unemployment"
+    edge_type: "causal"
+    timing:
+      lag: 6
+      lag_unit: "month"
+      contemporaneous: false
+      max_anticipation: 0
+    estimand:
+      type: "ATE(h)"
+      horizon: [0, 3, 6, 12, 18]
+      scale: "level"
+    allowed_designs: ["LOCAL_PROJECTIONS"]
+    design_priority: ["LOCAL_PROJECTIONS"]
+    diagnostics_required:
+      - "pre_trends"
+      - "stability"
+    acceptance_criteria:
+      diagnostics:
+        pretrend_p_min: 0.10
+        first_stage_f_min: 10.0
+        placebo_p_min: 0.10
+      data:
+        max_missing_rate: 0.05
+        min_obs: 80
+        min_pre_periods: 12
+      plausibility:
+        expected_sign: "positive"
+        magnitude_range: [0.0, 1.0]
+      stability:
+        regime_split_date: "2008-12"
+        max_coefficient_change: 0.5
+      null_acceptance:
+        enabled: true
+        equivalence_bound: 0.05
+    unit_specification:
+      treatment_unit: "pct"
+      outcome_unit: "pct"
+    notes: "Monetary tightening increases unemployment with long lag."
+
+  # 9. VIX → Industrial production
+  - id: "vix_to_industrial"
+    from: "vix"
+    to: "industrial_production"
+    edge_type: "reduced_form"
+    timing:
+      lag: 1
+      lag_unit: "month"
+      contemporaneous: false
+      max_anticipation: 0
+    estimand:
+      type: "elasticity"
+      horizon: [0, 1, 3, 6]
+      scale: "log"
+    allowed_designs: ["LOCAL_PROJECTIONS"]
+    design_priority: ["LOCAL_PROJECTIONS"]
+    diagnostics_required:
+      - "stability"
+    acceptance_criteria:
+      diagnostics:
+        pretrend_p_min: 0.10
+        first_stage_f_min: 10.0
+        placebo_p_min: 0.10
+      data:
+        max_missing_rate: 0.05
+        min_obs: 80
+        min_pre_periods: 12
+      plausibility:
+        expected_sign: "negative"
+        magnitude_range: [-0.3, 0.0]
+      stability:
+        regime_split_date: "2020-03"
+        max_coefficient_change: 0.5
+      null_acceptance:
+        enabled: true
+        equivalence_bound: 0.05
+    unit_specification:
+      treatment_unit: "log"
+      outcome_unit: "log"
+    notes: "Financial uncertainty depresses investment and production."
+
+  # 10. VIX → NFCI
+  - id: "vix_to_nfci"
+    from: "vix"
+    to: "nfci"
+    edge_type: "mechanical"
+    timing:
+      lag: 0
+      lag_unit: "month"
+      contemporaneous: true
+      max_anticipation: 0
+    estimand:
+      type: "elasticity"
+      horizon: [0, 1]
+      scale: "level"
+    allowed_designs: ["LOCAL_PROJECTIONS"]
+    design_priority: ["LOCAL_PROJECTIONS"]
+    diagnostics_required:
+      - "stability"
+    acceptance_criteria:
+      diagnostics:
+        pretrend_p_min: 0.10
+        first_stage_f_min: 10.0
+        placebo_p_min: 0.10
+      data:
+        max_missing_rate: 0.05
+        min_obs: 80
+        min_pre_periods: 12
+      plausibility:
+        expected_sign: "positive"
+        magnitude_range: [0.0, 0.5]
+      stability:
+        regime_split_date: null
+        max_coefficient_change: 0.5
+      null_acceptance:
+        enabled: true
+        equivalence_bound: 0.05
+    unit_specification:
+      treatment_unit: "log"
+      outcome_unit: "index"
+    notes: "VIX is a component / correlate of financial conditions. Near-mechanical."
+
+  # 11. Industrial production → Unemployment (Okun's law)
+  - id: "industrial_to_unemployment"
+    from: "industrial_production"
+    to: "unemployment"
+    edge_type: "reduced_form"
+    timing:
+      lag: 3
+      lag_unit: "month"
+      contemporaneous: false
+      max_anticipation: 0
+    estimand:
+      type: "elasticity"
+      horizon: [0, 3, 6, 12]
+      scale: "level"
+    allowed_designs: ["LOCAL_PROJECTIONS"]
+    design_priority: ["LOCAL_PROJECTIONS"]
+    diagnostics_required:
+      - "pre_trends"
+      - "stability"
+    acceptance_criteria:
+      diagnostics:
+        pretrend_p_min: 0.10
+        first_stage_f_min: 10.0
+        placebo_p_min: 0.10
+      data:
+        max_missing_rate: 0.05
+        min_obs: 80
+        min_pre_periods: 12
+      plausibility:
+        expected_sign: "negative"
+        magnitude_range: [-1.0, 0.0]
+      stability:
+        regime_split_date: "2020-03"
+        max_coefficient_change: 0.5
+      null_acceptance:
+        enabled: true
+        equivalence_bound: 0.05
+    unit_specification:
+      treatment_unit: "log"
+      outcome_unit: "pct"
+    notes: "Okun's law: output decline precedes rising unemployment."
+
+# =============================================================================
+# ASSUMPTIONS
+# =============================================================================
+
+assumptions:
+  - id: "oil_shock_exogeneity"
+    description: >
+      Baumeister oil supply shocks are exogenous to US domestic macro variables.
+      Based on structural VAR identification with sign restrictions.
+    applies_to_edges:
+      - "oil_shock_to_oil_price"
+
+  - id: "no_reverse_causation_cpi_oil"
+    description: >
+      US CPI does not cause oil prices at the monthly frequency considered.
+      The US is a price taker in global oil markets.
+    applies_to_edges:
+      - "oil_to_cpi_headline"
+      - "oil_to_cpi_core"
+
+# =============================================================================
+# LATENT CONFOUNDERS
+# =============================================================================
+
+latents:
+  - id: "global_demand"
+    description: >
+      Global aggregate demand drives both oil prices and US macro outcomes.
+      Partially addressed by using Baumeister structural shocks.
+    affects: ["oil_price", "industrial_production", "unemployment"]
+
+  - id: "monetary_expectations"
+    description: >
+      Forward-looking expectations about monetary policy affect both
+      financial conditions and real activity simultaneously.
+    affects: ["fed_funds_rate", "vix", "nfci"]
