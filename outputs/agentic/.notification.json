@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "timestamp": "2026-02-08T03:53:30.715522+00:00",
-  "run_id": "7679191c",
+  "timestamp": "2026-02-11T08:30:51.098393+00:00",
+  "run_id": "c7cccb21",
   "event": "run_complete",
-  "edges_estimated": 29,
+  "edges_estimated": 38,
   "edges_blocked": 0,
-  "mean_credibility": 0.81,
-  "message": "Run complete: 29 edges estimated, 0 blocked, mean credibility 0.81"
+  "mean_credibility": 0.835,
+  "message": "Run complete: 38 edges estimated, 0 blocked, mean credibility 0.83"
 }

@@ -50,6 +50,18 @@ variable A affects variable B, AND variable B affects variable C, extract BOTH
 the A->B and B->C claims. Do not stop at intermediate nodes — trace the full
 causal chain to terminal outcomes (e.g., capital adequacy, default rates, profits).
 
+IMPORTANT: Also extract AGGREGATION and MEASUREMENT relationships. If a variable is
+a sub-component of an aggregate (e.g., tradable CPI feeds into headline CPI, wage
+income feeds into total income, provisions feed into total capital), extract the
+component -> aggregate link with edge_type_suggestion = "mechanical". These structural
+links are essential for DAG connectivity even though they are not causal.
+
+IMPORTANT: When the text mentions that one variable PRESSURES or COMPRESSES another
+(e.g., "higher funding costs lower margins"), extract this as a causal claim with
+the appropriate direction, even if it describes a mechanical or accounting relationship.
+Every intermediate variable that connects a shock to the final outcome needs an explicit
+edge — do NOT leave dead-end variables with no downstream connection.
+
 Return a JSON array of claims."""
 
 CAUSAL_CLAIM_EXTRACTION_USER = """\

@@ -1,0 +1,340 @@
+edge_id: rwa_kspi_to_k2_ratio_kspi
+dag_version_hash: 4195135b663dd12b397a26b2e653b64687f1767c7ab19193b6bd8cf1f26d3e8d
+created_at: '2026-02-11T00:30:49.130391'
+data_provenance:
+  treatment_source:
+    connector: parquet_file
+    dataset: rwa_kspi
+    series: null
+    retrieval_time: null
+    file_path: null
+    file_checksum: null
+    row_count: 27
+    column_count: null
+    date_range:
+    - '2011-10-01'
+    - '2024-07-01'
+    cache_key: null
+  outcome_source:
+    connector: parquet_file
+    dataset: k2_ratio_kspi
+    series: null
+    retrieval_time: null
+    file_path: null
+    file_checksum: null
+    row_count: 27
+    column_count: null
+    date_range:
+    - '2011-10-01'
+    - '2024-07-01'
+    cache_key: null
+  control_sources: {}
+  instrument_sources: {}
+  combined_row_count: 27
+  combined_date_range:
+  - '2011-10-01'
+  - '2024-07-01'
+  missing_rate: null
+  panel_dimensions: null
+  entity_boundary_note: null
+  kpi_definitions: null
+spec_hash: b327b4b58bb76c861cb9ea83d801f78185de731f39d0cf1487f8bfe48ffdf5b0
+spec_details:
+  design: LOCAL_PROJECTIONS
+  controls:
+  - y_lag1
+  - y_lag2
+  - x_lag1
+  - x_lag2
+  instruments: []
+  fixed_effects: []
+  se_method: HAC_newey_west
+  sample_filter: null
+  horizon: &id001
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  bandwidth: null
+estimates:
+  point: -0.006058255436425573
+  se: 0.002047730679385075
+  ci_95:
+  - -0.01007180756802032
+  - -0.0020447033048308265
+  pvalue: 0.003091185818188935
+  horizons: *id001
+  irf:
+  - -0.006058255436425573
+  - -0.009538349868682329
+  - -0.00747482946179662
+  - -0.0037091732807421466
+  - -0.0015632328561167763
+  - 0.0007772501392740924
+  - -0.0014179683809291742
+  irf_ci_lower:
+  - -0.010071733818058056
+  - -0.016361024650976098
+  - -0.013915339738874655
+  - -0.009214637757442449
+  - -0.005111998206528879
+  - -0.001588272180331348
+  - -0.005693708007730881
+  irf_ci_upper:
+  - -0.0020447770547930896
+  - -0.0027156750863885602
+  - -0.0010343191847185839
+  - 0.0017962911959581557
+  - 0.0019855324942953264
+  - 0.0031427724588795327
+  - 0.0028577712458725327
+diagnostics:
+  hac_bandwidth:
+    name: hac_bandwidth
+    passed: true
+    value: 2.0
+    threshold: null
+    pvalue: null
+    message: 'Newey-West bandwidth: 2'
+  effective_obs:
+    name: effective_obs
+    passed: true
+    value: 25.0
+    threshold: 20.0
+    pvalue: null
+    message: ''
+  sign_consistency:
+    name: sign_consistency
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: No expected sign specified
+  ts_leads_test:
+    name: ts_leads_test
+    passed: false
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: fail'
+  ts_residual_autocorr:
+    name: ts_residual_autocorr
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_hac_sensitivity:
+    name: ts_hac_sensitivity
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_lag_sensitivity:
+    name: ts_lag_sensitivity
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_regime_stability:
+    name: ts_regime_stability
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_shock_support:
+    name: ts_shock_support
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+all_diagnostics_pass: false
+interpretation:
+  estimand: IRF of k2_ratio_kspi to a unit shock in rwa_kspi
+  is_not: Structural causal effect under all interventions
+  channels:
+  - direct
+  - indirect
+  population: ''
+  conditions: ''
+  allowed_uses: []
+  forbidden_uses: []
+failure_flags:
+  weak_identification: false
+  potential_bad_control: false
+  mechanical_identity_risk: false
+  regime_break_detected: false
+  small_sample: true
+  high_missing_rate: false
+  entity_boundary_change: false
+  definition_inconsistency: false
+counterfactual:
+  supports_shock_path: true
+  supports_policy_intervention: false
+  intervention_note: Reduced-form LP estimate
+  external_validity: ''
+credibility_rating: B
+credibility_score: 0.7155555555555556
+identification:
+  claim_level: BLOCKED_ID
+  risks:
+    unmeasured_confounding: medium
+    simultaneity: low
+    weak_variation: low
+    measurement_error: low
+    selection: low
+  untestable_assumptions:
+  - No omitted common cause of treatment and outcome
+  testable_threats_passed:
+  - hac_bandwidth
+  - effective_obs
+  - sign_consistency
+  - ts_residual_autocorr
+  - ts_hac_sensitivity
+  - ts_lag_sensitivity
+  - ts_regime_stability
+  - ts_shock_support
+  testable_threats_failed:
+  - ts_leads_test
+  strategy_type: ''
+  strategy_argument: ''
+  strategy_key_assumption: ''
+counterfactual_block:
+  shock_scenario_allowed: false
+  policy_intervention_allowed: false
+  reason_shock_blocked: Shock CF requires REDUCED_FORM+, edge has BLOCKED_ID
+  reason_policy_blocked: REDUCED_FORM mode does not allow policy interventions
+  allowed: false
+  reason_blocked: Shock CF requires REDUCED_FORM+, edge has BLOCKED_ID
+propagation_role:
+  role: identity
+  overlapping_paths: []
+  selected_for_counterfactual: false
+  mode_propagation_allowed:
+    STRUCTURAL: true
+    REDUCED_FORM: true
+    DESCRIPTIVE: true
+  mode_shock_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: false
+    DESCRIPTIVE: false
+  mode_policy_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: false
+    DESCRIPTIVE: false
+literature:
+  supporting:
+  - doi: ''
+    title: Levels of pharmaceuticals and endocrine disruptors in commercially available
+      seafood before and after cooking
+    authors:
+    - Barcelo, D.
+    - Caceres, N.
+    - Fernandez-Tejedor, M.
+    - Granby, Kit
+    - M. Marques, A.
+    - Maulvault, A.
+    - Munoz, D. A.
+    - Robbens, Johan
+    - Rodríguez-Mozaz, S
+    - Serra, A.
+    - Sioen, Isabelle
+    - Tediosi, A.
+    - Verbeke, K.
+    - Williamson, J.
+    year: 2016
+    excerpt: ''
+    relevance: supporting
+    edge_id: rwa_kspi_to_k2_ratio_kspi
+    paper_id: ''
+    citation_count: 0
+    search_query: KSPI risk-weighted assets KSPI K2 capital ratio causal effect
+    source: core
+    pdf_url: https://core.ac.uk/download/84002501.pdf
+  - doi: ''
+    title: 'Exposure to Chemicals in Consumer Products: The Role of the Near-Field
+      Environment'
+    authors:
+    - Ernstoff, Alexi
+    - Fantke, Peter
+    - Huang, L.
+    - Jolliet, O.
+    year: 2016
+    excerpt: ''
+    relevance: supporting
+    edge_id: rwa_kspi_to_k2_ratio_kspi
+    paper_id: ''
+    citation_count: 0
+    search_query: KSPI risk-weighted assets KSPI K2 capital ratio causal effect
+    source: core
+    pdf_url: https://core.ac.uk/download/84002493.pdf
+  - doi: ''
+    title: The development of an operational LCIA-methodology with impact categories
+      based on the control variables in the Planetary Boundaries framework
+    authors:
+    - Hauschild, Michael Zwicky
+    - Owsianiak, Mikolaj
+    - Ryberg, Morten
+    year: 2016
+    excerpt: ''
+    relevance: supporting
+    edge_id: rwa_kspi_to_k2_ratio_kspi
+    paper_id: ''
+    citation_count: 0
+    search_query: KSPI risk-weighted assets KSPI K2 capital ratio causal effect
+    source: core
+    pdf_url: https://core.ac.uk/download/84003389.pdf
+  - doi: ''
+    title: Capital Asset Pricing Model with Size Factor and Normalizing by Volatility
+      Index
+    authors:
+    - Abraham Atsiwo
+    - Andrey Sarantsev
+    year: 2024
+    excerpt: The Capital Asset Pricing Model (CAPM) relates a well-diversified stock
+      portfolio to a benchmark portfolio. We insert size effect in CAPM, capturing
+      the observation that small stocks have higher risk and return than large stocks,
+      on average. Dividing stock index returns by the Volatility Index makes
+    relevance: supporting
+    edge_id: rwa_kspi_to_k2_ratio_kspi
+    paper_id: 2411.19444v3
+    citation_count: 0
+    search_query: KSPI risk-weighted assets KSPI K2 capital ratio causal effect
+    source: arxiv
+    pdf_url: https://arxiv.org/pdf/2411.19444v3
+  challenging: []
+  methodological:
+  - doi: 10.1515/jci-2022-0060
+    title: 'Quantitative probing: Validating causal models using quantitative domain
+      knowledge'
+    authors:
+    - Daniel Grünbaum
+    - Maike L. Stern
+    - Elmar W. Lang
+    year: 2022
+    excerpt: We present quantitative probing as a model-agnostic framework for validating
+      causal models in the presence of quantitative domain knowledge. The method is
+      constructed as an analogue of the train/test split in correlation-based machine
+      learning and as an enhancement of current causal validation strat
+    relevance: methodological
+    edge_id: rwa_kspi_to_k2_ratio_kspi
+    paper_id: 2209.03013v1
+    citation_count: 0
+    search_query: KSPI risk-weighted assets KSPI K2 capital ratio causal effect
+    source: arxiv
+    pdf_url: https://arxiv.org/pdf/2209.03013v1
+  search_status: SEARCHED
+  search_timestamp: '2026-02-11T00:30:49.130499'
+  search_query: KSPI risk-weighted assets KSPI K2 capital ratio causal effect
+  total_results: 5
+companion_edge_id: null
+variant_of: null
+is_precisely_null: false
+null_equivalence_bound: null
