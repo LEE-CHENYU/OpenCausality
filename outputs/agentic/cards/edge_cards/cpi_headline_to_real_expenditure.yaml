@@ -1,6 +1,6 @@
 edge_id: cpi_headline_to_real_expenditure
 dag_version_hash: 4195135b663dd12b397a26b2e653b64687f1767c7ab19193b6bd8cf1f26d3e8d
-created_at: '2026-02-11T00:30:49.537418'
+created_at: '2026-02-11T10:31:03.061094'
 data_provenance:
   treatment_source:
     connector: parquet_file
@@ -339,7 +339,7 @@ literature:
     pdf_url: https://www.emerald.com:443/insight/content/doi/10.1108/AJAR-09-2018-0029/full/pdf?title=macroeconomic-factors-firm-characteristics-and-financial-performance-a-study-of-selected-quoted-manufacturing-firms-in-nigeria
   methodological: []
   search_status: SEARCHED
-  search_timestamp: '2026-02-11T00:30:49.537474'
+  search_timestamp: '2026-02-11T10:31:03.061142'
   search_query: Headline CPI Real consumption expenditure causal effect
   total_results: 5
 companion_edge_id: null

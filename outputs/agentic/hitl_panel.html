@@ -715,6 +715,20 @@ const ISSUES = {
     "severity": "HIGH",
     "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
     "message": "A-rating despite failed diagnostics."
+  },
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:nominal_income_to_real_income": {
+    "status": "OPEN",
+    "opened_run": "f92ae9db",
+    "severity": "CRITICAL",
+    "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+    "message": "p=0.0000 but claim_level=BLOCKED_ID. Significance does not establish causation."
+  },
+  "RATING_DIAGNOSTICS_CONFLICT:nominal_income_to_real_income": {
+    "status": "OPEN",
+    "opened_run": "f92ae9db",
+    "severity": "HIGH",
+    "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
+    "message": "A-rating despite failed diagnostics."
   }
 };
 const CLOSED_ISSUES_COUNT = 29;
@@ -1514,6 +1528,88 @@ const EDGES = {
       "residual_ac1"
     ],
     "propagation_role": "diagnostic_only"
+  },
+  "nominal_income_to_real_income": {
+    "point": 0.9330544195797443,
+    "se": 0.02770422400969326,
+    "pvalue": 1.1680567298440232e-248,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "A",
+    "score": 0.8375555555555555,
+    "claim_level": "BLOCKED_ID",
+    "all_pass": false,
+    "n_obs": 56,
+    "diagnostics": [
+      {
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": true
+      },
+      {
+        "name": "sign_consistency",
+        "passed": true
+      },
+      {
+        "name": "ts_leads_test",
+        "passed": false
+      },
+      {
+        "name": "ts_residual_autocorr",
+        "passed": true
+      },
+      {
+        "name": "ts_hac_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_lag_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_regime_stability",
+        "passed": true
+      },
+      {
+        "name": "ts_shock_support",
+        "passed": true
+      }
+    ],
+    "failure_flags": [],
+    "panel": null,
+    "estimand": "IRF of real_income to a unit shock in nominal_income",
+    "is_not": "Structural causal effect under all interventions",
+    "allowed_uses": [],
+    "forbidden_uses": [],
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Shock CF requires REDUCED_FORM+, edge has BLOCKED_ID",
+    "id_risks": {
+      "unmeasured_confounding": "medium",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "untestable_assumptions": [
+      "No omitted common cause of treatment and outcome"
+    ],
+    "testable_passed": [
+      "hac_bandwidth",
+      "effective_obs",
+      "sign_consistency",
+      "ts_residual_autocorr",
+      "ts_hac_sensitivity",
+      "ts_lag_sensitivity",
+      "ts_regime_stability",
+      "ts_shock_support"
+    ],
+    "testable_failed": [
+      "ts_leads_test"
+    ],
+    "propagation_role": "identity"
   },
   "oil_demand_to_fx": {
     "point": -0.29825697639309134,
@@ -3096,7 +3192,7 @@ const RULE_DESCRIPTIONS = {
     "guidance": "The system will auto-populate units from the DAG spec. Verify that the inferred units match the actual estimation specification.\n"
   }
 };
-const GENERATED_AT = "2026-02-11 08:30:50 UTC";
+const GENERATED_AT = "2026-02-11 18:31:03 UTC";
 const DAG_EDGES = {
   "oil_supply_to_brent": {
     "from": "oil_supply_shock",

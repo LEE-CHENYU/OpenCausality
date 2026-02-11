@@ -788,3 +788,297 @@ class TestExpertDAGValidation:
         for edge in expert_dag["edges"]:
             assert VALID_EDGE_ID_RE.match(edge["id"]), \
                 f"Expert DAG: invalid edge ID: {edge['id']}"
+
+
+# =========================================================================
+# Autonomous Pipeline Fixes: Computed Loaders, Dynamic Groups, Coercion
+# =========================================================================
+
+import numpy as np
+import pandas as pd
+from unittest.mock import MagicMock
+
+
+class TestNumericCoercion:
+    """Verify that string-typed columns are coerced to numeric."""
+
+    def test_object_dtype_coerced(self, tmp_path):
+        """Downloaded data with object dtype should become numeric."""
+        from shared.engine.dynamic_loader import _load_series_from_file
+
+        dates = pd.date_range("2020-01-01", periods=5, freq="MS")
+        df = pd.DataFrame({
+            "date": dates,
+            "value": ["100.5", "200.3", "150.0", "175.2", "160.8"],
+        })
+        path = tmp_path / "test_object.parquet"
+        df.to_parquet(path, index=False)
+
+        s = _load_series_from_file(path, "value", "test_node")
+        assert s.dtype in (np.float64, float), f"Expected numeric, got {s.dtype}"
+        assert len(s) == 5
+
+    def test_mixed_string_numeric_drops_invalid(self, tmp_path):
+        """Mixed string/numeric should drop non-numeric values."""
+        from shared.engine.dynamic_loader import _load_series_from_file
+
+        dates = pd.date_range("2020-01-01", periods=4, freq="MS")
+        df = pd.DataFrame({
+            "date": dates,
+            "value": ["100.5", "N/A", "150.0", "bad"],
+        })
+        path = tmp_path / "test_mixed.parquet"
+        df.to_parquet(path, index=False)
+
+        s = _load_series_from_file(path, "value", "test_node")
+        assert s.dtype in (np.float64, float)
+        assert len(s) == 2  # Only valid numeric values
+
+
+class TestDynamicEdgeGroups:
+    """Verify dynamic edge group registration and lookup."""
+
+    def test_register_and_lookup(self):
+        from shared.engine.data_assembler import (
+            _DYNAMIC_EDGE_GROUPS,
+            register_dynamic_edge_group,
+            get_edge_group,
+        )
+
+        test_edge = "_test_identity_edge_xyz"
+        try:
+            register_dynamic_edge_group(test_edge, "IDENTITY")
+            assert get_edge_group(test_edge) == "IDENTITY"
+        finally:
+            _DYNAMIC_EDGE_GROUPS.pop(test_edge, None)
+
+    def test_edge_node_map_takes_precedence(self):
+        """Edges in EDGE_NODE_MAP should return DYNAMIC_LP, not dynamic group."""
+        from shared.engine.data_assembler import (
+            EDGE_NODE_MAP,
+            _DYNAMIC_EDGE_GROUPS,
+            register_dynamic_edge_group,
+            get_edge_group,
+        )
+
+        test_edge = "_test_precedence_edge"
+        try:
+            EDGE_NODE_MAP[test_edge] = ("node_a", "node_b")
+            register_dynamic_edge_group(test_edge, "IDENTITY")
+            assert get_edge_group(test_edge) == "DYNAMIC_LP"
+        finally:
+            EDGE_NODE_MAP.pop(test_edge, None)
+            _DYNAMIC_EDGE_GROUPS.pop(test_edge, None)
+
+    def test_unknown_edge_without_registration(self):
+        from shared.engine.data_assembler import get_edge_group
+        assert get_edge_group("_nonexistent_edge_abc") == "UNKNOWN"
+
+
+class TestComputedLoaders:
+    """Verify that DynamicLoaderFactory builds computed loaders for derived nodes."""
+
+    def _make_node(self, node_id, formula=None, dep_names=None, source=None):
+        from shared.agentic.dag.parser import NodeSpec, IdentityDef
+
+        identity = None
+        if formula:
+            identity = IdentityDef(name=f"{node_id}_identity", formula=formula)
+
+        node = NodeSpec(
+            id=node_id,
+            name=node_id,
+            derived=formula is not None,
+            identity=identity,
+            source=source,
+        )
+        if dep_names:
+            node.depends_on = dep_names
+            if identity:
+                identity.depends_on = dep_names
+        return node
+
+    def test_computed_loader_simple_subtraction(self):
+        """Derived node with formula 'a - b' should produce correct series."""
+        from shared.engine.dynamic_loader import DynamicLoaderFactory
+        from shared.engine.data_assembler import NODE_LOADERS
+
+        factory = DynamicLoaderFactory()
+
+        dates = pd.date_range("2020-01-01", periods=12, freq="MS")
+        a_series = pd.Series(range(100, 112), index=dates, name="a", dtype=float)
+        b_series = pd.Series(range(10, 22), index=dates, name="b", dtype=float)
+
+        NODE_LOADERS["dep_a"] = lambda: a_series
+        NODE_LOADERS["dep_b"] = lambda: b_series
+
+        try:
+            derived_node = self._make_node(
+                "derived_sub",
+                formula="dep_a - dep_b",
+                dep_names=["dep_a", "dep_b"],
+            )
+
+            mock_dag = MagicMock()
+            mock_dag.get_node.return_value = None
+
+            loader = factory._build_computed_loader(derived_node, mock_dag)
+            assert loader is not None, "Computed loader should be built"
+
+            result = loader()
+            expected = a_series - b_series
+            np.testing.assert_array_almost_equal(result.values, expected.values)
+            assert result.name == "derived_sub"
+        finally:
+            NODE_LOADERS.pop("dep_a", None)
+            NODE_LOADERS.pop("dep_b", None)
+
+    def test_computed_loader_division(self):
+        """Derived node with formula 'x / y' should produce correct series."""
+        from shared.engine.dynamic_loader import DynamicLoaderFactory
+        from shared.engine.data_assembler import NODE_LOADERS
+
+        factory = DynamicLoaderFactory()
+
+        dates = pd.date_range("2020-01-01", periods=6, freq="MS")
+        x_series = pd.Series([100, 200, 300, 400, 500, 600], index=dates, dtype=float)
+        y_series = pd.Series([10, 20, 30, 40, 50, 60], index=dates, dtype=float)
+
+        NODE_LOADERS["numerator"] = lambda: x_series
+        NODE_LOADERS["denominator"] = lambda: y_series
+
+        try:
+            derived_node = self._make_node(
+                "ratio_node",
+                formula="numerator / denominator",
+                dep_names=["numerator", "denominator"],
+            )
+
+            mock_dag = MagicMock()
+            mock_dag.get_node.return_value = None
+
+            loader = factory._build_computed_loader(derived_node, mock_dag)
+            assert loader is not None
+
+            result = loader()
+            np.testing.assert_array_almost_equal(result.values, [10.0] * 6)
+        finally:
+            NODE_LOADERS.pop("numerator", None)
+            NODE_LOADERS.pop("denominator", None)
+
+    def test_computed_loader_returns_none_for_non_derived(self):
+        """Non-derived nodes should return None from _build_computed_loader."""
+        from shared.engine.dynamic_loader import DynamicLoaderFactory
+
+        factory = DynamicLoaderFactory()
+        node = self._make_node("plain_node")
+        loader = factory._build_computed_loader(node, MagicMock())
+        assert loader is None
+
+
+class TestRegisterEdgeWithDerived:
+    """Verify register_edge_from_spec falls back to computed loaders."""
+
+    def test_derived_node_edge_registration(self):
+        """Edge with a derived node should register via computed loader."""
+        from shared.engine.dynamic_loader import DynamicLoaderFactory
+        from shared.engine.data_assembler import NODE_LOADERS, EDGE_NODE_MAP
+        from shared.agentic.dag.parser import (
+            NodeSpec, EdgeSpec, DAGSpec, IdentityDef,
+        )
+
+        factory = DynamicLoaderFactory()
+
+        dates = pd.date_range("2020-01-01", periods=12, freq="MS")
+        obs_series = pd.Series(range(100, 112), index=dates, name="obs_a", dtype=float)
+        obs_b_series = pd.Series(range(10, 22), index=dates, name="obs_b", dtype=float)
+
+        NODE_LOADERS["obs_a"] = lambda: obs_series
+        NODE_LOADERS["obs_b"] = lambda: obs_b_series
+
+        derived = NodeSpec(
+            id="derived_c",
+            name="Derived C",
+            derived=True,
+            identity=IdentityDef(
+                name="c_identity",
+                formula="obs_a - obs_b",
+                depends_on=["obs_a", "obs_b"],
+            ),
+            depends_on=["obs_a", "obs_b"],
+        )
+
+        obs_node = NodeSpec(id="obs_a", name="Observed A")
+
+        edge = EdgeSpec(
+            id="obs_a_to_derived_c",
+            from_node="obs_a",
+            to_node="derived_c",
+            edge_type="causal",
+        )
+
+        mock_dag = MagicMock(spec=DAGSpec)
+        mock_dag.get_node.side_effect = lambda nid: {
+            "obs_a": obs_node,
+            "derived_c": derived,
+        }.get(nid)
+
+        try:
+            ok = factory.register_edge_from_spec(edge, mock_dag)
+            assert ok, "Edge registration should succeed with derived node"
+            assert "obs_a_to_derived_c" in EDGE_NODE_MAP
+            assert "derived_c" in NODE_LOADERS
+
+            result = NODE_LOADERS["derived_c"]()
+            expected = obs_series - obs_b_series
+            np.testing.assert_array_almost_equal(result.values, expected.values)
+        finally:
+            NODE_LOADERS.pop("obs_a", None)
+            NODE_LOADERS.pop("obs_b", None)
+            NODE_LOADERS.pop("derived_c", None)
+            EDGE_NODE_MAP.pop("obs_a_to_derived_c", None)
+
+
+class TestGenericIdentitySensitivity:
+    """Verify numerical sensitivity computation for generic identity edges."""
+
+    def test_subtraction_sensitivity(self):
+        """For formula 'a - b', d(result)/d(a) should be approx 1.0."""
+        dates = pd.date_range("2020-01-01", periods=12, freq="MS")
+        a_vals = np.random.default_rng(42).uniform(100, 200, 12)
+        b_vals = np.random.default_rng(42).uniform(10, 20, 12)
+        a_series = pd.Series(a_vals, index=dates, name="a")
+        b_series = pd.Series(b_vals, index=dates, name="b")
+
+        formula = "a - b"
+        ns_base = {"__builtins__": {}, "a": a_series, "b": b_series}
+        baseline = eval(formula, ns_base)  # noqa: S307
+
+        delta = a_series.abs().mean() * 0.01
+        ns_pert = {"__builtins__": {}, "a": a_series + delta, "b": b_series}
+        perturbed = eval(formula, ns_pert)  # noqa: S307
+
+        sensitivity = float(((perturbed - baseline) / delta).mean())
+        assert abs(sensitivity - 1.0) < 0.01, f"Expected ~1.0, got {sensitivity}"
+
+    def test_ratio_sensitivity(self):
+        """For formula 'a / b', d(result)/d(a) should be approx 1/b."""
+        dates = pd.date_range("2020-01-01", periods=12, freq="MS")
+        a_vals = np.random.default_rng(42).uniform(100, 200, 12)
+        b_vals = np.full(12, 50.0)
+        a_series = pd.Series(a_vals, index=dates, name="a")
+        b_series = pd.Series(b_vals, index=dates, name="b")
+
+        formula = "a / b"
+        ns_base = {"__builtins__": {}, "a": a_series, "b": b_series}
+        baseline = eval(formula, ns_base)  # noqa: S307
+
+        delta = a_series.abs().mean() * 0.01
+        ns_pert = {"__builtins__": {}, "a": a_series + delta, "b": b_series}
+        perturbed = eval(formula, ns_pert)  # noqa: S307
+
+        sensitivity = float(((perturbed - baseline) / delta).mean())
+        expected = 1.0 / 50.0
+        assert abs(sensitivity - expected) < 0.001, (
+            f"Expected ~{expected}, got {sensitivity}"
+        )

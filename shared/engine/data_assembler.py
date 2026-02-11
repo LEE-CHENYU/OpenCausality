@@ -508,6 +508,15 @@ PANEL_EDGE_SPECS: dict[str, dict[str, Any]] = {
     },
 }
 
+# Dynamic edge groups: populated at runtime by DynamicLoaderFactory
+_DYNAMIC_EDGE_GROUPS: dict[str, str] = {}
+
+
+def register_dynamic_edge_group(edge_id: str, group: str) -> None:
+    """Register a dynamic edge group classification at runtime."""
+    _DYNAMIC_EDGE_GROUPS[edge_id] = group
+
+
 # Accounting bridge edges: deterministic sensitivities, not regressions
 ACCOUNTING_BRIDGE_EDGES = {"loan_portfolio_to_rwa", "cor_to_capital"}
 
@@ -688,4 +697,6 @@ def get_edge_group(edge_id: str) -> str:
     else:
         if edge_id in EDGE_NODE_MAP:
             return "DYNAMIC_LP"
+        if edge_id in _DYNAMIC_EDGE_GROUPS:
+            return _DYNAMIC_EDGE_GROUPS[edge_id]
         return "UNKNOWN"

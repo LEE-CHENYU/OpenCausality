@@ -1,6 +1,6 @@
 edge_id: rwa_kspi_to_k2_ratio_kspi
 dag_version_hash: 4195135b663dd12b397a26b2e653b64687f1767c7ab19193b6bd8cf1f26d3e8d
-created_at: '2026-02-11T00:30:49.130391'
+created_at: '2026-02-11T10:31:02.596551'
 data_provenance:
   treatment_source:
     connector: parquet_file
@@ -331,7 +331,7 @@ literature:
     source: arxiv
     pdf_url: https://arxiv.org/pdf/2209.03013v1
   search_status: SEARCHED
-  search_timestamp: '2026-02-11T00:30:49.130499'
+  search_timestamp: '2026-02-11T10:31:02.596636'
   search_query: KSPI risk-weighted assets KSPI K2 capital ratio causal effect
   total_results: 5
 companion_edge_id: null

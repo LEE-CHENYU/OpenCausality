@@ -909,6 +909,53 @@ const EDGES = [
     "notes": "NL-extracted: Imported inflation (price level increase) with sticky incomes-&gt;Real disposable income (negative)",
     "provenance_source": "",
     "provenance_detail": "",
+    "point": 0.0,
+    "se": 0.0,
+    "pvalue": null,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "B",
+    "score": 0.6300000000000001,
+    "claim_level": "REDUCED_FORM",
+    "all_pass": false,
+    "diagnostics": [
+      {
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": false
+      },
+      {
+        "name": "sign_consistency",
+        "passed": true
+      },
+      {
+        "name": "ts_hac_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_regime_stability",
+        "passed": true
+      }
+    ],
+    "failure_flags": [
+      "small_sample"
+    ],
+    "id_risks": {
+      "unmeasured_confounding": "medium",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Design LOCAL_PROJECTIONS provides REDUCED_FORM level only",
+    "n_obs": 0,
+    "strategy_type": "",
+    "strategy_argument": "",
+    "strategy_key_assumption": "",
     "issues": [],
     "has_critical_issue": false
   },
@@ -935,6 +982,53 @@ const EDGES = [
     "notes": "NL-extracted: Transfers and regulated prices (buffers) during exchange-rate/price shock-&gt;Headline nominal income stability (positive)",
     "provenance_source": "",
     "provenance_detail": "",
+    "point": 0.0,
+    "se": 0.0,
+    "pvalue": null,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "B",
+    "score": 0.6300000000000001,
+    "claim_level": "REDUCED_FORM",
+    "all_pass": false,
+    "diagnostics": [
+      {
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": false
+      },
+      {
+        "name": "sign_consistency",
+        "passed": true
+      },
+      {
+        "name": "ts_hac_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_regime_stability",
+        "passed": true
+      }
+    ],
+    "failure_flags": [
+      "small_sample"
+    ],
+    "id_risks": {
+      "unmeasured_confounding": "medium",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Design LOCAL_PROJECTIONS provides REDUCED_FORM level only",
+    "n_obs": 0,
+    "strategy_type": "",
+    "strategy_argument": "",
+    "strategy_key_assumption": "",
     "issues": [],
     "has_critical_issue": false
   },
@@ -1404,8 +1498,82 @@ const EDGES = [
     "notes": "Auto-created identity edge from real_income_identity",
     "provenance_source": "",
     "provenance_detail": "",
-    "issues": [],
-    "has_critical_issue": false
+    "point": 0.9330544195797443,
+    "se": 0.02770422400969326,
+    "pvalue": 1.1680567298440232e-248,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "A",
+    "score": 0.8375555555555555,
+    "claim_level": "BLOCKED_ID",
+    "all_pass": false,
+    "diagnostics": [
+      {
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": true
+      },
+      {
+        "name": "sign_consistency",
+        "passed": true
+      },
+      {
+        "name": "ts_leads_test",
+        "passed": false
+      },
+      {
+        "name": "ts_residual_autocorr",
+        "passed": true
+      },
+      {
+        "name": "ts_hac_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_lag_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_regime_stability",
+        "passed": true
+      },
+      {
+        "name": "ts_shock_support",
+        "passed": true
+      }
+    ],
+    "failure_flags": [],
+    "id_risks": {
+      "unmeasured_confounding": "medium",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Shock CF requires REDUCED_FORM+, edge has BLOCKED_ID",
+    "n_obs": 56,
+    "strategy_type": "",
+    "strategy_argument": "",
+    "strategy_key_assumption": "",
+    "issues": [
+      {
+        "issue_key": "SIGNIFICANT_BUT_NOT_IDENTIFIED:nominal_income_to_real_income",
+        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+        "severity": "CRITICAL",
+        "message": "p=0.0000 but claim_level=BLOCKED_ID. Significance does not establish causation."
+      },
+      {
+        "issue_key": "RATING_DIAGNOSTICS_CONFLICT:nominal_income_to_real_income",
+        "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
+        "severity": "HIGH",
+        "message": "A-rating despite failed diagnostics."
+      }
+    ],
+    "has_critical_issue": true
   },
   {
     "id": "cor_kspi_to_total_capital_kspi",
@@ -2356,7 +2524,7 @@ const ACTIONS_BY_RULE = {
     ]
   }
 };
-const GENERATED_AT = "2026-02-11 17:50:07 UTC";
+const GENERATED_AT = "2026-02-11 18:32:12 UTC";
 const ISSUE_GUIDANCE = {
   "SIGNIFICANT_BUT_NOT_IDENTIFIED:fx_to_cpi_tradable": "**Finding**: The edge **fx_to_cpi_tradable** has a statistically significant estimated effect (**\u03b2 = 0.113**, **SE = 0.028**, **p = 0.0001**, **N = 1200**) while being labeled **IDENTIFIED_CAUSAL** under **IMMUTABLE_EVIDENCE**.\n\n**Concern**: Even with **p = 0.0001**, statistical significance alone does not justify a causal claim, and with **no failed diagnostics reported** there is still an identification gap: the evidence presented supports a precisely estimated association but does not document the specific quasi-experimental/exogeneity conditions required for **IDENTIFIED_CAUSAL**.\n\n**Recommendation**: **Downgrade the claim level from IDENTIFIED_CAUSAL to ASSOCIATIONAL (or \u201cNOT_IDENTIFIED\u201d) unless you can explicitly document the identification argument** tied to \u201cIMMUTABLE_EVIDENCE\u201d (e.g., a clearly exogenous FX shock/assignment mechanism), keeping **\u03b2 = 0.113 (p = 0.0001)** as strong evidence of association but not, by itself, causation.",
   "RATING_DIAGNOSTICS_CONFLICT:cpi_to_nbk_rate": "**Finding**: The cpi_to_nbk_rate edge is rated **A** even though the estimated effect is essentially null (**coefficient = -0.5353**, **SE = 13.9656**, **p = 0.9694**, **N = 67**) and it **fails sign_consistency**.\n\n**Concern**: An **A-rating** is not credible here because **sign_consistency failed**, indicating the estimated direction is unstable across horizons/specifications in the local projections setup, and the extremely weak statistical signal (**p = 0.9694**) makes any causal directional claim at the **BLOCKED_ID** level highly unreliable.\n\n**Recommendation**: **Downgrade or block** this edge for causal interpretation (at minimum remove the **A** rating) unless you can resolve the **sign_consistency** failure (e.g., by tightening the LP specification/horizon set or addressing instability); with **p = 0.9694**, the practical default should be to treat this as **no evidence of an effect** rather than an A-rated causal link.",

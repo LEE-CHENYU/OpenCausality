@@ -1,5 +1,5 @@
 # Human-in-the-Loop Checklist
-Run ID: c7cccb21
+Run ID: f92ae9db
 
 > This checklist contains issues that require your expert judgment before
 > the pipeline can proceed. For each item, review the context, understand
@@ -222,5 +222,15 @@ Run ID: c7cccb21
 - **Decision guidance:** If you have a credible identification strategy, upgrade to IDENTIFIED_CAUSAL and document it. Otherwise, accept as REDUCED_FORM — informative but not usable for counterfactual predictions without caveats.
 
 - pvalue: 3.334696254595197e-69
+- claim_level: BLOCKED_ID
+- [ ] Decision: _________________
+
+### 24. p=0.0000 but claim_level=BLOCKED_ID. Significance does not establish causation.
+- **Edge:** `nominal_income_to_real_income`
+- **Why this matters:** This edge shows a statistically significant result (low p-value), but the identification strategy has not been validated as causal. A significant correlation is not the same as a causal effect — without proper identification (e.g., IV, RDD, DiD), the estimate may reflect reverse causation, omitted variable bias, or spurious correlation. Accepting this as causal without acknowledgement constitutes overclaiming.
+
+- **Decision guidance:** If you have a credible identification strategy, upgrade to IDENTIFIED_CAUSAL and document it. Otherwise, accept as REDUCED_FORM — informative but not usable for counterfactual predictions without caveats.
+
+- pvalue: 1.1680567298440232e-248
 - claim_level: BLOCKED_ID
 - [ ] Decision: _________________

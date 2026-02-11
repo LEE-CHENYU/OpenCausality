@@ -16,6 +16,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Literal
 
+import pandas as pd
+
 from shared.agentic.dag.parser import DAGSpec, parse_dag
 from shared.agentic.dag.validator import DAGValidator, ValidationReport
 from shared.agentic.queue.queue import TaskQueue, create_queue_from_dag
@@ -1080,7 +1082,143 @@ class AgentLoop:
         )
 
     def _create_identity_card(self, task: LinkageTask) -> EdgeCard:
-        """Create EdgeCard from identity (mechanical) sensitivity."""
+        """Create EdgeCard from identity (mechanical) sensitivity.
+
+        Handles two cases:
+        1. Legacy K2 edges (capital_to_k2, rwa_to_k2) — uses hardcoded KSPI logic
+        2. Generic identity edges — numerically computes sensitivity from the
+           target node's identity formula using loaded dependency series
+        """
+        from shared.agentic.output.edge_card import (
+            Estimates, DiagnosticResult, Interpretation,
+            FailureFlags, CounterfactualApplicability,
+        )
+        from shared.agentic.output.provenance import SpecDetails
+
+        _K2_EDGES = {"capital_to_k2", "rwa_to_k2"}
+
+        if task.edge_id in _K2_EDGES:
+            return self._create_k2_identity_card(task)
+
+        # --- Generic identity card via numerical sensitivity ---
+        edge = self.dag.get_edge(task.edge_id)
+        if not edge:
+            raise ValueError(f"Edge not found: {task.edge_id}")
+
+        to_node = self.dag.get_node(edge.to_node)
+        from_node_id = edge.from_node
+
+        # Find the identity formula on the target node
+        formula = None
+        dep_names: list[str] = []
+        if to_node and to_node.identity:
+            formula = to_node.identity.formula
+            dep_names = list(to_node.depends_on)
+
+        if formula is None:
+            raise ValueError(
+                f"Identity edge {task.edge_id}: target node '{edge.to_node}' "
+                f"has no identity formula"
+            )
+
+        # Load dependency series and compute sensitivity numerically
+        from shared.engine.data_assembler import NODE_LOADERS
+        import numpy as _np
+
+        dep_series: dict[str, pd.Series] = {}
+        for dep in dep_names:
+            if dep in NODE_LOADERS:
+                dep_series[dep] = NODE_LOADERS[dep]()
+
+        if from_node_id not in dep_series:
+            raise ValueError(
+                f"Identity edge {task.edge_id}: from_node '{from_node_id}' "
+                f"not loadable for sensitivity computation"
+            )
+
+        # Align to common index
+        combined = pd.DataFrame(dep_series).dropna()
+        if combined.empty:
+            raise ValueError(
+                f"Identity edge {task.edge_id}: no overlapping data for "
+                f"dependencies {dep_names}"
+            )
+
+        # Build safe evaluation namespace
+        def _eval_formula(data: dict[str, pd.Series]) -> pd.Series:
+            ns: dict = {"__builtins__": {}}
+            ns.update(data)
+            ns["log"] = _np.log
+            ns["exp"] = _np.exp
+            ns["abs"] = _np.abs
+            ns["sqrt"] = _np.sqrt
+            result = eval(formula, ns)  # noqa: S307
+            if isinstance(result, pd.Series):
+                return result
+            return pd.Series(result, index=next(iter(data.values())).index)
+
+        # Compute baseline
+        base_data = {dep: combined[dep] for dep in dep_names}
+        baseline = _eval_formula(base_data)
+
+        # Perturb from_node by 1% to get numerical derivative
+        perturbed_data = dict(base_data)
+        delta = combined[from_node_id].abs().mean() * 0.01
+        if delta == 0:
+            delta = 1.0
+        perturbed_data[from_node_id] = combined[from_node_id] + delta
+        perturbed = _eval_formula(perturbed_data)
+
+        # Sensitivity = mean(Δoutput / Δinput)
+        sensitivity = float(((perturbed - baseline) / delta).mean())
+
+        formula_str = f"d({to_node.id})/d({from_node_id}) via {formula}"
+
+        estimates = Estimates(
+            point=sensitivity,
+            se=0.0,
+            ci_95=(sensitivity, sensitivity),
+            pvalue=None,
+        )
+        diagnostics = {
+            "identity_check": DiagnosticResult(
+                name="identity_check", passed=True,
+                value=sensitivity,
+                message=f"Deterministic: {formula_str}",
+            ),
+        }
+        failure_flags = FailureFlags(mechanical_identity_risk=True)
+        spec_details = SpecDetails(design="IDENTITY", se_method="deterministic")
+
+        score, rating = compute_credibility_score(
+            diagnostics=diagnostics,
+            failure_flags=failure_flags,
+            design_weight=1.0,
+            data_coverage=1.0,
+        )
+        return EdgeCard(
+            edge_id=task.edge_id,
+            dag_version_hash=self._dag_hash,
+            spec_hash=spec_details.compute_hash(),
+            spec_details=spec_details,
+            estimates=estimates,
+            diagnostics=diagnostics,
+            interpretation=Interpretation(
+                estimand=f"Sensitivity: {formula_str}",
+                is_not="Causal effect; this is a mechanical identity",
+            ),
+            failure_flags=failure_flags,
+            counterfactual=CounterfactualApplicability(
+                supports_shock_path=True,
+                supports_policy_intervention=True,
+                intervention_note="Mechanical identity; always holds by definition",
+            ),
+            credibility_rating=rating,
+            credibility_score=score,
+        )
+
+    def _create_k2_identity_card(self, task: LinkageTask) -> EdgeCard:
+        """Create EdgeCard for legacy K2 identity edges (capital_to_k2, rwa_to_k2)."""
         from shared.engine.ts_estimator import compute_identity_sensitivity
         from shared.engine.data_assembler import _load_kspi_quarterly
         from shared.agentic.output.edge_card import (
