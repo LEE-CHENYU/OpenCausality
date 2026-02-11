@@ -1,0 +1,332 @@
+edge_id: kzt_usd_to_cpi_nontradable
+dag_version_hash: 4195135b663dd12b397a26b2e653b64687f1767c7ab19193b6bd8cf1f26d3e8d
+created_at: '2026-02-11T11:28:39.375677'
+data_provenance:
+  treatment_source:
+    connector: parquet_file
+    dataset: kzt_usd
+    series: null
+    retrieval_time: null
+    file_path: null
+    file_checksum: null
+    row_count: 188
+    column_count: null
+    date_range:
+    - '2010-05-01'
+    - '2025-12-01'
+    cache_key: null
+  outcome_source:
+    connector: parquet_file
+    dataset: cpi_nontradable
+    series: null
+    retrieval_time: null
+    file_path: null
+    file_checksum: null
+    row_count: 188
+    column_count: null
+    date_range:
+    - '2010-05-01'
+    - '2025-12-01'
+    cache_key: null
+  control_sources: {}
+  instrument_sources: {}
+  combined_row_count: 188
+  combined_date_range:
+  - '2010-05-01'
+  - '2025-12-01'
+  missing_rate: null
+  panel_dimensions: null
+  entity_boundary_note: null
+  kpi_definitions: null
+spec_hash: b327b4b58bb76c861cb9ea83d801f78185de731f39d0cf1487f8bfe48ffdf5b0
+spec_details:
+  design: LOCAL_PROJECTIONS
+  controls:
+  - y_lag1
+  - y_lag2
+  - x_lag1
+  - x_lag2
+  instruments: []
+  fixed_effects: []
+  se_method: HAC_newey_west
+  sample_filter: null
+  horizon: &id001
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  bandwidth: null
+estimates:
+  point: 7.680517172265832e-05
+  se: 3.3801146890145904e-05
+  ci_95:
+  - 1.055492381797235e-05
+  - 0.00014305541962734427
+  pvalue: 0.023070493914662118
+  horizons: *id001
+  irf:
+  - 7.680517172265832e-05
+  - 0.0001036959259176659
+  - 6.586784259811431e-05
+  - 6.591895983112467e-06
+  - -2.661757891127539e-06
+  - 9.913562769139591e-06
+  - -7.682905149349812e-07
+  irf_ci_lower:
+  - 1.05561411818243e-05
+  - -7.32640006433457e-06
+  - -1.4812366873148661e-05
+  - -4.7006436259234274e-05
+  - -5.603431835691445e-05
+  - -3.217799467155412e-05
+  - -6.857045633915963e-05
+  irf_ci_upper:
+  - 0.00014305420226349235
+  - 0.00021471825189966638
+  - 0.00014654805206937727
+  - 6.019022822545921e-05
+  - 5.071080257465938e-05
+  - 5.20051202098333e-05
+  - 6.703387530928968e-05
+diagnostics:
+  hac_bandwidth:
+    name: hac_bandwidth
+    passed: true
+    value: 4.0
+    threshold: null
+    pvalue: null
+    message: 'Newey-West bandwidth: 4'
+  effective_obs:
+    name: effective_obs
+    passed: true
+    value: 186.0
+    threshold: 20.0
+    pvalue: null
+    message: ''
+  sign_consistency:
+    name: sign_consistency
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: No expected sign specified
+  ts_leads_test:
+    name: ts_leads_test
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_residual_autocorr:
+    name: ts_residual_autocorr
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_hac_sensitivity:
+    name: ts_hac_sensitivity
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_lag_sensitivity:
+    name: ts_lag_sensitivity
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_regime_stability:
+    name: ts_regime_stability
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_shock_support:
+    name: ts_shock_support
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+all_diagnostics_pass: true
+interpretation:
+  estimand: IRF of cpi_nontradable to a unit shock in kzt_usd
+  is_not: Structural causal effect under all interventions
+  channels:
+  - direct
+  - indirect
+  population: ''
+  conditions: ''
+  allowed_uses: []
+  forbidden_uses: []
+failure_flags:
+  weak_identification: false
+  potential_bad_control: false
+  mechanical_identity_risk: false
+  regime_break_detected: false
+  small_sample: false
+  high_missing_rate: false
+  entity_boundary_change: false
+  definition_inconsistency: false
+counterfactual:
+  supports_shock_path: true
+  supports_policy_intervention: false
+  intervention_note: Reduced-form LP estimate
+  external_validity: ''
+credibility_rating: A
+credibility_score: 0.97
+identification:
+  claim_level: REDUCED_FORM
+  risks:
+    unmeasured_confounding: medium
+    simultaneity: low
+    weak_variation: low
+    measurement_error: low
+    selection: low
+  untestable_assumptions:
+  - No omitted common cause of treatment and outcome
+  testable_threats_passed:
+  - hac_bandwidth
+  - effective_obs
+  - sign_consistency
+  - ts_leads_test
+  - ts_residual_autocorr
+  - ts_hac_sensitivity
+  - ts_lag_sensitivity
+  - ts_regime_stability
+  - ts_shock_support
+  testable_threats_failed: []
+  strategy_type: ''
+  strategy_argument: ''
+  strategy_key_assumption: ''
+counterfactual_block:
+  shock_scenario_allowed: false
+  policy_intervention_allowed: false
+  reason_shock_blocked: Design LOCAL_PROJECTIONS provides REDUCED_FORM level only
+  reason_policy_blocked: REDUCED_FORM mode does not allow policy interventions
+  allowed: false
+  reason_blocked: Design LOCAL_PROJECTIONS provides REDUCED_FORM level only
+propagation_role:
+  role: structural
+  overlapping_paths: []
+  selected_for_counterfactual: true
+  mode_propagation_allowed:
+    STRUCTURAL: true
+    REDUCED_FORM: true
+    DESCRIPTIVE: true
+  mode_shock_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: true
+    DESCRIPTIVE: false
+  mode_policy_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: false
+    DESCRIPTIVE: false
+literature:
+  supporting:
+  - doi: 10.5089/9781475598759.002
+    title: Republic of Kazakhstan
+    authors:
+    - International Monetary Fund. Middle East and Central Asia Dept.
+    year: 2017
+    excerpt: This Selected Issues Paper evaluates Kazakhstan’s oil rules, current
+      fiscal stance, and long-term sustainability. The sharp and sustained drop in
+      oil prices since 2014 has reduced the value of Kazakhstan’s oil wealth. Kazakhstan’s
+      non-oil deficit path has been higher than suggested by long-term benc
+    relevance: supporting
+    edge_id: kzt_usd_to_cpi_nontradable
+    paper_id: ''
+    citation_count: 1
+    search_query: KZT/USD exchange rate Non-tradable CPI causal effect
+    source: openalex
+    pdf_url: https://www.elibrary.imf.org/doc/IMF002/24266-9781475598759/24266-9781475598759/Other_formats/Source_PDF/24266-9781475598810.pdf
+  - doi: 10.1515/jci-2021-0042
+    title: A Unifying Causal Framework for Analyzing Dataset Shift-stable Learning
+      Algorithms
+    authors:
+    - Adarsh Subbaswamy
+    - Bryant Chen
+    - Suchi Saria
+    year: 2019
+    excerpt: Recent interest in the external validity of prediction models (i.e.,
+      the problem of different train and test distributions, known as dataset shift)
+      has produced many methods for finding predictive distributions that are invariant
+      to dataset shifts and can be used for prediction in new, unseen enviro
+    relevance: supporting
+    edge_id: kzt_usd_to_cpi_nontradable
+    paper_id: 1905.11374v5
+    citation_count: 0
+    search_query: KZT/USD exchange rate Non-tradable CPI causal effect
+    source: arxiv
+    pdf_url: https://arxiv.org/pdf/1905.11374v5
+  - doi: ''
+    title: 'Natural resource funds as mechanisms for avoiding the resource curse :
+      a comparative study of Kazakhstan, Azerbaijan and Norway'
+    authors:
+    - Le, Tommy Khang
+    - Munthe-Dahl, Oskar
+    year: 2014
+    excerpt: Studies show that countries blessed with an abundance of natural resources
+      such as oil tend to have less economic growth and a less fortunate development
+      than countries with fewer natural resources. This master thesis is motivated
+      by the fact that there are relatively few studies conducted on a natu
+    relevance: supporting
+    edge_id: kzt_usd_to_cpi_nontradable
+    paper_id: ''
+    citation_count: 0
+    search_query: KZT/USD exchange rate Non-tradable CPI causal effect
+    source: core
+    pdf_url: https://core.ac.uk/download/30913679.pdf
+  - doi: ''
+    title: International analyses of natural resource curse and Kazakhstan’s related
+      economic performance with special attention to its wheat and energy sectors
+    authors:
+    - Oskenbayev, Yessengali
+    year: 2015
+    excerpt: The bottom line of this study is to examine the role of natural resource
+      endowments for economic growth and institutional quality with special focus
+      on Kazakhstan and CIS countries. It is documented that resource rents share
+      in income has a negative effect on institutional quality and thus undermine
+    relevance: supporting
+    edge_id: kzt_usd_to_cpi_nontradable
+    paper_id: ''
+    citation_count: 0
+    search_query: KZT/USD exchange rate Non-tradable CPI causal effect
+    source: core
+    pdf_url: https://core.ac.uk/download/304638845.pdf
+  challenging: []
+  methodological:
+  - doi: 10.1515/jci-2022-0060
+    title: 'Quantitative probing: Validating causal models using quantitative domain
+      knowledge'
+    authors:
+    - Daniel Grünbaum
+    - Maike L. Stern
+    - Elmar W. Lang
+    year: 2022
+    excerpt: We present quantitative probing as a model-agnostic framework for validating
+      causal models in the presence of quantitative domain knowledge. The method is
+      constructed as an analogue of the train/test split in correlation-based machine
+      learning and as an enhancement of current causal validation strat
+    relevance: methodological
+    edge_id: kzt_usd_to_cpi_nontradable
+    paper_id: 2209.03013v1
+    citation_count: 0
+    search_query: KZT/USD exchange rate Non-tradable CPI causal effect
+    source: arxiv
+    pdf_url: https://arxiv.org/pdf/2209.03013v1
+  search_status: SEARCHED
+  search_timestamp: '2026-02-11T11:28:39.375819'
+  search_query: KZT/USD exchange rate Non-tradable CPI causal effect
+  total_results: 5
+companion_edge_id: null
+variant_of: null
+is_precisely_null: false
+null_equivalence_bound: null

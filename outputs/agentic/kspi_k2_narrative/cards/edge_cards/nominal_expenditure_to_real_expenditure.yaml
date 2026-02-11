@@ -1,0 +1,302 @@
+edge_id: nominal_expenditure_to_real_expenditure
+dag_version_hash: 4195135b663dd12b397a26b2e653b64687f1767c7ab19193b6bd8cf1f26d3e8d
+created_at: '2026-02-11T11:28:39.087212'
+data_provenance:
+  treatment_source:
+    connector: parquet_file
+    dataset: nominal_expenditure
+    series: null
+    retrieval_time: null
+    file_path: null
+    file_checksum: null
+    row_count: 0
+    column_count: null
+    date_range: null
+    cache_key: null
+  outcome_source:
+    connector: parquet_file
+    dataset: real_expenditure
+    series: null
+    retrieval_time: null
+    file_path: null
+    file_checksum: null
+    row_count: 0
+    column_count: null
+    date_range: null
+    cache_key: null
+  control_sources: {}
+  instrument_sources: {}
+  combined_row_count: 0
+  combined_date_range: null
+  missing_rate: null
+  panel_dimensions: null
+  entity_boundary_note: null
+  kpi_definitions: null
+spec_hash: b327b4b58bb76c861cb9ea83d801f78185de731f39d0cf1487f8bfe48ffdf5b0
+spec_details:
+  design: LOCAL_PROJECTIONS
+  controls:
+  - y_lag1
+  - y_lag2
+  - x_lag1
+  - x_lag2
+  instruments: []
+  fixed_effects: []
+  se_method: HAC_newey_west
+  sample_filter: null
+  horizon: &id001
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  bandwidth: null
+estimates:
+  point: 0.0
+  se: 0.0
+  ci_95:
+  - 0.0
+  - 0.0
+  pvalue: null
+  horizons: *id001
+  irf:
+  - .nan
+  - .nan
+  - .nan
+  - .nan
+  - .nan
+  - .nan
+  - .nan
+  irf_ci_lower:
+  - .nan
+  - .nan
+  - .nan
+  - .nan
+  - .nan
+  - .nan
+  - .nan
+  irf_ci_upper:
+  - .nan
+  - .nan
+  - .nan
+  - .nan
+  - .nan
+  - .nan
+  - .nan
+diagnostics:
+  hac_bandwidth:
+    name: hac_bandwidth
+    passed: true
+    value: 0.0
+    threshold: null
+    pvalue: null
+    message: 'Newey-West bandwidth: 0'
+  effective_obs:
+    name: effective_obs
+    passed: false
+    value: 0.0
+    threshold: 20.0
+    pvalue: null
+    message: ''
+  sign_consistency:
+    name: sign_consistency
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: No expected sign specified
+  ts_hac_sensitivity:
+    name: ts_hac_sensitivity
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_regime_stability:
+    name: ts_regime_stability
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+all_diagnostics_pass: false
+interpretation:
+  estimand: IRF of real_expenditure to a unit shock in nominal_expenditure
+  is_not: Structural causal effect under all interventions
+  channels:
+  - direct
+  - indirect
+  population: ''
+  conditions: ''
+  allowed_uses: []
+  forbidden_uses: []
+failure_flags:
+  weak_identification: false
+  potential_bad_control: false
+  mechanical_identity_risk: false
+  regime_break_detected: false
+  small_sample: true
+  high_missing_rate: false
+  entity_boundary_change: false
+  definition_inconsistency: false
+counterfactual:
+  supports_shock_path: true
+  supports_policy_intervention: false
+  intervention_note: Reduced-form LP estimate
+  external_validity: ''
+credibility_rating: B
+credibility_score: 0.6300000000000001
+identification:
+  claim_level: REDUCED_FORM
+  risks:
+    unmeasured_confounding: medium
+    simultaneity: low
+    weak_variation: low
+    measurement_error: low
+    selection: low
+  untestable_assumptions:
+  - No omitted common cause of treatment and outcome
+  testable_threats_passed:
+  - hac_bandwidth
+  - sign_consistency
+  - ts_hac_sensitivity
+  - ts_regime_stability
+  testable_threats_failed:
+  - effective_obs
+  strategy_type: ''
+  strategy_argument: ''
+  strategy_key_assumption: ''
+counterfactual_block:
+  shock_scenario_allowed: false
+  policy_intervention_allowed: false
+  reason_shock_blocked: Design LOCAL_PROJECTIONS provides REDUCED_FORM level only
+  reason_policy_blocked: REDUCED_FORM mode does not allow policy interventions
+  allowed: false
+  reason_blocked: Design LOCAL_PROJECTIONS provides REDUCED_FORM level only
+propagation_role:
+  role: identity
+  overlapping_paths: []
+  selected_for_counterfactual: true
+  mode_propagation_allowed:
+    STRUCTURAL: true
+    REDUCED_FORM: true
+    DESCRIPTIVE: true
+  mode_shock_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: true
+    DESCRIPTIVE: false
+  mode_policy_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: false
+    DESCRIPTIVE: false
+literature:
+  supporting:
+  - doi: 10.1257/aer.103.6.2121
+    title: 'The China Syndrome: Local Labor Market Effects of Import Competition in
+      the United States'
+    authors:
+    - David Autor
+    - David Dorn
+    - Gordon Hanson
+    year: 2013
+    excerpt: We analyze the effect of rising Chinese import competition between 1990
+      and 2007 on US local labor markets, exploiting cross-market variation in import
+      exposure stemming from initial differences in industry specialization and instrumenting
+      for US imports using changes in Chinese imports by other hig
+    relevance: supporting
+    edge_id: nominal_expenditure_to_real_expenditure
+    paper_id: ''
+    citation_count: 4101
+    search_query: Nominal consumption expenditure Real consumption expenditure causal
+      effect
+    source: openalex
+    pdf_url: https://www.aeaweb.org/articles/pdf/doi/10.1257/aer.103.6.2121
+  - doi: 10.1086/654340
+    title: An Optimization-Based Econometric Framework for the Evaluation of Monetary
+      Policy
+    authors:
+    - Julio J. Rotemberg
+    - Michael Woodford
+    year: 1997
+    excerpt: This paper considers a simple quantitative model of output, interest
+      rate and inflation determination in the United States, and uses it to evaluate
+      alternative rules by which the Fed may set interest rates. The model is derived
+      from optimizing behavior under rational expectations, both on the part o
+    relevance: supporting
+    edge_id: nominal_expenditure_to_real_expenditure
+    paper_id: ''
+    citation_count: 1897
+    search_query: Nominal consumption expenditure Real consumption expenditure causal
+      effect
+    source: openalex
+    pdf_url: https://www.journals.uchicago.edu/doi/epdf/10.1086/654340
+  - doi: 10.2307/2534702
+    title: Systematic Monetary Policy and the Effects of Oil Price Shocks
+    authors:
+    - Ben Bernanke
+    - Mark Gertler
+    - Mark W. Watson
+    - Christopher A. Sims
+    - Benjamin M. Friedman
+    year: 1997
+    excerpt: Your use of the JSTOR archive indicates your acceptance of JSTOR&amp;apos;s
+      Terms and Conditions of Use, available at
+    relevance: supporting
+    edge_id: nominal_expenditure_to_real_expenditure
+    paper_id: ''
+    citation_count: 1578
+    search_query: Nominal consumption expenditure Real consumption expenditure causal
+      effect
+    source: openalex
+    pdf_url: https://www.jstor.org/institutionSearch?redirectUri=%2fstable%2f2534702
+  - doi: 10.1080/09638199.2024.2433008
+    title: Asymmetric effect of consumption expenditure on import function in Saudi
+      Arabia
+    authors:
+    - Abdullah M. Al-Malki
+    - Md. Fouad Bin Amin
+    - Mehboob Ul Hassan
+    year: 2024
+    excerpt: We study the asymmetric effect of consumption expenditure on Saudi imports
+      from 1991 to 2020. We found a direct relationship between consumption expenditure
+      and imports both in short and long-run periods, however, the positive shocks
+      in consumption expenditures have a dominant impact in the long run
+    relevance: supporting
+    edge_id: nominal_expenditure_to_real_expenditure
+    paper_id: cf6ef30e2ce2ea82ee98ffcf675e7c286296cf8c
+    citation_count: 2
+    search_query: Nominal consumption expenditure Real consumption expenditure causal
+      effect
+    source: semantic_scholar
+    pdf_url: ''
+  - doi: 10.5604/01.3001.0054.2990
+    title: EXPENDITURE ON FOOD AND FOOD CONSUMPTION IN HOUSEHOLDS IN POLAND DURING
+      THE COVID-19 PANDEMIC
+    authors:
+    - M. Utzig
+    year: 2024
+    excerpt: The COVID-19 pandemic influenced many areas of human life, one of those
+      areas is expenditure on food and food consumption in households. The paper aims
+      to identify changes in household expenditure on food and food consumption in
+      Poland in the span of the COVID-19 pandemic. The analysis covers the pe
+    relevance: supporting
+    edge_id: nominal_expenditure_to_real_expenditure
+    paper_id: bf970d9e04667b06d1bc7e4e459639c72b4d1d6d
+    citation_count: 1
+    search_query: Nominal consumption expenditure Real consumption expenditure causal
+      effect
+    source: semantic_scholar
+    pdf_url: ''
+  challenging: []
+  methodological: []
+  search_status: SEARCHED
+  search_timestamp: '2026-02-11T11:28:39.087343'
+  search_query: Nominal consumption expenditure Real consumption expenditure causal
+    effect
+  total_results: 5
+companion_edge_id: null
+variant_of: null
+is_precisely_null: false
+null_equivalence_bound: null

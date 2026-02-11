@@ -1,0 +1,289 @@
+edge_id: cpi_headline_to_real_income
+dag_version_hash: 4195135b663dd12b397a26b2e653b64687f1767c7ab19193b6bd8cf1f26d3e8d
+created_at: '2026-02-11T11:28:39.790702'
+data_provenance:
+  treatment_source:
+    connector: parquet_file
+    dataset: cpi_headline
+    series: null
+    retrieval_time: null
+    file_path: null
+    file_checksum: null
+    row_count: 0
+    column_count: null
+    date_range: null
+    cache_key: null
+  outcome_source:
+    connector: parquet_file
+    dataset: real_income
+    series: null
+    retrieval_time: null
+    file_path: null
+    file_checksum: null
+    row_count: 0
+    column_count: null
+    date_range: null
+    cache_key: null
+  control_sources: {}
+  instrument_sources: {}
+  combined_row_count: 0
+  combined_date_range: null
+  missing_rate: null
+  panel_dimensions: null
+  entity_boundary_note: null
+  kpi_definitions: null
+spec_hash: b327b4b58bb76c861cb9ea83d801f78185de731f39d0cf1487f8bfe48ffdf5b0
+spec_details:
+  design: LOCAL_PROJECTIONS
+  controls:
+  - y_lag1
+  - y_lag2
+  - x_lag1
+  - x_lag2
+  instruments: []
+  fixed_effects: []
+  se_method: HAC_newey_west
+  sample_filter: null
+  horizon: &id001
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  bandwidth: null
+estimates:
+  point: 0.0
+  se: 0.0
+  ci_95:
+  - 0.0
+  - 0.0
+  pvalue: null
+  horizons: *id001
+  irf:
+  - .nan
+  - .nan
+  - .nan
+  - .nan
+  - .nan
+  - .nan
+  - .nan
+  irf_ci_lower:
+  - .nan
+  - .nan
+  - .nan
+  - .nan
+  - .nan
+  - .nan
+  - .nan
+  irf_ci_upper:
+  - .nan
+  - .nan
+  - .nan
+  - .nan
+  - .nan
+  - .nan
+  - .nan
+diagnostics:
+  hac_bandwidth:
+    name: hac_bandwidth
+    passed: true
+    value: 0.0
+    threshold: null
+    pvalue: null
+    message: 'Newey-West bandwidth: 0'
+  effective_obs:
+    name: effective_obs
+    passed: false
+    value: 0.0
+    threshold: 20.0
+    pvalue: null
+    message: ''
+  sign_consistency:
+    name: sign_consistency
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: No expected sign specified
+  ts_hac_sensitivity:
+    name: ts_hac_sensitivity
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_regime_stability:
+    name: ts_regime_stability
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+all_diagnostics_pass: false
+interpretation:
+  estimand: IRF of real_income to a unit shock in cpi_headline
+  is_not: Structural causal effect under all interventions
+  channels:
+  - direct
+  - indirect
+  population: ''
+  conditions: ''
+  allowed_uses: []
+  forbidden_uses: []
+failure_flags:
+  weak_identification: false
+  potential_bad_control: false
+  mechanical_identity_risk: false
+  regime_break_detected: false
+  small_sample: true
+  high_missing_rate: false
+  entity_boundary_change: false
+  definition_inconsistency: false
+counterfactual:
+  supports_shock_path: true
+  supports_policy_intervention: false
+  intervention_note: Reduced-form LP estimate
+  external_validity: ''
+credibility_rating: B
+credibility_score: 0.6300000000000001
+identification:
+  claim_level: REDUCED_FORM
+  risks:
+    unmeasured_confounding: medium
+    simultaneity: low
+    weak_variation: low
+    measurement_error: low
+    selection: low
+  untestable_assumptions:
+  - No omitted common cause of treatment and outcome
+  testable_threats_passed:
+  - hac_bandwidth
+  - sign_consistency
+  - ts_hac_sensitivity
+  - ts_regime_stability
+  testable_threats_failed:
+  - effective_obs
+  strategy_type: ''
+  strategy_argument: ''
+  strategy_key_assumption: ''
+counterfactual_block:
+  shock_scenario_allowed: false
+  policy_intervention_allowed: false
+  reason_shock_blocked: Design LOCAL_PROJECTIONS provides REDUCED_FORM level only
+  reason_policy_blocked: REDUCED_FORM mode does not allow policy interventions
+  allowed: false
+  reason_blocked: Design LOCAL_PROJECTIONS provides REDUCED_FORM level only
+propagation_role:
+  role: reduced_form
+  overlapping_paths: []
+  selected_for_counterfactual: true
+  mode_propagation_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: true
+    DESCRIPTIVE: true
+  mode_shock_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: true
+    DESCRIPTIVE: false
+  mode_policy_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: false
+    DESCRIPTIVE: false
+literature:
+  supporting:
+  - doi: 10.3386/w23687
+    title: The Rise of Market Power and the Macroeconomic Implications
+    authors:
+    - Jan De Loecker
+    - Jan Eeckhout
+    year: 2017
+    excerpt: wages; market power; mark-ups; technology; market dynamism; market structure
+    relevance: supporting
+    edge_id: cpi_headline_to_real_income
+    paper_id: ''
+    citation_count: 783
+    search_query: Headline CPI Real monetary income causal effect
+    source: openalex
+    pdf_url: https://doi.org/10.3386/w23687
+  - doi: 10.3386/w15836
+    title: 'The Natural Resource Curse: A Survey'
+    authors:
+    - Jeffrey A. Frankel
+    year: 2010
+    excerpt: It is striking how often countries with oil or other natural resource
+      wealth have failed to grow more rapidly than those without. This is the phenomenon
+      known as the Natural Resource Curse. The principle is not confined to individual
+      anecdotes or case studies, but has been borne out in econometric t
+    relevance: supporting
+    edge_id: cpi_headline_to_real_income
+    paper_id: ''
+    citation_count: 581
+    search_query: Headline CPI Real monetary income causal effect
+    source: openalex
+    pdf_url: https://doi.org/10.3386/w15836
+  challenging:
+  - doi: 10.1108/ajar-09-2018-0029
+    title: Macroeconomic factors, firm characteristics and financial performance
+    authors:
+    - Chinedu Francis Egbunike
+    - Chinedu U. Okerekeoti
+    year: 2018
+    excerpt: 'Purpose The purpose of this paper is to explore the interrelationship
+      between macroeconomic factors, firm characteristics and financial performance
+      of quoted manufacturing firms in Nigeria. Specifically, the study investigates
+      the effect of interest rate, inflation rate, exchange rate and the gross '
+    relevance: challenging
+    edge_id: cpi_headline_to_real_income
+    paper_id: ''
+    citation_count: 173
+    search_query: Headline CPI Real monetary income causal effect
+    source: openalex
+    pdf_url: https://www.emerald.com:443/insight/content/doi/10.1108/AJAR-09-2018-0029/full/pdf?title=macroeconomic-factors-firm-characteristics-and-financial-performance-a-study-of-selected-quoted-manufacturing-firms-in-nigeria
+  methodological:
+  - doi: 10.1080/01621459.2025.2596297
+    title: 'The impact of job stability on monetary poverty in Italy: causal small
+      area estimation'
+    authors:
+    - Katarzyna Reluga
+    - Dehan Kong
+    - Setareh Ranjbar
+    - Nicola Salvati
+    - Mark van der Laan
+    year: 2025
+    excerpt: Job stability - encompassing secure contracts, adequate wages, social
+      benefits, and career opportunities - is a critical determinant in reducing monetary
+      poverty, as it provides households with reliable income and enhances economic
+      well-being. This study leverages EU-SILC survey and census data to e
+    relevance: methodological
+    edge_id: cpi_headline_to_real_income
+    paper_id: d566768db235aa427cc184ab0bcb1f9352311650
+    citation_count: 0
+    search_query: Headline CPI Real monetary income causal effect
+    source: semantic_scholar
+    pdf_url: ''
+  - doi: 10.1017/S1365100525000240
+    title: Are inflation movements global in nature?
+    authors:
+    - Zo Andriantomanga
+    year: 2025
+    excerpt: Abstract This paper adds to the literature on global inflation synchronization
+      by distinguishing the traded and non-traded content of the consumption basket.
+      Using a novel database of monthly CPI series of 40 countries from 2000, a dynamic
+      factor model with stochastic volatility decomposes inflation
+    relevance: methodological
+    edge_id: cpi_headline_to_real_income
+    paper_id: 397f56e4dcd2a7f810b242954e9e4bb9b146a7da
+    citation_count: 0
+    search_query: Headline CPI Real monetary income causal effect
+    source: semantic_scholar
+    pdf_url: ''
+  search_status: SEARCHED
+  search_timestamp: '2026-02-11T11:28:39.790928'
+  search_query: Headline CPI Real monetary income causal effect
+  total_results: 5
+companion_edge_id: null
+variant_of: null
+is_precisely_null: false
+null_equivalence_bound: null

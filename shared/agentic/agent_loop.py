@@ -1518,6 +1518,14 @@ class AgentLoop:
         for edge_id, reason in self.queue.get_blocking_issues().items():
             report.add_blocked_edge(edge_id, reason)
 
+        # Add failed edges (data gaps, adapter errors, etc.)
+        for task in self.queue.get_by_status(TaskStatus.FAILED):
+            if task.edge_id not in report.blocked_edges:
+                report.add_blocked_edge(
+                    task.edge_id,
+                    task.blocked_reason or "Failed (unknown reason)",
+                )
+
         # Compute critical path
         critical_tasks = self.queue.get_critical_tasks()
         critical_ids = [t.edge_id for t in critical_tasks]
@@ -1545,7 +1553,19 @@ class AgentLoop:
                 report.metadata = {}
             report.metadata["data_guidance"] = self._data_guidance
 
+        # Persist report JSON so the viz builder can show blocked-edge guidance
+        self._save_run_report(report)
+
         return report
+
+    def _save_run_report(self, report: SystemReport) -> None:
+        """Save run report JSON to the output directory for viz consumption."""
+        import json
+        report_path = self.config.output_dir / "run_report.json"
+        report_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(report_path, "w") as f:
+            json.dump(report.to_dict(), f, indent=2, default=str)
+        logger.info(f"Run report saved to {report_path}")
 
     def _print_edge_risk_block(
         self,

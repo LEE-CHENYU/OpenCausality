@@ -1,0 +1,332 @@
+edge_id: cpi_tradable_to_cpi_headline
+dag_version_hash: 4195135b663dd12b397a26b2e653b64687f1767c7ab19193b6bd8cf1f26d3e8d
+created_at: '2026-02-11T11:28:39.719642'
+data_provenance:
+  treatment_source:
+    connector: parquet_file
+    dataset: cpi_tradable
+    series: null
+    retrieval_time: null
+    file_path: null
+    file_checksum: null
+    row_count: 178
+    column_count: null
+    date_range:
+    - '2011-01-01'
+    - '2025-10-01'
+    cache_key: null
+  outcome_source:
+    connector: parquet_file
+    dataset: cpi_headline
+    series: null
+    retrieval_time: null
+    file_path: null
+    file_checksum: null
+    row_count: 178
+    column_count: null
+    date_range:
+    - '2011-01-01'
+    - '2025-10-01'
+    cache_key: null
+  control_sources: {}
+  instrument_sources: {}
+  combined_row_count: 178
+  combined_date_range:
+  - '2011-01-01'
+  - '2025-10-01'
+  missing_rate: null
+  panel_dimensions: null
+  entity_boundary_note: null
+  kpi_definitions: null
+spec_hash: b327b4b58bb76c861cb9ea83d801f78185de731f39d0cf1487f8bfe48ffdf5b0
+spec_details:
+  design: LOCAL_PROJECTIONS
+  controls:
+  - y_lag1
+  - y_lag2
+  - x_lag1
+  - x_lag2
+  instruments: []
+  fixed_effects: []
+  se_method: HAC_newey_west
+  sample_filter: null
+  horizon: &id001
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  bandwidth: null
+estimates:
+  point: 0.761814289462254
+  se: 0.043327155866326385
+  ci_95:
+  - 0.6768930639642543
+  - 0.8467355149602538
+  pvalue: 3.334696254595197e-69
+  horizons: *id001
+  irf:
+  - 0.761814289462254
+  - 0.43190623861094657
+  - 0.2614624504023015
+  - 0.1827804037018953
+  - 0.08900811723446048
+  - 0.011393739948500098
+  - 0.01569778169453669
+  irf_ci_lower:
+  - 0.676894624411701
+  - 0.30915327852711705
+  - 0.17112870851665837
+  - 0.060983857609730116
+  - 0.001892209954701185
+  - -0.07189377917850072
+  - -0.0901867917628496
+  irf_ci_upper:
+  - 0.8467339545128071
+  - 0.5546591986947761
+  - 0.35179619228794456
+  - 0.30457694979406047
+  - 0.17612402451421977
+  - 0.09468125907550091
+  - 0.12158235515192298
+diagnostics:
+  hac_bandwidth:
+    name: hac_bandwidth
+    passed: true
+    value: 4.0
+    threshold: null
+    pvalue: null
+    message: 'Newey-West bandwidth: 4'
+  effective_obs:
+    name: effective_obs
+    passed: true
+    value: 176.0
+    threshold: 20.0
+    pvalue: null
+    message: ''
+  sign_consistency:
+    name: sign_consistency
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: No expected sign specified
+  ts_leads_test:
+    name: ts_leads_test
+    passed: false
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: fail'
+  ts_residual_autocorr:
+    name: ts_residual_autocorr
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_hac_sensitivity:
+    name: ts_hac_sensitivity
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_lag_sensitivity:
+    name: ts_lag_sensitivity
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_regime_stability:
+    name: ts_regime_stability
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_shock_support:
+    name: ts_shock_support
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+all_diagnostics_pass: false
+interpretation:
+  estimand: IRF of cpi_headline to a unit shock in cpi_tradable
+  is_not: Structural causal effect under all interventions
+  channels:
+  - direct
+  - indirect
+  population: ''
+  conditions: ''
+  allowed_uses: []
+  forbidden_uses: []
+failure_flags:
+  weak_identification: false
+  potential_bad_control: false
+  mechanical_identity_risk: false
+  regime_break_detected: false
+  small_sample: false
+  high_missing_rate: false
+  entity_boundary_change: false
+  definition_inconsistency: false
+counterfactual:
+  supports_shock_path: true
+  supports_policy_intervention: false
+  intervention_note: Reduced-form LP estimate
+  external_validity: ''
+credibility_rating: A
+credibility_score: 0.9255555555555555
+identification:
+  claim_level: BLOCKED_ID
+  risks:
+    unmeasured_confounding: medium
+    simultaneity: low
+    weak_variation: low
+    measurement_error: low
+    selection: low
+  untestable_assumptions:
+  - No omitted common cause of treatment and outcome
+  testable_threats_passed:
+  - hac_bandwidth
+  - effective_obs
+  - sign_consistency
+  - ts_residual_autocorr
+  - ts_hac_sensitivity
+  - ts_lag_sensitivity
+  - ts_regime_stability
+  - ts_shock_support
+  testable_threats_failed:
+  - ts_leads_test
+  strategy_type: ''
+  strategy_argument: ''
+  strategy_key_assumption: ''
+counterfactual_block:
+  shock_scenario_allowed: false
+  policy_intervention_allowed: false
+  reason_shock_blocked: Shock CF requires REDUCED_FORM+, edge has BLOCKED_ID
+  reason_policy_blocked: REDUCED_FORM mode does not allow policy interventions
+  allowed: false
+  reason_blocked: Shock CF requires REDUCED_FORM+, edge has BLOCKED_ID
+propagation_role:
+  role: identity
+  overlapping_paths: []
+  selected_for_counterfactual: false
+  mode_propagation_allowed:
+    STRUCTURAL: true
+    REDUCED_FORM: true
+    DESCRIPTIVE: true
+  mode_shock_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: false
+    DESCRIPTIVE: false
+  mode_policy_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: false
+    DESCRIPTIVE: false
+literature:
+  supporting:
+  - doi: 10.3386/w15836
+    title: 'The Natural Resource Curse: A Survey'
+    authors:
+    - Jeffrey A. Frankel
+    year: 2010
+    excerpt: It is striking how often countries with oil or other natural resource
+      wealth have failed to grow more rapidly than those without. This is the phenomenon
+      known as the Natural Resource Curse. The principle is not confined to individual
+      anecdotes or case studies, but has been borne out in econometric t
+    relevance: supporting
+    edge_id: cpi_tradable_to_cpi_headline
+    paper_id: ''
+    citation_count: 581
+    search_query: Tradable CPI Headline CPI causal effect
+    source: openalex
+    pdf_url: https://doi.org/10.3386/w15836
+  - doi: 10.1353/eca.2013.0015
+    title: 'Boom, Bust, Recovery: Forensics of the Latvia Crisis'
+    authors:
+    - Olivier Blanchard
+    - Mark D. Griffiths
+    - Bertrand Gruss
+    year: 2013
+    excerpt: 'Latvia’s boom, bust, and recovery provide a rare case study for macroeconomists:
+      an economy that responded to a balance-of-payments crisis by maintaining its
+      currency peg and adjusting through internal devaluation and front-loaded consolidation.
+      This paper lays down the facts about Latvia’s boom and'
+    relevance: supporting
+    edge_id: cpi_tradable_to_cpi_headline
+    paper_id: ''
+    citation_count: 93
+    search_query: Tradable CPI Headline CPI causal effect
+    source: openalex
+    pdf_url: https://muse.jhu.edu/article/543823/pdf
+  - doi: 10.3386/w28005
+    title: 'The Slope of the Phillips Curve: Evidence from U.S. States'
+    authors:
+    - Jonathon Hazell
+    - Juan Herreño
+    - Emi Nakamura
+    - Jón Steinsson
+    year: 2020
+    excerpt: We estimate the slope of the Phillips curve in the cross section of U.S.
+      states using newly constructed state-level price indexes for non-tradeable goods
+      back to 1978.Our estimates indicate that the slope of the Phillips curve is
+      small and was small even during the early 1980s.We estimate only a mod
+    relevance: supporting
+    edge_id: cpi_tradable_to_cpi_headline
+    paper_id: ''
+    citation_count: 59
+    search_query: Tradable CPI Headline CPI causal effect
+    source: openalex
+    pdf_url: https://doi.org/10.3386/w28005
+  - doi: 10.1080/23311932.2023.2212458
+    title: Measuring the pass-through effect of global food price volatility and South
+      Africa’s CPI on the headline inflation of Zimbabwe
+    authors:
+    - Gabriel Mhonyera
+    - Stein Masunda
+    - D. Meyer
+    year: 2023
+    excerpt: Abstract Pronounced food price volatility has challenging effects on
+      the macroeconomic performance of countries. Particularly, large food price swings
+      can generate rippling effects on inflation and poverty. This article examines
+      the inflation effect of global food price volatility and South Africa’s
+    relevance: supporting
+    edge_id: cpi_tradable_to_cpi_headline
+    paper_id: 2b43fdefb48d7029b942112204c0ff34c66cd881
+    citation_count: 5
+    search_query: Tradable CPI Headline CPI causal effect
+    source: semantic_scholar
+    pdf_url: ''
+  - doi: 10.30586/pek.1561475
+    title: 'ECONOMIC DETERMINANTS OF E-COMMERCE: A FREQUENCY-DOMAIN CAUSALITY ANALYSIS
+      OF CPI AND PERSONAL LOANS IN TÜRKİYE'
+    authors:
+    - Mehmet Mert Türk
+    year: 2024
+    excerpt: This study explores the relationship between e-commerce volume, the Consumer
+      Price Index (CPI), and personal loan rates in Turkey, focusing on the period
+      from 2015 to 2024. By employing time series analysis and frequency-domain causality
+      tests, the research aims to identify the factors influencing t
+    relevance: supporting
+    edge_id: cpi_tradable_to_cpi_headline
+    paper_id: 1ea10378f3b33ed676b831273d239ba213c8a725
+    citation_count: 0
+    search_query: Tradable CPI Headline CPI causal effect
+    source: semantic_scholar
+    pdf_url: ''
+  challenging: []
+  methodological: []
+  search_status: SEARCHED
+  search_timestamp: '2026-02-11T11:28:39.719904'
+  search_query: Tradable CPI Headline CPI causal effect
+  total_results: 5
+companion_edge_id: null
+variant_of: null
+is_precisely_null: false
+null_equivalence_bound: null

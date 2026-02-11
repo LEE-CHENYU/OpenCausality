@@ -1,0 +1,333 @@
+edge_id: nominal_income_to_real_income
+dag_version_hash: 4195135b663dd12b397a26b2e653b64687f1767c7ab19193b6bd8cf1f26d3e8d
+created_at: '2026-02-11T11:28:39.543486'
+data_provenance:
+  treatment_source:
+    connector: parquet_file
+    dataset: nominal_income
+    series: null
+    retrieval_time: null
+    file_path: null
+    file_checksum: null
+    row_count: 58
+    column_count: null
+    date_range:
+    - '2011-03-01'
+    - '2025-09-01'
+    cache_key: null
+  outcome_source:
+    connector: parquet_file
+    dataset: real_income
+    series: null
+    retrieval_time: null
+    file_path: null
+    file_checksum: null
+    row_count: 58
+    column_count: null
+    date_range:
+    - '2011-03-01'
+    - '2025-09-01'
+    cache_key: null
+  control_sources: {}
+  instrument_sources: {}
+  combined_row_count: 58
+  combined_date_range:
+  - '2011-03-01'
+  - '2025-09-01'
+  missing_rate: null
+  panel_dimensions: null
+  entity_boundary_note: null
+  kpi_definitions: null
+spec_hash: b327b4b58bb76c861cb9ea83d801f78185de731f39d0cf1487f8bfe48ffdf5b0
+spec_details:
+  design: LOCAL_PROJECTIONS
+  controls:
+  - y_lag1
+  - y_lag2
+  - x_lag1
+  - x_lag2
+  instruments: []
+  fixed_effects: []
+  se_method: HAC_newey_west
+  sample_filter: null
+  horizon: &id001
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  bandwidth: null
+estimates:
+  point: 0.9330544195797443
+  se: 0.02770422400969326
+  ci_95:
+  - 0.8787541405207455
+  - 0.9873546986387431
+  pvalue: 1.1680567298440232e-248
+  horizons: *id001
+  irf:
+  - 0.9330544195797443
+  - -0.6193795722262204
+  - 0.13201103877208745
+  - -0.15568365354630562
+  - 0.582227978036663
+  - -0.45537342757126803
+  - 0.0846500474313099
+  irf_ci_lower:
+  - 0.8787551383011157
+  - -0.8574815687829211
+  - -0.01967287198814438
+  - -0.2564041426667929
+  - 0.3966411286985923
+  - -0.6932886820216477
+  - -0.018449097143621043
+  irf_ci_upper:
+  - 0.9873537008583729
+  - -0.38127757566951975
+  - 0.2836949495323193
+  - -0.05496316442581835
+  - 0.7678148273747338
+  - -0.21745817312088836
+  - 0.18774919200624085
+diagnostics:
+  hac_bandwidth:
+    name: hac_bandwidth
+    passed: true
+    value: 3.0
+    threshold: null
+    pvalue: null
+    message: 'Newey-West bandwidth: 3'
+  effective_obs:
+    name: effective_obs
+    passed: true
+    value: 56.0
+    threshold: 20.0
+    pvalue: null
+    message: ''
+  sign_consistency:
+    name: sign_consistency
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: No expected sign specified
+  ts_leads_test:
+    name: ts_leads_test
+    passed: false
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: fail'
+  ts_residual_autocorr:
+    name: ts_residual_autocorr
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_hac_sensitivity:
+    name: ts_hac_sensitivity
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_lag_sensitivity:
+    name: ts_lag_sensitivity
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_regime_stability:
+    name: ts_regime_stability
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_shock_support:
+    name: ts_shock_support
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+all_diagnostics_pass: false
+interpretation:
+  estimand: IRF of real_income to a unit shock in nominal_income
+  is_not: Structural causal effect under all interventions
+  channels:
+  - direct
+  - indirect
+  population: ''
+  conditions: ''
+  allowed_uses: []
+  forbidden_uses: []
+failure_flags:
+  weak_identification: false
+  potential_bad_control: false
+  mechanical_identity_risk: false
+  regime_break_detected: false
+  small_sample: false
+  high_missing_rate: false
+  entity_boundary_change: false
+  definition_inconsistency: false
+counterfactual:
+  supports_shock_path: true
+  supports_policy_intervention: false
+  intervention_note: Reduced-form LP estimate
+  external_validity: ''
+credibility_rating: A
+credibility_score: 0.8375555555555555
+identification:
+  claim_level: BLOCKED_ID
+  risks:
+    unmeasured_confounding: medium
+    simultaneity: low
+    weak_variation: low
+    measurement_error: low
+    selection: low
+  untestable_assumptions:
+  - No omitted common cause of treatment and outcome
+  testable_threats_passed:
+  - hac_bandwidth
+  - effective_obs
+  - sign_consistency
+  - ts_residual_autocorr
+  - ts_hac_sensitivity
+  - ts_lag_sensitivity
+  - ts_regime_stability
+  - ts_shock_support
+  testable_threats_failed:
+  - ts_leads_test
+  strategy_type: ''
+  strategy_argument: ''
+  strategy_key_assumption: ''
+counterfactual_block:
+  shock_scenario_allowed: false
+  policy_intervention_allowed: false
+  reason_shock_blocked: Shock CF requires REDUCED_FORM+, edge has BLOCKED_ID
+  reason_policy_blocked: REDUCED_FORM mode does not allow policy interventions
+  allowed: false
+  reason_blocked: Shock CF requires REDUCED_FORM+, edge has BLOCKED_ID
+propagation_role:
+  role: identity
+  overlapping_paths: []
+  selected_for_counterfactual: false
+  mode_propagation_allowed:
+    STRUCTURAL: true
+    REDUCED_FORM: true
+    DESCRIPTIVE: true
+  mode_shock_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: false
+    DESCRIPTIVE: false
+  mode_policy_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: false
+    DESCRIPTIVE: false
+literature:
+  supporting:
+  - doi: 10.1596/1813-9450-1678
+    title: 'Financial Development and Economic Growth: Views and Agenda'
+    authors:
+    - Ross Levine
+    year: 1999
+    excerpt: 'No AccessPolicy Research Working Papers21 Jun 2013Financial Development
+      and Economic Growth: Views and AgendaAuthors/Editors: Ross LevineRoss Levinehttps://doi.org/10.1596/1813-9450-1678SectionsAboutPDF
+      (3.4 MB) ToolsAdd to favoritesDownload CitationsTrack Citations ShareFacebookTwitterLinked
+      In Abs'
+    relevance: supporting
+    edge_id: nominal_income_to_real_income
+    paper_id: ''
+    citation_count: 3033
+    search_query: Nominal monetary income Real monetary income causal effect
+    source: openalex
+    pdf_url: ''
+  - doi: 10.1086/654340
+    title: An Optimization-Based Econometric Framework for the Evaluation of Monetary
+      Policy
+    authors:
+    - Julio J. Rotemberg
+    - Michael Woodford
+    year: 1997
+    excerpt: This paper considers a simple quantitative model of output, interest
+      rate and inflation determination in the United States, and uses it to evaluate
+      alternative rules by which the Fed may set interest rates. The model is derived
+      from optimizing behavior under rational expectations, both on the part o
+    relevance: supporting
+    edge_id: nominal_income_to_real_income
+    paper_id: ''
+    citation_count: 1897
+    search_query: Nominal monetary income Real monetary income causal effect
+    source: openalex
+    pdf_url: https://www.journals.uchicago.edu/doi/epdf/10.1086/654340
+  - doi: 10.3386/w21162
+    title: 'Dilemma not Trilemma: The Global Financial Cycle and Monetary Policy Independence'
+    authors:
+    - Hélène Rey
+    year: 2015
+    excerpt: There is a global financial cycle in capital flows, asset prices and
+      in credit growth.This cycle co moves with the VIX, a measure of uncertainty
+      and risk aversion of the markets.Asset markets in countries with more credit
+      inflows are more sensitive to the global cycle.The global financial cycle is
+      n
+    relevance: supporting
+    edge_id: nominal_income_to_real_income
+    paper_id: ''
+    citation_count: 1875
+    search_query: Nominal monetary income Real monetary income causal effect
+    source: openalex
+    pdf_url: https://doi.org/10.3386/w21162
+  - doi: 10.1186/s12889-024-19049-w
+    title: 'Estimating the causal effects of income on health: how researchers’ definitions
+      of “income” matter'
+    authors:
+    - E. Igelström
+    - D. Kopasker
+    - Peter Craig
+    - J. Lewsey
+    - S. Katikireddi
+    year: 2024
+    excerpt: There is a well-established cross-sectional association between income
+      and health, but estimates of the causal effects of income vary substantially.
+      Different definitions of income may lead to substantially different empirical
+      results, yet research is often framed as investigating “the effect of inc
+    relevance: supporting
+    edge_id: nominal_income_to_real_income
+    paper_id: dd876faa37663300eb303ce87b7119b2e4936175
+    citation_count: 6
+    search_query: Nominal monetary income Real monetary income causal effect
+    source: semantic_scholar
+    pdf_url: ''
+  - doi: 10.26425/1816-4277-2025-8-92-101
+    title: Statistical analysis of average per capita monetary income of the population
+      in Russia and its regions
+    authors:
+    - E. Dolgikh
+    - V. A. Filatova
+    year: 2025
+    excerpt: The population’s monetary incomes structure for 2015 and 2023 has been
+      analyzed, and the characteristics of structural shifts during the period under
+      review have been given. Special attention has been paid to the characterization
+      of the trends in changes in the average per capita population’s moneta
+    relevance: supporting
+    edge_id: nominal_income_to_real_income
+    paper_id: e64842f84c44e87a0e257daa8bf410715cda9412
+    citation_count: 0
+    search_query: Nominal monetary income Real monetary income causal effect
+    source: semantic_scholar
+    pdf_url: ''
+  challenging: []
+  methodological: []
+  search_status: SEARCHED
+  search_timestamp: '2026-02-11T11:28:39.543596'
+  search_query: Nominal monetary income Real monetary income causal effect
+  total_results: 5
+companion_edge_id: null
+variant_of: null
+is_precisely_null: false
+null_equivalence_bound: null

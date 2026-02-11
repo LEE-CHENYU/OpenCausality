@@ -1,0 +1,3404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HITL Resolution Panel</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background: #fff;
+            color: #000;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        /* Header */
+        .header {
+            padding: 24px 32px 16px;
+            border-bottom: 1px solid #000;
+        }
+        .header h1 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .header .subtitle {
+            color: #666;
+            font-size: 11px;
+            margin-bottom: 12px;
+        }
+        .stats-row {
+            display: flex;
+            gap: 24px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .stat {
+            font-size: 11px;
+        }
+        .stat strong { font-weight: 600; }
+        .stat .critical { color: #000; font-weight: 700; }
+        .stat .high { color: #555; font-weight: 600; }
+
+        /* Controls bar */
+        .controls-bar {
+            padding: 10px 32px;
+            border-bottom: 1px solid #000;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            background: #fafafa;
+            font-size: 11px;
+        }
+        .controls-bar label {
+            color: #666;
+            margin-right: 4px;
+        }
+        .controls-bar select, .controls-bar input[type="text"] {
+            border: 1px solid #000;
+            background: #fff;
+            padding: 4px 8px;
+            font-size: 11px;
+            font-family: inherit;
+        }
+        .controls-bar input[type="text"] {
+            width: 200px;
+        }
+
+        /* Progress bar */
+        .progress-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: auto;
+        }
+        .progress-bar {
+            width: 120px;
+            height: 8px;
+            border: 1px solid #000;
+            background: #fff;
+        }
+        .progress-fill {
+            height: 100%;
+            background: #000;
+            transition: width 0.3s;
+        }
+        .progress-label {
+            font-size: 11px;
+            font-weight: 500;
+            min-width: 60px;
+        }
+
+        /* Sections */
+        .section {
+            padding: 16px 32px;
+            border-bottom: 1px solid #ddd;
+        }
+        .section:last-of-type {
+            border-bottom: 1px solid #000;
+        }
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+        .section-title {
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .section-count {
+            font-size: 11px;
+            color: #666;
+        }
+        .severity-badge {
+            display: inline-block;
+            font-size: 10px;
+            font-weight: 600;
+            padding: 1px 6px;
+            border: 1px solid #000;
+            margin-left: 8px;
+        }
+        .severity-badge.critical {
+            background: #000;
+            color: #fff;
+        }
+        .severity-badge.high {
+            background: #fff;
+            color: #000;
+        }
+        .severity-badge.medium {
+            background: #eee;
+            color: #000;
+        }
+        .severity-badge.low {
+            background: #fff;
+            color: #999;
+        }
+
+        /* Bulk action */
+        .bulk-action {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            background: #fafafa;
+        }
+        .bulk-action label { color: #666; font-size: 11px; }
+        .bulk-action select {
+            border: 1px solid #000;
+            background: #fff;
+            padding: 3px 6px;
+            font-size: 11px;
+            font-family: inherit;
+        }
+        .btn-sm {
+            border: 1px solid #000;
+            background: #fff;
+            padding: 3px 10px;
+            font-size: 11px;
+            font-family: inherit;
+            cursor: pointer;
+        }
+        .btn-sm:hover { background: #000; color: #fff; }
+
+        /* Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+        }
+        th {
+            text-align: left;
+            font-weight: 600;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 6px 8px;
+            border-bottom: 1px solid #000;
+            color: #666;
+        }
+        td {
+            padding: 8px 8px;
+            border-bottom: 1px solid #eee;
+            vertical-align: top;
+        }
+        tr:hover td { background: #fafafa; }
+        tr.resolved td { opacity: 0.45; }
+
+        .edge-name {
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        .mono {
+            font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+            font-size: 10px;
+        }
+        .diag-pass { color: #000; }
+        .diag-fail { color: #000; font-weight: 700; text-decoration: underline; }
+
+        .claim-tag {
+            display: inline-block;
+            font-size: 9px;
+            font-weight: 600;
+            padding: 1px 5px;
+            border: 1px solid #000;
+            white-space: nowrap;
+        }
+        .rating-tag {
+            display: inline-block;
+            font-size: 10px;
+            font-weight: 700;
+            width: 18px;
+            text-align: center;
+            border: 1px solid #000;
+        }
+
+        .flag-list {
+            font-size: 10px;
+            color: #666;
+        }
+        .flag-list .flag {
+            display: inline-block;
+            margin-right: 4px;
+            padding: 0 3px;
+            border: 1px solid #ccc;
+            font-size: 9px;
+        }
+
+        /* Action cells */
+        td select {
+            border: 1px solid #000;
+            background: #fff;
+            padding: 3px 6px;
+            font-size: 11px;
+            font-family: inherit;
+            width: 100%;
+        }
+        td select.decided {
+            background: #000;
+            color: #fff;
+        }
+        td input[type="text"] {
+            border: 1px solid #ccc;
+            padding: 3px 6px;
+            font-size: 10px;
+            font-family: inherit;
+            width: 100%;
+            margin-top: 4px;
+        }
+        td input[type="text"]:focus {
+            border-color: #000;
+            outline: none;
+        }
+
+        /* Details toggle */
+        .details-row td {
+            padding: 0 8px 8px 8px;
+            border-bottom: 1px solid #ddd;
+        }
+        .details-content {
+            display: none;
+            padding: 8px 12px;
+            background: #fafafa;
+            border: 1px solid #eee;
+            font-size: 10px;
+            line-height: 1.6;
+        }
+        .details-content.open { display: block; }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            max-width: 400px;
+        }
+        .detail-label { color: #666; }
+        .detail-value { font-weight: 500; font-variant-numeric: tabular-nums; }
+        .toggle-btn {
+            cursor: pointer;
+            color: #666;
+            font-size: 10px;
+            text-decoration: underline;
+        }
+        .toggle-btn:hover { color: #000; }
+
+        /* Footer */
+        .footer {
+            padding: 16px 32px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .footer label {
+            font-size: 11px;
+            color: #666;
+        }
+        .footer input[type="text"] {
+            border: 1px solid #000;
+            padding: 6px 10px;
+            font-size: 11px;
+            font-family: inherit;
+            width: 220px;
+        }
+        .btn-export {
+            border: 1px solid #000;
+            background: #000;
+            color: #fff;
+            padding: 6px 20px;
+            font-size: 12px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+        }
+        .btn-export:hover { background: #333; }
+        .btn-export:disabled {
+            background: #ccc;
+            border-color: #ccc;
+            cursor: not-allowed;
+        }
+        .footer .timestamp {
+            font-size: 10px;
+            color: #999;
+            margin-left: auto;
+        }
+
+        /* Welcome banner */
+        .welcome-banner {
+            padding: 16px 32px;
+            background: #f8f8f8;
+            border-bottom: 1px solid #ddd;
+            font-size: 11px;
+            line-height: 1.7;
+            color: #333;
+        }
+        .welcome-banner h2 { font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+        .welcome-banner p { margin-bottom: 6px; }
+
+        /* Rule info box */
+        .rule-info {
+            margin-bottom: 12px;
+            padding: 10px 14px;
+            background: #f8f8f8;
+            border-left: 3px solid #000;
+        }
+        .rule-description { font-size: 11px; font-weight: 500; margin-bottom: 4px; }
+        .rule-extra { display: none; }
+        .rule-extra.open { display: block; }
+        .rule-explanation {
+            font-size: 11px; color: #444; line-height: 1.6; margin-bottom: 6px; margin-top: 6px;
+        }
+        .rule-guidance {
+            font-size: 11px; color: #222; padding: 6px 10px;
+            background: #fff; border: 1px solid #ddd;
+        }
+        .rule-guidance strong { font-weight: 600; }
+        .why-toggle {
+            cursor: pointer; color: #666; font-size: 10px;
+            text-decoration: underline; margin-left: 8px;
+        }
+        .why-toggle:hover { color: #000; }
+
+        /* Action tooltip info box */
+        .action-info {
+            font-size: 10px; color: #555; margin-top: 4px;
+            padding: 4px 6px; background: #f8f8f8; border: 1px solid #eee;
+            min-height: 16px;
+        }
+
+        /* Decision guide */
+        .decision-guide {
+            margin-bottom: 10px;
+            padding: 10px 14px;
+            background: #fffbf0;
+            border-left: 3px solid #c8a000;
+            font-size: 11px;
+            line-height: 1.7;
+        }
+        .decision-guide-title {
+            font-weight: 600;
+            font-size: 11px;
+            margin-bottom: 6px;
+            color: #7a6400;
+        }
+        .decision-guide .risk-tag {
+            display: inline-block;
+            font-size: 9px;
+            padding: 1px 5px;
+            border: 1px solid #c8a000;
+            margin-right: 3px;
+            background: #fff8e0;
+        }
+        .decision-guide .risk-tag.high { border-color: #c00; background: #fff0f0; }
+        .decision-guide .sign-match { color: #080; }
+        .decision-guide .sign-mismatch { color: #c00; font-weight: 600; }
+        .decision-guide .implication {
+            margin-top: 6px; padding: 4px 8px;
+            background: #fff; border: 1px solid #e8e0c0;
+        }
+
+        /* LLM guidance */
+        .llm-guidance {
+            margin-bottom: 10px;
+            padding: 10px 14px;
+            background: #f0f4ff;
+            border-left: 3px solid #2563eb;
+            font-size: 11px;
+            line-height: 1.7;
+        }
+        .llm-guidance-title {
+            font-weight: 600;
+            font-size: 11px;
+            margin-bottom: 6px;
+            color: #1e40af;
+        }
+        .llm-guidance-text {
+            color: #333;
+        }
+
+        /* LLM edge annotation */
+        .llm-edge-annotation {
+            margin-top: 6px;
+            padding: 6px 10px;
+            background: #f8f9ff;
+            border: 1px solid #dde3ff;
+            font-size: 10px;
+            line-height: 1.6;
+            color: #444;
+            font-style: italic;
+        }
+
+        /* Hidden */
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>HITL Resolution Panel</h1>
+    <div class="subtitle">Human-in-the-Loop Issue Resolution &mdash; KSPI K2 Agentic Pipeline</div>
+    <div class="stats-row" id="statsRow"></div>
+</div>
+
+<div class="welcome-banner">
+    <h2>How to Use This Panel</h2>
+    <p>This panel presents issues detected by the OpenCausality governance system that require
+    your expert judgment. Each section groups issues by rule type and severity. Your role is to
+    review each flagged issue, understand its implications for causal inference, and select an
+    appropriate resolution action.</p>
+    <p>For each issue, click <strong>[Why?]</strong> to see why it matters and how to decide.
+    Select an action from the dropdown and optionally add a rationale. Your decisions will be
+    logged in the audit trail for reproducibility.</p>
+    <p>When all issues are resolved, click <strong>Export Decisions</strong> to save your
+    decisions as a JSON file that can be fed back into the pipeline.</p>
+</div>
+
+<div class="controls-bar">
+    <label>Severity</label>
+    <select id="filterSeverity">
+        <option value="all">All</option>
+        <option value="CRITICAL">CRITICAL</option>
+        <option value="HIGH">HIGH</option>
+        <option value="MEDIUM">MEDIUM</option>
+        <option value="LOW">LOW</option>
+    </select>
+    <label>Rule</label>
+    <select id="filterRule">
+        <option value="all">All rules</option>
+    </select>
+    <label>Status</label>
+    <select id="filterStatus">
+        <option value="all">All</option>
+        <option value="pending">Pending</option>
+        <option value="resolved">Resolved</option>
+    </select>
+    <div class="progress-container">
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+        <span class="progress-label" id="progressLabel">0 / 0</span>
+    </div>
+</div>
+
+<div id="sectionsContainer"></div>
+
+<div class="footer">
+    <label>Analyst ID</label>
+    <input type="text" id="analystId" placeholder="Your name or initials">
+    <button class="btn-export" id="exportBtn">Export Decisions</button>
+    <span class="timestamp" id="genTimestamp"></span>
+</div>
+
+<script>
+// ── INJECTED DATA (replaced at build time) ──────────────────────────────
+const ISSUES = {
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:rwa_kspi_to_k2_ratio_kspi": {
+    "status": "OPEN",
+    "opened_run": "eee75eeb",
+    "severity": "CRITICAL",
+    "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+    "message": "p=0.0031 but claim_level=BLOCKED_ID. Significance does not establish causation."
+  },
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:cpi_nontradable_to_cpi_headline": {
+    "status": "OPEN",
+    "opened_run": "eee75eeb",
+    "severity": "CRITICAL",
+    "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+    "message": "p=0.0015 but claim_level=BLOCKED_ID. Significance does not establish causation."
+  },
+  "RATING_DIAGNOSTICS_CONFLICT:cpi_nontradable_to_cpi_headline": {
+    "status": "OPEN",
+    "opened_run": "eee75eeb",
+    "severity": "HIGH",
+    "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
+    "message": "A-rating despite failed diagnostics."
+  },
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:kzt_usd_to_cpi_nontradable": {
+    "status": "OPEN",
+    "opened_run": "eee75eeb",
+    "severity": "CRITICAL",
+    "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+    "message": "p=0.0231 but claim_level=REDUCED_FORM. Significance does not establish causation."
+  },
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:real_expenditure_to_ppop_kspi": {
+    "status": "OPEN",
+    "opened_run": "eee75eeb",
+    "severity": "CRITICAL",
+    "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+    "message": "p=0.0000 but claim_level=REDUCED_FORM. Significance does not establish causation."
+  },
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:cor_kspi_to_total_capital_kspi": {
+    "status": "OPEN",
+    "opened_run": "eee75eeb",
+    "severity": "CRITICAL",
+    "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+    "message": "p=0.0000 but claim_level=BLOCKED_ID. Significance does not establish causation."
+  },
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:ppop_kspi_to_total_capital_kspi": {
+    "status": "OPEN",
+    "opened_run": "eee75eeb",
+    "severity": "CRITICAL",
+    "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+    "message": "p=0.0000 but claim_level=BLOCKED_ID. Significance does not establish causation."
+  },
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:cpi_tradable_to_cpi_headline": {
+    "status": "OPEN",
+    "opened_run": "eee75eeb",
+    "severity": "CRITICAL",
+    "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+    "message": "p=0.0000 but claim_level=BLOCKED_ID. Significance does not establish causation."
+  },
+  "RATING_DIAGNOSTICS_CONFLICT:cpi_tradable_to_cpi_headline": {
+    "status": "OPEN",
+    "opened_run": "eee75eeb",
+    "severity": "HIGH",
+    "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
+    "message": "A-rating despite failed diagnostics."
+  },
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:nominal_income_to_real_income": {
+    "status": "OPEN",
+    "opened_run": "eee75eeb",
+    "severity": "CRITICAL",
+    "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+    "message": "p=0.0000 but claim_level=BLOCKED_ID. Significance does not establish causation."
+  },
+  "RATING_DIAGNOSTICS_CONFLICT:nominal_income_to_real_income": {
+    "status": "OPEN",
+    "opened_run": "eee75eeb",
+    "severity": "HIGH",
+    "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
+    "message": "A-rating despite failed diagnostics."
+  }
+};
+const CLOSED_ISSUES_COUNT = 0;
+const EDGES = {
+  "cor_kspi_to_total_capital_kspi": {
+    "point": -8.279877170645383,
+    "se": 0.9271160839206617,
+    "pvalue": 4.229850937660592e-19,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "B",
+    "score": 0.7155555555555556,
+    "claim_level": "BLOCKED_ID",
+    "all_pass": false,
+    "n_obs": 25,
+    "diagnostics": [
+      {
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": true
+      },
+      {
+        "name": "sign_consistency",
+        "passed": true
+      },
+      {
+        "name": "ts_leads_test",
+        "passed": false
+      },
+      {
+        "name": "ts_residual_autocorr",
+        "passed": true
+      },
+      {
+        "name": "ts_hac_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_lag_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_regime_stability",
+        "passed": true
+      },
+      {
+        "name": "ts_shock_support",
+        "passed": true
+      }
+    ],
+    "failure_flags": [
+      "small_sample"
+    ],
+    "panel": null,
+    "estimand": "IRF of total_capital_kspi to a unit shock in cor_kspi",
+    "is_not": "Structural causal effect under all interventions",
+    "allowed_uses": [],
+    "forbidden_uses": [],
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Shock CF requires REDUCED_FORM+, edge has BLOCKED_ID",
+    "id_risks": {
+      "unmeasured_confounding": "medium",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "untestable_assumptions": [
+      "No omitted common cause of treatment and outcome"
+    ],
+    "testable_passed": [
+      "hac_bandwidth",
+      "effective_obs",
+      "sign_consistency",
+      "ts_residual_autocorr",
+      "ts_hac_sensitivity",
+      "ts_lag_sensitivity",
+      "ts_regime_stability",
+      "ts_shock_support"
+    ],
+    "testable_failed": [
+      "ts_leads_test"
+    ],
+    "propagation_role": "bridge"
+  },
+  "cpi_nontradable_to_cpi_headline": {
+    "point": 0.722095626287286,
+    "se": 0.22687975273453517,
+    "pvalue": 0.0014589663178228855,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "A",
+    "score": 0.9255555555555555,
+    "claim_level": "BLOCKED_ID",
+    "all_pass": false,
+    "n_obs": 176,
+    "diagnostics": [
+      {
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": true
+      },
+      {
+        "name": "sign_consistency",
+        "passed": true
+      },
+      {
+        "name": "ts_leads_test",
+        "passed": false
+      },
+      {
+        "name": "ts_residual_autocorr",
+        "passed": true
+      },
+      {
+        "name": "ts_hac_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_lag_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_regime_stability",
+        "passed": true
+      },
+      {
+        "name": "ts_shock_support",
+        "passed": true
+      }
+    ],
+    "failure_flags": [],
+    "panel": null,
+    "estimand": "IRF of cpi_headline to a unit shock in cpi_nontradable",
+    "is_not": "Structural causal effect under all interventions",
+    "allowed_uses": [],
+    "forbidden_uses": [],
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Shock CF requires REDUCED_FORM+, edge has BLOCKED_ID",
+    "id_risks": {
+      "unmeasured_confounding": "medium",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "untestable_assumptions": [
+      "No omitted common cause of treatment and outcome"
+    ],
+    "testable_passed": [
+      "hac_bandwidth",
+      "effective_obs",
+      "sign_consistency",
+      "ts_residual_autocorr",
+      "ts_hac_sensitivity",
+      "ts_lag_sensitivity",
+      "ts_regime_stability",
+      "ts_shock_support"
+    ],
+    "testable_failed": [
+      "ts_leads_test"
+    ],
+    "propagation_role": "identity"
+  },
+  "cpi_tradable_to_cpi_headline": {
+    "point": 0.761814289462254,
+    "se": 0.043327155866326385,
+    "pvalue": 3.334696254595197e-69,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "A",
+    "score": 0.9255555555555555,
+    "claim_level": "BLOCKED_ID",
+    "all_pass": false,
+    "n_obs": 176,
+    "diagnostics": [
+      {
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": true
+      },
+      {
+        "name": "sign_consistency",
+        "passed": true
+      },
+      {
+        "name": "ts_leads_test",
+        "passed": false
+      },
+      {
+        "name": "ts_residual_autocorr",
+        "passed": true
+      },
+      {
+        "name": "ts_hac_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_lag_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_regime_stability",
+        "passed": true
+      },
+      {
+        "name": "ts_shock_support",
+        "passed": true
+      }
+    ],
+    "failure_flags": [],
+    "panel": null,
+    "estimand": "IRF of cpi_headline to a unit shock in cpi_tradable",
+    "is_not": "Structural causal effect under all interventions",
+    "allowed_uses": [],
+    "forbidden_uses": [],
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Shock CF requires REDUCED_FORM+, edge has BLOCKED_ID",
+    "id_risks": {
+      "unmeasured_confounding": "medium",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "untestable_assumptions": [
+      "No omitted common cause of treatment and outcome"
+    ],
+    "testable_passed": [
+      "hac_bandwidth",
+      "effective_obs",
+      "sign_consistency",
+      "ts_residual_autocorr",
+      "ts_hac_sensitivity",
+      "ts_lag_sensitivity",
+      "ts_regime_stability",
+      "ts_shock_support"
+    ],
+    "testable_failed": [
+      "ts_leads_test"
+    ],
+    "propagation_role": "identity"
+  },
+  "kzt_usd_to_cpi_nontradable": {
+    "point": 7.680517172265832e-05,
+    "se": 3.3801146890145904e-05,
+    "pvalue": 0.023070493914662118,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "A",
+    "score": 0.97,
+    "claim_level": "REDUCED_FORM",
+    "all_pass": true,
+    "n_obs": 186,
+    "diagnostics": [
+      {
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": true
+      },
+      {
+        "name": "sign_consistency",
+        "passed": true
+      },
+      {
+        "name": "ts_leads_test",
+        "passed": true
+      },
+      {
+        "name": "ts_residual_autocorr",
+        "passed": true
+      },
+      {
+        "name": "ts_hac_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_lag_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_regime_stability",
+        "passed": true
+      },
+      {
+        "name": "ts_shock_support",
+        "passed": true
+      }
+    ],
+    "failure_flags": [],
+    "panel": null,
+    "estimand": "IRF of cpi_nontradable to a unit shock in kzt_usd",
+    "is_not": "Structural causal effect under all interventions",
+    "allowed_uses": [],
+    "forbidden_uses": [],
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Design LOCAL_PROJECTIONS provides REDUCED_FORM level only",
+    "id_risks": {
+      "unmeasured_confounding": "medium",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "untestable_assumptions": [
+      "No omitted common cause of treatment and outcome"
+    ],
+    "testable_passed": [
+      "hac_bandwidth",
+      "effective_obs",
+      "sign_consistency",
+      "ts_leads_test",
+      "ts_residual_autocorr",
+      "ts_hac_sensitivity",
+      "ts_lag_sensitivity",
+      "ts_regime_stability",
+      "ts_shock_support"
+    ],
+    "testable_failed": [],
+    "propagation_role": "structural"
+  },
+  "nominal_income_to_real_income": {
+    "point": 0.9330544195797443,
+    "se": 0.02770422400969326,
+    "pvalue": 1.1680567298440232e-248,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "A",
+    "score": 0.8375555555555555,
+    "claim_level": "BLOCKED_ID",
+    "all_pass": false,
+    "n_obs": 56,
+    "diagnostics": [
+      {
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": true
+      },
+      {
+        "name": "sign_consistency",
+        "passed": true
+      },
+      {
+        "name": "ts_leads_test",
+        "passed": false
+      },
+      {
+        "name": "ts_residual_autocorr",
+        "passed": true
+      },
+      {
+        "name": "ts_hac_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_lag_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_regime_stability",
+        "passed": true
+      },
+      {
+        "name": "ts_shock_support",
+        "passed": true
+      }
+    ],
+    "failure_flags": [],
+    "panel": null,
+    "estimand": "IRF of real_income to a unit shock in nominal_income",
+    "is_not": "Structural causal effect under all interventions",
+    "allowed_uses": [],
+    "forbidden_uses": [],
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Shock CF requires REDUCED_FORM+, edge has BLOCKED_ID",
+    "id_risks": {
+      "unmeasured_confounding": "medium",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "untestable_assumptions": [
+      "No omitted common cause of treatment and outcome"
+    ],
+    "testable_passed": [
+      "hac_bandwidth",
+      "effective_obs",
+      "sign_consistency",
+      "ts_residual_autocorr",
+      "ts_hac_sensitivity",
+      "ts_lag_sensitivity",
+      "ts_regime_stability",
+      "ts_shock_support"
+    ],
+    "testable_failed": [
+      "ts_leads_test"
+    ],
+    "propagation_role": "identity"
+  },
+  "ppop_kspi_to_total_capital_kspi": {
+    "point": 67.39583115584853,
+    "se": 8.209668409808977,
+    "pvalue": 2.2243652090044065e-16,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "B",
+    "score": 0.6511111111111112,
+    "claim_level": "BLOCKED_ID",
+    "all_pass": false,
+    "n_obs": 15,
+    "diagnostics": [
+      {
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": false
+      },
+      {
+        "name": "sign_consistency",
+        "passed": true
+      },
+      {
+        "name": "ts_leads_test",
+        "passed": false
+      },
+      {
+        "name": "ts_residual_autocorr",
+        "passed": true
+      },
+      {
+        "name": "ts_hac_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_lag_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_regime_stability",
+        "passed": true
+      },
+      {
+        "name": "ts_shock_support",
+        "passed": true
+      }
+    ],
+    "failure_flags": [
+      "small_sample"
+    ],
+    "panel": null,
+    "estimand": "IRF of total_capital_kspi to a unit shock in ppop_kspi",
+    "is_not": "Structural causal effect under all interventions",
+    "allowed_uses": [],
+    "forbidden_uses": [],
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Shock CF requires REDUCED_FORM+, edge has BLOCKED_ID",
+    "id_risks": {
+      "unmeasured_confounding": "medium",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "untestable_assumptions": [
+      "No omitted common cause of treatment and outcome"
+    ],
+    "testable_passed": [
+      "hac_bandwidth",
+      "sign_consistency",
+      "ts_residual_autocorr",
+      "ts_hac_sensitivity",
+      "ts_lag_sensitivity",
+      "ts_regime_stability",
+      "ts_shock_support"
+    ],
+    "testable_failed": [
+      "effective_obs",
+      "ts_leads_test"
+    ],
+    "propagation_role": "bridge"
+  },
+  "real_expenditure_to_ppop_kspi": {
+    "point": -0.7732869484425496,
+    "se": 5.9538920948099374e-12,
+    "pvalue": 0.0,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "C",
+    "score": 0.522,
+    "claim_level": "REDUCED_FORM",
+    "all_pass": false,
+    "n_obs": 6,
+    "diagnostics": [
+      {
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": false
+      },
+      {
+        "name": "sign_consistency",
+        "passed": true
+      },
+      {
+        "name": "ts_residual_autocorr",
+        "passed": false
+      },
+      {
+        "name": "ts_hac_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_lag_sensitivity",
+        "passed": false
+      },
+      {
+        "name": "ts_regime_stability",
+        "passed": true
+      },
+      {
+        "name": "ts_shock_support",
+        "passed": false
+      }
+    ],
+    "failure_flags": [
+      "small_sample"
+    ],
+    "panel": null,
+    "estimand": "IRF of ppop_kspi to a unit shock in real_expenditure",
+    "is_not": "Structural causal effect under all interventions",
+    "allowed_uses": [],
+    "forbidden_uses": [],
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Counterfactual Use: BLOCKED\nReason: insufficient shock episodes\n\nEven if p<0.05, this does not establish a causal effect.",
+    "id_risks": {
+      "unmeasured_confounding": "medium",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "untestable_assumptions": [
+      "No omitted common cause of treatment and outcome"
+    ],
+    "testable_passed": [
+      "hac_bandwidth",
+      "sign_consistency",
+      "ts_hac_sensitivity",
+      "ts_regime_stability"
+    ],
+    "testable_failed": [
+      "effective_obs",
+      "ts_residual_autocorr",
+      "ts_lag_sensitivity",
+      "ts_shock_support"
+    ],
+    "propagation_role": "reduced_form"
+  },
+  "rwa_kspi_to_k2_ratio_kspi": {
+    "point": -0.006058255436425573,
+    "se": 0.002047730679385075,
+    "pvalue": 0.003091185818188935,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "B",
+    "score": 0.7155555555555556,
+    "claim_level": "BLOCKED_ID",
+    "all_pass": false,
+    "n_obs": 25,
+    "diagnostics": [
+      {
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": true
+      },
+      {
+        "name": "sign_consistency",
+        "passed": true
+      },
+      {
+        "name": "ts_leads_test",
+        "passed": false
+      },
+      {
+        "name": "ts_residual_autocorr",
+        "passed": true
+      },
+      {
+        "name": "ts_hac_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_lag_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_regime_stability",
+        "passed": true
+      },
+      {
+        "name": "ts_shock_support",
+        "passed": true
+      }
+    ],
+    "failure_flags": [
+      "small_sample"
+    ],
+    "panel": null,
+    "estimand": "IRF of k2_ratio_kspi to a unit shock in rwa_kspi",
+    "is_not": "Structural causal effect under all interventions",
+    "allowed_uses": [],
+    "forbidden_uses": [],
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Shock CF requires REDUCED_FORM+, edge has BLOCKED_ID",
+    "id_risks": {
+      "unmeasured_confounding": "medium",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "untestable_assumptions": [
+      "No omitted common cause of treatment and outcome"
+    ],
+    "testable_passed": [
+      "hac_bandwidth",
+      "effective_obs",
+      "sign_consistency",
+      "ts_residual_autocorr",
+      "ts_hac_sensitivity",
+      "ts_lag_sensitivity",
+      "ts_regime_stability",
+      "ts_shock_support"
+    ],
+    "testable_failed": [
+      "ts_leads_test"
+    ],
+    "propagation_role": "identity"
+  }
+};
+const ACTIONS_BY_RULE = {
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED": {
+    "action_type": "set_claim_level",
+    "options": [
+      {
+        "value": "IDENTIFIED_CAUSAL",
+        "label": "IDENTIFIED_CAUSAL",
+        "tooltip": "Asserts credible identification strategy (IV, RDD, DiD). Requires documentation. Unlocks counterfactual propagation at full weight."
+      },
+      {
+        "value": "REDUCED_FORM",
+        "label": "REDUCED_FORM",
+        "tooltip": "Informative but not causally identified. Flagged in reports, excluded from causal counterfactuals. Useful for suggestive evidence."
+      },
+      {
+        "value": "DESCRIPTIVE",
+        "label": "DESCRIPTIVE",
+        "tooltip": "Descriptive association only. No causal weight in propagation or counterfactuals. Kept for reporting and context."
+      },
+      {
+        "value": "BLOCKED_ID",
+        "label": "BLOCKED_ID",
+        "tooltip": "Blocks identification claim entirely. Edge remains in DAG but cannot be used for propagation until resolved."
+      }
+    ]
+  },
+  "REACTION_FUNCTION_EDGE": {
+    "action_type": "set_propagation",
+    "options": [
+      {
+        "value": "RECLASSIFY_DIAGNOSTIC",
+        "label": "Reclassify as diagnostic",
+        "tooltip": "Moves edge to diagnostic-only role. It will appear in reports but not participate in shock propagation or counterfactuals."
+      },
+      {
+        "value": "ACCEPT_WITH_CAVEAT",
+        "label": "Accept with caveat",
+        "tooltip": "Keeps edge in propagation but adds an explicit caveat about endogeneity to all downstream counterfactuals."
+      },
+      {
+        "value": "BLOCK_PROPAGATION",
+        "label": "Block from propagation",
+        "tooltip": "Removes edge from all propagation paths. It remains visible in the DAG for documentation but has zero causal weight."
+      }
+    ]
+  },
+  "TIME_FE_ABSORBS_SHOCK": {
+    "action_type": "set_design_fix",
+    "options": [
+      {
+        "value": "ADD_INTERACTION",
+        "label": "Add Exposure x Shock",
+        "tooltip": "Adds cross-sectional exposure interaction to identify effects absorbed by time FE. Standard DiD approach for common macro shocks."
+      },
+      {
+        "value": "DROP_TIME_FE",
+        "label": "Drop time FE",
+        "tooltip": "Removes time fixed effects to allow common shock identification. Risks confounding from other time-varying factors."
+      },
+      {
+        "value": "ACCEPT",
+        "label": "Accept (document)",
+        "tooltip": "Keeps current specification. Documents that the common shock effect is absorbed and the estimate captures only cross-sectional variation."
+      }
+    ]
+  },
+  "EXPOSURE_NOT_PREDETERMINED": {
+    "action_type": "set_exposure_action",
+    "options": [
+      {
+        "value": "LAG_EXPOSURE",
+        "label": "Lag exposure variable",
+        "tooltip": "Uses pre-treatment period exposure measurement to avoid bad controls bias. Recommended if pre-treatment data is available."
+      },
+      {
+        "value": "ACCEPT_CAVEAT",
+        "label": "Accept with caveat",
+        "tooltip": "Keeps contemporaneous exposure with a documented caveat about potential attenuation bias from endogenous exposure."
+      },
+      {
+        "value": "BLOCK_ID",
+        "label": "Block identification claim",
+        "tooltip": "Downgrades identification to REDUCED_FORM. The edge cannot claim causal identification without predetermined exposure."
+      }
+    ]
+  },
+  "MECHANICAL_EDGE_ESTIMATED": {
+    "action_type": "set_edge_type",
+    "options": [
+      {
+        "value": "CONVERT_BRIDGE",
+        "label": "Convert to bridge edge",
+        "tooltip": "Replaces regression with deterministic sensitivity (partial derivative). Eliminates wasted estimation budget on tautological relationships."
+      },
+      {
+        "value": "ACCEPT",
+        "label": "Accept as regression",
+        "tooltip": "Keeps the regression estimate. Useful if you want to empirically test whether the identity holds (e.g., detecting measurement error)."
+      }
+    ]
+  },
+  "PATH_DOUBLE_COUNTING": {
+    "action_type": "set_path_choice",
+    "options": [
+      {
+        "value": "USE_STRUCTURAL",
+        "label": "Use structural chain",
+        "tooltip": "Uses the full structural decomposition (A-&gt;B-&gt;C). Provides more granular policy levers but requires all intermediate edges to be credible."
+      },
+      {
+        "value": "USE_REDUCED_FORM",
+        "label": "Use reduced-form shortcut",
+        "tooltip": "Uses the direct reduced-form edge (A-&gt;C). Simpler and more robust if intermediate edges are weak, but loses structural detail."
+      },
+      {
+        "value": "ACCEPT_BOTH",
+        "label": "Accept both (document)",
+        "tooltip": "Keeps both paths with documentation. Only valid if paths measure different aspects (e.g., short-run vs long-run effects)."
+      }
+    ]
+  },
+  "ENTITY_BOUNDARY_DRIFT": {
+    "action_type": "set_boundary_action",
+    "options": [
+      {
+        "value": "HARMONIZE",
+        "label": "Harmonize to common scope",
+        "tooltip": "Converts all observations to the same entity scope (bank-level or group-level). May require data adjustments."
+      },
+      {
+        "value": "ACCEPT_CAVEAT",
+        "label": "Accept with caveat",
+        "tooltip": "Keeps mixed scopes with a documented caveat. Appropriate when scope differences are small or unavoidable."
+      },
+      {
+        "value": "EXCLUDE_EDGE",
+        "label": "Exclude edge",
+        "tooltip": "Removes the edge from estimation entirely. Use when scope mixing makes the estimate unreliable."
+      }
+    ]
+  },
+  "KPI_DEFINITION_MISMATCH_CROSS_BANK": {
+    "action_type": "set_kpi_action",
+    "options": [
+      {
+        "value": "HARMONIZE",
+        "label": "Harmonize definitions",
+        "tooltip": "Adjusts data to use consistent definitions across banks. May require recalculation from raw components."
+      },
+      {
+        "value": "ACCEPT_CAVEAT",
+        "label": "Accept with caveat",
+        "tooltip": "Keeps heterogeneous definitions with documentation. Appropriate if differences are minor or well-understood."
+      },
+      {
+        "value": "EXCLUDE_EDGE",
+        "label": "Exclude edge",
+        "tooltip": "Removes the edge. Use when definition differences are fundamental and cannot be reconciled."
+      }
+    ]
+  },
+  "SHOCK_CONSTRUCT_AMBIGUOUS": {
+    "action_type": "set_shock_action",
+    "options": [
+      {
+        "value": "ADD_METADATA",
+        "label": "Add shock metadata",
+        "tooltip": "Populates missing shock_node_id, shock_unit, and shock_scale from DAG spec. Required for counterfactual scenarios."
+      },
+      {
+        "value": "ACCEPT",
+        "label": "Accept as-is",
+        "tooltip": "Keeps edge without shock metadata. Edge will not be usable in counterfactual scenarios."
+      }
+    ]
+  },
+  "FREQUENCY_ALIGNMENT_ERROR": {
+    "action_type": "set_freq_action",
+    "options": [
+      {
+        "value": "AGGREGATE_Q",
+        "label": "Aggregate to quarterly",
+        "tooltip": "Aggregates higher-frequency data to quarterly using the DAG-specified method (average for flows, end-of-period for stocks)."
+      },
+      {
+        "value": "AGGREGATE_A",
+        "label": "Aggregate to annual",
+        "tooltip": "Aggregates to annual frequency. Loses short-run dynamics but may be necessary for data availability reasons."
+      },
+      {
+        "value": "ACCEPT",
+        "label": "Accept (document)",
+        "tooltip": "Keeps mixed frequencies with documentation. Only appropriate if the estimator handles mixed frequencies natively."
+      }
+    ]
+  },
+  "FREQUENCY_SCALING_MISMATCH": {
+    "action_type": "set_scaling_action",
+    "options": [
+      {
+        "value": "NORMALIZE",
+        "label": "Normalize to common unit",
+        "tooltip": "Rescales coefficients to a common time unit (quarterly convention). Ensures cross-run comparability."
+      },
+      {
+        "value": "ACCEPT_CAVEAT",
+        "label": "Accept with caveat",
+        "tooltip": "Keeps different time units with documentation. Cross-run comparisons will include unit conversion caveats."
+      }
+    ]
+  },
+  "EXTRACTION_PROVENANCE_GAPS": {
+    "action_type": "set_provenance_action",
+    "options": [
+      {
+        "value": "ADD_SOURCE",
+        "label": "Add source reference",
+        "tooltip": "Adds source document, page, and table reference to the data extraction metadata for audit trail."
+      },
+      {
+        "value": "ACCEPT",
+        "label": "Accept (low risk)",
+        "tooltip": "Accepts without provenance. Appropriate for public market data or well-known statistical series."
+      }
+    ]
+  },
+  "SMALL_SAMPLE_INFERENCE": {
+    "action_type": "set_sample_action",
+    "options": [
+      {
+        "value": "CAP_B",
+        "label": "Cap rating to B",
+        "tooltip": "Limits credibility rating to B, reflecting asymptotic approximation risk with N &lt; 30. Automatic default action."
+      },
+      {
+        "value": "ACCEPT_CAVEAT",
+        "label": "Accept with caveat",
+        "tooltip": "Keeps current rating with documented small-sample caveat. Only if you have justification for asymptotic validity."
+      },
+      {
+        "value": "RE_ESTIMATE",
+        "label": "Flag for re-estimation",
+        "tooltip": "Queues re-estimation with wild bootstrap standard errors for more reliable small-sample inference."
+      }
+    ]
+  },
+  "PANEL_TOO_FEW_UNITS": {
+    "action_type": "set_panel_action",
+    "options": [
+      {
+        "value": "CAP_B",
+        "label": "Cap rating to B",
+        "tooltip": "Limits rating to B due to cluster-robust SE unreliability with &lt; 5 units. Automatic default action."
+      },
+      {
+        "value": "WILD_BOOTSTRAP",
+        "label": "Use wild cluster bootstrap",
+        "tooltip": "Re-estimates with wild cluster bootstrap (Webb weights) for valid few-cluster inference. May widen confidence intervals."
+      },
+      {
+        "value": "ACCEPT_CAVEAT",
+        "label": "Accept with caveat",
+        "tooltip": "Keeps current estimate with documented caveat about few-cluster inference fragility."
+      }
+    ]
+  },
+  "LOO_INSTABILITY": {
+    "action_type": "set_loo_action",
+    "options": [
+      {
+        "value": "CAP_C",
+        "label": "Cap rating to C",
+        "tooltip": "Limits rating to C reflecting result fragility to single-unit exclusion. Signals low confidence in generalizability."
+      },
+      {
+        "value": "ACCEPT_CAVEAT",
+        "label": "Accept with caveat",
+        "tooltip": "Keeps current rating with documented LOO instability caveat. Identify the influential unit in the rationale."
+      },
+      {
+        "value": "RE_ESTIMATE",
+        "label": "Flag for re-estimation",
+        "tooltip": "Queues re-estimation with the influential unit excluded or winsorized. Produces a robustness comparison."
+      }
+    ]
+  },
+  "BREAKS_UNMODELED": {
+    "action_type": "set_breaks_action",
+    "options": [
+      {
+        "value": "ADD_REGIME",
+        "label": "Add regime dummy",
+        "tooltip": "Adds a structural break dummy at the detected break date. Allows coefficient to differ across regimes."
+      },
+      {
+        "value": "SPLIT_SAMPLE",
+        "label": "Split sample estimation",
+        "tooltip": "Estimates separately for each regime. Provides regime-specific coefficients for targeted counterfactuals."
+      },
+      {
+        "value": "ACCEPT_CAVEAT",
+        "label": "Accept with caveat",
+        "tooltip": "Keeps pooled estimate with caveat about coefficient averaging across regimes."
+      }
+    ]
+  },
+  "MULTIPLE_TESTING_DRIFT": {
+    "action_type": "set_testing_action",
+    "options": [
+      {
+        "value": "BONFERRONI",
+        "label": "Apply Bonferroni correction",
+        "tooltip": "Adjusts p-values for the number of specifications tested. Conservative but protects against false discoveries."
+      },
+      {
+        "value": "ACCEPT_CAVEAT",
+        "label": "Accept with caveat",
+        "tooltip": "Keeps unadjusted p-values with documentation of the specification search. Appropriate for pre-planned robustness."
+      },
+      {
+        "value": "RESET_BUDGET",
+        "label": "Reset spec budget",
+        "tooltip": "Resets the specification budget counter. Use only if the additional specs were pre-planned and documented."
+      }
+    ]
+  },
+  "NONSTATIONARY_LEVELS_RISK": {
+    "action_type": "set_stationarity_action",
+    "options": [
+      {
+        "value": "DIFFERENCE",
+        "label": "First-difference",
+        "tooltip": "Applies first-differencing to both variables. Removes trends but loses long-run level information."
+      },
+      {
+        "value": "ECM",
+        "label": "Use ECM specification",
+        "tooltip": "Uses Error Correction Model to preserve long-run relationship while modeling short-run dynamics. Requires cointegration."
+      },
+      {
+        "value": "ACCEPT",
+        "label": "Accept (document)",
+        "tooltip": "Keeps levels specification with documentation. Only valid if you have theoretical reasons for level relationships."
+      }
+    ]
+  },
+  "RESIDUAL_AUTOCORR_DETECTED": {
+    "action_type": "set_autocorr_action",
+    "options": [
+      {
+        "value": "INCREASE_HAC",
+        "label": "Increase HAC bandwidth",
+        "tooltip": "Increases Newey-West kernel bandwidth to better capture serial correlation. May widen standard errors."
+      },
+      {
+        "value": "ACCEPT_CAVEAT",
+        "label": "Accept with caveat",
+        "tooltip": "Keeps current HAC bandwidth with documented autocorrelation caveat. Appropriate for mild autocorrelation."
+      }
+    ]
+  },
+  "REGIME_BREAK_SUSPECTED": {
+    "action_type": "set_regime_action",
+    "options": [
+      {
+        "value": "ADD_BREAK",
+        "label": "Add structural break",
+        "tooltip": "Adds break dummy and interaction terms at the detected break date. Allows before/after comparison."
+      },
+      {
+        "value": "SPLIT_SAMPLE",
+        "label": "Split sample",
+        "tooltip": "Estimates separately for pre-break and post-break periods. Provides regime-specific coefficients."
+      },
+      {
+        "value": "ACCEPT_CAVEAT",
+        "label": "Accept with caveat",
+        "tooltip": "Keeps pooled estimate with documented regime instability caveat."
+      }
+    ]
+  },
+  "LEADS_SIGNIFICANT_TIMING_FAIL": {
+    "action_type": "set_timing_action",
+    "options": [
+      {
+        "value": "BLOCK_PROPAGATION",
+        "label": "Block from propagation",
+        "tooltip": "Removes edge from all propagation paths. Automatic action for timing failures. Edge kept for diagnostic purposes."
+      },
+      {
+        "value": "ACCEPT_CAVEAT",
+        "label": "Accept with caveat (document)",
+        "tooltip": "Keeps edge with documented timing failure. Only valid if leads reflect anticipated policy changes, not reverse causation."
+      },
+      {
+        "value": "RE_ESTIMATE",
+        "label": "Flag for re-estimation",
+        "tooltip": "Queues re-estimation with adjusted shock timing or additional lead/lag structure to investigate timing failure."
+      }
+    ]
+  },
+  "HAC_LAG_SENSITIVITY_HIGH": {
+    "action_type": "set_hac_action",
+    "options": [
+      {
+        "value": "USE_FIXED_BW",
+        "label": "Fix HAC bandwidth",
+        "tooltip": "Uses a fixed, data-driven bandwidth (Andrews 1991). Removes sensitivity to ad hoc bandwidth choice."
+      },
+      {
+        "value": "ACCEPT_CAVEAT",
+        "label": "Accept with caveat",
+        "tooltip": "Keeps current estimate with documented bandwidth sensitivity caveat. Report results across multiple bandwidths."
+      }
+    ]
+  },
+  "SELECTION_PUBLIC_BANK_ONLY": {
+    "action_type": "set_selection_action",
+    "options": [
+      {
+        "value": "ADD_DISCLAIMER",
+        "label": "Add report disclaimer",
+        "tooltip": "Adds explicit sample restriction disclaimer to the system report. Results clearly labeled as public-bank-only."
+      },
+      {
+        "value": "CAP_SCOPE",
+        "label": "Cap counterfactual scope",
+        "tooltip": "Restricts counterfactual predictions to public banks only. Prevents extrapolation to non-sampled bank types."
+      },
+      {
+        "value": "ACCEPT",
+        "label": "Accept as-is",
+        "tooltip": "No action taken. Use only if the target population is specifically public banks."
+      }
+    ]
+  },
+  "SURVIVORSHIP_BIAS_RISK": {
+    "action_type": "set_survivorship_action",
+    "options": [
+      {
+        "value": "ADD_DISCLAIMER",
+        "label": "Add report disclaimer",
+        "tooltip": "Adds survivorship bias disclaimer. Notes that estimates may understate negative effects due to exit selection."
+      },
+      {
+        "value": "SENSITIVITY_CHECK",
+        "label": "Run sensitivity check",
+        "tooltip": "Re-estimates including failed/merged banks up to their last observation. Compares with survivor-only estimates."
+      },
+      {
+        "value": "ACCEPT_CAVEAT",
+        "label": "Accept with caveat",
+        "tooltip": "Keeps survivor-only estimate with documented caveat about potential downward bias in negative effect estimates."
+      }
+    ]
+  },
+  "COVERAGE_GAP_EXTERNAL_VALIDITY": {
+    "action_type": "set_coverage_action",
+    "options": [
+      {
+        "value": "ADD_DISCLAIMER",
+        "label": "Add report disclaimer",
+        "tooltip": "Adds coverage gap disclaimer. Documents which segments of the target population are missing from the sample."
+      },
+      {
+        "value": "ACCEPT_CAVEAT",
+        "label": "Accept with caveat",
+        "tooltip": "Accepts with documented coverage limitation. Notes direction of likely bias from missing segments."
+      }
+    ]
+  },
+  "RATING_DIAGNOSTICS_CONFLICT": {
+    "action_type": "set_rating",
+    "options": [
+      {
+        "value": "DOWNGRADE_B",
+        "label": "Downgrade to B",
+        "tooltip": "Downgrades from A to B due to failed diagnostics. Standard action to maintain rating-evidence consistency."
+      },
+      {
+        "value": "DOWNGRADE_C",
+        "label": "Downgrade to C",
+        "tooltip": "Downgrades to C for severe diagnostic failures (multiple failed checks or critical timing failure)."
+      },
+      {
+        "value": "ACCEPT",
+        "label": "Accept (document)",
+        "tooltip": "Keeps A rating despite diagnostic issues. Requires strong justification documented in rationale."
+      }
+    ]
+  },
+  "N_REPORTING_INCONSISTENT": {
+    "action_type": "set_n_action",
+    "options": [
+      {
+        "value": "FIX_REPORT",
+        "label": "Fix report N",
+        "tooltip": "Updates the system report header to match EdgeCard N_eff. Standard fix for reporting inconsistencies."
+      },
+      {
+        "value": "FIX_EDGECARD",
+        "label": "Fix EdgeCard N_eff",
+        "tooltip": "Updates EdgeCard N_eff to match report header. Use only if the report header is the authoritative source."
+      },
+      {
+        "value": "ACCEPT",
+        "label": "Accept (document)",
+        "tooltip": "Keeps inconsistency with documentation. Only if the discrepancy reflects a deliberate methodological choice."
+      }
+    ]
+  },
+  "CROSS_EVIDENCE_CONFLICT": {
+    "action_type": "set_conflict_action",
+    "options": [
+      {
+        "value": "PREFER_STRUCTURAL",
+        "label": "Prefer structural edge",
+        "tooltip": "Uses the structural (better-identified) edge estimate. The conflicting reduced-form edge is demoted to diagnostic-only."
+      },
+      {
+        "value": "PREFER_REDUCED",
+        "label": "Prefer reduced-form edge",
+        "tooltip": "Uses the reduced-form edge estimate. The structural edge is demoted. Appropriate if structural identification is suspect."
+      },
+      {
+        "value": "ACCEPT_BOTH",
+        "label": "Accept both (document)",
+        "tooltip": "Keeps both estimates with documented conflict. Reports will show both with an explicit conflict warning."
+      }
+    ]
+  },
+  "UNIT_MISSING_IN_EDGECARD": {
+    "action_type": "set_unit_action",
+    "options": [
+      {
+        "value": "ADD_UNITS",
+        "label": "Add units from spec",
+        "tooltip": "Auto-populates treatment_unit and outcome_unit from the DAG node specifications. Standard auto-fix."
+      },
+      {
+        "value": "ACCEPT",
+        "label": "Accept (not critical)",
+        "tooltip": "Keeps edge without explicit units. Only for edges not used in propagation where unit ambiguity is acceptable."
+      }
+    ]
+  },
+  "_default": {
+    "action_type": "resolve",
+    "options": [
+      {
+        "value": "ACCEPT",
+        "label": "Accept",
+        "tooltip": "Accepts the issue without further action. The issue is marked as resolved."
+      },
+      {
+        "value": "REJECT",
+        "label": "Reject",
+        "tooltip": "Rejects the flagged finding. The edge remains as-is but the rejection is logged for audit."
+      },
+      {
+        "value": "ESCALATE",
+        "label": "Escalate",
+        "tooltip": "Escalates to senior reviewer or domain expert. Issue remains open until resolved by escalation target."
+      }
+    ]
+  }
+};
+const RULE_DESCRIPTIONS = {
+  "ENTITY_BOUNDARY_DRIFT": {
+    "description": "Mixing entity scopes (bank vs group) breaks comparability",
+    "explanation": "When different observations mix entity scopes (e.g., bank-level vs consolidated group-level), the treatment and outcome variables become incomparable across units. Capital ratios at bank level differ systematically from group level due to intra-group transfers and double counting. Ignoring this produces biased panel estimates because the variation being exploited is partly definitional, not economic.\n",
+    "guidance": "Harmonize all observations to the same scope (preferably unconsolidated bank-level for Kazakhstan data). If harmonization is impossible, add a scope dummy and note the caveat in the report.\n"
+  },
+  "KPI_DEFINITION_MISMATCH_CROSS_BANK": {
+    "description": "NPL/CoR definitions differ across banks causing sign conflicts",
+    "explanation": "Banks may use different definitions for key performance indicators (e.g., NPL includes/excludes restructured loans, CoR uses different provisioning rules). Cross-bank panel estimation treats these as comparable, but definitional differences create measurement error correlated with bank characteristics. This can flip coefficient signs between runs and invalidate pooled estimates.\n",
+    "guidance": "Check if the definition mismatch is economically meaningful. If yes, harmonize definitions or estimate separately by definition group. Document any remaining heterogeneity as a limitation.\n"
+  },
+  "SHOCK_CONSTRUCT_AMBIGUOUS": {
+    "description": "EdgeCard must include shock_node_id, shock_unit, shock_scale",
+    "explanation": "Without explicit shock metadata (which node is shocked, in what units, at what scale), counterfactual scenarios become ambiguous. A &quot;10% depreciation&quot; could mean 10 percentage points or 10% of the current level, leading to order-of-magnitude errors in propagation. This metadata is required for reproducible counterfactuals.\n",
+    "guidance": "The system will auto-populate shock metadata from the DAG spec. Verify that the inferred shock_unit and shock_scale match your intended scenario.\n"
+  },
+  "FREQUENCY_ALIGNMENT_ERROR": {
+    "description": "Mixing frequencies without explicit aggregation rule",
+    "explanation": "Mixing monthly treatment with quarterly outcome (or vice versa) without a declared aggregation method (end-of-period, average, sum) introduces temporal misalignment. The estimator may silently interpolate or drop observations, changing the effective sample and potentially biasing results. This is auto-fixable but must be logged.\n",
+    "guidance": "The system will apply the aggregation rule from the DAG spec. If no rule is specified, it defaults to end-of-period for stocks and average for flows.\n"
+  },
+  "FREQUENCY_SCALING_MISMATCH": {
+    "description": "Annual vs quarterly estimates not normalized to common unit",
+    "explanation": "When comparing estimates across runs with different frequencies, a quarterly coefficient is not directly comparable to an annual one. Failing to normalize (e.g., annualize quarterly or quarterly-ize annual) leads to incorrect propagation multipliers and misleading cross-run convergence assessments.\n",
+    "guidance": "Normalize all estimates to a common time unit before comparison. The preferred convention is quarterly for macro variables and annual for structural parameters.\n"
+  },
+  "EXTRACTION_PROVENANCE_GAPS": {
+    "description": "Missing source document/page reference for extracted data",
+    "explanation": "Data extracted from PDFs, reports, or regulatory filings should carry provenance (source document, page, table number) so that results can be independently verified. Missing provenance makes reproduction impossible and raises audit risk, especially for regulatory submissions.\n",
+    "guidance": "Add the source reference to the data extraction metadata. For low-risk variables (e.g., public market data), this can be accepted with a note.\n"
+  },
+  "REACTION_FUNCTION_EDGE": {
+    "description": "Policy reaction edge cannot be used for shock propagation",
+    "explanation": "A policy reaction function (e.g., central bank raises rates in response to inflation) captures endogenous behavior, not a causal effect of an exogenous shock. Using it for shock propagation would double-count the policy response or create circular logic. The edge should be classified as diagnostic or informational only.\n",
+    "guidance": "Reclassify as diagnostic-only if this is purely a reaction function. If you believe there is an exogenous component, document the identification strategy and accept with a caveat.\n"
+  },
+  "TIME_FE_ABSORBS_SHOCK": {
+    "description": "Panel with time FE and common shock requires Exposure x Shock",
+    "explanation": "Time fixed effects absorb all common time-varying shocks (including the treatment of interest if it is a macro shock common to all units). To identify the effect, the design must exploit cross-sectional variation in exposure (Exposure x Shock interaction). Without this, the coefficient is mechanically zero or identified only from noise.\n",
+    "guidance": "The system will suggest adding an Exposure x Shock interaction term. This is the standard diff-in-diff approach for common shocks in panel data.\n"
+  },
+  "EXPOSURE_NOT_PREDETERMINED": {
+    "description": "Exposure variable must be measured strictly pre-treatment",
+    "explanation": "If the exposure variable (e.g., bank&#x27;s FX share) is measured contemporaneously with or after the shock, it may itself be affected by the shock, creating a &quot;bad controls&quot; problem. This violates the exclusion restriction in diff-in-diff designs and biases the estimated causal effect, typically attenuating it toward zero.\n",
+    "guidance": "Lag the exposure variable to a pre-treatment period. If pre-treatment measurement is unavailable, accept with a caveat noting potential attenuation bias.\n"
+  },
+  "MECHANICAL_EDGE_ESTIMATED": {
+    "description": "Accounting identity should be bridge, not regression",
+    "explanation": "Regressing an identity (e.g., CAR = Capital / RWA) produces tautological results with near-perfect fit, inflating credibility scores and wasting estimation budget. Mechanical edges should be treated as deterministic bridges that pass through shocks via calculus (partial derivatives), not statistical estimation.\n",
+    "guidance": "The system will convert this to a bridge edge with deterministic sensitivity. Accept as regression only if you need to test whether the identity holds empirically.\n"
+  },
+  "PATH_DOUBLE_COUNTING": {
+    "description": "Direct reduced-form + indirect chain both used for propagation",
+    "explanation": "If both a direct reduced-form edge (A -&gt; C) and a structural chain (A -&gt; B -&gt; C) are included in propagation, the total effect is double-counted. This inflates counterfactual predictions, potentially by 100% or more. The system detects overlapping paths and requires the analyst to choose one.\n",
+    "guidance": "Prefer the structural chain if all intermediate edges are IDENTIFIED_CAUSAL, as it provides more granular policy levers. Use reduced-form if intermediate edges are weak or if you only need the total effect.\n"
+  },
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED": {
+    "description": "Significant result but claim_level != IDENTIFIED_CAUSAL",
+    "explanation": "This edge shows a statistically significant result (low p-value), but the identification strategy has not been validated as causal. A significant correlation is not the same as a causal effect \u2014 without proper identification (e.g., IV, RDD, DiD), the estimate may reflect reverse causation, omitted variable bias, or spurious correlation. Accepting this as causal without acknowledgement constitutes overclaiming.\n",
+    "guidance": "If you have a credible identification strategy, upgrade to IDENTIFIED_CAUSAL and document it. Otherwise, accept as REDUCED_FORM \u2014 informative but not usable for counterfactual predictions without caveats.\n"
+  },
+  "SMALL_SAMPLE_INFERENCE": {
+    "description": "N &lt; 30 with HAC SEs; inference fragile",
+    "explanation": "With fewer than 30 observations, HAC (Newey-West) standard errors rely on asymptotic approximations that perform poorly in small samples. Confidence intervals may be too narrow, leading to false rejections of the null. The credibility rating is capped to reflect this uncertainty.\n",
+    "guidance": "Consider wild bootstrap for more reliable small-sample inference. The rating cap to B is automatic; override only if you have strong justification for asymptotic validity.\n"
+  },
+  "PANEL_TOO_FEW_UNITS": {
+    "description": "&lt; 5 units; cluster-robust unreliable",
+    "explanation": "Cluster-robust standard errors require a sufficient number of clusters (units) to be reliable. With fewer than 5 units, the cluster-robust variance estimator is severely biased downward, leading to over-rejection. This is a well-known problem in the panel econometrics literature (Cameron, Gelbach, Miller 2008).\n",
+    "guidance": "Use wild cluster bootstrap (Webb weights) for valid inference with few clusters. The rating cap to B is automatic. Accept with caveat if bootstrap is infeasible.\n"
+  },
+  "LOO_INSTABILITY": {
+    "description": "Leave-one-out shows sign flip or &gt;50% magnitude change",
+    "explanation": "Leave-one-out (LOO) analysis drops each unit in turn and re-estimates. If the coefficient flips sign or changes magnitude by more than 50%, the result is driven by a single influential unit rather than a systematic pattern. Such fragility undermines confidence in the estimate as a general causal effect.\n",
+    "guidance": "Identify the influential unit and investigate whether it is an outlier or represents a genuine subgroup effect. Consider winsorizing, trimming, or reporting results with and without the influential unit.\n"
+  },
+  "BREAKS_UNMODELED": {
+    "description": "Regime changes not accounted for in estimation",
+    "explanation": "Structural breaks (e.g., policy changes, crises) can cause coefficient instability. If breaks are present but not modeled, the estimated coefficient is a weighted average across regimes, which may not represent either regime accurately. This is especially problematic for counterfactual scenarios that project beyond a break date.\n",
+    "guidance": "Add a regime dummy or split the sample at the break date. If the break is recent and data post-break is insufficient, restrict counterfactual scope to the pre-break regime.\n"
+  },
+  "MULTIPLE_TESTING_DRIFT": {
+    "description": "Spec search exceeded pre-registered budget",
+    "explanation": "Running many specifications and reporting only the significant one inflates the false discovery rate. The pre-registered specification budget limits this. If the budget is exceeded, the analyst must either apply a multiple testing correction (e.g., Bonferroni) or justify the additional specifications as pre-planned robustness checks.\n",
+    "guidance": "Apply Bonferroni correction to the p-values if the budget was exceeded due to exploratory analysis. If the additional specs were planned robustness checks, document them and reset the budget.\n"
+  },
+  "NONSTATIONARY_LEVELS_RISK": {
+    "description": "Both variables in levels and trending; require transformation or ECM",
+    "explanation": "Regressing two trending (non-stationary) variables in levels produces spurious regression \u2014 high R-squared and significant t-statistics that reflect shared trends, not causal relationships. The solution is to first-difference, use an ECM if cointegrated, or apply appropriate transformations (log-differences for growth rates).\n",
+    "guidance": "The system will apply first-differencing by default. If you believe the variables are cointegrated, select ECM specification to preserve the long-run relationship.\n"
+  },
+  "RESIDUAL_AUTOCORR_DETECTED": {
+    "description": "Serial correlation in residuals; HAC SEs may be inadequate",
+    "explanation": "Serial correlation in residuals indicates that the model is missing dynamic structure. While HAC standard errors adjust for this, they may be inadequate if the autocorrelation is strong or persistent, leading to under-estimated standard errors and over-rejection.\n",
+    "guidance": "Consider increasing the HAC bandwidth or adding lagged dependent variables. If autocorrelation is mild (DW close to 2), accept with a caveat.\n"
+  },
+  "REGIME_BREAK_SUSPECTED": {
+    "description": "Coefficient instability across regime splits",
+    "explanation": "TSGuard detected statistically significant coefficient differences across time sub-samples, suggesting a structural break. Using a single coefficient for the full sample masks regime-specific effects and produces unreliable counterfactuals for periods after the break.\n",
+    "guidance": "Split the sample at the detected break date and estimate separately. If the break is too recent for reliable post-break estimation, restrict counterfactual scope to the pre-break regime.\n"
+  },
+  "LEADS_SIGNIFICANT_TIMING_FAIL": {
+    "description": "Effects appear before shock; reverse causation or omitted factor",
+    "explanation": "If the outcome responds significantly BEFORE the treatment shock, the causal interpretation fails. This indicates either reverse causation (outcome causes treatment), an omitted common factor driving both, or anticipation effects that violate the parallel trends assumption. The edge is blocked from propagation automatically.\n",
+    "guidance": "Investigate whether leads reflect anticipation (expected policy changes) or reverse causation. If anticipation, consider adjusting the shock timing. If reverse causation, reclassify the edge direction or remove from the DAG.\n"
+  },
+  "HAC_LAG_SENSITIVITY_HIGH": {
+    "description": "Estimate changes materially with HAC lag length",
+    "explanation": "If the point estimate or its significance changes substantially when varying the HAC bandwidth (number of lags in the Newey-West kernel), the inference is fragile to the choice of bandwidth. This suggests that the serial correlation structure is complex and the standard errors are not robust to bandwidth selection.\n",
+    "guidance": "Report results across multiple bandwidths. Use a data-driven bandwidth selector (e.g., Andrews 1991) rather than ad hoc choice. Accept with caveat if the sign is stable across bandwidths.\n"
+  },
+  "SELECTION_PUBLIC_BANK_ONLY": {
+    "description": "Panel uses only public banks; results may not generalize to full banking sector",
+    "explanation": "Public (listed) banks differ systematically from private banks in size, governance, risk appetite, and regulatory scrutiny. Estimates from public-only samples may not generalize to the full banking sector. Counterfactuals applied to the full sector using these estimates would be unreliable for the private bank segment.\n",
+    "guidance": "Add a disclaimer noting the sample restriction. Cap the counterfactual scope to public banks only, or accept with a clear caveat about external validity limitations.\n"
+  },
+  "SURVIVORSHIP_BIAS_RISK": {
+    "description": "Sample excludes failed/merged banks; survival conditioning biases estimates",
+    "explanation": "If banks that failed, merged, or exited the sample are excluded, the remaining sample is conditioned on survival. This creates survivorship bias \u2014 the estimated effects reflect only the experience of survivors, typically underestimating the negative effects of shocks (since the most affected banks disappeared).\n",
+    "guidance": "Run a sensitivity check including failed/merged banks up to their last observation. Add a disclaimer about survivorship bias. If data on exits is unavailable, accept with a clear caveat.\n"
+  },
+  "COVERAGE_GAP_EXTERNAL_VALIDITY": {
+    "description": "Sample covers &lt;50% of system assets or &lt;50% of institutions in target population",
+    "explanation": "When the sample covers less than half of the target population (by assets or count), the estimated effects may not represent the system as a whole. Small or mid-sized banks excluded from the sample may have different exposure patterns and response mechanisms than the included banks.\n",
+    "guidance": "Add a disclaimer noting the coverage gap. If the coverage gap is due to data availability, document which segments are missing and their likely direction of bias.\n"
+  },
+  "RATING_DIAGNOSTICS_CONFLICT": {
+    "description": "A-rating despite failed diagnostics or missing requirements",
+    "explanation": "An A-rating signals high credibility, but one or more diagnostics have failed or required checks are missing. This inconsistency undermines the rating system&#x27;s integrity. The system auto-downgrades to B to maintain consistency between the rating and the underlying evidence.\n",
+    "guidance": "The auto-downgrade to B is applied. Override to A only if you can document why the failed diagnostic does not affect the estimate&#x27;s credibility for your specific use case.\n"
+  },
+  "N_REPORTING_INCONSISTENT": {
+    "description": "Report N header != EdgeCard N_eff",
+    "explanation": "The sample size reported in the system report header differs from the effective observations in the EdgeCard. This inconsistency confuses reviewers and may indicate a data processing error (e.g., missing values were dropped but not reflected in the header count).\n",
+    "guidance": "The system will auto-fix by aligning the report N to the EdgeCard N_eff. Accept the auto-fix unless you have a specific reason for the discrepancy.\n"
+  },
+  "CROSS_EVIDENCE_CONFLICT": {
+    "description": "Two edges measuring same relationship have conflicting signs",
+    "explanation": "When two edges estimate the same causal relationship (e.g., one reduced-form and one structural) but produce opposite signs, at least one is biased or misspecified. Using both in propagation would produce contradictory counterfactuals. The analyst must adjudicate which estimate is more credible.\n",
+    "guidance": "Prefer the structural edge if its identification strategy is stronger. If both designs are equally credible, report the conflict as a limitation and consider averaging with appropriate uncertainty.\n"
+  },
+  "ORPHAN_NODE_UNCONNECTED": {
+    "description": "Node not connected to any edge; unreachable in propagation",
+    "explanation": "A node exists in the DAG but does not appear in any edge&#x27;s from/to or latent&#x27;s affects list. If the node has an identity formula whose components are all present in the DAG, an identity edge can be auto-created. Otherwise, human intervention is required to either add a causal edge with estimation backing or remove the node.\n",
+    "guidance": "For identity-resolvable orphans, the system creates a deterministic identity edge and edge card. For others, add an edge with proper estimation or remove the orphan node from the DAG.\n"
+  },
+  "TARGET_UNREACHABLE": {
+    "description": "Target node is unreachable from any root node in the DAG",
+    "explanation": "The target node (the variable the DAG is designed to explain) cannot be reached by following edges from any exogenous root node. This means the causal narrative is structurally broken \u2014 shocks cannot propagate to the target. Common causes include missing identity edges, disconnected components, or incomplete narrative extraction.\n",
+    "guidance": "Add the missing edges that connect the exogenous shock chain to the target. For identity nodes (e.g., K2 = Capital / RWA), ensure both identity component edges exist.\n"
+  },
+  "IDENTITY_DEPS_INCOMPLETE": {
+    "description": "Derived node&#x27;s identity formula has dependencies without edges",
+    "explanation": "A derived node has an identity formula (e.g., K2 = Capital / RWA) that references dependency nodes, but one or more of those dependencies lack an edge pointing to the derived node. This breaks the accounting identity chain and prevents correct propagation through the identity relationship.\n",
+    "guidance": "The system will auto-create identity edges from each dependency to the derived node. Accept if the dependencies are correctly specified in the formula.\n"
+  },
+  "SINK_NODE_NOT_TARGET": {
+    "description": "Non-target node absorbs information but does not transmit downstream",
+    "explanation": "A node has incoming edges but no outgoing edges, yet it is not the DAG&#x27;s target node. This means information (shocks) flow into this node but are absorbed without transmitting further. If the node is meant to influence downstream variables, the missing outgoing edge represents a gap in the causal narrative.\n",
+    "guidance": "Either add an outgoing edge to connect this node downstream, or accept this as a terminal diagnostic node that is not part of the propagation chain.\n"
+  },
+  "EDGE_ID_SYNTAX_INVALID": {
+    "description": "Edge ID contains spaces, arrows, or other invalid characters",
+    "explanation": "Edge IDs must be valid snake_case identifiers (lowercase letters, digits, underscores only). IDs containing spaces, arrows (-&gt;), parentheses, or other special characters cause filesystem errors when saving EdgeCards and break downstream tooling that expects clean identifiers.\n",
+    "guidance": "The system will auto-sanitize the edge ID by converting arrows to _to_, removing special characters, and collapsing consecutive underscores.\n"
+  },
+  "IDENTITY_FORMULA_DOUBLE_TRANSFORM": {
+    "description": "Identity formula applies log() to a node already stored in log form",
+    "explanation": "A derived node&#x27;s identity formula contains log(X) where X already has transforms: [log], meaning the data is already in log levels. Applying log() again would double-log the variable, producing incorrect results. This is usually a documentation convention issue rather than a runtime bug, but it creates ambiguity about whether the formula represents a mathematical operation or a label.\n",
+    "guidance": "If the convention is that transforms: [log] means &quot;data stored in log form&quot;, then the formula should use the variable name directly (e.g., X - Y instead of log(X) - log(Y)). Update the formula to match.\n"
+  },
+  "UNIT_MISSING_IN_EDGECARD": {
+    "description": "EdgeCard missing treatment_unit/outcome_unit",
+    "explanation": "Without explicit units (e.g., &quot;pp&quot;, &quot;%&quot;, &quot;log points&quot;), the coefficient is uninterpretable. A coefficient of 0.5 could mean 0.5 percentage points, 50%, or 0.5 log points \u2014 a potential 100x difference in the implied effect. Units are required for any meaningful propagation or reporting.\n",
+    "guidance": "The system will auto-populate units from the DAG spec. Verify that the inferred units match the actual estimation specification.\n"
+  }
+};
+const GENERATED_AT = "2026-02-11 19:28:40 UTC";
+const DAG_EDGES = {
+  "oil_supply_to_brent": {
+    "from": "oil_supply_shock",
+    "to": "brent_price",
+    "edge_type": "causal",
+    "expected_sign": "negative",
+    "magnitude_range": [
+      -0.5,
+      0.0
+    ],
+    "regime_split_date": "",
+    "interpretation": "Oil price response to supply shock",
+    "is_not": [
+      "Demand-driven price movements"
+    ],
+    "allowed_uses": [
+      "shock_counterfactual"
+    ],
+    "forbidden_uses": [
+      "policy_counterfactual"
+    ],
+    "notes": "Exogenous supply shock identification from Baumeister."
+  },
+  "oil_supply_to_fx": {
+    "from": "oil_supply_shock",
+    "to": "kzt_usd",
+    "edge_type": "causal",
+    "expected_sign": "positive",
+    "magnitude_range": [
+      0.0,
+      0.5
+    ],
+    "regime_split_date": "",
+    "interpretation": "KZT response to oil supply shock",
+    "is_not": [
+      "Response to domestic factors"
+    ],
+    "allowed_uses": [
+      "shock_counterfactual"
+    ],
+    "forbidden_uses": [
+      "policy_counterfactual"
+    ],
+    "notes": "Oil exporter commodity currency dynamics."
+  },
+  "oil_demand_to_fx": {
+    "from": "oil_demand_shock",
+    "to": "kzt_usd",
+    "edge_type": "causal",
+    "expected_sign": "negative",
+    "magnitude_range": [
+      -0.5,
+      0.0
+    ],
+    "regime_split_date": "",
+    "interpretation": "KZT response to oil demand shock",
+    "is_not": [
+      "Response to domestic factors"
+    ],
+    "allowed_uses": [
+      "shock_counterfactual"
+    ],
+    "forbidden_uses": [
+      "policy_counterfactual"
+    ],
+    "notes": "Commodity currency responds to global demand."
+  },
+  "vix_to_fx": {
+    "from": "vix_shock",
+    "to": "kzt_usd",
+    "edge_type": "causal",
+    "expected_sign": "positive",
+    "magnitude_range": [
+      0.0,
+      0.3
+    ],
+    "regime_split_date": "",
+    "interpretation": "KZT response to global risk aversion",
+    "is_not": [
+      "Response to Kazakhstan-specific risk"
+    ],
+    "allowed_uses": [
+      "shock_counterfactual"
+    ],
+    "forbidden_uses": [
+      "policy_counterfactual"
+    ],
+    "notes": "EM risk-off channel."
+  },
+  "fx_to_cpi_tradable": {
+    "from": "kzt_usd",
+    "to": "cpi_tradable",
+    "edge_type": "immutable",
+    "expected_sign": "positive",
+    "magnitude_range": [
+      0.05,
+      0.25
+    ],
+    "regime_split_date": "2015-08",
+    "interpretation": "Differential inflation response by import intensity",
+    "is_not": [
+      "Full pass-through including indirect effects",
+      "Policy counterfactual"
+    ],
+    "allowed_uses": [
+      "shock_counterfactual",
+      "scenario_only"
+    ],
+    "forbidden_uses": [
+      "policy_counterfactual"
+    ],
+    "notes": "Block A validated result: 11.3% FX pass-through to tradable CPI."
+  },
+  "fx_to_cpi_nontradable": {
+    "from": "kzt_usd",
+    "to": "cpi_nontradable",
+    "edge_type": "immutable",
+    "expected_sign": "any",
+    "magnitude_range": [
+      -0.05,
+      0.1
+    ],
+    "regime_split_date": "",
+    "interpretation": "Falsification test for FX pass-through",
+    "is_not": [
+      "Primary transmission channel"
+    ],
+    "allowed_uses": [
+      "falsification_evidence"
+    ],
+    "forbidden_uses": [
+      "shock_counterfactual",
+      "policy_counterfactual"
+    ],
+    "notes": "Block A falsification: Near-zero pass-through to non-tradable CPI."
+  },
+  "cpi_to_nbk_rate": {
+    "from": "cpi_headline",
+    "to": "nbk_policy_rate",
+    "edge_type": "reaction_function",
+    "expected_sign": "positive",
+    "magnitude_range": [
+      0.0,
+      2.0
+    ],
+    "regime_split_date": "",
+    "interpretation": "NBK reaction function to inflation",
+    "is_not": [
+      "Causal effect of policy on inflation",
+      "Taylor rule structural parameter"
+    ],
+    "allowed_uses": [
+      "scenario_only"
+    ],
+    "forbidden_uses": [
+      "policy_counterfactual"
+    ],
+    "notes": "NBK responds to inflation. Requires nbk_policy_rate connector."
+  },
+  "fx_to_nbk_rate": {
+    "from": "kzt_usd",
+    "to": "nbk_policy_rate",
+    "edge_type": "reaction_function",
+    "expected_sign": "positive",
+    "magnitude_range": [
+      0.0,
+      5.0
+    ],
+    "regime_split_date": "",
+    "interpretation": "NBK reaction function to FX depreciation",
+    "is_not": [
+      "Causal effect of policy on FX"
+    ],
+    "allowed_uses": [
+      "scenario_only"
+    ],
+    "forbidden_uses": [
+      "policy_counterfactual"
+    ],
+    "notes": "NBK responds to FX conditions. Requires nbk_policy_rate connector."
+  },
+  "nbk_rate_to_deposit_cost": {
+    "from": "nbk_policy_rate",
+    "to": "deposit_cost_kspi",
+    "edge_type": "causal",
+    "expected_sign": "positive",
+    "magnitude_range": [
+      0.0,
+      1.5
+    ],
+    "regime_split_date": "",
+    "interpretation": "Association between policy rate and KSPI funding cost",
+    "is_not": [
+      "Causal monetary policy effect",
+      "Structural transmission coefficient"
+    ],
+    "allowed_uses": [
+      "scenario_only"
+    ],
+    "forbidden_uses": [
+      "policy_counterfactual"
+    ],
+    "notes": "Funding cost channel. Requires both connectors."
+  },
+  "nbk_rate_to_cor": {
+    "from": "nbk_policy_rate",
+    "to": "cor_kspi",
+    "edge_type": "causal",
+    "expected_sign": "positive",
+    "magnitude_range": [
+      0.0,
+      0.5
+    ],
+    "regime_split_date": "",
+    "interpretation": "Association between policy rate and KSPI credit losses",
+    "is_not": [
+      "Causal monetary policy effect",
+      "Counterfactual policy simulation"
+    ],
+    "allowed_uses": [
+      "scenario_only"
+    ],
+    "forbidden_uses": [
+      "policy_counterfactual"
+    ],
+    "notes": "Borrower stress channel. Lagged 2Q for credit deterioration."
+  },
+  "cpi_to_nominal_income": {
+    "from": "cpi_headline",
+    "to": "nominal_income",
+    "edge_type": "immutable",
+    "expected_sign": "positive",
+    "magnitude_range": [
+      0.0,
+      1.5
+    ],
+    "regime_split_date": "2015-08",
+    "interpretation": "Nominal income response to external inflation (IV)",
+    "is_not": [
+      "Response to demand-driven inflation",
+      "Real wage elasticity"
+    ],
+    "allowed_uses": [
+      "shock_counterfactual"
+    ],
+    "forbidden_uses": [
+      "policy_counterfactual"
+    ],
+    "notes": "Block B validated: LP-IV estimate using imported inflation IV."
+  },
+  "fx_to_real_expenditure": {
+    "from": "kzt_usd",
+    "to": "real_expenditure",
+    "edge_type": "immutable",
+    "expected_sign": "negative",
+    "magnitude_range": [
+      -0.3,
+      0.0
+    ],
+    "regime_split_date": "2015-08",
+    "interpretation": "MPC-like ratio to FX shocks",
+    "is_not": [
+      "Universal MPC (channels conflated)",
+      "Demand-side consumption function"
+    ],
+    "allowed_uses": [
+      "shock_counterfactual",
+      "scenario_only"
+    ],
+    "forbidden_uses": [
+      "policy_counterfactual"
+    ],
+    "notes": "Block F validated: IRF(0) = -0.10 for real expenditure."
+  },
+  "shock_to_npl_kspi": {
+    "from": "imported_inflation_instrument",
+    "to": "npl_kspi",
+    "edge_type": "causal",
+    "expected_sign": "positive",
+    "magnitude_range": [
+      0.0,
+      0.5
+    ],
+    "regime_split_date": "",
+    "interpretation": "Aggregate NPL response to imported inflation shock",
+    "is_not": [
+      "Micro income-default elasticity",
+      "IFRS 9 overlay component"
+    ],
+    "allowed_uses": [
+      "shock_counterfactual",
+      "scenario_only"
+    ],
+    "forbidden_uses": [
+      "policy_counterfactual"
+    ],
+    "notes": "Reduced-form NPL response. Cannot decompose channels without loan-level data."
+  },
+  "shock_to_cor_kspi": {
+    "from": "imported_inflation_instrument",
+    "to": "cor_kspi",
+    "edge_type": "causal",
+    "expected_sign": "positive",
+    "magnitude_range": [
+      0.0,
+      0.5
+    ],
+    "regime_split_date": "",
+    "interpretation": "Total provisioning response to imported inflation shock",
+    "is_not": [
+      "IFRS 9 macro overlay component",
+      "Realized credit loss component"
+    ],
+    "allowed_uses": [
+      "shock_counterfactual",
+      "scenario_only"
+    ],
+    "forbidden_uses": [
+      "policy_counterfactual"
+    ],
+    "notes": "Reduced-form CoR response. IFRS 9 overlay is latent."
+  },
+  "expenditure_to_payments_revenue": {
+    "from": "real_expenditure",
+    "to": "payments_revenue_kspi",
+    "edge_type": "causal",
+    "expected_sign": "positive",
+    "magnitude_range": [
+      0.0,
+      2.0
+    ],
+    "regime_split_date": "",
+    "interpretation": "Association between spending and KSPI payments revenue",
+    "is_not": [
+      "Causal effect without confounding",
+      "KSPI market share dynamics"
+    ],
+    "allowed_uses": [
+      "scenario_only"
+    ],
+    "forbidden_uses": [
+      "shock_counterfactual",
+      "policy_counterfactual"
+    ],
+    "notes": "Spending -&gt; GMV -&gt; Interchange -&gt; Revenue. Requires KSPI connector."
+  },
+  "cor_to_capital": {
+    "from": "cor_kspi",
+    "to": "total_capital_kspi",
+    "edge_type": "mechanical",
+    "expected_sign": "negative",
+    "magnitude_range": [
+      -1.0,
+      0.0
+    ],
+    "regime_split_date": "",
+    "interpretation": "Capital impact from provisioning",
+    "is_not": [
+      "Net income effect (ignores PPOP)"
+    ],
+    "allowed_uses": [
+      "scenario_only"
+    ],
+    "forbidden_uses": [
+      "shock_counterfactual",
+      "policy_counterfactual"
+    ],
+    "notes": "Provisioning reduces capital. Control for PPOP."
+  },
+  "loan_portfolio_to_rwa": {
+    "from": "loan_portfolio_kspi",
+    "to": "rwa_kspi",
+    "edge_type": "mechanical",
+    "expected_sign": "positive",
+    "magnitude_range": [
+      0.5,
+      1.5
+    ],
+    "regime_split_date": "",
+    "interpretation": "Mechanical volume effect on RWA",
+    "is_not": [
+      "Risk-weight changes"
+    ],
+    "allowed_uses": [
+      "scenario_only"
+    ],
+    "forbidden_uses": [],
+    "notes": "Volume \u00d7 avg RW. Mechanical relationship."
+  },
+  "portfolio_mix_to_rwa": {
+    "from": "portfolio_mix_kspi",
+    "to": "rwa_kspi",
+    "edge_type": "causal",
+    "expected_sign": "any",
+    "magnitude_range": [
+      -0.5,
+      0.5
+    ],
+    "regime_split_date": "",
+    "interpretation": "RWA composition effect from product mix shifts",
+    "is_not": [
+      "Volume effect",
+      "Regulatory changes"
+    ],
+    "allowed_uses": [
+      "scenario_only"
+    ],
+    "forbidden_uses": [],
+    "notes": "Product mix shifts risk weights. NBK uses 150%+ for unsecured."
+  },
+  "capital_to_k2": {
+    "from": "total_capital_kspi",
+    "to": "k2_ratio_kspi",
+    "edge_type": "identity",
+    "expected_sign": "",
+    "magnitude_range": null,
+    "regime_split_date": "",
+    "interpretation": "K2 identity: Capital / RWA",
+    "is_not": [
+      "Causal relationship"
+    ],
+    "allowed_uses": [
+      "scenario_only"
+    ],
+    "forbidden_uses": [],
+    "notes": "K2 = Total Capital / RWA. Mechanical identity."
+  },
+  "rwa_to_k2": {
+    "from": "rwa_kspi",
+    "to": "k2_ratio_kspi",
+    "edge_type": "identity",
+    "expected_sign": "",
+    "magnitude_range": null,
+    "regime_split_date": "",
+    "interpretation": "K2 identity: Capital / RWA",
+    "is_not": [
+      "Causal relationship"
+    ],
+    "allowed_uses": [
+      "scenario_only"
+    ],
+    "forbidden_uses": [],
+    "notes": "K2 = Total Capital / RWA. Mechanical identity."
+  },
+  "import_share_to_iv": {
+    "from": "E_import_share",
+    "to": "imported_inflation_instrument",
+    "edge_type": "identity",
+    "expected_sign": "",
+    "magnitude_range": null,
+    "regime_split_date": "",
+    "interpretation": "Identity component of imported inflation IV construction",
+    "is_not": [
+      "Causal relationship"
+    ],
+    "allowed_uses": [
+      "scenario_only"
+    ],
+    "forbidden_uses": [],
+    "notes": "Static exposure weight in IV construction. Formula component."
+  },
+  "nominal_expenditure_to_real": {
+    "from": "nominal_expenditure",
+    "to": "real_expenditure",
+    "edge_type": "identity",
+    "expected_sign": "",
+    "magnitude_range": null,
+    "regime_split_date": "",
+    "interpretation": "Identity component of real expenditure deflation",
+    "is_not": [
+      "Causal relationship"
+    ],
+    "allowed_uses": [
+      "scenario_only"
+    ],
+    "forbidden_uses": [],
+    "notes": "Nominal-to-real deflation identity. Formula component."
+  },
+  "wage_to_nominal_income": {
+    "from": "wage_income",
+    "to": "nominal_income",
+    "edge_type": "mechanical",
+    "expected_sign": "",
+    "magnitude_range": null,
+    "regime_split_date": "",
+    "interpretation": "Wage component of total nominal income",
+    "is_not": [
+      "Causal effect",
+      "Independent income source"
+    ],
+    "allowed_uses": [
+      "scenario_only"
+    ],
+    "forbidden_uses": [],
+    "notes": "Income channel decomposition. Wages are ~60% of nominal monetary income."
+  }
+};
+const DAG_NODES = {
+  "oil_supply_shock": {
+    "name": "Oil supply shock",
+    "unit": "sd",
+    "description": "Baumeister oil supply shock (exogenous to Kazakhstan)."
+  },
+  "oil_demand_shock": {
+    "name": "Oil demand shock",
+    "unit": "sd",
+    "description": "Baumeister oil demand shock (global demand-driven)."
+  },
+  "global_activity_shock": {
+    "name": "Global activity innovation",
+    "unit": "innovation",
+    "description": "Innovation in global activity index (IGREA)."
+  },
+  "vix_shock": {
+    "name": "VIX shock",
+    "unit": "innovation",
+    "description": "Innovation in VIX (risk aversion shock)."
+  },
+  "kzt_usd": {
+    "name": "KZT/USD exchange rate",
+    "unit": "log",
+    "description": "Kazakh tenge per US dollar, log level."
+  },
+  "brent_price": {
+    "name": "Brent crude oil price",
+    "unit": "log",
+    "description": "Brent spot price, USD per barrel, log level."
+  },
+  "nbk_policy_rate": {
+    "name": "NBK base rate",
+    "unit": "pct",
+    "description": "National Bank of Kazakhstan policy rate."
+  },
+  "cpi_headline": {
+    "name": "Headline CPI",
+    "unit": "log",
+    "description": "Kazakhstan headline CPI index, log level."
+  },
+  "cpi_tradable": {
+    "name": "Tradable CPI",
+    "unit": "log",
+    "description": "CPI for tradable goods (import-weighted). Block A validated."
+  },
+  "cpi_nontradable": {
+    "name": "Non-tradable CPI",
+    "unit": "log",
+    "description": "CPI for non-tradable goods (services). Block A falsification."
+  },
+  "imported_inflation_instrument": {
+    "name": "Imported inflation IV",
+    "unit": "pct",
+    "description": "Constructed instrument for imported inflation (FX change \u00d7 pre-period import share)."
+  },
+  "E_import_share": {
+    "name": "Pre-period import share",
+    "unit": "share",
+    "description": "Pre-period regional import intensity (static exposure)."
+  },
+  "nominal_income": {
+    "name": "Nominal monetary income",
+    "unit": "log",
+    "description": "Regional household nominal monetary income. Block B validated."
+  },
+  "real_income": {
+    "name": "Real monetary income",
+    "unit": "log",
+    "description": "Nominal income deflated by CPI. Identity node."
+  },
+  "wage_income": {
+    "name": "Wage income",
+    "unit": "log",
+    "description": "Household income from wages and salaries."
+  },
+  "transfer_income": {
+    "name": "Transfer income",
+    "unit": "log",
+    "description": "Household income from government transfers."
+  },
+  "nominal_expenditure": {
+    "name": "Nominal consumption expenditure",
+    "unit": "log",
+    "description": "Household nominal consumption expenditure. Block F validated."
+  },
+  "real_expenditure": {
+    "name": "Real consumption expenditure",
+    "unit": "log",
+    "description": "Nominal expenditure deflated by CPI. Block F validated."
+  },
+  "npl_aggregate": {
+    "name": "Aggregate NPL ratio",
+    "unit": "pct",
+    "description": "Banking sector NPL ratio from NBK."
+  },
+  "npl_kspi": {
+    "name": "KSPI NPL ratio",
+    "unit": "pct",
+    "description": "Kaspi.kz non-performing loan ratio."
+  },
+  "cor_kspi": {
+    "name": "KSPI cost of risk",
+    "unit": "pct",
+    "description": "Kaspi.kz cost of risk (annualized provisions / avg loans)."
+  },
+  "loan_portfolio_kspi": {
+    "name": "KSPI net loan portfolio",
+    "unit": "log",
+    "description": "Kaspi.kz net loan portfolio level (bn KZT)."
+  },
+  "portfolio_mix_kspi": {
+    "name": "KSPI portfolio mix",
+    "unit": "share",
+    "description": "Shares by product type (BNPL, car loans, merchant)."
+  },
+  "deposits_kspi": {
+    "name": "KSPI deposits",
+    "unit": "log",
+    "description": "Kaspi.kz total deposits (bn KZT)."
+  },
+  "deposit_cost_kspi": {
+    "name": "KSPI deposit cost",
+    "unit": "pct",
+    "description": "Kaspi.kz average deposit rate."
+  },
+  "rwa_kspi": {
+    "name": "KSPI risk-weighted assets",
+    "unit": "log",
+    "description": "Kaspi.kz risk-weighted assets for regulatory capital."
+  },
+  "ppop_kspi": {
+    "name": "KSPI pre-provision operating profit",
+    "unit": "log",
+    "description": "Kaspi.kz PPOP (revenue - opex, before provisions)."
+  },
+  "total_capital_kspi": {
+    "name": "KSPI total capital",
+    "unit": "log",
+    "description": "Kaspi.kz total regulatory capital (Tier 1 + Tier 2)."
+  },
+  "k2_ratio_kspi": {
+    "name": "KSPI K2 capital ratio",
+    "unit": "pct",
+    "description": "Kaspi.kz K2 capital adequacy ratio (Total Capital / RWA)."
+  },
+  "payments_revenue_kspi": {
+    "name": "KSPI Payments revenue",
+    "unit": "log",
+    "description": "Kaspi.kz payments segment revenue."
+  },
+  "marketplace_revenue_kspi": {
+    "name": "KSPI Marketplace revenue",
+    "unit": "log",
+    "description": "Kaspi.kz marketplace segment revenue."
+  },
+  "fintech_revenue_kspi": {
+    "name": "KSPI Fintech revenue",
+    "unit": "log",
+    "description": "Kaspi.kz fintech (lending) segment revenue."
+  }
+};
+const LLM_GUIDANCE = {
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:fx_to_cpi_tradable": "**Finding**: The edge **fx_to_cpi_tradable** has a statistically significant estimated effect (**\u03b2 = 0.113**, **SE = 0.028**, **p = 0.0001**, **N = 1200**) while being labeled **IDENTIFIED_CAUSAL** under **IMMUTABLE_EVIDENCE**.\n\n**Concern**: Even with **p = 0.0001**, statistical significance alone does not justify a causal claim, and with **no failed diagnostics reported** there is still an identification gap: the evidence presented supports a precisely estimated association but does not document the specific quasi-experimental/exogeneity conditions required for **IDENTIFIED_CAUSAL**.\n\n**Recommendation**: **Downgrade the claim level from IDENTIFIED_CAUSAL to ASSOCIATIONAL (or \u201cNOT_IDENTIFIED\u201d) unless you can explicitly document the identification argument** tied to \u201cIMMUTABLE_EVIDENCE\u201d (e.g., a clearly exogenous FX shock/assignment mechanism), keeping **\u03b2 = 0.113 (p = 0.0001)** as strong evidence of association but not, by itself, causation.",
+  "RATING_DIAGNOSTICS_CONFLICT:cpi_to_nbk_rate": "**Finding**: The cpi_to_nbk_rate edge is rated **A** even though the estimated effect is essentially null (**coefficient = -0.5353**, **SE = 13.9656**, **p = 0.9694**, **N = 67**) and it **fails sign_consistency**.\n\n**Concern**: An **A-rating** is not credible here because **sign_consistency failed**, indicating the estimated direction is unstable across horizons/specifications in the local projections setup, and the extremely weak statistical signal (**p = 0.9694**) makes any causal directional claim at the **BLOCKED_ID** level highly unreliable.\n\n**Recommendation**: **Downgrade or block** this edge for causal interpretation (at minimum remove the **A** rating) unless you can resolve the **sign_consistency** failure (e.g., by tightening the LP specification/horizon set or addressing instability); with **p = 0.9694**, the practical default should be to treat this as **no evidence of an effect** rather than an A-rated causal link.",
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:shock_to_npl_kspi_annual": "**Finding**: The edge **shock_to_npl_kspi_annual** is highly statistically significant with a coefficient of **349.16** (SE **33.42**), **p = 1.51e-25**, but it is only claimed at **REDUCED_FORM** identification with **N = 8** and a failed diagnostic **effective_obs**.\n\n**Concern**: With only **8 observations** and a failed **effective_obs** diagnostic, the extremely small p-value is not credible evidence of a causal effect\u2014local projections can produce spuriously \u201cprecise\u201d inference when the effective sample size is too small, so causal validity is weak despite the large t-statistic implied by 349.16/33.42.\n\n**Recommendation**: Treat this result as **non-causal / exploratory** and **do not use it for causal claims or policy decisions** unless you can (i) raise effective sample size (e.g., longer time series / pooled panel), and (ii) re-estimate with inference robust to small samples (e.g., small-sample/HAC adjustments or bootstrap) and only then reconsider whether an identified design (beyond **REDUCED_FORM**) is defensible.",
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:shock_to_npl_sector": "**Finding**: The edge **shock_to_npl_sector** is statistically significant in the reduced form (**coef = -46.55**, **SE = 13.42**, **p = 0.0029**, **N = 48**) under **PANEL_LP_EXPOSURE_FE**, despite a **Rating = C**.\n\n**Concern**: Because the **claim level is REDUCED_FORM** and key robustness/validity checks failed (**leave_one_bank_out** suggests the estimate may be driven by one bank; **regime_break** indicates instability across time/regimes), the significant **-46.55** cannot be treated as a causal effect and is at high risk of being non-identified or non-generalizable.\n\n**Recommendation**: Treat this as **descriptive reduced-form evidence only** (do not use for causal claims or policy counterfactuals) and re-estimate with (i) bank-influence mitigation or diagnostics-based exclusion/weighting to address the **leave_one_bank_out** failure and (ii) explicit regime controls/splitting or break-robust specifications to resolve **regime_break**; if the magnitude/sign remains similar after passing both diagnostics, then you can consider upgrading identification strength, otherwise downgrade the result to \u201cunstable/fragile.\u201d",
+  "LOO_INSTABILITY:shock_to_npl_sector": "**Finding**: The edge **shock_to_npl_sector** has a large negative estimate (**\u03b2 = -46.55**, **SE = 13.42**, **p = 0.00293**, **N = 48**), but it is flagged **HIGH** severity because leave-one-out causes a **sign flip or >50% magnitude change**.\n\n**Concern**: Despite the low p-value, the **leave_one_bank_out** failure and **regime_break** failure indicate the estimate is likely being driven by one (or a few) banks and/or a structural break, so the reduced-form causal interpretation is fragile and may not generalize across units or time.\n\n**Recommendation**: Do not treat this as a stable causal effect as-is; re-estimate the **PANEL_LP_EXPOSURE_FE** specification with explicit break handling (e.g., split-sample or break dummies) and influence-robust inference (e.g., report leave-one-bank-out range and downweight/diagnose influential banks), and only keep the edge if the coefficient remains directionally consistent and within ~50% of **-46.55** across these checks (otherwise downgrade or exclude from the causal graph).",
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:shock_to_cor_kspi_annual": "**Finding**: The estimated effect on `shock_to_cor_kspi_annual` is **360.118** (SE **45.442**) with **p = 2.28e-15** using **N = 8** annual local projections, but the claim level is only **REDUCED_FORM** and diagnostics flag **effective_obs** as failed.\n\n**Concern**: Despite extreme statistical significance, the **failed effective_obs diagnostic** with only **8 observations** means the inference likely overstates precision (effective sample size/independent variation is insufficient), so the **360.118** coefficient cannot be treated as a credible causal effect\u2014at best it is a reduced-form association.\n\n**Recommendation**: Treat this edge as **not causally identified** and **downgrade or suppress causal claims** unless you can (i) fix the **effective_obs** failure (e.g., increase usable time periods/horizons, correct overlapping-horizon SEs, or adjust specification) and (ii) provide an identification strategy beyond reduced-form\u2014otherwise report it explicitly as **descriptive reduced-form** with **N = 8** and failed diagnostic.",
+  "RATING_DIAGNOSTICS_CONFLICT:vix_to_fx": "**Finding**: The vix_to_fx edge is rated **A** even though the estimated effect is **-0.0324** with **SE = 0.1099** and **p = 0.7681 (N = 190)**, alongside a **failed sign_consistency** diagnostic.\n\n**Concern**: With a highly insignificant coefficient (p = 0.7681) and **sign_consistency failing**, the direction of the effect is unstable across specifications/horizons, so treating this reduced-form LOCAL_PROJECTIONS result as \u201cA\u201d-quality causal evidence risks a false directional claim.\n\n**Recommendation**: **Downgrade the rating (at least to B/C) and treat the sign as indeterminate** unless you can resolve sign_consistency (e.g., pre-specify horizon/spec, report the full impulse-response path and robustness set); if you must keep it, restrict the claim to \u201cno detectable reduced-form effect\u201d given the wide uncertainty implied by SE = 0.1099 and p = 0.7681.",
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:oil_supply_to_income": "**Finding**: The oil_supply \u2192 income edge is being flagged because it is statistically significant (p = 0.0030) while the claim level is only **REDUCED_FORM** (no identified causal coefficient is reported: Coefficient/SE/N/Design all N/A).\n\n**Concern**: With no identification strategy or supporting diagnostics (failed diagnostics: none reported, but also no design information), the p = 0.0030 likely reflects correlation/reduced-form association and can be driven by confounding, simultaneity, or common shocks, so treating it as \u201coil supply causes income\u201d would be causally invalid.\n\n**Recommendation**: Do **not** interpret this as a causal effect; either (i) keep the edge explicitly labeled as reduced-form association, or (ii) upgrade to an identified design by specifying and estimating a causal estimand (e.g., an instrument for oil supply, a DiD/event-study around exogenous supply disruptions, or a structural time-series/VAR with credible exclusion restrictions) and then report the causal coefficient, SE, N, and identification diagnostics before making causal claims.",
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:cpi_to_nominal_income": "**Finding**: The edge **cpi_to_nominal_income** shows a statistically significant association (**\u03b2 = 0.65**, **SE = 0.18**, **p = 0.0003**, **N = 80**) while being labeled **IDENTIFIED_CAUSAL** under an **IMMUTABLE_EVIDENCE** design.\n\n**Concern**: Even with no failed diagnostics, a very small p-value (0.0003) only supports that the estimate differs from zero\u2014not that the **0.65** effect is causally identified\u2014so the \u201cIDENTIFIED_CAUSAL\u201d claim risks overstating causal validity given the design label \u201cIMMUTABLE_EVIDENCE.\u201d\n\n**Recommendation**: Downgrade the claim from **IDENTIFIED_CAUSAL** to an associational claim unless you can document an explicit identification argument (e.g., exogenous CPI variation or a valid design like IV/DiD/RDD); otherwise keep the estimate (**0.65**) but relabel it as correlational despite its strong significance (**p = 0.0003**).",
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:global_activity_to_income": "**Finding**: The reduced-form estimate for the edge **global_activity \u2192 income** is statistically significant (**p = 0.0030**) while the claim level is explicitly **REDUCED_FORM** (no identified causal coefficient/SE/N reported).\n\n**Concern**: Because no identification strategy is provided (no design, coefficient, SE, N, or diagnostics beyond \u201cnone\u201d), the **p = 0.0030** only supports correlation/predictive association and can still be driven by confounding, reverse causality, or simultaneity\u2014so treating it as causal would be invalid.\n\n**Recommendation**: Keep the relationship labeled **associational** unless you can upgrade to an identified design (e.g., IV with relevance/exclusion evidence, DiD with pre-trends, RDD with continuity tests, or panel with credible exogeneity); otherwise, use the result only for prediction/description and explicitly avoid causal language despite the strong significance (**p = 0.0030**).",
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:portfolio_mix_to_rwa": "**Finding**: The edge **portfolio_mix_to_rwa \u2192 rwa** is statistically significant (**coef = 18,195.96**, **SE = 3,952.75**, **p = 4.16e-06**, **N = 16**) despite a blocked identification claim (**claim_level = BLOCKED_ID**) under **LOCAL_PROJECTIONS**.\n\n**Concern**: With **N = 16** and a failed **effective_obs** diagnostic, the \u201csignificant\u201d estimate likely reflects weak/insufficient effective sample support and/or unstable inference, so the very small **p-value (4.16e-06)** does not resolve endogeneity (e.g., reverse causality, omitted variables) and threatens causal validity.\n\n**Recommendation**: Treat this relationship as **non-causal for decisioning** (keep **BLOCKED_ID** and do not act on the **18,195.96** effect) unless you can fix identification by increasing effective observations and strengthening design (e.g., add credible exogenous variation/instruments or tighter controls and re-run LP with checks that **effective_obs** passes).",
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:expenditure_to_payments_revenue": "**Finding**: The edge **expenditure_to_payments_revenue** is statistically significant (**coef = 333.41**, **SE = 70.95**, **p = 2.62e-06**, **N = 7**) under **LOCAL_PROJECTIONS**, but it is only supported at **claim_level = REDUCED_FORM** and has a failed diagnostic (**effective_obs**).\n\n**Concern**: Despite the very small p-value, causal validity is weak because **effective_obs failed** and the sample is extremely small (**N = 7**), so the estimate may be driven by low effective information (and reduced-form significance alone does not identify a causal channel).\n\n**Recommendation**: Treat this relationship as **associational/forecasting-only** and do **not** use it for causal decisions until you (i) fix the **effective_obs** issue (e.g., reduce horizons/lags or simplify the LP specification to increase usable observations) and (ii) add an identification strategy beyond reduced form (e.g., credible exogenous shock/instrument or stronger controls), otherwise the **333.41** estimate should be considered too fragile for causal interpretation.",
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:nbk_rate_to_cor": "**Finding**: The estimated effect on the edge **nbk_rate_to_cor** is **0.35596** (SE **0.11934**), statistically significant with **p=0.00286** using **N=18** under **LOCAL_PROJECTIONS**, despite a **BLOCKED_ID** claim level and a failed **effective_obs** diagnostic.\n\n**Concern**: The combination of **BLOCKED_ID** identification and a failed **effective_obs** check means the nominal significance (**p=0.00286**) is not credible evidence of a causal effect\u2014your effective sample/information content is likely too low or too correlated for the reported SE, so inference may be overstated and the coefficient **0.35596** may reflect confounding or small-sample artifacts.\n\n**Recommendation**: Do **not** treat this edge as causal; either **downgrade to descriptive/associational** reporting (keep the coefficient but remove causal language) or **re-estimate with stronger identification and sufficient effective observations** (e.g., expand the sample beyond **18**, reduce lag/horizon complexity, use robust small-sample inference, and add/justify an identification strategy) before unblocking the claim.",
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:shock_to_cor_kspi": "**Finding**: The edge **shock_to_cor_kspi** is highly statistically significant with **\u03b2 = 85.96**, **SE = 7.40**, **p = 3.57e-31** (N=26) under **LOCAL_PROJECTIONS**, despite the issue flag that \u201cp=0.0000 but claim_level=.\u201d  \n\n**Concern**: With **claim level = REDUCED_FORM** and **no failed diagnostics reported**, the result supports a strong reduced-form association but does not, by itself, justify a causal interpretation\u2014especially given the small sample (**N=26**) where identification assumptions (exogeneity of the shock, no omitted confounding, correct timing) are not verified by significance alone.  \n\n**Recommendation**: Keep the estimate as **reduced-form evidence** (do not upgrade to structural/causal language) and, if a causal claim is needed, add explicit identification support (e.g., document shock exogeneity, include robustness to alternative controls/specifications and pre-trend/lead tests in the local projections) before treating **\u03b2 = 85.96 (p = 3.57e-31)** as causal.",
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:shock_to_npl_kspi": "**Finding**: The edge **shock_to_npl_kspi** is highly statistically significant with **\u03b2 = 72.80**, **SE = 10.30**, and **p = 1.55e-12** (N = 26), but it is labeled **REDUCED_FORM** rather than identified causal.\n\n**Concern**: Despite the very small p-value, a **REDUCED_FORM** local-projections estimate (and **no failed diagnostics reported**) still does not rule out omitted variables, anticipation, or correlated shocks, so treating **\u03b2 = 72.80** as causal would overstate causal validity given the **B** rating and small sample (**N = 26**).\n\n**Recommendation**: Use this estimate as **descriptive/associational evidence** only (report it explicitly as reduced-form), and if a causal claim is required, **upgrade identification** by introducing an explicit exogenous shock/instrument or credible quasi-experimental variation and then re-estimate LP with robustness checks (otherwise keep the edge but **downgrade causal language/claim strength** while noting the large magnitude and **p = 1.55e-12**).",
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:oil_supply_to_brent": "**Finding**: The estimated effect on the edge **oil_supply_to_brent** is **-0.0517** (SE **0.00541**), which is highly statistically significant (**p = 1.22e-21**, N=306) under **LOCAL_PROJECTIONS**, even though the **claim_level is REDUCED_FORM**.\n\n**Concern**: Because this is explicitly **reduced-form**, the very strong significance (p\u22480) does **not** identify a causal oil-supply shock effect on Brent\u2014it's consistent with reverse causality, omitted variables, or anticipatory/expectations channels, and **no failed diagnostics** does not substitute for an identification strategy.\n\n**Recommendation**: Keep the result as **descriptive/predictive reduced-form evidence** (report **-0.0517** with p=1.22e-21) and **do not make causal claims** unless you upgrade identification (e.g., a clearly exogenous supply-shock instrument or narrative shock series with stated exogeneity and timing restrictions), in which case rerun LP with that identification and reassess.",
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:shock_to_cor_sector": "**Finding**: The edge **shock_to_cor_sector \u2192 cor_sector** is statistically significant with **\u03b2 = 36.18** (SE = **6.69**), **p = 4.75e-05** using **N = 48** under **PANEL_LP_EXPOSURE_FE**, but it is only labeled at **claim_level = REDUCED_FORM**.\n\n**Concern**: Despite the very small p-value (**4.75e-05**), causal validity is undermined because the key robustness check **leave_one_bank_out failed**, indicating the estimate may be driven by a single influential bank (or a small subset), so the significant reduced-form association may not generalize or identify a causal effect.\n\n**Recommendation**: Treat this as **non-identified/fragile** and **do not use it for causal claims** until you (i) diagnose influence by re-estimating after dropping each bank to identify which exclusion breaks the result and (ii) either adjust the design (e.g., reweight/trim influential exposure banks, redefine exposure, or use a specification that reduces single-bank leverage) or report it explicitly as **sensitive reduced-form evidence** with the leave-one-bank-out failure front-and-center.",
+  "LOO_INSTABILITY:shock_to_cor_sector": "**Finding**: The edge `shock_to_cor_sector` is large and statistically strong in-sample (coef = **36.18**, SE = **6.69**, p = **4.75e-05**, N = **48**), but it fails **leave_one_bank_out** with **LOO_INSTABILITY** (sign flip or >50% magnitude change when dropping a single bank).\n\n**Concern**: With **HIGH** LOO instability in a **PANEL_LP_EXPOSURE_FE** reduced-form, the estimated **36.18** effect is likely being driven by one (or a few) influential banks, so the causal claim is not robust and may not generalize\u2014especially given the overall **Rating: C** and small N (**48**).\n\n**Recommendation**: Do not use this edge for causal decision-making as-is; re-estimate and report bank-level influence (identify the bank(s) whose removal flips the sign/changes >50%), and either (i) pre-specify and justify exclusion/winsorization of the influential unit(s) or (ii) move to an estimator/inference that is less sensitive (e.g., robust to influential clusters) and downgrade the conclusion to \u201cfragile/unsupported\u201d unless the coefficient remains stable under these checks.",
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:fx_to_real_expenditure": "**Finding**: The edge **fx_to_real_expenditure** has an estimated coefficient of **-0.10** (SE **0.04**) with **p=0.012** (N=**60**), yet the issue flags it as \u201csignificant but not identified\u201d despite the current **Claim level = IDENTIFIED_CAUSAL**.\n\n**Concern**: With **no failed diagnostics reported**, the main causal-validity risk is a **mismatch between statistical significance (p=0.012) and the evidentiary basis needed for identification**, meaning the **IDENTIFIED_CAUSAL** label may be overstated if the \u201cIMMUTABLE_EVIDENCE\u201d design does not actually rule out confounding/reverse causality for this relationship.\n\n**Recommendation**: **Keep the estimate (-0.10, p=0.012) as an association but downgrade the claim from IDENTIFIED_CAUSAL to a weaker level (e.g., \u201cassociational\u201d/\u201csuggestive\u201d) unless you can explicitly document the identification argument implied by the IMMUTABLE_EVIDENCE design (e.g., why fx variation is exogenous to real expenditure), in which case retain IDENTIFIED_CAUSAL and add that justification to resolve the flag.**",
+  "LOO_INSTABILITY:nbk_rate_to_cor_sector": "**Finding**: The estimated effect on `nbk_rate_to_cor_sector` is 0.1349 with SE 1.3889 and p=0.9258 (N=30), and the leave-one-bank-out diagnostic shows a sign flip or >50% magnitude change.\n\n**Concern**: With p=0.9258 and an instability diagnostic failing (`leave_one_bank_out`), the estimate is both statistically uninformative and not robust to the removal of a single bank, implying the reduced-form association is likely driven by one influential unit and is not credible for causal interpretation under this PANEL_LP_EXPOSURE_FE design.\n\n**Recommendation**: Do not use this edge for causal claims; either (i) downgrade/omit it from the main results and report it only as unstable/noisy, or (ii) re-estimate with influence-robust strategies (identify the influential bank(s), report leave-one-out estimates, consider trimming/winsorizing exposures, and/or use robust methods like median/Huber M-estimation or reweighting) before reconsidering inclusion.",
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:nbk_rate_to_deposit_cost": "**Finding**: The edge **nbk_rate_to_deposit_cost** is statistically significant (**\u03b2 = 0.2227**, **SE = 0.0618**, **p = 0.0003135**, **N = 18**) under **LOCAL_PROJECTIONS**, but it is marked **Claim level = BLOCKED_ID** with failed diagnostics (**effective_obs**, **residual_ac1**).\n\n**Concern**: Despite the low p-value, causal validity is not supported because identification is explicitly blocked and the failed diagnostics indicate (i) too few effective observations given **N = 18** and (ii) autocorrelated residuals (failed **residual_ac1**), both of which can make the reported **p = 0.0003135** materially overstate evidence against the null and undermine the causal interpretation of **\u03b2 = 0.2227**.\n\n**Recommendation**: Treat this edge as **non-causal/associational only** (do not use it for causal claims or policy simulation) unless you can unblock identification (e.g., a defensible exogenous shock/instrument or design change) and re-estimate with inference robust to serial correlation (e.g., LP with HAC/Newey\u2013West or block bootstrap) while also addressing the **effective_obs** failure, because with **N = 18** the current \u201csignificant\u201d result is not decision-safe.",
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:oil_demand_to_income": "**Finding**: The edge **oil_demand_to_income** is flagged because it is statistically significant (**p = 0.0030**) but the current claim level is **REDUCED_FORM**, and there is **no identified causal effect estimate reported** (Coefficient/SE/N/Design are **N/A**).\n\n**Concern**: With only a reduced-form association (and no failed diagnostics reported), the **p = 0.0030** result can reflect confounding, reverse causality, or simultaneity, so treating this as causal would be invalid despite statistical significance.\n\n**Recommendation**: Keep the claim explicitly **associational/predictive** unless you can upgrade to an **identified design** (e.g., valid IV, DiD, RD, or controlled adjustment with justified ignorability) and then report an actual **coefficient, SE, N, and identification checks**; otherwise, downgrade interpretation and document that **p = 0.0030 supports correlation only, not causation**.",
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:loan_portfolio_to_rwa": "**Finding**: The edge `loan_portfolio_to_rwa \u2192 rwa` shows a positive estimated coefficient of **0.5714**, and the issue message reports **p=0.0000** (despite the edge table listing **SE=0.0** and **p-value=None**, with **N=None**).\n\n**Concern**: With **SE=0.0** and **N missing**, the reported **p=0.0000** is not interpretable as statistical evidence, and the tool\u2019s flag (\u201c**SIGNIFICANT_BUT_NOT_IDENTIFIED**\u201d / **claim_level=REDUCED_FORM**) indicates that\u2014even if significant\u2014this association may be **reduced-form** and not a defensible causal effect, though **no diagnostics failed**.\n\n**Recommendation**: Treat this edge as **non-identified / accounting-identity-driven** under the **ACCOUNTING_BRIDGE** design and **downgrade the claim to reduced-form unless you can supply valid uncertainty (nonzero SE, explicit N) and a clear identification argument**, because the current \u201csignificance\u201d signal (p=0.0000 with SE=0.0 and N=None) is effectively a computation/definition artifact rather than causal evidence.",
+  "SIGNIFICANT_BUT_NOT_IDENTIFIED:cor_to_capital": "**Finding**: The edge **cor_to_capital** shows a large estimated effect (**coefficient = -22.4**) but the uncertainty stats are internally inconsistent (**SE = 0.0**, **p-value = None**, **N = None**) while the issue flag reports \u201c**p=0.0000**\u201d alongside a blocked-identification condition.\n\n**Concern**: With **SE=0.0** and missing **N/p-value**, the apparent \u201c**p=0.0000**\u201d is not interpretable and can be a numerical/artifact-driven significance signal rather than evidence of a valid causal estimate\u2014so despite **Claim level: IDENTIFIED_CAUSAL** and **no failed diagnostics**, the estimate is not auditably identified and risks a false causal conclusion.\n\n**Recommendation**: **Block causal use and treat as non-identified until the inference metadata is corrected**\u2014specifically, recompute/verify **N**, a non-degenerate **SE**, and a consistent **p-value** under the **ACCOUNTING_BRIDGE** design (or rerun with robust/clustered SEs as appropriate), and only then decide whether **-22.4** is a stable identified causal effect or an accounting/estimation artifact.",
+  "RATING_DIAGNOSTICS_CONFLICT:oil_supply_to_fx": "**Finding**: The estimated effect on edge **oil_supply_to_fx** is essentially zero (**coef = 0.0004479**) and completely statistically insignificant (**p = 0.9972**, **SE = 0.1277**, **N = 187**) despite receiving an **A** rating.\n\n**Concern**: An **A** rating is not credible when the estimate provides no evidentiary support for an effect (p \u2248 1), so the rating likely reflects a scoring/logic conflict (even though \u201cFailed diagnostics: none\u201d) and could be misinterpreted as \u201chigh-confidence causal effect\u201d rather than \u201chigh-confidence null.\u201d\n\n**Recommendation**: Downgrade the rating from **A** to reflect \u201cno detectable effect\u201d (or split the rating into separate dimensions: **identification/diagnostics = A** but **evidence strength = D/F** given **p = 0.9972**), and treat this edge as **not supporting a causal impact** in decision-making unless the goal is explicitly to document a precisely estimated null.",
+  "RATING_DIAGNOSTICS_CONFLICT:oil_demand_to_fx": "**Finding**: The edge oil_demand_to_fx has a negative coefficient of **-0.2983** with **p = 0.0641** (SE **0.1611**, N **187**) but is assigned an **A rating** while the record shows **no failed diagnostics**.\n\n**Concern**: The stated issue (\u201cA-rating despite failed diagnostics\u201d) is not supported by the provided diagnostics (none failed), so the high-severity conflict likely reflects a **metadata/flagging error**; however, independently of that, the estimate is only **marginally significant at 10% (not at 5%)**, which weakens the evidential strength one would typically associate with an A-rated reduced-form local projection.\n\n**Recommendation**: **Resolve the conflict by correcting the diagnostic flag (since none failed) and downgrade or qualify the rating** (e.g., to reflect **p = 0.0641** as \u201csuggestive\u201d rather than \u201cstrong\u201d evidence) unless your rating policy explicitly permits A ratings for reduced-form LP results that are only significant at the 10% level."
+};
+const LLM_EDGE_ANNOTATIONS = {
+  "oil_supply_to_brent": "An oil supply shock is associated with movements in the Brent price, capturing how unexpected changes in global oil availability translate into market pricing of crude. A key risk is that the \u201cexogenous\u201d shock series may still embed demand news, inventory/precautionary demand, or contemporaneous policy/geopolitical information that also affects Brent, which would confound the reduced-form mapping and potentially distort the sign or magnitude. Another concern is timing/aggregation (e.g., monthly identification vs. higher-frequency price adjustment) and measurement error in the shock that can attenuate estimates. Next, check robustness to alternative oil shock measures (e.g., Kilian-type decompositions), verify the dynamic response via local projections/VAR impulse responses, and test for sensitivity to controlling for global activity, inventories, and financial conditions to ensure the shock is not proxying for broader macro news.",
+  "oil_supply_to_fx": "",
+  "oil_demand_to_fx": "This edge means that global oil demand shocks are associated with movements in the KZT/USD exchange rate, consistent with Kazakhstan behaving like a commodity currency whose terms of trade improve when oil demand strengthens. A key risk is that the \u201coil demand shock\u201d measure may still bundle global growth/financial risk shocks that simultaneously move capital flows and the dollar, creating omitted-variable bias or conflating demand with broader risk-on/risk-off dynamics; additionally, FX responses can reflect central bank intervention, capital controls, or anticipatory pricing that complicates timing. Next, a researcher should check identification of the oil-demand shock (e.g., alternative global demand instruments or sign/zero restrictions), test robustness to controlling for global dollar strength and risk sentiment (DXY, VIX, global rates), and verify the impulse timing (does KZT move after the shock rather than before) and stability across regimes (pre/post major policy changes or oil-price collapses).",
+  "vix_to_fx": "A VIX shock is associated with movements in KZT/USD through the EM \u201crisk-off\u201d channel: higher global risk aversion tends to trigger outflows from emerging markets and pressure local currencies, shifting the exchange rate. A key risk is that this reduced-form link may be confounded by concurrent global factors (oil price shocks, US rate surprises, global dollar strength) that move both VIX and KZT/USD, and by timing/market-hours issues that blur the direction of comovement\u2014especially given the imprecise estimate (large SE, high p-value). Next, check robustness to controlling for Brent/Urals oil, DXY, US Treasury yields/Fed surprises, and test alternative event windows/lags (and possibly local trading-hour-aligned changes) to see whether the association strengthens and whether the sign is stable across subsamples (e.g., crises vs calm periods).",
+  "fx_to_cpi_tradable": "A change in the KZT/USD exchange rate causes a change in tradable CPI by altering local-currency prices of imported consumption goods and imported inputs used in tradable production; the estimate implies about 11.3% pass-through from FX movements into tradable consumer prices over the study horizon. Key risks include violations of the identification assumptions\u2014e.g., exchange-rate moves coinciding with unobserved shocks to import prices, tariffs, subsidies, administered prices, or demand conditions that also affect tradable CPI\u2014plus measurement/aggregation issues in the tradable CPI basket and potential nonlinear or state-dependent pass-through during crises. Next, the researcher should scrutinize the identifying variation and timing (event-study/pre-trends, placebo outcomes), test robustness to controlling for global commodity prices and foreign inflation, and check heterogeneity by import intensity/category and asymmetry between depreciations and appreciations.",
+  "fx_to_cpi_nontradable": "This edge represents the causal effect of KZT/USD exchange-rate movements on prices of non-tradable goods and services, where theory would typically suggest little direct pass-through because these items are not imported and have limited foreign-input content. The near-zero estimate is consistent with non-tradables being insulated from exchange-rate shocks, making it a useful falsification check for broader pass-through claims. Key risks are misclassification of \u201cnon-tradable\u201d items (hidden imported inputs or regulated tariffs), CPI measurement/aggregation that masks sectoral effects, and identification failure if the exchange-rate variation used is endogenous to domestic inflation expectations or policy responses. Next, the researcher should verify the tradable/non-tradable basket construction and input import intensity, run event-study/lag specifications and subcomponents (services vs. shelter vs. administered prices), and test robustness to alternative instruments or shock definitions and to excluding periods with price controls or tax changes.",
+  "cpi_to_nbk_rate": "This edge represents the NBK\u2019s reaction function: headline inflation may be related to subsequent policy-rate adjustments as the central bank leans against inflationary pressure. The main risk is that this relationship is blocked or confounded by omitted drivers (e.g., exchange rate movements, output gap, global commodity prices, fiscal shocks) or by reverse timing/measurement issues (policy affecting inflation with lags while inflation data reflect earlier conditions), which can wash out the apparent link\u2014consistent with the extremely imprecise estimate and near-zero statistical signal here. Next, verify timing and information sets (use real-time CPI releases and meeting dates), add key controls and lags typical of Taylor-type rules, and check robustness across regimes (e.g., pre/post policy framework changes) to see whether CPI predicts rate moves in subsamples or at specific horizons.",
+  "fx_to_nbk_rate": "",
+  "nbk_rate_to_deposit_cost": "A higher NBK policy rate is plausibly related to higher deposit funding costs at KSPI through the standard monetary transmission \u201cfunding cost channel,\u201d where banks must offer higher rates to retain/attract deposits. The main risk is that this edge is not identified: concurrent shocks (inflation expectations, FX pressure, liquidity stress, regulatory changes, or risk-premium shifts) can move the policy rate and KSPI\u2019s effective deposit cost together, and deposit-cost measurement/composition changes (term mix, retail vs corporate, promotional pricing) can mechanically generate the association. Next, verify the required connectors and timing by checking event-study dynamics around policy announcements, controlling for macro/market confounders (inflation, KZT/USD, sovereign spreads, system liquidity), and testing whether the pass-through differs by deposit type/maturity or by the share of sticky vs rate-sensitive deposits.",
+  "nbk_rate_to_cor": "A higher NBK policy rate may be related to a subsequent rise in the KSPI corporate NPL (or distress) measure through the borrower-stress channel: higher debt-service costs and tighter financial conditions can worsen firms\u2019 repayment capacity, with a plausible two-quarter lag before deterioration is realized in bank portfolios. The main risk to a causal interpretation is endogeneity of policy: the NBK may raise rates in response to macro conditions (inflation, overheating, FX pressure, commodity shocks) that also independently affect corporate credit quality, plus omitted concurrent macroprudential actions or regulatory changes that shift measured impairment. Next, a researcher should check robustness to controlling for the NBK reaction function and common macro drivers (output gap, inflation, exchange rate, oil/commodity prices), test alternative lag structures and pre-trends, and verify that cor_kspi measurement/accounting rules and loan classification practices are stable over time.",
+  "cpi_to_nominal_income": "A rise in headline CPI causes an increase in nominal income, consistent with wage/earnings indexation, cost-of-living adjustments, and price passthrough into nominal pay and receipts. The main threat is that the imported-inflation instrument could still shift nominal income through channels other than domestic CPI (e.g., trade exposure affecting labor demand, sectoral composition, or terms-of-trade income), or that the LP specification is contaminated by anticipatory wage setting or differential measurement/timing of CPI versus income. Next, check exclusion and monotonicity more directly by testing balance on pre-trends and trade-exposure covariates, running sector/region heterogeneity and placebo outcomes (e.g., employment or hours), and verifying robustness to alternative CPI definitions (core vs headline) and income measures (wages vs total household/firm income).",
+  "fx_to_real_expenditure": "A rise in **kzt_usd** (a KZT depreciation against the USD) **causes** a decline in **real_expenditure**, consistent with exchange-rate pass-through raising the domestic price of imported consumption/investment goods and tightening real purchasing power; the IRF(0) of -0.10 suggests an immediate contraction. The main threats are violations of the identification assumptions\u2014e.g., contemporaneous monetary/fiscal or commodity-price shocks moving both the exchange rate and spending, anticipatory behavior (expenditure falling before the depreciation), or measurement/deflation issues that mechanically induce a negative response. Next, check pre-trends/placebo leads and sensitivity to alternative identification (e.g., different shock ordering/instruments), and verify robustness across deflators (CPI vs. PCE) and subsamples (oil-price regimes, crisis periods) to ensure the effect isn\u2019t driven by correlated external shocks or inflation mismeasurement.",
+  "shock_to_npl_kspi": "An increase in the imported-inflation instrument is associated with higher NPLs in KSPI, consistent with a macro price shock that may squeeze real incomes, raise input costs, or tighten financial conditions and thereby worsen repayment capacity. The main risk to interpreting this as a clean reduced-form shock transmission is that the instrument could be correlated with other contemporaneous forces affecting NPLs (e.g., exchange-rate movements, policy responses, sectoral demand shocks) or that bank-level exposure/composition shifts mechanically change measured NPLs. Given the note that channels can\u2019t be decomposed without loan-level data, the next checks should focus on validating the instrument\u2019s exogeneity (placebo tests on pre-trends and unaffected outcomes, robustness to adding exchange rate/monetary policy controls) and exploring heterogeneity using available aggregates (e.g., by sectoral loan shares, maturity structure, or borrower type) to see whether the response aligns with plausible pass-through mechanisms.",
+  "shock_to_cor_kspi": "",
+  "expenditure_to_payments_revenue": "Higher real_expenditure is associated with higher payments_revenue_kspi, consistent with a channel where customer spending increases GMV that flows through the KSPI connector into interchange and fee-based payments revenue. A key risk is that expenditure may be proxying for broader demand or seasonality that also directly raises payments revenue (e.g., promotions, macro conditions, merchant mix), and connector availability/measurement issues could induce selection or attenuation if KSPI coverage changes over time. Next, check whether the relationship is stable across periods with constant KSPI integration (and across cohorts/markets), and validate the GMV\u2192interchange\u2192revenue linkage by testing intermediate outcomes (GMV, connected share, take rate) and ruling out concurrent pricing or tracking changes.",
+  "cor_to_capital": "Higher loan-loss provisioning (cor_kspi) mechanically causes lower total regulatory capital (total_capital_kspi) because provisions flow through earnings and reduce retained earnings/CET1 under standard accounting and capital rules. The main threat to interpreting the magnitude as causal is that provisioning is typically prompted by underlying credit deterioration that also affects capital through other channels (charge-offs, risk-weight changes, supervisory actions), and any \u201ccontrol for PPOP\u201d may not fully net out simultaneous income shocks or timing mismatches. Next, verify the exact capital definition and mapping (e.g., CET1 vs total capital, treatment of expected-loss reserves) and run timing/robustness checks (lags, event-study around provisioning spikes) to confirm the relationship is purely accounting-mechanical rather than driven by concurrent balance-sheet or regulatory adjustments.",
+  "loan_portfolio_to_rwa": "This edge represents the accounting/regulatory mapping from loan portfolio volume into risk\u2011weighted assets: holding the average risk weight fixed, increasing loan exposures causes a proportional increase in RWA by construction (Volume \u00d7 avg RW), so the coefficient is essentially a scaling factor. The main risk to interpreting this as a stable causal effect is that \u201cavg RW\u201d is not actually fixed\u2014changes in portfolio composition, IRB model updates, regulatory parameter shifts, or RWA optimization can make RWA respond non-proportionally to volume and break the purely mechanical relationship. Next, verify that the definition of loan_portfolio_kspi matches the exposure measure used in RWA (EAD vs book value, netting, CRM, off\u2011balance sheet CCFs) and check whether the implied average risk weight (RWA/Volume) is constant over time or varies with composition/regime changes.",
+  "portfolio_mix_to_rwa": "",
+  "capital_to_k2": "Higher total capital mechanically increases the K2 ratio because \\(K2 = \\frac{\\text{Total Capital}}{\\text{RWA}}\\); holding RWA fixed, a one-unit increase in capital raises K2 one-for-one scaled by \\(1/\\text{RWA}\\). The main risk to interpreting the 0.0625 as a stable \u201ccausal effect\u201d is that RWA is in the denominator and typically varies with portfolio risk, regulation, and measurement choices, so changes in capital may coincide with changes in RWA that alter the mapping from capital to K2. A researcher should verify the exact construction and units (e.g., whether K2 is in percentage points and capital/RWA in consistent currency terms), check for any smoothing/averaging or reporting lags, and confirm that RWA is treated consistently across time and banks so the implied derivative \\(dK2/dCapital \\approx 1/\\text{RWA}\\) matches the estimate.",
+  "rwa_to_k2": "Higher RWA mechanically lowers the K2 ratio because \\(K2=\\frac{\\text{Total Capital}}{\\text{RWA}}\\); holding capital fixed, an increase in the denominator reduces the ratio one-for-one in proportional terms. The main risk is not causal invalidity but measurement/definition mismatches (e.g., capital and RWA not aligned in time, consolidation scope, or regulatory definition changes) and any data construction that induces non-classical error, which can make the identity fail empirically. Next, verify unit consistency and timing (same reporting date), confirm the exact capital numerator used (e.g., total vs. Tier 2/total regulatory capital), and recompute K2 directly from the underlying components to ensure the estimated coefficient reflects the accounting identity rather than a coding artifact."
+};
+
+// Severity sort order
+const SEVERITY_ORDER = {CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3};
+
+// Known rule-specific column configs
+const RULE_COLUMNS = {
+    SIGNIFICANT_BUT_NOT_IDENTIFIED: {
+        headers: '<th>Edge</th><th>p-value</th><th>Point (SE)</th><th>Claim</th><th>Rating</th><th>Design</th><th>Diagnostics</th><th>Action</th>',
+        colspan: 8,
+        renderRow: function(item, edge, actCfg, isResolved, decVal) {
+            return `
+                <td>
+                    <span class="edge-name">${item.edge_id}</span>
+                    <span class="toggle-btn" data-toggle="${item.key}">[+]</span>
+                    ${edge.failure_flags && edge.failure_flags.length > 0 ?
+                        '<br><span class="flag-list">' + edge.failure_flags.map(f => '<span class="flag">'+f+'</span>').join('') + '</span>' : ''}
+                </td>
+                <td class="mono">${fmtP(edge.pvalue)}</td>
+                <td class="mono">${fmtNum(edge.point)} (${fmtNum(edge.se)})</td>
+                <td><span class="claim-tag">${edge.claim_level || '--'}</span></td>
+                <td><span class="rating-tag">${edge.rating || '--'}</span></td>
+                <td style="font-size:10px">${edge.design || '--'}</td>
+                <td style="font-size:10px">${edge.diagnostics ? diagSummary(edge.diagnostics) : '--'}</td>
+                <td>${renderAction(item.key, actCfg, isResolved, decVal)}</td>
+            `;
+        }
+    },
+    RATING_DIAGNOSTICS_CONFLICT: {
+        headers: '<th>Edge</th><th>Rating</th><th>Score</th><th>Failed diagnostics</th><th>N obs</th><th>Action</th>',
+        colspan: 6,
+        renderRow: function(item, edge, actCfg, isResolved, decVal) {
+            var failedDiags = (edge.diagnostics || []).filter(function(d){return !d.passed;});
+            return `
+                <td>
+                    <span class="edge-name">${item.edge_id}</span>
+                    <span class="toggle-btn" data-toggle="${item.key}">[+]</span>
+                </td>
+                <td><span class="rating-tag">${edge.rating || '--'}</span></td>
+                <td class="mono">${edge.score ? edge.score.toFixed(3) : '--'}</td>
+                <td style="font-size:10px">${failedDiags.map(function(d){return '<span class="diag-fail">\u2717 '+d.name+'</span>';}).join(', ') || 'none'}</td>
+                <td class="mono">${edge.n_obs || '--'}</td>
+                <td>${renderAction(item.key, actCfg, isResolved, decVal)}</td>
+            `;
+        }
+    },
+    LOO_INSTABILITY: {
+        headers: '<th>Edge</th><th>Message</th><th>N units</th><th>Rating</th><th>Score</th><th>Action</th>',
+        colspan: 6,
+        renderRow: function(item, edge, actCfg, isResolved, decVal) {
+            var nUnits = edge.panel ? edge.panel.n_units : (edge.n_obs || '--');
+            return `
+                <td>
+                    <span class="edge-name">${item.edge_id}</span>
+                    <span class="toggle-btn" data-toggle="${item.key}">[+]</span>
+                </td>
+                <td style="font-size:10px;max-width:200px">${item.message}</td>
+                <td class="mono">${nUnits}</td>
+                <td><span class="rating-tag">${edge.rating || '--'}</span></td>
+                <td class="mono">${edge.score ? edge.score.toFixed(3) : '--'}</td>
+                <td>${renderAction(item.key, actCfg, isResolved, decVal)}</td>
+            `;
+        }
+    }
+};
+
+// Default (generic) columns for unknown rules
+var DEFAULT_COLUMNS = {
+    headers: '<th>Edge</th><th>Message</th><th>Rating</th><th>Score</th><th>Action</th>',
+    colspan: 5,
+    renderRow: function(item, edge, actCfg, isResolved, decVal) {
+        return `
+            <td>
+                <span class="edge-name">${item.edge_id}</span>
+                <span class="toggle-btn" data-toggle="${item.key}">[+]</span>
+            </td>
+            <td style="font-size:10px;max-width:250px">${item.message}</td>
+            <td><span class="rating-tag">${edge.rating || '--'}</span></td>
+            <td class="mono">${edge.score ? edge.score.toFixed(3) : '--'}</td>
+            <td>${renderAction(item.key, actCfg, isResolved, decVal)}</td>
+        `;
+    }
+};
+
+// ── DAG helpers ───────────────────────────────────────────────────────
+function edgeLabel(edgeId) {
+    var de = DAG_EDGES[edgeId];
+    if (!de) return edgeId;
+    var fromName = (DAG_NODES[de.from] || {}).name || de.from;
+    var toName = (DAG_NODES[de.to] || {}).name || de.to;
+    return fromName + ' \u2192 ' + toName;
+}
+
+function edgeInterpretation(edgeId) {
+    var de = DAG_EDGES[edgeId];
+    return de ? (de.interpretation || '') : '';
+}
+
+function escHtml(s) {
+    if (!s) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function renderMarkdown(s) {
+    if (!s) return '';
+    var h = escHtml(s);
+    // Bold: **text** or __text__
+    h = h.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    h = h.replace(/__(.+?)__/g, '<strong>$1</strong>');
+    // Italic: *text* or _text_ (but not inside already-converted strong)
+    h = h.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, '<em>$1</em>');
+    h = h.replace(/(?<!_)_(?!_)(.+?)(?<!_)_(?!_)/g, '<em>$1</em>');
+    // Inline code: `text`
+    h = h.replace(/`([^`]+)`/g, '<code style="background:#e8e8e8;padding:1px 3px;font-size:9px;">$1</code>');
+    // Bullet lists: lines starting with - or *
+    h = h.replace(/^[\-\*]\s+(.+)$/gm, '<li>$1</li>');
+    h = h.replace(/((?:<li>.*<\/li>\s*)+)/g, '<ul style="margin:4px 0 4px 16px;padding:0;">$1</ul>');
+    // Numbered lists: lines starting with 1. 2. etc
+    h = h.replace(/^\d+\.\s+(.+)$/gm, '<li>$1</li>');
+    // Line breaks: double newline -> paragraph break, single newline -> <br>
+    h = h.replace(/\n\n+/g, '</p><p style="margin:4px 0;">');
+    h = h.replace(/\n/g, '<br>');
+    h = '<p style="margin:4px 0;">' + h + '</p>';
+    return h;
+}
+
+function signLabel(val) {
+    if (val === null || val === undefined) return 'unknown';
+    return val > 0 ? 'positive' : val < 0 ? 'negative' : 'zero';
+}
+
+function checkSignConsistency(edge, dagEdge) {
+    if (!dagEdge || !dagEdge.expected_sign || edge.point === null || edge.point === undefined) return null;
+    var actual = edge.point > 0 ? 'positive' : edge.point < 0 ? 'negative' : 'zero';
+    var expected = dagEdge.expected_sign;
+    return actual === expected;
+}
+
+function renderRiskTags(risks) {
+    if (!risks || typeof risks !== 'object') return '';
+    var html = '';
+    for (var k in risks) {
+        var level = risks[k];
+        var cls = (level === 'high') ? ' high' : '';
+        html += '<span class="risk-tag' + cls + '">' + escHtml(k.replace(/_/g,' ')) + ' ' + escHtml(level) + '</span>';
+    }
+    return html;
+}
+
+// ── Decision Guides (per-rule template functions) ─────────────────────
+var DECISION_GUIDES = {
+    SIGNIFICANT_BUT_NOT_IDENTIFIED: function(item, edge, dagEdge) {
+        var label = edgeLabel(item.edge_id);
+        var interp = edgeInterpretation(item.edge_id);
+        var signOk = checkSignConsistency(edge, dagEdge);
+        var signHtml = '';
+        if (signOk !== null) {
+            var expected = dagEdge.expected_sign || '?';
+            var actual = signLabel(edge.point);
+            if (signOk) {
+                signHtml = '<div>Expected sign: <strong>' + escHtml(expected) + '</strong>. ' +
+                    'Estimated: <span class="sign-match"><strong>' + escHtml(actual) + '</strong> \u2713 consistent</span></div>';
+            } else {
+                signHtml = '<div>Expected sign: <strong>' + escHtml(expected) + '</strong>. ' +
+                    'Estimated: <span class="sign-mismatch"><strong>' + escHtml(actual) + '</strong> \u2717 inconsistent</span></div>';
+            }
+        }
+
+        var claimHtml = '';
+        var cl = edge.claim_level || '';
+        if (cl === 'REDUCED_FORM') {
+            claimHtml = '<div>Current claim: <strong>REDUCED_FORM</strong> \u2014 already acknowledged as reduced-form. Consider upgrading if you have IV/RDD/DiD evidence.</div>';
+        } else if (cl === 'BLOCKED_ID') {
+            claimHtml = '<div>Current claim: <strong>BLOCKED_ID</strong> \u2014 identification is currently blocked. Resolve identification concern before using in counterfactuals.</div>';
+        } else {
+            claimHtml = '<div>Current claim: <strong>' + escHtml(cl || 'none') + '</strong> \u2014 no claim level set. This is the most urgent: significant result with no acknowledgement.</div>';
+        }
+
+        var risksHtml = renderRiskTags(edge.id_risks);
+
+        var cfHtml = '';
+        if (edge.cf_reason_blocked) {
+            cfHtml = '<div class="implication"><strong>Counterfactual status:</strong> ' + escHtml(edge.cf_reason_blocked) + '</div>';
+        }
+
+        var implHtml = '<div class="implication"><strong>If you select IDENTIFIED_CAUSAL:</strong> This edge will be used in shock and policy counterfactuals. Requires documented identification strategy (IV, RDD, DiD).</div>' +
+            '<div class="implication"><strong>If you select REDUCED_FORM:</strong> Informative but excluded from causal counterfactuals. Reduced-form edges cannot support policy intervention claims.</div>' +
+            '<div class="implication"><strong>If you select BLOCKED_ID:</strong> Edge remains blocked. No counterfactual propagation until resolved.</div>';
+
+        return '<div class="decision-guide">' +
+            '<div class="decision-guide-title">Decision Guide: ' + escHtml(label) + '</div>' +
+            (interp ? '<div>' + escHtml(interp) + '</div>' : '') +
+            signHtml +
+            claimHtml +
+            (risksHtml ? '<div style="margin-top:4px">Identification risks: ' + risksHtml + '</div>' : '') +
+            cfHtml +
+            implHtml +
+            '</div>';
+    },
+
+    LOO_INSTABILITY: function(item, edge, dagEdge) {
+        var label = edgeLabel(item.edge_id);
+        var interp = edgeInterpretation(item.edge_id);
+
+        // Extract influential unit from message
+        var unitMatch = (item.message || '').match(/excluding[:\s]+(\S+)/i);
+        var unitName = unitMatch ? unitMatch[1] : 'unknown unit';
+
+        var panelHtml = '';
+        if (edge.panel) {
+            var nUnits = edge.panel.n_units || '?';
+            var nPeriods = edge.panel.n_periods || '?';
+            var fraction = edge.panel.n_units ? (1 / edge.panel.n_units * 100).toFixed(1) : '?';
+            panelHtml = '<div>Panel: <strong>' + nUnits + ' units \u00d7 ' + nPeriods + ' periods</strong>. ' +
+                'Dropping <strong>' + escHtml(unitName) + '</strong> removes ~' + fraction + '% of cross-sectional variation.</div>';
+        } else {
+            panelHtml = '<div>Influential unit: <strong>' + escHtml(unitName) + '</strong></div>';
+        }
+
+        var implHtml = '<div class="implication"><strong>Suggested actions:</strong> ' +
+            '(1) Winsorize extreme values from this unit. ' +
+            '(2) Trim/exclude and report both results. ' +
+            '(3) Accept with caveat noting sensitivity to this unit.</div>';
+
+        return '<div class="decision-guide">' +
+            '<div class="decision-guide-title">Decision Guide: ' + escHtml(label) + '</div>' +
+            (interp ? '<div>' + escHtml(interp) + '</div>' : '') +
+            '<div>' + escHtml(item.message) + '</div>' +
+            panelHtml +
+            implHtml +
+            '</div>';
+    },
+
+    RATING_DIAGNOSTICS_CONFLICT: function(item, edge, dagEdge) {
+        var label = edgeLabel(item.edge_id);
+        var interp = edgeInterpretation(item.edge_id);
+
+        var failedDiags = (edge.diagnostics || []).filter(function(d){return !d.passed;});
+        var diagNames = {
+            'effective_obs': 'Tests whether the sample has enough observations for reliable inference',
+            'ts_leads_test': 'Tests whether future values predict current treatment (anticipation/reverse causality)',
+            'sign_consistency': 'Tests whether the estimated sign matches the expected direction from theory',
+            'ts_residual_autocorr': 'Tests for autocorrelation in residuals that could bias standard errors',
+            'ts_hac_sensitivity': 'Tests whether HAC standard error corrections materially change inference',
+            'ts_lag_sensitivity': 'Tests whether results are robust to different lag specifications',
+            'ts_regime_stability': 'Tests for structural breaks in the estimated relationship',
+            'ts_shock_support': 'Tests whether the shock variable has sufficient variation',
+            'hac_bandwidth': 'Checks Newey-West bandwidth selection'
+        };
+
+        var failedHtml = '';
+        if (failedDiags.length > 0) {
+            failedHtml = '<div style="margin-top:4px"><strong>Failed diagnostics:</strong><ul style="margin:2px 0 0 16px;padding:0">';
+            failedDiags.forEach(function(d) {
+                var desc = diagNames[d.name] || 'Diagnostic test';
+                failedHtml += '<li><span class="diag-fail">\u2717 ' + escHtml(d.name) + '</span> \u2014 ' + escHtml(desc) + '</li>';
+            });
+            failedHtml += '</ul></div>';
+        }
+
+        var ratingHtml = '<div>Current rating: <strong>' + escHtml(edge.rating || '--') + '</strong> (score: ' +
+            (edge.score ? edge.score.toFixed(3) : '--') + ') but <strong>' + failedDiags.length +
+            '</strong> diagnostic(s) failed.</div>';
+
+        var implHtml = '<div class="implication"><strong>Options:</strong> ' +
+            '(1) Downgrade rating to match diagnostic evidence. ' +
+            '(2) Re-estimate with different specification to resolve failures. ' +
+            '(3) Accept with caveat, documenting why the rating override is justified.</div>';
+
+        return '<div class="decision-guide">' +
+            '<div class="decision-guide-title">Decision Guide: ' + escHtml(label) + '</div>' +
+            (interp ? '<div>' + escHtml(interp) + '</div>' : '') +
+            ratingHtml +
+            failedHtml +
+            implHtml +
+            '</div>';
+    },
+
+    REGIME_INSTABILITY: function(item, edge, dagEdge) {
+        var label = edgeLabel(item.edge_id);
+        var interp = edgeInterpretation(item.edge_id);
+
+        var splitDate = (dagEdge && dagEdge.regime_split_date) ? dagEdge.regime_split_date : '';
+        var splitHtml = splitDate ?
+            '<div>DAG regime split date: <strong>' + escHtml(splitDate) + '</strong></div>' : '';
+
+        var implHtml = '<div class="implication"><strong>Options:</strong> ' +
+            '(1) Split sample at the break date and estimate separately. ' +
+            '(2) Restrict counterfactual scope to post-break regime only. ' +
+            '(3) Use a regime-switching model that accounts for the structural change.</div>';
+
+        return '<div class="decision-guide">' +
+            '<div class="decision-guide-title">Decision Guide: ' + escHtml(label) + '</div>' +
+            (interp ? '<div>' + escHtml(interp) + '</div>' : '') +
+            '<div>' + escHtml(item.message) + '</div>' +
+            splitHtml +
+            implHtml +
+            '</div>';
+    }
+};
+
+function defaultDecisionGuide(item, edge, dagEdge) {
+    var label = edgeLabel(item.edge_id);
+    var interp = edgeInterpretation(item.edge_id);
+    var signOk = checkSignConsistency(edge, dagEdge);
+    var signHtml = '';
+    if (signOk !== null) {
+        var expected = dagEdge.expected_sign || '?';
+        var actual = signLabel(edge.point);
+        if (signOk) {
+            signHtml = '<div>Sign: <span class="sign-match">' + escHtml(actual) + ' (expected ' + escHtml(expected) + ') \u2713</span></div>';
+        } else {
+            signHtml = '<div>Sign: <span class="sign-mismatch">' + escHtml(actual) + ' (expected ' + escHtml(expected) + ') \u2717</span></div>';
+        }
+    }
+    var risksHtml = renderRiskTags(edge.id_risks);
+    return '<div class="decision-guide">' +
+        '<div class="decision-guide-title">Decision Guide: ' + escHtml(label) + '</div>' +
+        (interp ? '<div>' + escHtml(interp) + '</div>' : '') +
+        '<div>Estimate: <strong>' + fmtNum(edge.point) + '</strong> (SE ' + fmtNum(edge.se) + ', p=' + fmtP(edge.pvalue) + '). ' +
+        'Claim: <strong>' + escHtml(edge.claim_level || 'none') + '</strong>. Rating: <strong>' + escHtml(edge.rating || '--') + '</strong>.</div>' +
+        signHtml +
+        (risksHtml ? '<div style="margin-top:4px">Identification risks: ' + risksHtml + '</div>' : '') +
+        '<div style="margin-top:4px"><strong>Issue:</strong> ' + escHtml(item.message) + '</div>' +
+        '</div>';
+}
+
+// ── LLM Guidance rendering ──────────────────────────────────────────
+function renderLLMGuidance(issueKey) {
+    var text = LLM_GUIDANCE[issueKey];
+    if (!text) return '';
+    return '<div class="llm-guidance">' +
+        '<div class="llm-guidance-title">AI Analysis</div>' +
+        '<div class="llm-guidance-text">' + renderMarkdown(text) + '</div>' +
+        '</div>';
+}
+
+function renderLLMEdgeAnnotation(edgeId) {
+    var text = LLM_EDGE_ANNOTATIONS[edgeId];
+    if (!text) return '';
+    return '<div class="llm-edge-annotation">' + renderMarkdown(text) + '</div>';
+}
+
+// ── State ─────────────────────────────────────────────────────────────
+var decisions = {}; // key -> {value, rationale}
+
+// ── Helpers ───────────────────────────────────────────────────────────
+function extractEdgeId(issueKey) {
+    var parts = issueKey.split(':');
+    return parts.slice(1).join(':');
+}
+
+function fmtP(p) {
+    if (p === null || p === undefined) return '--';
+    if (p < 0.0001) return p.toExponential(2);
+    return p.toFixed(4);
+}
+
+function fmtNum(n, decimals) {
+    if (n === null || n === undefined) return '--';
+    if (Math.abs(n) > 1000) return n.toFixed(1);
+    if (Math.abs(n) < 0.01 && n !== 0) return n.toExponential(2);
+    return n.toFixed(decimals !== undefined ? decimals : 4);
+}
+
+function diagSummary(diags) {
+    var passed = diags.filter(function(d){return d.passed;}).length;
+    return passed + '/' + diags.length + ' pass';
+}
+
+function diagDetail(diags) {
+    return diags.map(function(d) {
+        return '<span class="' + (d.passed ? 'diag-pass' : 'diag-fail') + '">' +
+               (d.passed ? '\u2713' : '\u2717') + ' ' + d.name + '</span>';
+    }).join(', ');
+}
+
+function renderAction(key, actCfg, isResolved, decVal) {
+    var opts = '<option value="">-- select --</option>';
+    var tooltips = {};
+    if (actCfg && actCfg.options) {
+        actCfg.options.forEach(function(o) {
+            var sel = (isResolved && decVal === o.value) ? ' selected' : '';
+            var tip = o.tooltip ? ' title="' + o.tooltip.replace(/"/g, '&quot;') + '"' : '';
+            opts += '<option value="' + o.value + '"' + sel + tip + '>' + o.label + '</option>';
+            if (o.tooltip) tooltips[o.value] = o.tooltip;
+        });
+    }
+    var rat = (decisions[key] && decisions[key].rationale) || '';
+    var currentTip = (isResolved && tooltips[decVal]) ? tooltips[decVal] : '';
+    return '<select data-key="' + key + '" data-tooltips=\'' + JSON.stringify(tooltips).replace(/'/g, "&#39;") + '\'>' + opts + '</select>' +
+           '<div class="action-info" data-tip-for="' + key + '">' + currentTip + '</div>' +
+           '<input type="text" data-rationale="' + key + '" placeholder="Rationale..." value="' + rat.replace(/"/g, '&quot;') + '">';
+}
+
+function updateProgress() {
+    var openKeys = Object.keys(ISSUES);
+    var total = openKeys.length;
+    var resolved = openKeys.filter(function(k){return decisions[k] && decisions[k].value;}).length;
+    var pct = total > 0 ? (resolved / total * 100) : 0;
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressLabel').textContent = resolved + ' / ' + total + ' resolved';
+}
+
+function updateStats() {
+    var openKeys = Object.keys(ISSUES);
+    var total = openKeys.length + CLOSED_ISSUES_COUNT;
+    var sevCounts = {};
+    openKeys.forEach(function(k) {
+        var s = ISSUES[k].severity;
+        sevCounts[s] = (sevCounts[s] || 0) + 1;
+    });
+    var html = '<span class="stat"><strong>' + openKeys.length + '</strong> open</span>' +
+               '<span class="stat">&middot; <strong>' + CLOSED_ISSUES_COUNT + '</strong> closed</span>' +
+               '<span class="stat">&middot; <strong>' + total + '</strong> total</span>' +
+               '<span class="stat" style="margin-left:12px">';
+    var parts = [];
+    ['CRITICAL','HIGH','MEDIUM','LOW'].forEach(function(s) {
+        if (sevCounts[s]) parts.push('<span class="' + s.toLowerCase() + '">' + sevCounts[s] + ' ' + s + '</span>');
+    });
+    html += parts.join(' &middot; ') + '</span>';
+    document.getElementById('statsRow').innerHTML = html;
+}
+
+// ── Group issues by rule_id ───────────────────────────────────────────
+function groupByRule() {
+    var groups = {};
+    for (var key in ISSUES) {
+        var issue = ISSUES[key];
+        var rule = issue.rule_id;
+        if (!groups[rule]) groups[rule] = [];
+        groups[rule].push({key: key, severity: issue.severity, rule_id: rule,
+                          message: issue.message, edge_id: extractEdgeId(key)});
+    }
+    return groups;
+}
+
+// ── Render ────────────────────────────────────────────────────────────
+function render() {
+    var container = document.getElementById('sectionsContainer');
+    container.innerHTML = '';
+    var groups = groupByRule();
+
+    // Populate rule filter
+    var ruleFilter = document.getElementById('filterRule');
+    var existingRules = [];
+    for (var i = 0; i < ruleFilter.options.length; i++) existingRules.push(ruleFilter.options[i].value);
+    for (var rule in groups) {
+        if (existingRules.indexOf(rule) === -1) {
+            var opt = document.createElement('option');
+            opt.value = rule;
+            opt.textContent = rule;
+            ruleFilter.appendChild(opt);
+        }
+    }
+
+    var sevFilter = document.getElementById('filterSeverity').value;
+    var ruleFilterVal = document.getElementById('filterRule').value;
+    var statusFilter = document.getElementById('filterStatus').value;
+
+    // Sort rules: by severity of first item (CRITICAL first), then alphabetical
+    var ruleKeys = Object.keys(groups);
+    ruleKeys.sort(function(a, b) {
+        var sevA = SEVERITY_ORDER[groups[a][0].severity] || 99;
+        var sevB = SEVERITY_ORDER[groups[b][0].severity] || 99;
+        if (sevA !== sevB) return sevA - sevB;
+        return a.localeCompare(b);
+    });
+
+    ruleKeys.forEach(function(rule) {
+        if (ruleFilterVal !== 'all' && ruleFilterVal !== rule) return;
+
+        var items = groups[rule];
+
+        // Apply severity filter
+        if (sevFilter !== 'all') {
+            items = items.filter(function(i){return i.severity === sevFilter;});
+        }
+
+        // Apply status filter
+        if (statusFilter === 'pending') {
+            items = items.filter(function(i){return !decisions[i.key] || !decisions[i.key].value;});
+        } else if (statusFilter === 'resolved') {
+            items = items.filter(function(i){return decisions[i.key] && decisions[i.key].value;});
+        }
+
+        if (items.length === 0) return;
+
+        var severity = items[0].severity;
+        var actCfg = ACTIONS_BY_RULE[rule] || ACTIONS_BY_RULE['_default'];
+        var colCfg = RULE_COLUMNS[rule] || DEFAULT_COLUMNS;
+
+        var section = document.createElement('div');
+        section.className = 'section';
+        var ruleInfo = RULE_DESCRIPTIONS[rule] || {};
+        var desc = (typeof ruleInfo === 'string') ? ruleInfo : (ruleInfo.description || '');
+        var explanation = (typeof ruleInfo === 'object') ? (ruleInfo.explanation || '') : '';
+        var guidance = (typeof ruleInfo === 'object') ? (ruleInfo.guidance || '') : '';
+        var extraId = 'ruleextra-' + rule.replace(/[^a-zA-Z0-9]/g, '_');
+
+        section.innerHTML =
+            '<div class="section-header">' +
+                '<div>' +
+                    '<span class="section-title">' + rule + '</span>' +
+                    '<span class="severity-badge ' + severity.toLowerCase() + '">' + severity + '</span>' +
+                    '<span class="section-count">' + items.length + ' edge' + (items.length !== 1 ? 's' : '') + '</span>' +
+                '</div>' +
+            '</div>' +
+            '<div class="rule-info">' +
+                '<div class="rule-description">' + desc +
+                    (explanation ? '<span class="why-toggle" data-toggle-extra="' + extraId + '">[Why?]</span>' : '') +
+                '</div>' +
+                (explanation ? '<div class="rule-extra" id="' + extraId + '">' +
+                    '<div class="rule-explanation">' + explanation + '</div>' +
+                    (guidance ? '<div class="rule-guidance"><strong>Decision guidance:</strong> ' + guidance + '</div>' : '') +
+                '</div>' : '') +
+            '</div>';
+
+        // Bulk action (for sections with >3 items)
+        if (items.length > 3 && actCfg) {
+            var bulk = document.createElement('div');
+            bulk.className = 'bulk-action';
+            var optHtml = '<option value="">-- select --</option>';
+            actCfg.options.forEach(function(o) { optHtml += '<option value="' + o.value + '">' + o.label + '</option>'; });
+            bulk.innerHTML =
+                '<label>Bulk action:</label>' +
+                '<select id="bulk-' + rule + '">' + optHtml + '</select>' +
+                '<button class="btn-sm" data-rule="' + rule + '">Apply to all unresolved</button>';
+            (function(r, itms) {
+                bulk.querySelector('button').addEventListener('click', function() {
+                    var val = document.getElementById('bulk-' + r).value;
+                    if (!val) return;
+                    itms.forEach(function(item) {
+                        if (!decisions[item.key] || !decisions[item.key].value) {
+                            decisions[item.key] = {value: val, rationale: (decisions[item.key] && decisions[item.key].rationale) || ''};
+                            var sel = document.querySelector('select[data-key="' + item.key + '"]');
+                            if (sel) { sel.value = val; sel.classList.add('decided'); }
+                            var row = document.querySelector('tr[data-key="' + item.key + '"]');
+                            if (row) row.classList.add('resolved');
+                        }
+                    });
+                    updateProgress();
+                });
+            })(rule, items);
+            section.appendChild(bulk);
+        }
+
+        // Build table
+        var table = document.createElement('table');
+        table.innerHTML = '<thead><tr>' + colCfg.headers + '</tr></thead><tbody></tbody>';
+        var tbody = table.querySelector('tbody');
+
+        items.forEach(function(item) {
+            var edge = EDGES[item.edge_id] || {};
+            var isResolved = decisions[item.key] && decisions[item.key].value;
+            var decVal = isResolved ? decisions[item.key].value : '';
+            var tr = document.createElement('tr');
+            tr.setAttribute('data-key', item.key);
+            if (isResolved) tr.classList.add('resolved');
+
+            tr.innerHTML = colCfg.renderRow(item, edge, actCfg, isResolved, decVal);
+            tbody.appendChild(tr);
+
+            // Details row with decision guide + LLM guidance
+            var detailTr = document.createElement('tr');
+            detailTr.className = 'details-row';
+            var safeId = item.key.replace(/[^a-zA-Z0-9]/g, '_');
+            var dagEdge = DAG_EDGES[item.edge_id] || {};
+            var guideFn = DECISION_GUIDES[item.rule_id] || defaultDecisionGuide;
+            var guideHtml = guideFn(item, edge, dagEdge);
+            var llmGuidanceHtml = renderLLMGuidance(item.key);
+            var llmAnnotationHtml = renderLLMEdgeAnnotation(item.edge_id);
+            detailTr.innerHTML = '<td colspan="' + colCfg.colspan + '">' +
+                '<div class="details-content" id="detail-' + safeId + '">' +
+                    guideHtml +
+                    llmGuidanceHtml +
+                    '<div class="detail-row"><span class="detail-label">Edge ID</span><span class="detail-value">' + item.edge_id + '</span></div>' +
+                    '<div class="detail-row"><span class="detail-label">Design</span><span class="detail-value">' + (edge.design || '--') + '</span></div>' +
+                    '<div class="detail-row"><span class="detail-label">Point (SE)</span><span class="detail-value">' + fmtNum(edge.point) + ' (' + fmtNum(edge.se) + ')</span></div>' +
+                    '<div class="detail-row"><span class="detail-label">p-value</span><span class="detail-value">' + fmtP(edge.pvalue) + '</span></div>' +
+                    '<div class="detail-row"><span class="detail-label">Claim level</span><span class="detail-value">' + (edge.claim_level || '--') + '</span></div>' +
+                    '<div class="detail-row"><span class="detail-label">Rating / Score</span><span class="detail-value">' + (edge.rating || '--') + ' / ' + (edge.score ? edge.score.toFixed(3) : '--') + '</span></div>' +
+                    '<div class="detail-row"><span class="detail-label">N obs</span><span class="detail-value">' + (edge.n_obs || '--') + '</span></div>' +
+                    (edge.panel ? '<div class="detail-row"><span class="detail-label">Panel</span><span class="detail-value">' + edge.panel.n_units + ' units x ' + edge.panel.n_periods + ' periods (' + edge.panel.balance + ')</span></div>' : '') +
+                    '<div class="detail-row"><span class="detail-label">All diagnostics pass</span><span class="detail-value">' + (edge.all_pass ? 'Yes' : 'No') + '</span></div>' +
+                    '<div style="margin-top:4px">' + (edge.diagnostics ? diagDetail(edge.diagnostics) : '--') + '</div>' +
+                    (edge.failure_flags && edge.failure_flags.length > 0 ? '<div class="detail-row" style="margin-top:4px"><span class="detail-label">Flags</span><span class="detail-value">' + edge.failure_flags.join(', ') + '</span></div>' : '') +
+                    '<div class="detail-row" style="margin-top:4px"><span class="detail-label">Issue</span><span class="detail-value">' + item.message + '</span></div>' +
+                    llmAnnotationHtml +
+                '</div>' +
+            '</td>';
+            tbody.appendChild(detailTr);
+        });
+
+        section.appendChild(table);
+        container.appendChild(section);
+    });
+
+    // Attach event listeners
+    container.querySelectorAll('select[data-key]').forEach(function(sel) {
+        sel.addEventListener('change', function() {
+            var key = this.getAttribute('data-key');
+            if (!decisions[key]) decisions[key] = {value: '', rationale: ''};
+            decisions[key].value = this.value;
+            var row = document.querySelector('tr[data-key="' + key + '"]');
+            if (this.value) {
+                this.classList.add('decided');
+                if (row) row.classList.add('resolved');
+            } else {
+                this.classList.remove('decided');
+                if (row) row.classList.remove('resolved');
+            }
+            // Update tooltip display
+            try {
+                var tooltips = JSON.parse(this.getAttribute('data-tooltips') || '{}');
+                var tipEl = document.querySelector('[data-tip-for="' + key + '"]');
+                if (tipEl) tipEl.textContent = tooltips[this.value] || '';
+            } catch(e) {}
+            updateProgress();
+        });
+    });
+
+    container.querySelectorAll('input[data-rationale]').forEach(function(inp) {
+        inp.addEventListener('input', function() {
+            var key = this.getAttribute('data-rationale');
+            if (!decisions[key]) decisions[key] = {value: '', rationale: ''};
+            decisions[key].rationale = this.value;
+        });
+    });
+
+    container.querySelectorAll('.toggle-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var key = this.getAttribute('data-toggle');
+            var id = 'detail-' + key.replace(/[^a-zA-Z0-9]/g, '_');
+            var el = document.getElementById(id);
+            if (el) {
+                el.classList.toggle('open');
+                this.textContent = el.classList.contains('open') ? '[-]' : '[+]';
+            }
+        });
+    });
+
+    // Why? toggle for rule explanation
+    container.querySelectorAll('.why-toggle').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var id = this.getAttribute('data-toggle-extra');
+            var el = document.getElementById(id);
+            if (el) {
+                el.classList.toggle('open');
+                this.textContent = el.classList.contains('open') ? '[Hide]' : '[Why?]';
+            }
+        });
+    });
+
+    // Restore decided styles
+    for (var key in decisions) {
+        if (decisions[key].value) {
+            var sel = container.querySelector('select[data-key="' + key + '"]');
+            if (sel) { sel.value = decisions[key].value; sel.classList.add('decided'); }
+        }
+    }
+
+    updateProgress();
+}
+
+// ── Export ────────────────────────────────────────────────────────────
+document.getElementById('exportBtn').addEventListener('click', function() {
+    var analystId = document.getElementById('analystId').value.trim();
+    var now = new Date().toISOString();
+    var decisionList = [];
+
+    for (var key in decisions) {
+        var dec = decisions[key];
+        if (!dec.value) continue;
+        var issue = ISSUES[key];
+        var edgeId = extractEdgeId(key);
+        var actCfg = ACTIONS_BY_RULE[issue.rule_id] || ACTIONS_BY_RULE['_default'];
+        decisionList.push({
+            issue_key: key,
+            edge_id: edgeId,
+            rule_id: issue.rule_id,
+            action: actCfg ? actCfg.action_type : 'unknown',
+            value: dec.value,
+            rationale: dec.rationale || '',
+            status: 'CLOSED'
+        });
+    }
+
+    var output = {
+        generated_at: now,
+        analyst_id: analystId || 'anonymous',
+        panel_built_at: GENERATED_AT,
+        decisions: decisionList
+    };
+
+    var blob = new Blob([JSON.stringify(output, null, 2)], {type: 'application/json'});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    var dateStr = now.slice(0,10).replace(/-/g,'');
+    a.href = url;
+    a.download = 'hitl_decisions_' + dateStr + '.json';
+    a.click();
+    URL.revokeObjectURL(url);
+});
+
+// ── Filter listeners ──────────────────────────────────────────────────
+document.getElementById('filterSeverity').addEventListener('change', render);
+document.getElementById('filterRule').addEventListener('change', render);
+document.getElementById('filterStatus').addEventListener('change', render);
+
+// ── Init ──────────────────────────────────────────────────────────────
+updateStats();
+document.getElementById('genTimestamp').textContent = 'Generated: ' + GENERATED_AT;
+render();
+
+</script>
+</body>
+</html>
