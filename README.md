@@ -45,25 +45,25 @@ expert-built specifications.
 
 ## Why OpenCausality
 
-The past decade of data science was shaped by a single economic force: the plummeting
-cost of storage and compute made it cheaper to collect everything and predict than to
-think carefully and explain. Predictive ML flourished not because prediction is what
-organizations need most, but because big data made it the path of least resistance.
-Correctness — understanding *why* something happens — was never the optimization target.
+The past decade of data science was driven by a behavioral revolution: the mass
+adoption of smartphones and mobile internet — accelerating after the iPhone's launch
+in 2007 — put billions of people online and generated unprecedented volumes of
+behavioral data. Every click, purchase, search, and location trace became a row in a
+table. The cheapest thing to do with all that data was predict from it. Predictive ML
+flourished not because prediction is what organizations need most, but because the
+sheer abundance of data made it the path of least resistance. Correctness —
+understanding *why* something happens — was never the optimization target.
 
-This matters because prediction, causal interpretation, and causal inference are
-fundamentally different things. A predictive model can exploit any statistical
-regularity — including spurious correlations and confounded associations — and still
-forecast well, without representing the actual data generating process at all. Causal
-interpretation goes a step further: it takes an observed correlation and attaches a
-story about cause and effect. But a plausible story about *why* two variables move
-together is not evidence that intervening on one will change the other. Correlations
-can arise from confounding, reverse causality, or selection — none of which a
-predictive model or a post-hoc narrative is designed to detect. Causal inference, by
-contrast, is the discipline of recovering the data generating process itself:
-specifying which variables cause which, under what assumptions identification holds,
-and what would happen under intervention. That is a qualitatively harder problem than
-prediction, and it is the problem that matters when decisions have consequences.
+But prediction and causation are fundamentally different things. A predictive model
+learns whatever statistical patterns help it forecast — including spurious correlations
+and confounded associations — without needing to represent the actual data generating
+process. Correlations can arise from confounding, reverse causality, or selection, and
+a predictive model has no reason to distinguish these from genuine causal effects.
+Knowing that A predicts B tells you nothing about whether changing A would change B.
+Causal inference is the discipline of recovering the data generating process itself:
+identifying which variables actually affect which, under what assumptions, and what
+would happen if you intervened. That is the problem that matters when decisions have
+consequences.
 
 Yet causal reasoning is not a niche academic skill. It is among the most fundamental
 forms of intelligence: pre-linguistic, rooted in physical interaction with the world,
