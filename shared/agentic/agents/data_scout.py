@@ -121,16 +121,21 @@ class DataScout:
     Budget tracking: after each download, file size is accumulated against
     ``budget_bytes``. When exhausted, remaining nodes are skipped.
     All downloads are wrapped in try/except — failures are logged, never block.
+
+    When static connectors fail, DataScout can delegate to a
+    DataResolverAgent for LLM-powered adaptive data discovery.
     """
 
     def __init__(
         self,
         budget_mb: int = 100,
         output_dir: Path | None = None,
+        llm_client: Any | None = None,
     ):
         self.budget_bytes = budget_mb * 1024 * 1024
         self.output_dir = output_dir or Path("outputs/agentic/cards/data")
         self._bytes_used = 0
+        self.llm_client = llm_client
 
     # ------------------------------------------------------------------
     # Public API
@@ -152,6 +157,7 @@ class DataScout:
             DataScoutReport
         """
         node_map = {n.id: n for n in dag.nodes}
+        self._current_dag = dag  # stash for DataResolverAgent fallback
         results: list[DownloadResult] = []
         downloaded = 0
         skipped = 0
@@ -263,16 +269,14 @@ class DataScout:
             elif connector == "nbk":
                 return self._fetch_nbk(node.id)
             else:
-                return DownloadResult(
-                    node_id=node.id, connector=connector,
-                    success=False, error=f"unknown connector: {connector}",
+                # Unknown connector — try DataResolverAgent if available
+                return self._try_resolver_fallback(
+                    node, f"unknown connector: {connector}",
                 )
         except Exception as e:
             logger.warning(f"DataScout: download failed for {node.id}: {e}")
-            return DownloadResult(
-                node_id=node.id, connector=connector,
-                success=False, error=str(e),
-            )
+            # Try DataResolverAgent as last resort
+            return self._try_resolver_fallback(node, str(e))
 
     # -- FRED --
 
@@ -337,6 +341,59 @@ class DataScout:
             node_id=node_id, connector="nbk", success=True,
             size_bytes=size, file_path=save_path, row_count=len(df),
         )
+
+    # -- DataResolverAgent fallback --
+
+    def _try_resolver_fallback(
+        self, node: Any, original_error: str,
+    ) -> DownloadResult:
+        """Try the LLM-powered DataResolverAgent as a last resort.
+
+        Only available when DataScout is initialized with an llm_client.
+        """
+        if self.llm_client is None:
+            return DownloadResult(
+                node_id=node.id, connector="",
+                success=False, error=original_error,
+            )
+
+        logger.info(
+            f"DataScout: static connectors failed for '{node.id}', "
+            f"delegating to DataResolverAgent"
+        )
+        try:
+            from shared.agentic.agents.data_resolver import DataResolverAgent
+
+            # We need a dag reference; get it from the node's parent if available
+            dag = getattr(self, "_current_dag", None)
+            agent = DataResolverAgent(
+                llm_client=self.llm_client,
+                dag=dag,
+                dynamic_loader=None,
+            )
+            result = agent.resolve_node(node.id)
+
+            if result.success:
+                return DownloadResult(
+                    node_id=node.id,
+                    connector=f"api:{result.provider}",
+                    success=True,
+                    size_bytes=0,  # size tracked separately
+                    file_path=Path(result.file_path) if result.file_path else None,
+                    row_count=result.rows,
+                )
+            else:
+                return DownloadResult(
+                    node_id=node.id, connector="",
+                    success=False,
+                    error=f"{original_error}; resolver also failed: {result.error}",
+                )
+        except Exception as e:
+            logger.warning(f"DataScout: DataResolverAgent fallback failed for {node.id}: {e}")
+            return DownloadResult(
+                node_id=node.id, connector="",
+                success=False, error=f"{original_error}; resolver error: {e}",
+            )
 
     # -- Data card generation --
 

@@ -48,6 +48,21 @@ allowed_auto_fixes:
     modes: ["EXPLORATION"]
     requires_logging: true
 
+  - action: "search_alternative_source"
+    description: "Use DataResolverAgent to find data from external APIs"
+    modes: ["EXPLORATION"]
+    requires_logging: true
+
+  - action: "fix_alignment_mismatch"
+    description: "Re-queue edge after frequency alignment fix"
+    modes: ["EXPLORATION"]
+    requires_logging: true
+
+  - action: "add_fallback_connector"
+    description: "Add API-discovered source as fallback connector in node spec"
+    modes: ["EXPLORATION"]
+    requires_logging: true
+
 disallowed_auto_fixes:
   - action: "change_sample_window"
     reason: "Risk of chasing significance"

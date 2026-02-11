@@ -218,6 +218,60 @@ class IssueRegistry:
 
         return detected
 
+    def detect_data_issues(
+        self,
+        failed_nodes: list[str],
+        dag: Any,
+        ledger: IssueLedger,
+    ) -> list[Issue]:
+        """Create LOADER_FAILED issues for nodes that could not be loaded.
+
+        Called by the agent loop after DataScout exhausts its sources.
+
+        Args:
+            failed_nodes: Node IDs that have no working loader.
+            dag: The DAGSpec for node metadata lookup.
+            ledger: IssueLedger to record issues.
+
+        Returns:
+            List of created issues.
+        """
+        detected = []
+        node_map = {n.id: n for n in dag.nodes}
+
+        for node_id in failed_nodes:
+            node = node_map.get(node_id)
+            node_name = getattr(node, "name", node_id) if node else node_id
+
+            # Collect the sources that were tried
+            failed_sources: list[str] = []
+            if node and node.source:
+                for src in (node.source.preferred or []):
+                    failed_sources.append(f"{src.connector}/{src.dataset}")
+                for src in (node.source.fallback or []):
+                    failed_sources.append(f"{src.connector}/{src.dataset}")
+
+            issue = self.create_issue(
+                "LOADER_FAILED",
+                f"No data loader could be built for node '{node_id}' ({node_name}). "
+                f"Tried sources: {', '.join(failed_sources) or 'none declared'}.",
+                scope="node",
+                node_id=node_id,
+                evidence={
+                    "failed_sources": failed_sources,
+                    "has_source_spec": bool(node and node.source and node.source.preferred),
+                },
+                suggested_fix={
+                    "action": "search_alternative_source",
+                    "node_id": node_id,
+                    "failed_sources": failed_sources,
+                },
+            )
+            if issue:
+                detected.append(ledger.add(issue))
+
+        return detected
+
     def detect_post_run_issues(
         self,
         edge_cards: dict[str, Any],
@@ -229,6 +283,22 @@ class IssueRegistry:
         for edge_id, card in edge_cards.items():
             estimates = card.estimates if hasattr(card, "estimates") else None
             if not estimates:
+                # Check for DATA_INSUFFICIENT_EDGE
+                failure_flags = getattr(card, "failure_flags", None)
+                if failure_flags and getattr(failure_flags, "data_insufficient", False):
+                    issue = self.create_issue(
+                        "DATA_INSUFFICIENT_EDGE",
+                        f"Edge '{edge_id}' has insufficient data for estimation "
+                        f"(fewer than 5 observations after alignment).",
+                        edge_id=edge_id,
+                        evidence={"data_insufficient": True},
+                        suggested_fix={
+                            "action": "search_alternative_source",
+                            "edge_id": edge_id,
+                        },
+                    )
+                    if issue:
+                        detected.append(ledger.add(issue))
                 continue
 
             # SMALL_SAMPLE_INFERENCE

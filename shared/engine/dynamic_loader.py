@@ -86,7 +86,9 @@ _CONNECTOR_STRATEGIES: dict[str, ConnectorStrategy] = {
         name="world_bank",
         local_path_templates=[
             "data/backup/worldbank/{series}.parquet",
+            "data/raw/api_downloads/world_bank/{series}.parquet",
         ],
+        api_fallback="shared.data.api_tools.WorldBankFallback",
     ),
     "ingested": ConnectorStrategy(
         name="ingested",

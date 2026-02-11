@@ -17,9 +17,20 @@ import logging
 import re
 import subprocess
 from abc import ABC, abstractmethod
-from typing import Any
+from dataclasses import dataclass, field
+from typing import Any, Callable
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class AgentResult:
+    """Result of a multi-turn agent loop."""
+
+    text: str = ""
+    tool_calls: list[dict[str, Any]] = field(default_factory=list)
+    success: bool = True
+    error: str = ""
 
 
 class LLMClient(ABC):
@@ -34,6 +45,26 @@ class LLMClient(ABC):
     def complete_structured(self, system: str, user: str, schema: dict) -> dict:
         """Generate a structured (JSON) completion matching the given schema."""
         ...
+
+    def run_agent_loop(
+        self,
+        system: str,
+        user: str,
+        tools: list[dict],
+        tool_executor: Callable[[str, dict], str],
+        max_turns: int = 10,
+    ) -> AgentResult:
+        """Run a multi-turn tool-use agent loop.
+
+        Sends initial messages + tool definitions to the LLM. When the LLM
+        responds with tool_use blocks, calls ``tool_executor(name, input)``
+        and feeds results back.  Continues until the LLM responds with only
+        text (no tool calls) or ``max_turns`` is reached.
+
+        Default implementation raises NotImplementedError; subclasses that
+        support tool-use should override.
+        """
+        raise NotImplementedError(f"{type(self).__name__} does not support run_agent_loop")
 
 
 class AnthropicClient(LLMClient):
@@ -83,6 +114,84 @@ class AnthropicClient(LLMClient):
                 except json.JSONDecodeError:
                     pass
         return {}
+
+    def run_agent_loop(
+        self,
+        system: str,
+        user: str,
+        tools: list[dict],
+        tool_executor: Callable[[str, dict], str],
+        max_turns: int = 10,
+    ) -> AgentResult:
+        """Multi-turn tool-use loop using the Anthropic messages API."""
+        messages: list[dict] = [{"role": "user", "content": user}]
+        all_tool_calls: list[dict] = []
+
+        for turn in range(max_turns):
+            try:
+                response = self._client.messages.create(
+                    model=self._model,
+                    max_tokens=4096,
+                    system=system,
+                    messages=messages,
+                    tools=tools,
+                )
+            except Exception as e:
+                return AgentResult(error=str(e), success=False)
+
+            # Separate text and tool_use blocks
+            text_parts: list[str] = []
+            tool_uses: list[Any] = []
+            for block in response.content:
+                if block.type == "text":
+                    text_parts.append(block.text)
+                elif block.type == "tool_use":
+                    tool_uses.append(block)
+
+            # If no tool calls, we're done
+            if not tool_uses:
+                return AgentResult(
+                    text="\n".join(text_parts),
+                    tool_calls=all_tool_calls,
+                    success=True,
+                )
+
+            # Append assistant message with all content blocks
+            messages.append({"role": "assistant", "content": response.content})
+
+            # Execute each tool call and build tool_result messages
+            tool_results: list[dict] = []
+            for tool_use in tool_uses:
+                call_record = {
+                    "turn": turn,
+                    "tool": tool_use.name,
+                    "input": tool_use.input,
+                }
+                try:
+                    result_str = tool_executor(tool_use.name, tool_use.input)
+                    call_record["output"] = result_str[:2000]  # truncate for audit
+                    call_record["success"] = True
+                except Exception as e:
+                    result_str = f"Error: {e}"
+                    call_record["output"] = result_str
+                    call_record["success"] = False
+
+                all_tool_calls.append(call_record)
+                tool_results.append({
+                    "type": "tool_result",
+                    "tool_use_id": tool_use.id,
+                    "content": result_str,
+                })
+
+            messages.append({"role": "user", "content": tool_results})
+
+        # max_turns exhausted
+        return AgentResult(
+            text="Agent loop reached max turns without completing.",
+            tool_calls=all_tool_calls,
+            success=False,
+            error="max_turns_exceeded",
+        )
 
 
 class LiteLLMClient(LLMClient):
@@ -135,6 +244,87 @@ class LiteLLMClient(LLMClient):
             except json.JSONDecodeError:
                 pass
         return {}
+
+    def run_agent_loop(
+        self,
+        system: str,
+        user: str,
+        tools: list[dict],
+        tool_executor: Callable[[str, dict], str],
+        max_turns: int = 10,
+    ) -> AgentResult:
+        """Multi-turn tool-use loop using litellm (OpenAI-compatible format)."""
+        import litellm
+
+        # Convert Anthropic tool format to OpenAI function format
+        oai_tools = []
+        for tool in tools:
+            oai_tools.append({
+                "type": "function",
+                "function": {
+                    "name": tool["name"],
+                    "description": tool.get("description", ""),
+                    "parameters": tool["input_schema"],
+                },
+            })
+
+        messages: list[dict] = [
+            {"role": "system", "content": system},
+            {"role": "user", "content": user},
+        ]
+        all_tool_calls: list[dict] = []
+
+        for turn in range(max_turns):
+            try:
+                response = litellm.completion(
+                    model=self._model,
+                    max_tokens=4096,
+                    messages=messages,
+                    tools=oai_tools,
+                )
+            except Exception as e:
+                return AgentResult(error=str(e), success=False)
+
+            msg = response.choices[0].message
+
+            if not msg.tool_calls:
+                return AgentResult(
+                    text=msg.content or "",
+                    tool_calls=all_tool_calls,
+                    success=True,
+                )
+
+            # Append assistant message
+            messages.append(msg.model_dump())
+
+            # Execute each tool call
+            for tc in msg.tool_calls:
+                fn_name = tc.function.name
+                fn_args = json.loads(tc.function.arguments)
+                call_record = {"turn": turn, "tool": fn_name, "input": fn_args}
+
+                try:
+                    result_str = tool_executor(fn_name, fn_args)
+                    call_record["output"] = result_str[:2000]
+                    call_record["success"] = True
+                except Exception as e:
+                    result_str = f"Error: {e}"
+                    call_record["output"] = result_str
+                    call_record["success"] = False
+
+                all_tool_calls.append(call_record)
+                messages.append({
+                    "role": "tool",
+                    "tool_call_id": tc.id,
+                    "content": result_str,
+                })
+
+        return AgentResult(
+            text="Agent loop reached max turns without completing.",
+            tool_calls=all_tool_calls,
+            success=False,
+            error="max_turns_exceeded",
+        )
 
 
 class CodexCLIClient(LLMClient):

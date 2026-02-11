@@ -210,21 +210,34 @@ class AgentLoop:
         # HITL gate
         self.hitl_gate = HITLGate()
 
+        # LLM client (for DataResolverAgent and adaptive data discovery)
+        self._llm_client = None
+        try:
+            from shared.llm.client import get_llm_client
+            self._llm_client = get_llm_client()
+        except Exception as e:
+            logger.warning(f"LLM client unavailable (data resolver disabled): {e}")
+
         # PatchPolicy and PatchBot
         self.patch_policy = PatchPolicy.load()
         self.patch_bot = PatchBot(
             self.patch_policy,
             artifact_store=self.artifact_store,
             audit_log=self.audit_log,
+            llm_client=self._llm_client,
+            dynamic_loader=None,  # set after dynamic_loader is created
+            dag=self.dag,
         )
 
         # Dynamic loader factory
         self.dynamic_loader = DynamicLoaderFactory()
+        self.patch_bot.dynamic_loader = self.dynamic_loader
 
-        # DataScout (real data download)
+        # DataScout (real data download, with optional LLM fallback)
         self.data_scout = DataScout(
             budget_mb=self.config.download_budget_mb,
             output_dir=self.config.output_dir / "cards" / "data",
+            llm_client=self._llm_client,
         )
 
         # PaperScout (literature search — multi-source)
@@ -447,6 +460,35 @@ class AgentLoop:
                 should_stop=True,
                 stop_reason="CONFIRMATION mode: single pass only",
             )
+
+        # Phase 5.5: Data-fix pass (dispatch LOADER_FAILED issues to PatchBot first)
+        data_fixes_applied = 0
+        data_issues = [
+            iss for iss in self.issue_ledger.get_auto_fixable()
+            if iss.rule_id in ("LOADER_FAILED", "DATA_INSUFFICIENT_EDGE", "ALIGNMENT_FAILURE")
+        ]
+        if data_issues:
+            logger.info(f"Phase 5.5: Dispatching {len(data_issues)} data issues to PatchBot")
+            data_patch_results = self.patch_bot.apply_fixes(self.issue_ledger, self.mode)
+            for pr in data_patch_results:
+                if pr.applied and pr.action in (
+                    "search_alternative_source", "fix_alignment_mismatch",
+                    "add_fallback_connector",
+                ):
+                    data_fixes_applied += 1
+                    logger.info(
+                        f"PatchBot data fix: {pr.action} -> {pr.message}"
+                    )
+
+            # If data was resolved, re-run auto_populate and re-catalog
+            if data_fixes_applied > 0:
+                repop = self.dynamic_loader.auto_populate_from_dag(self.dag)
+                new_reg = sum(1 for v in repop.values() if v == "registered")
+                if new_reg > 0:
+                    logger.info(
+                        f"Phase 5.5: auto-registered {new_reg} edges after data fix"
+                    )
+                self._catalog_data()
 
         # Phase 6: PatchBot applies auto-fixes
         patches_applied = 0
@@ -745,6 +787,22 @@ class AgentLoop:
             )
             for msg in self._data_guidance:
                 logger.warning(msg)
+
+        # Create LOADER_FAILED issues for remaining missing nodes
+        remaining_missing = [
+            node.id for node in self.dag.nodes
+            if not self.catalog.is_available(node.id)
+            and getattr(node, "observed", True)
+            and not getattr(node, "latent", False)
+        ]
+        if remaining_missing:
+            self.issue_registry.detect_data_issues(
+                remaining_missing, self.dag, self.issue_ledger,
+            )
+            logger.info(
+                f"Created LOADER_FAILED issues for {len(remaining_missing)} nodes: "
+                f"{remaining_missing[:5]}{'...' if len(remaining_missing) > 5 else ''}"
+            )
 
         # Mark remaining missing nodes as BLOCKED (not UNKNOWN)
         from shared.engine.data_assembler import EDGE_NODE_MAP

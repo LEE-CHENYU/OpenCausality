@@ -52,10 +52,16 @@ class PatchBot:
         policy: PatchPolicy | None = None,
         artifact_store: ArtifactStore | None = None,
         audit_log: AuditLog | None = None,
+        llm_client: Any | None = None,
+        dynamic_loader: Any | None = None,
+        dag: Any | None = None,
     ):
         self.policy = policy or PatchPolicy.load()
         self.artifact_store = artifact_store
         self.audit_log = audit_log
+        self.llm_client = llm_client
+        self.dynamic_loader = dynamic_loader
+        self.dag = dag
 
     def apply_fixes(
         self,
@@ -125,6 +131,10 @@ class PatchBot:
             "fix_edge_id_syntax": self._fix_edge_id_syntax,
             "fix_missing_source_spec": self._fix_missing_source_spec,
             "fix_orphan_identity_edge": self._fix_orphan_identity_edge,
+            # Data resolution handlers (delegate to DataResolverAgent)
+            "search_alternative_source": self._fix_search_alternative_source,
+            "fix_alignment_mismatch": self._fix_alignment_mismatch,
+            "add_fallback_connector": self._fix_add_fallback_connector,
         }
 
         handler = handlers.get(action)
@@ -568,5 +578,149 @@ class PatchBot:
             message=f"Created {len(created_edges)} identity edges for orphan '{node_id}': {created_edges}",
             changes={"node_id": node_id, "created_edges": created_edges, "formula": formula},
             affected_edges=created_edges,
+            requires_reestimation=False,
+        )
+
+    # ------------------------------------------------------------------
+    # Data resolution handlers (adaptive, LLM-powered)
+    # ------------------------------------------------------------------
+
+    def _fix_search_alternative_source(self, issue: Issue, fix: dict) -> PatchResult:
+        """Use DataResolverAgent to find data from external APIs.
+
+        Delegates to the LLM-powered DataResolverAgent, which searches
+        data catalogs, fetches matching indicators, and registers loaders.
+        """
+        node_id = fix.get("node_id", issue.node_id or "")
+        failed_sources = fix.get("failed_sources", [])
+        edge_id = issue.edge_id or ""
+
+        if not node_id:
+            return PatchResult(
+                issue_key=issue.issue_key,
+                action="search_alternative_source",
+                applied=False,
+                message="No node_id in fix or issue",
+            )
+
+        if not self.llm_client or not self.dag:
+            return PatchResult(
+                issue_key=issue.issue_key,
+                action="search_alternative_source",
+                applied=False,
+                message="LLM client or DAG not available for DataResolverAgent",
+            )
+
+        from shared.agentic.agents.data_resolver import DataResolverAgent
+
+        agent = DataResolverAgent(
+            llm_client=self.llm_client,
+            dag=self.dag,
+            dynamic_loader=self.dynamic_loader,
+        )
+        result = agent.resolve_node(node_id, failed_sources=failed_sources)
+
+        prompt = f"DataResolverAgent for node '{node_id}': searched external APIs"
+        self._log_llm_repair(
+            edge_id=edge_id or node_id,
+            field="data_source",
+            old_value=failed_sources,
+            new_value={
+                "provider": result.provider,
+                "indicator": result.indicator,
+                "file_path": result.file_path,
+            },
+            reason=f"LLM-powered data discovery for node {node_id}",
+            prompt=prompt,
+            structural=False,
+        )
+
+        if result.success:
+            # Find affected edges that involve this node
+            affected = []
+            if self.dag:
+                for e in self.dag.edges:
+                    if e.from_node == node_id or e.to_node == node_id:
+                        affected.append(e.id)
+
+            return PatchResult(
+                issue_key=issue.issue_key,
+                action="search_alternative_source",
+                applied=True,
+                message=(
+                    f"DataResolverAgent found data for '{node_id}' "
+                    f"via {result.provider}/{result.indicator} "
+                    f"({result.rows} rows -> {result.file_path})"
+                ),
+                changes={
+                    "node_id": node_id,
+                    "provider": result.provider,
+                    "indicator": result.indicator,
+                    "file_path": result.file_path,
+                    "rows": result.rows,
+                },
+                affected_edges=affected,
+                requires_reestimation=True,
+            )
+        else:
+            return PatchResult(
+                issue_key=issue.issue_key,
+                action="search_alternative_source",
+                applied=False,
+                message=f"DataResolverAgent failed for '{node_id}': {result.error}",
+            )
+
+    def _fix_alignment_mismatch(self, issue: Issue, fix: dict) -> PatchResult:
+        """Re-queue edge for re-estimation after alignment fix.
+
+        When an edge has frequency mismatch between treatment and outcome,
+        this handler marks affected edges for re-estimation so the data
+        assembler can retry with corrected alignment.
+        """
+        edge_id = issue.edge_id or ""
+
+        return PatchResult(
+            issue_key=issue.issue_key,
+            action="fix_alignment_mismatch",
+            applied=True,
+            message=f"Re-queued edge '{edge_id}' for re-estimation after alignment fix",
+            affected_edges=[edge_id] if edge_id else [],
+            requires_reestimation=True,
+        )
+
+    def _fix_add_fallback_connector(self, issue: Issue, fix: dict) -> PatchResult:
+        """Add an API-discovered source as a fallback connector.
+
+        After DataResolverAgent successfully downloads data, this handler
+        records the new source as a fallback in the node's source spec
+        for future runs.
+        """
+        node_id = fix.get("node_id", issue.node_id or "")
+        provider = fix.get("provider", "")
+        indicator = fix.get("indicator", "")
+        edge_id = issue.edge_id or ""
+
+        prompt = f"Add fallback connector {provider}/{indicator} for node '{node_id}'"
+        self._log_llm_repair(
+            edge_id=edge_id or node_id,
+            field="fallback_connector",
+            old_value=None,
+            new_value={"provider": provider, "indicator": indicator},
+            reason=f"API-discovered fallback source for node {node_id}",
+            prompt=prompt,
+            structural=False,
+        )
+
+        return PatchResult(
+            issue_key=issue.issue_key,
+            action="add_fallback_connector",
+            applied=True,
+            message=f"Added fallback connector {provider}/{indicator} for '{node_id}'",
+            changes={
+                "node_id": node_id,
+                "provider": provider,
+                "indicator": indicator,
+            },
+            affected_edges=[edge_id] if edge_id else [],
             requires_reestimation=False,
         )

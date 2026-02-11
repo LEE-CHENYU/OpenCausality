@@ -67,6 +67,9 @@ def _setup_data_scout_loop(dag, report):
         loop.data_scout.generate_user_guidance.return_value = []
         loop.queue = MagicMock()
         loop.audit_log = MagicMock()
+        loop.issue_registry = MagicMock()
+        loop.issue_registry.detect_data_issues.return_value = []
+        loop.issue_ledger = MagicMock()
         loop._data_guidance = []
         loop._data_hash = ""
         return loop

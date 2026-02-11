@@ -131,6 +131,9 @@ class PatchPolicy:
     _LLM_METADATA_REPAIRS: set[str] = {
         "fix_edge_id_syntax",
         "fix_missing_source_spec",
+        "search_alternative_source",
+        "fix_alignment_mismatch",
+        "add_fallback_connector",
     }
 
     # Structural LLM repair actions that require HITL unless within safe boundaries.

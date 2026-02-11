@@ -582,6 +582,59 @@ rules:
       form", then the formula should use the variable name directly (e.g.,
       X - Y instead of log(X) - log(Y)). Update the formula to match.
 
+  # =========================================================================
+  # Data Pipeline / Loader Problems
+  # =========================================================================
+  - rule_id: LOADER_FAILED
+    severity: HIGH
+    trigger: pre_run
+    auto_fixable: true
+    requires_human: false
+    description: "Primary and fallback data loaders both failed for a node"
+    explanation: >
+      The DynamicLoaderFactory could not build a loader for a DAG node from
+      any of its declared source specs (preferred + fallback). This prevents
+      estimation of all edges involving this node. The DataResolverAgent can
+      attempt to discover and download data from external APIs.
+    guidance: >
+      The system will dispatch to the DataResolverAgent, which uses LLM
+      tool-use to search data catalogs (World Bank, FRED, IMF, DBnomics),
+      fetch matching indicators, and register loaders. If automated
+      resolution fails, drop a data file into data/raw/ and re-run.
+
+  - rule_id: DATA_INSUFFICIENT_EDGE
+    severity: HIGH
+    trigger: post_run
+    auto_fixable: true
+    requires_human: false
+    description: "Edge estimation produced fewer than 5 observations after alignment"
+    explanation: >
+      After aligning treatment and outcome series in time, fewer than 5
+      usable observations remain. This is typically caused by frequency
+      mismatch (annual vs monthly), non-overlapping date ranges, or
+      excessive NaN values. The estimate is unreliable and marked with
+      rating D.
+    guidance: >
+      The DataResolverAgent can attempt to find a higher-frequency version
+      of the data or a longer time series from an alternative provider.
+      If this fails, the edge should be excluded from propagation.
+
+  - rule_id: ALIGNMENT_FAILURE
+    severity: MEDIUM
+    trigger: post_run
+    auto_fixable: true
+    requires_human: false
+    description: "Treatment and outcome series have no overlapping date range"
+    explanation: >
+      The two series for an edge have completely disjoint date ranges,
+      making estimation impossible. This often happens when one series
+      is annual (e.g., from World Bank) and the other is monthly, or
+      when one series ends before the other begins.
+    guidance: >
+      The system will attempt frequency resampling (forward-fill annual
+      to monthly) or search for an alternative series with better coverage.
+      If alignment is impossible, the edge is excluded from estimation.
+
   - rule_id: UNIT_MISSING_IN_EDGECARD
     severity: CRITICAL
     trigger: post_run
