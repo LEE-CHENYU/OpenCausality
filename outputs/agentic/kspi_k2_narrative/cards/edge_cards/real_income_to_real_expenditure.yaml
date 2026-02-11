@@ -1,10 +1,10 @@
-edge_id: nominal_expenditure_to_real_expenditure
+edge_id: real_income_to_real_expenditure
 dag_version_hash: d131ab06e0448ce0ca06e96cba9cbb5daa8404669ad95ba1b6630376a2728f3c
-created_at: '2026-02-11T11:52:15.634241'
+created_at: '2026-02-11T11:52:16.120121'
 data_provenance:
   treatment_source:
     connector: parquet_file
-    dataset: nominal_expenditure
+    dataset: real_income
     series: null
     retrieval_time: null
     file_path: null
@@ -92,7 +92,7 @@ diagnostics:
     message: 'TSGuard: pass'
 all_diagnostics_pass: false
 interpretation:
-  estimand: IRF of real_expenditure to a unit shock in nominal_expenditure
+  estimand: IRF of real_expenditure to a unit shock in real_income
   is_not: Structural causal effect under all interventions
   channels:
   - direct
@@ -145,12 +145,12 @@ counterfactual_block:
   allowed: false
   reason_blocked: Shock CF requires REDUCED_FORM+, edge has DESCRIPTIVE
 propagation_role:
-  role: identity
+  role: diagnostic_only
   overlapping_paths: []
   selected_for_counterfactual: false
   mode_propagation_allowed:
-    STRUCTURAL: true
-    REDUCED_FORM: true
+    STRUCTURAL: false
+    REDUCED_FORM: false
     DESCRIPTIVE: true
   mode_shock_cf_allowed:
     STRUCTURAL: false
@@ -162,26 +162,39 @@ propagation_role:
     DESCRIPTIVE: false
 literature:
   supporting:
-  - doi: 10.1257/aer.103.6.2121
-    title: 'The China Syndrome: Local Labor Market Effects of Import Competition in
-      the United States'
+  - doi: 10.1017/s0020818300018993
+    title: 'International regimes, transactions, and change: embedded liberalism in
+      the postwar economic order'
     authors:
-    - David Autor
-    - David Dorn
-    - Gordon Hanson
-    year: 2013
-    excerpt: We analyze the effect of rising Chinese import competition between 1990
-      and 2007 on US local labor markets, exploiting cross-market variation in import
-      exposure stemming from initial differences in industry specialization and instrumenting
-      for US imports using changes in Chinese imports by other hig
+    - John Gerard Ruggie
+    year: 1982
+    excerpt: The prevailing model of international economic regimes is strictly positivistic
+      in its epistemological orientation and stresses the distribution of material
+      power capabilities in its explanatory logic. It is inadequate to account for
+      the current set of international economic regimes and for the diff
     relevance: supporting
-    edge_id: nominal_expenditure_to_real_expenditure
+    edge_id: real_income_to_real_expenditure
     paper_id: ''
-    citation_count: 4101
-    search_query: Nominal consumption expenditure Real consumption expenditure causal
-      effect
+    citation_count: 4367
+    search_query: Real monetary income Real consumption expenditure causal effect
     source: openalex
-    pdf_url: https://www.aeaweb.org/articles/pdf/doi/10.1257/aer.103.6.2121
+    pdf_url: https://www.cambridge.org/core/services/aop-cambridge-core/content/view/238A600FEFE7EDBC2DDAB30E6A28B4D9/S0020818300018993a.pdf/div-class-title-international-regimes-transactions-and-change-embedded-liberalism-in-the-postwar-economic-order-div.pdf
+  - doi: 10.3386/w3301
+    title: 'Patent Statistics as Economic Indicators: A Survey'
+    authors:
+    - Zvi Griliches
+    year: 1990
+    excerpt: This survey reviews the growing use of patent data in economic analysis.After
+      describing some of the main characteristics of patents and patent data, it focuses
+      on the use of patents as an indicator of technological change.Cross-sectional
+      and time-series studies of the relationship of patents to R&D
+    relevance: supporting
+    edge_id: real_income_to_real_expenditure
+    paper_id: ''
+    citation_count: 3634
+    search_query: Real monetary income Real consumption expenditure causal effect
+    source: openalex
+    pdf_url: https://doi.org/10.3386/w3301
   - doi: 10.1086/654340
     title: An Optimization-Based Econometric Framework for the Evaluation of Monetary
       Policy
@@ -194,32 +207,12 @@ literature:
       alternative rules by which the Fed may set interest rates. The model is derived
       from optimizing behavior under rational expectations, both on the part o
     relevance: supporting
-    edge_id: nominal_expenditure_to_real_expenditure
+    edge_id: real_income_to_real_expenditure
     paper_id: ''
     citation_count: 1897
-    search_query: Nominal consumption expenditure Real consumption expenditure causal
-      effect
+    search_query: Real monetary income Real consumption expenditure causal effect
     source: openalex
     pdf_url: https://www.journals.uchicago.edu/doi/epdf/10.1086/654340
-  - doi: 10.2307/2534702
-    title: Systematic Monetary Policy and the Effects of Oil Price Shocks
-    authors:
-    - Ben Bernanke
-    - Mark Gertler
-    - Mark W. Watson
-    - Christopher A. Sims
-    - Benjamin M. Friedman
-    year: 1997
-    excerpt: Your use of the JSTOR archive indicates your acceptance of JSTOR&amp;apos;s
-      Terms and Conditions of Use, available at
-    relevance: supporting
-    edge_id: nominal_expenditure_to_real_expenditure
-    paper_id: ''
-    citation_count: 1578
-    search_query: Nominal consumption expenditure Real consumption expenditure causal
-      effect
-    source: openalex
-    pdf_url: https://www.jstor.org/institutionSearch?redirectUri=%2fstable%2f2534702
   - doi: 10.1080/09638199.2024.2433008
     title: Asymmetric effect of consumption expenditure on import function in Saudi
       Arabia
@@ -233,37 +226,34 @@ literature:
       and imports both in short and long-run periods, however, the positive shocks
       in consumption expenditures have a dominant impact in the long run
     relevance: supporting
-    edge_id: nominal_expenditure_to_real_expenditure
+    edge_id: real_income_to_real_expenditure
     paper_id: cf6ef30e2ce2ea82ee98ffcf675e7c286296cf8c
     citation_count: 2
-    search_query: Nominal consumption expenditure Real consumption expenditure causal
-      effect
+    search_query: Real monetary income Real consumption expenditure causal effect
     source: semantic_scholar
     pdf_url: ''
-  - doi: 10.5604/01.3001.0054.2990
-    title: EXPENDITURE ON FOOD AND FOOD CONSUMPTION IN HOUSEHOLDS IN POLAND DURING
-      THE COVID-19 PANDEMIC
+  - doi: 10.22219/jibe.v8i01.29447
+    title: Bank lending channel and household consumption expenditure in Nigeria
     authors:
-    - M. Utzig
+    - A. Onanuga
+    - K. Arikewuyo
     year: 2024
-    excerpt: The COVID-19 pandemic influenced many areas of human life, one of those
-      areas is expenditure on food and food consumption in households. The paper aims
-      to identify changes in household expenditure on food and food consumption in
-      Poland in the span of the COVID-19 pandemic. The analysis covers the pe
+    excerpt: The primary objective of this paper is to analyze the effect of the bank
+      lending channel on household consumption expenditure in Nigeria. Utilizing annual
+      secondary data from the United Nations Statistical Division Database and the
+      Central Bank of Nigeria Database, and employing the Generalized Meth
     relevance: supporting
-    edge_id: nominal_expenditure_to_real_expenditure
-    paper_id: bf970d9e04667b06d1bc7e4e459639c72b4d1d6d
-    citation_count: 1
-    search_query: Nominal consumption expenditure Real consumption expenditure causal
-      effect
+    edge_id: real_income_to_real_expenditure
+    paper_id: 378dc1701be5cd05ea2beed921fdeaad238f1f75
+    citation_count: 0
+    search_query: Real monetary income Real consumption expenditure causal effect
     source: semantic_scholar
     pdf_url: ''
   challenging: []
   methodological: []
   search_status: SEARCHED
-  search_timestamp: '2026-02-11T11:52:15.634292'
-  search_query: Nominal consumption expenditure Real consumption expenditure causal
-    effect
+  search_timestamp: '2026-02-11T11:52:16.120180'
+  search_query: Real monetary income Real consumption expenditure causal effect
   total_results: 5
 companion_edge_id: null
 variant_of: null

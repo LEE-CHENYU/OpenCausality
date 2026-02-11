@@ -73,7 +73,7 @@ def load_edge_card(card_path: Path) -> dict | None:
     if not card:
         return None
 
-    estimates = card.get("estimates", {})
+    estimates = card.get("estimates") or {}
     diagnostics_raw = card.get("diagnostics", {})
     identification = card.get("identification", {})
     spec = card.get("spec_details", {})
@@ -1495,7 +1495,18 @@ function showEdgeTooltip(e, d) {
     if (d.claim_level) html += '<div class="tooltip-row"><span class="tooltip-label">Claim</span><span class="tooltip-value">' + d.claim_level + '</span></div>';
     if (d.rating) html += '<div class="tooltip-row"><span class="tooltip-label">Rating</span><span class="tooltip-value">' + d.rating + '</span></div>';
     if (d.design) html += '<div class="tooltip-row"><span class="tooltip-label">Design</span><span class="tooltip-value">' + d.design + '</span></div>';
-    if (!hasEstimate) {
+    if (d.design === 'DATA_INSUFFICIENT') {
+        html += '<div style="margin-top:8px;padding:6px 8px;background:#f8d7da;border:1px solid #f5c2c7;border-radius:4px;font-size:10px">';
+        html += '<div style="font-weight:600;color:#842029;margin-bottom:4px">Insufficient Data</div>';
+        html += '<div style="color:#842029;margin-bottom:4px">This edge has fewer than 5 overlapping observations after data alignment. No reliable estimate can be produced.</div>';
+        var ffList = d.failure_flags || [];
+        if (ffList.indexOf('data_insufficient') >= 0) {
+            html += '<div style="color:#555;margin-top:4px"><strong>Common causes:</strong> Date format mismatch between series, missing time periods in downloaded data, or derived node dependencies that fail to compute.</div>';
+        }
+        if (d.blocked_reason) html += '<div style="color:#555;margin-top:4px">' + escHtml(d.blocked_reason) + '</div>';
+        if (d.remediation) html += '<div style="color:#555;margin-top:4px">' + escHtml(d.remediation) + '</div>';
+        html += '</div>';
+    } else if (!hasEstimate) {
         html += '<div style="margin-top:8px;padding:6px 8px;background:#fff3cd;border:1px solid #ffc107;border-radius:4px;font-size:10px">';
         html += '<div style="font-weight:600;color:#856404;margin-bottom:4px">Not Estimated</div>';
         if (d.blocked_reason) {
@@ -1692,7 +1703,8 @@ function applyFilters() {
     var identified = visible.filter(function(e) { return e.claim_level === 'IDENTIFIED_CAUSAL'; }).length;
     document.getElementById('statIdentified').textContent = identified;
     var blocked = visible.filter(function(e) { return e.blocked_reason; }).length;
-    document.getElementById('statBlocked').textContent = blocked;
+    var nodata = visible.filter(function(e) { return e.design === 'DATA_INSUFFICIENT'; }).length;
+    document.getElementById('statBlocked').textContent = blocked + (nodata ? ' + ' + nodata + ' no data' : '');
 }
 
 document.getElementById('typeFilter').addEventListener('change', applyFilters);

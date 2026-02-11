@@ -1392,20 +1392,30 @@ class AgentLoop:
         point = lp.impact_estimate
         se = lp.impact_se
         n_obs = lp.nobs[0] if lp.nobs else 0
-        ci_lo = point - 1.96 * se if not np_.isnan(se) else 0.0
-        ci_hi = point + 1.96 * se if not np_.isnan(se) else 0.0
-        pval = lp.pvalues[0] if lp.pvalues and not np_.isnan(lp.pvalues[0]) else None
+        data_insufficient = (n_obs < 5)
 
-        estimates = Estimates(
-            point=float(point) if not np_.isnan(point) else 0.0,
-            se=float(se) if not np_.isnan(se) else 0.0,
-            ci_95=(float(ci_lo), float(ci_hi)),
-            pvalue=float(pval) if pval is not None else None,
-            horizons=lp.horizons,
-            irf=lp.coefficients,
-            irf_ci_lower=lp.ci_lower,
-            irf_ci_upper=lp.ci_upper,
-        )
+        if data_insufficient:
+            # Zero or near-zero observations — don't report a misleading 0.0 estimate
+            estimates = None
+            logger.warning(
+                f"Edge {task.edge_id}: DATA INSUFFICIENT — only {n_obs} observations "
+                f"after alignment. No estimate produced."
+            )
+        else:
+            ci_lo = point - 1.96 * se if not np_.isnan(se) else 0.0
+            ci_hi = point + 1.96 * se if not np_.isnan(se) else 0.0
+            pval = lp.pvalues[0] if lp.pvalues and not np_.isnan(lp.pvalues[0]) else None
+
+            estimates = Estimates(
+                point=float(point) if not np_.isnan(point) else 0.0,
+                se=float(se) if not np_.isnan(se) else 0.0,
+                ci_95=(float(ci_lo), float(ci_hi)),
+                pvalue=float(pval) if pval is not None else None,
+                horizons=lp.horizons,
+                irf=lp.coefficients,
+                irf_ci_lower=lp.ci_lower,
+                irf_ci_upper=lp.ci_upper,
+            )
 
         diagnostics: dict[str, DiagnosticResult] = {}
         if lp.hac_bandwidth:
@@ -1439,10 +1449,11 @@ class AgentLoop:
         failure_flags = FailureFlags(
             small_sample=is_quarterly or n_obs < 30,
             regime_break_detected=regime_break,
+            data_insufficient=data_insufficient,
         )
         treatment_node, outcome_node = EDGE_NODE_MAP[task.edge_id]
         spec_details = SpecDetails(
-            design="LOCAL_PROJECTIONS",
+            design="LOCAL_PROJECTIONS" if not data_insufficient else "DATA_INSUFFICIENT",
             controls=[f"y_lag{i}" for i in range(1, n_lags + 1)] + [f"x_lag{i}" for i in range(1, n_lags + 1)],
             se_method="HAC_newey_west",
             horizon=lp.horizons,
@@ -1453,16 +1464,21 @@ class AgentLoop:
             diagnostics=diagnostics, failure_flags=failure_flags,
             design_weight=design_weight, data_coverage=data_coverage,
         )
-        if is_quarterly and rating == "A":
+        if data_insufficient:
+            rating = "D"
+            score = 0.0
+        elif is_quarterly and rating == "A":
             rating = "B"
             score = min(score, 0.79)
 
         # Null detection
         is_null = False
         null_bound = None
-        if pval is not None and pval > 0.10 and abs(point) < 2 * se:
-            is_null = True
-            null_bound = float(2 * se)
+        if not data_insufficient and estimates is not None:
+            pval = estimates.pvalue
+            if pval is not None and pval > 0.10 and abs(estimates.point) < 2 * estimates.se:
+                is_null = True
+                null_bound = float(2 * estimates.se)
 
         date_range = (str(data.index.min().date()), str(data.index.max().date())) if len(data) > 0 else None
         provenance = DataProvenance(

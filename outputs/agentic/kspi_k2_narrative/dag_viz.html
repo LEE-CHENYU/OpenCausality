@@ -918,13 +918,13 @@ const EDGES = [
     "notes": "NL-extracted: Imported inflation (price level increase) with sticky incomes-&gt;Real disposable income (negative)",
     "provenance_source": "",
     "provenance_detail": "",
-    "point": 0.0,
-    "se": 0.0,
+    "point": null,
+    "se": null,
     "pvalue": null,
-    "design": "LOCAL_PROJECTIONS",
-    "rating": "B",
-    "score": 0.6300000000000001,
-    "claim_level": "REDUCED_FORM",
+    "design": "DATA_INSUFFICIENT",
+    "rating": "D",
+    "score": 0.0,
+    "claim_level": "DESCRIPTIVE",
     "all_pass": false,
     "diagnostics": [
       {
@@ -949,7 +949,8 @@ const EDGES = [
       }
     ],
     "failure_flags": [
-      "small_sample"
+      "small_sample",
+      "data_insufficient"
     ],
     "id_risks": {
       "unmeasured_confounding": "medium",
@@ -960,7 +961,7 @@ const EDGES = [
     },
     "cf_shock_allowed": false,
     "cf_policy_allowed": false,
-    "cf_reason_blocked": "Design LOCAL_PROJECTIONS provides REDUCED_FORM level only",
+    "cf_reason_blocked": "Shock CF requires REDUCED_FORM+, edge has DESCRIPTIVE",
     "n_obs": 0,
     "strategy_type": "",
     "strategy_argument": "",
@@ -997,13 +998,13 @@ const EDGES = [
     "notes": "NL-extracted: Transfers and regulated prices (buffers) during exchange-rate/price shock-&gt;Headline nominal income stability (positive)",
     "provenance_source": "",
     "provenance_detail": "",
-    "point": 0.0,
-    "se": 0.0,
+    "point": null,
+    "se": null,
     "pvalue": null,
-    "design": "LOCAL_PROJECTIONS",
-    "rating": "B",
-    "score": 0.6300000000000001,
-    "claim_level": "REDUCED_FORM",
+    "design": "DATA_INSUFFICIENT",
+    "rating": "D",
+    "score": 0.0,
+    "claim_level": "DESCRIPTIVE",
     "all_pass": false,
     "diagnostics": [
       {
@@ -1028,7 +1029,8 @@ const EDGES = [
       }
     ],
     "failure_flags": [
-      "small_sample"
+      "small_sample",
+      "data_insufficient"
     ],
     "id_risks": {
       "unmeasured_confounding": "medium",
@@ -1039,7 +1041,7 @@ const EDGES = [
     },
     "cf_shock_allowed": false,
     "cf_policy_allowed": false,
-    "cf_reason_blocked": "Design LOCAL_PROJECTIONS provides REDUCED_FORM level only",
+    "cf_reason_blocked": "Shock CF requires REDUCED_FORM+, edge has DESCRIPTIVE",
     "n_obs": 0,
     "strategy_type": "",
     "strategy_argument": "",
@@ -1059,13 +1061,13 @@ const EDGES = [
     "notes": "NL-extracted: Household purchasing-power squeeze (real income/spending softening)-&gt;Kaspi balance-sheet pressure (positive); Household squeeze / reduced purchasing power-&gt;Repayment stress (delinquencies and provisions) (positive); Deterioration in macro conditions / household squeeze (stress)-&gt;Increase in &#x27;macro provisioning&#x27; ahead of realized defaults (positive)",
     "provenance_source": "",
     "provenance_detail": "",
-    "point": 0.0,
-    "se": 0.0,
+    "point": null,
+    "se": null,
     "pvalue": null,
-    "design": "LOCAL_PROJECTIONS",
-    "rating": "B",
-    "score": 0.6300000000000001,
-    "claim_level": "REDUCED_FORM",
+    "design": "DATA_INSUFFICIENT",
+    "rating": "D",
+    "score": 0.0,
+    "claim_level": "DESCRIPTIVE",
     "all_pass": false,
     "diagnostics": [
       {
@@ -1090,7 +1092,8 @@ const EDGES = [
       }
     ],
     "failure_flags": [
-      "small_sample"
+      "small_sample",
+      "data_insufficient"
     ],
     "id_risks": {
       "unmeasured_confounding": "medium",
@@ -1101,7 +1104,7 @@ const EDGES = [
     },
     "cf_shock_allowed": false,
     "cf_policy_allowed": false,
-    "cf_reason_blocked": "Design LOCAL_PROJECTIONS provides REDUCED_FORM level only",
+    "cf_reason_blocked": "Shock CF requires REDUCED_FORM+, edge has DESCRIPTIVE",
     "n_obs": 0,
     "strategy_type": "",
     "strategy_argument": "",
@@ -1648,13 +1651,13 @@ const EDGES = [
     "strategy_type": "accounting_identity",
     "strategy_argument": "real_expenditure = log(nominal_expenditure) - log(cpi_headline) is a deflation identity.",
     "strategy_key_assumption": "CPI is the appropriate deflator for household consumption.",
-    "point": 0.0,
-    "se": 0.0,
+    "point": null,
+    "se": null,
     "pvalue": null,
-    "design": "LOCAL_PROJECTIONS",
-    "rating": "B",
-    "score": 0.6300000000000001,
-    "claim_level": "REDUCED_FORM",
+    "design": "DATA_INSUFFICIENT",
+    "rating": "D",
+    "score": 0.0,
+    "claim_level": "DESCRIPTIVE",
     "all_pass": false,
     "diagnostics": [
       {
@@ -1679,7 +1682,8 @@ const EDGES = [
       }
     ],
     "failure_flags": [
-      "small_sample"
+      "small_sample",
+      "data_insufficient"
     ],
     "id_risks": {
       "unmeasured_confounding": "medium",
@@ -1690,7 +1694,7 @@ const EDGES = [
     },
     "cf_shock_allowed": false,
     "cf_policy_allowed": false,
-    "cf_reason_blocked": "Design LOCAL_PROJECTIONS provides REDUCED_FORM level only",
+    "cf_reason_blocked": "Shock CF requires REDUCED_FORM+, edge has DESCRIPTIVE",
     "n_obs": 0,
     "issues": [],
     "has_critical_issue": false,
@@ -2126,6 +2130,67 @@ const EDGES = [
     "has_critical_issue": true,
     "llm_annotation": "This edge represents the mechanical aggregation channel: inflation in tradable goods is a component of the overall consumer price index, so movements in tradable CPI typically feed into headline CPI through expenditure weights and index construction. The main risk is that treating this as an estimable \u201ceffect\u201d is misleading because the relationship is partly definitional and can be distorted by reweighting, base-year changes, and differences in seasonal adjustment or coverage between the series; the auto-bridging note also flags a substantive mismatch risk if the two CPI measures are not constructed consistently. Next, the researcher should verify the CPI formula and weights (and whether tradables are a strict subset of headline), align vintages/seasonal-adjustment/base periods, and check whether the coefficient roughly matches the implied average weight of tradables in the headline basket over the sample (including allowing for time-varying weights).",
     "causal_assessment": "**Strategy**: None\u2014this edge is auto-bridged via tag similarity and then estimated with local projections, so it amounts to a predictive association rather than an identified causal effect (despite being labeled \u201cidentity\u201d).\n\n**Strengths**: The LP estimate is very precise (0.762, SE 0.043, extremely small p-value) and many time-series robustness checks pass (HAC bandwidth/effective obs, residual autocorrelation check, HAC/lag sensitivity, regime stability, shock support, sign consistency), suggesting the relationship is stable and not an artifact of a particular specification.\n\n**Vulnerabilities**: There is no source of exogenous variation and no stated identifying assumption; headline CPI mechanically co-moves with tradable CPI through index construction and shared shocks, so the coefficient is not interpretable as a causal effect without a structural decomposition/weighting identity. The failed **ts_leads_test** is a red flag for reverse timing/anticipation (headline moving before tradables), which directly undermines a causal \u201ctradables \u2192 headline\u201d interpretation even in a reduced-form sense.\n\n**Verdict**: **ABSENT**"
+  },
+  {
+    "id": "real_income_to_real_expenditure",
+    "source": "real_income",
+    "target": "real_expenditure",
+    "edge_type": "causal",
+    "expected_sign": "",
+    "interpretation": "",
+    "notes": "When real income falls, households cut consumption expenditure",
+    "provenance_source": "",
+    "provenance_detail": "",
+    "point": null,
+    "se": null,
+    "pvalue": null,
+    "design": "DATA_INSUFFICIENT",
+    "rating": "D",
+    "score": 0.0,
+    "claim_level": "DESCRIPTIVE",
+    "all_pass": false,
+    "diagnostics": [
+      {
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": false
+      },
+      {
+        "name": "sign_consistency",
+        "passed": true
+      },
+      {
+        "name": "ts_hac_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_regime_stability",
+        "passed": true
+      }
+    ],
+    "failure_flags": [
+      "small_sample",
+      "data_insufficient"
+    ],
+    "id_risks": {
+      "unmeasured_confounding": "medium",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Shock CF requires REDUCED_FORM+, edge has DESCRIPTIVE",
+    "n_obs": 0,
+    "strategy_type": "",
+    "strategy_argument": "",
+    "strategy_key_assumption": "",
+    "issues": [],
+    "has_critical_issue": false
   }
 ];
 const LATENTS = [];
@@ -2886,7 +2951,7 @@ const ACTIONS_BY_RULE = {
     ]
   }
 };
-const GENERATED_AT = "2026-02-11 19:33:42 UTC";
+const GENERATED_AT = "2026-02-11 19:52:25 UTC";
 const ISSUE_GUIDANCE = {
   "SIGNIFICANT_BUT_NOT_IDENTIFIED:rwa_kspi_to_k2_ratio_kspi": "**Finding**: The edge `rwa_kspi_to_k2_ratio_kspi` is statistically significant with a negative coefficient of **-0.00606** (SE **0.00205**, **p=0.00309**, **N=25**) under **LOCAL_PROJECTIONS**, but it is flagged **claim_level=BLOCKED_ID**.\n\n**Concern**: Despite the low p-value, causal interpretation is not credible because the edge **fails the `ts_leads_test`** (a key pre-trend/anticipation diagnostic), meaning the outcome appears to move **before** the purported shock and the estimated effect could reflect reverse causality or omitted time-varying confounding rather than `rwa_kspi` causing changes in `k2_ratio_kspi`.\n\n**Recommendation**: Keep the claim **blocked for causal use** and treat the estimate (**-0.00606**, p=0.00309) as **associational only** until you re-specify and re-estimate in a way that passes `ts_leads_test` (e.g., adjust timing/lag structure in the local projection, add relevant controls/time effects, or use an identification strategy like an IV or stronger quasi-experimental design); if you must act now, base decisions on robustness across specifications rather than this single significant-but-not-identified result.",
   "SIGNIFICANT_BUT_NOT_IDENTIFIED:cpi_nontradable_to_cpi_headline": "**Finding**: The edge **cpi_nontradable \u2192 cpi_headline** is statistically significant (**coef = 0.7221**, **SE = 0.2269**, **p = 0.001459**, **N = 176**, LOCAL_PROJECTIONS) but is marked **BLOCKED_ID** with a **failed ts_leads_test**.\n\n**Concern**: Despite the strong p-value (0.001459), the **failed ts_leads_test** indicates violations consistent with **non-causal timing/anticipation or residual confounding**, so treating 0.7221 as a causal effect risks attributing predictive correlation to causation, directly contradicting the **BLOCKED_ID** identification status.\n\n**Recommendation**: Keep the claim **blocked for causal interpretation** and either (i) **repair identification** by modifying the LP specification to pass the **ts_leads_test** (e.g., add/adjust leads/lags and controls until leads are jointly null), or (ii) if you must use it now, **downgrade the statement to predictive association** (\u201ca 1-unit increase in nontradable CPI is associated with +0.722 in headline CPI\u201d) and do not use it for policy/counterfactual decisions until the leads test passes.",
@@ -3571,7 +3636,18 @@ function showEdgeTooltip(e, d) {
     if (d.claim_level) html += '<div class="tooltip-row"><span class="tooltip-label">Claim</span><span class="tooltip-value">' + d.claim_level + '</span></div>';
     if (d.rating) html += '<div class="tooltip-row"><span class="tooltip-label">Rating</span><span class="tooltip-value">' + d.rating + '</span></div>';
     if (d.design) html += '<div class="tooltip-row"><span class="tooltip-label">Design</span><span class="tooltip-value">' + d.design + '</span></div>';
-    if (!hasEstimate) {
+    if (d.design === 'DATA_INSUFFICIENT') {
+        html += '<div style="margin-top:8px;padding:6px 8px;background:#f8d7da;border:1px solid #f5c2c7;border-radius:4px;font-size:10px">';
+        html += '<div style="font-weight:600;color:#842029;margin-bottom:4px">Insufficient Data</div>';
+        html += '<div style="color:#842029;margin-bottom:4px">This edge has fewer than 5 overlapping observations after data alignment. No reliable estimate can be produced.</div>';
+        var ffList = d.failure_flags || [];
+        if (ffList.indexOf('data_insufficient') >= 0) {
+            html += '<div style="color:#555;margin-top:4px"><strong>Common causes:</strong> Date format mismatch between series, missing time periods in downloaded data, or derived node dependencies that fail to compute.</div>';
+        }
+        if (d.blocked_reason) html += '<div style="color:#555;margin-top:4px">' + escHtml(d.blocked_reason) + '</div>';
+        if (d.remediation) html += '<div style="color:#555;margin-top:4px">' + escHtml(d.remediation) + '</div>';
+        html += '</div>';
+    } else if (!hasEstimate) {
         html += '<div style="margin-top:8px;padding:6px 8px;background:#fff3cd;border:1px solid #ffc107;border-radius:4px;font-size:10px">';
         html += '<div style="font-weight:600;color:#856404;margin-bottom:4px">Not Estimated</div>';
         if (d.blocked_reason) {
@@ -3768,7 +3844,8 @@ function applyFilters() {
     var identified = visible.filter(function(e) { return e.claim_level === 'IDENTIFIED_CAUSAL'; }).length;
     document.getElementById('statIdentified').textContent = identified;
     var blocked = visible.filter(function(e) { return e.blocked_reason; }).length;
-    document.getElementById('statBlocked').textContent = blocked;
+    var nodata = visible.filter(function(e) { return e.design === 'DATA_INSUFFICIENT'; }).length;
+    document.getElementById('statBlocked').textContent = blocked + (nodata ? ' + ' + nodata + ' no data' : '');
 }
 
 document.getElementById('typeFilter').addEventListener('change', applyFilters);

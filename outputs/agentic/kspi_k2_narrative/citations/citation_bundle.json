@@ -1943,5 +1943,94 @@
         "pdf_url": ""
       }
     ]
+  },
+  {
+    "edge_id": "real_income_to_real_expenditure",
+    "citations": [
+      {
+        "doi": "10.1017/s0020818300018993",
+        "title": "International regimes, transactions, and change: embedded liberalism in the postwar economic order",
+        "authors": [
+          "John Gerard Ruggie"
+        ],
+        "year": 1982,
+        "excerpt": "The prevailing model of international economic regimes is strictly positivistic in its epistemological orientation and stresses the distribution of material power capabilities in its explanatory logic. It is inadequate to account for the current set of international economic regimes and for the diff",
+        "relevance": "supporting",
+        "edge_id": "real_income_to_real_expenditure",
+        "paper_id": "",
+        "citation_count": 4367,
+        "search_query": "Real monetary income Real consumption expenditure causal effect",
+        "source": "openalex",
+        "pdf_url": "https://www.cambridge.org/core/services/aop-cambridge-core/content/view/238A600FEFE7EDBC2DDAB30E6A28B4D9/S0020818300018993a.pdf/div-class-title-international-regimes-transactions-and-change-embedded-liberalism-in-the-postwar-economic-order-div.pdf"
+      },
+      {
+        "doi": "10.3386/w3301",
+        "title": "Patent Statistics as Economic Indicators: A Survey",
+        "authors": [
+          "Zvi Griliches"
+        ],
+        "year": 1990,
+        "excerpt": "This survey reviews the growing use of patent data in economic analysis.After describing some of the main characteristics of patents and patent data, it focuses on the use of patents as an indicator of technological change.Cross-sectional and time-series studies of the relationship of patents to R&D",
+        "relevance": "supporting",
+        "edge_id": "real_income_to_real_expenditure",
+        "paper_id": "",
+        "citation_count": 3634,
+        "search_query": "Real monetary income Real consumption expenditure causal effect",
+        "source": "openalex",
+        "pdf_url": "https://doi.org/10.3386/w3301"
+      },
+      {
+        "doi": "10.1086/654340",
+        "title": "An Optimization-Based Econometric Framework for the Evaluation of Monetary Policy",
+        "authors": [
+          "Julio J. Rotemberg",
+          "Michael Woodford"
+        ],
+        "year": 1997,
+        "excerpt": "This paper considers a simple quantitative model of output, interest rate and inflation determination in the United States, and uses it to evaluate alternative rules by which the Fed may set interest rates. The model is derived from optimizing behavior under rational expectations, both on the part o",
+        "relevance": "supporting",
+        "edge_id": "real_income_to_real_expenditure",
+        "paper_id": "",
+        "citation_count": 1897,
+        "search_query": "Real monetary income Real consumption expenditure causal effect",
+        "source": "openalex",
+        "pdf_url": "https://www.journals.uchicago.edu/doi/epdf/10.1086/654340"
+      },
+      {
+        "doi": "10.1080/09638199.2024.2433008",
+        "title": "Asymmetric effect of consumption expenditure on import function in Saudi Arabia",
+        "authors": [
+          "Abdullah M. Al-Malki",
+          "Md. Fouad Bin Amin",
+          "Mehboob Ul Hassan"
+        ],
+        "year": 2024,
+        "excerpt": "We study the asymmetric effect of consumption expenditure on Saudi imports from 1991 to 2020. We found a direct relationship between consumption expenditure and imports both in short and long-run periods, however, the positive shocks in consumption expenditures have a dominant impact in the long run",
+        "relevance": "supporting",
+        "edge_id": "real_income_to_real_expenditure",
+        "paper_id": "cf6ef30e2ce2ea82ee98ffcf675e7c286296cf8c",
+        "citation_count": 2,
+        "search_query": "Real monetary income Real consumption expenditure causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      },
+      {
+        "doi": "10.22219/jibe.v8i01.29447",
+        "title": "Bank lending channel and household consumption expenditure in Nigeria",
+        "authors": [
+          "A. Onanuga",
+          "K. Arikewuyo"
+        ],
+        "year": 2024,
+        "excerpt": "The primary objective of this paper is to analyze the effect of the bank lending channel on household consumption expenditure in Nigeria. Utilizing annual secondary data from the United Nations Statistical Division Database and the Central Bank of Nigeria Database, and employing the Generalized Meth",
+        "relevance": "supporting",
+        "edge_id": "real_income_to_real_expenditure",
+        "paper_id": "378dc1701be5cd05ea2beed921fdeaad238f1f75",
+        "citation_count": 0,
+        "search_query": "Real monetary income Real consumption expenditure causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      }
+    ]
   }
 ]

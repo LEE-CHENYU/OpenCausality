@@ -656,13 +656,22 @@ def dag_run(
         table.add_column("Score", style="white")
 
         for summary in report.edge_summaries:
-            est = f"{summary.estimate:.4f}" if summary.estimate else "-"
+            if summary.design == "DATA_INSUFFICIENT":
+                est = "[red]NO DATA[/red]"
+                design_display = "[red]NO DATA[/red]"
+                rating_display = "[dim]-[/dim]"
+                score_display = "[dim]-[/dim]"
+            else:
+                est = f"{summary.estimate:.4f}" if summary.estimate else "-"
+                design_display = summary.design
+                rating_display = summary.credibility_rating
+                score_display = f"{summary.credibility_score:.2f}"
             table.add_row(
                 summary.edge_id,
-                summary.design,
+                design_display,
                 est,
-                summary.credibility_rating,
-                f"{summary.credibility_score:.2f}",
+                rating_display,
+                score_display,
             )
 
         console.print(table)
@@ -886,6 +895,125 @@ def dag_list(
         console.print("[yellow]Could not import DAG parser[/yellow]")
         for dag_file in sorted(dag_files):
             console.print(f"  {dag_file.name}")
+
+
+# ============================================================================
+# DAG Edge Commands
+# ============================================================================
+
+@dag_app.command("add-edge")
+def dag_add_edge(
+    dag_path: Path = typer.Argument(
+        ...,
+        help="Path to DAG YAML to modify",
+    ),
+    from_node: str = typer.Option(
+        ..., "--from", "-f",
+        help="Source node ID (treatment variable)",
+    ),
+    to_node: str = typer.Option(
+        ..., "--to", "-t",
+        help="Target node ID (outcome variable)",
+    ),
+    edge_type: str = typer.Option(
+        "causal", "--type",
+        help="Edge type: causal, identity, immutable, mechanical",
+    ),
+    notes: str = typer.Option(
+        "", "--notes", "-n",
+        help="Human-readable notes about this edge",
+    ),
+    dry_run: bool = typer.Option(
+        False, "--dry-run",
+        help="Preview the edge without writing to file",
+    ),
+):
+    """
+    Add a causal edge to a DAG YAML interactively.
+
+    Example:
+        opencausality dag add-edge kspi_k2_narrative.yaml --from real_income --to real_expenditure
+        opencausality dag add-edge kspi_k2_narrative.yaml -f real_income -t real_expenditure --notes "Income squeeze reduces spending"
+    """
+    import yaml
+
+    dag_path = resolve_path(dag_path)
+    if not dag_path.exists():
+        console.print(f"[red]DAG file not found: {dag_path}[/red]")
+        raise typer.Exit(1)
+
+    # Parse to validate nodes exist
+    try:
+        from shared.agentic.dag.parser import parse_dag
+        dag = parse_dag(dag_path)
+    except Exception as e:
+        console.print(f"[red]Cannot parse DAG: {e}[/red]")
+        raise typer.Exit(1)
+
+    # Check nodes exist
+    node_ids = {n.id for n in dag.nodes}
+    missing = []
+    if from_node not in node_ids:
+        missing.append(f"from_node '{from_node}'")
+    if to_node not in node_ids:
+        missing.append(f"to_node '{to_node}'")
+    if missing:
+        console.print(f"[red]Node(s) not found in DAG: {', '.join(missing)}[/red]")
+        console.print(f"[dim]Available nodes: {', '.join(sorted(node_ids))}[/dim]")
+        raise typer.Exit(1)
+
+    # Check for duplicate edge
+    edge_id = f"{from_node}_to_{to_node}"
+    existing_ids = {e.id for e in dag.edges}
+    if edge_id in existing_ids:
+        console.print(f"[yellow]Edge '{edge_id}' already exists in DAG.[/yellow]")
+        raise typer.Exit(0)
+
+    # Build the new edge
+    from_spec = next(n for n in dag.nodes if n.id == from_node)
+    to_spec = next(n for n in dag.nodes if n.id == to_node)
+
+    new_edge = {
+        "id": edge_id,
+        "from": from_node,
+        "to": to_node,
+        "edge_type": edge_type,
+        "estimand": {"type": "elasticity"},
+        "timing": {"lag": 1, "contemporaneous": False, "unit": "quarter"},
+        "unit_spec": {
+            "treatment_unit": f"1 {from_spec.unit}",
+            "outcome_unit": f"1 {to_spec.unit}",
+        },
+    }
+    if notes:
+        new_edge["notes"] = notes
+
+    # Display preview
+    console.print(f"\n[bold cyan]New Edge Preview[/bold cyan]")
+    console.print(f"  ID:   [cyan]{edge_id}[/cyan]")
+    console.print(f"  From: {from_node} ({from_spec.name})")
+    console.print(f"  To:   {to_node} ({to_spec.name})")
+    console.print(f"  Type: {edge_type}")
+    if notes:
+        console.print(f"  Notes: {notes}")
+
+    if dry_run:
+        console.print("\n[yellow]Dry run — no changes written.[/yellow]")
+        console.print(f"\n[dim]YAML that would be appended:[/dim]")
+        console.print(yaml.dump([new_edge], sort_keys=False, allow_unicode=True))
+        return
+
+    # Append to YAML file
+    with open(dag_path) as f:
+        raw = yaml.safe_load(f)
+
+    raw.setdefault("edges", []).append(new_edge)
+
+    with open(dag_path, "w") as f:
+        yaml.dump(raw, f, sort_keys=False, allow_unicode=True, default_flow_style=False)
+
+    console.print(f"\n[green]Edge '{edge_id}' added to {dag_path.name}[/green]")
+    console.print(f"Re-run pipeline: [cyan]opencausality dag run {dag_path}[/cyan]")
 
 
 # ============================================================================

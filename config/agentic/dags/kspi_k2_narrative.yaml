@@ -1377,6 +1377,20 @@ edges:
     outcome_unit: log
   notes: 'Auto-bridged: cpi_tradable was unreachable from target. Connected to cpi_headline
     by tag similarity (shared: [''inflation'', ''prices'']).'
+- id: real_income_to_real_expenditure
+  from: real_income
+  to: real_expenditure
+  edge_type: causal
+  estimand:
+    type: elasticity
+  timing:
+    lag: 1
+    contemporaneous: false
+    unit: quarter
+  unit_spec:
+    treatment_unit: 1 log
+    outcome_unit: 1 log
+  notes: When real income falls, households cut consumption expenditure
 assumptions:
 - id: scope_consistency
   description: Transmission of global shocks to Kazakhstan-specific outcomes preserves

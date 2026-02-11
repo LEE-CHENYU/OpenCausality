@@ -1,6 +1,6 @@
 edge_id: cpi_headline_to_real_income
-dag_version_hash: 4195135b663dd12b397a26b2e653b64687f1767c7ab19193b6bd8cf1f26d3e8d
-created_at: '2026-02-11T11:28:39.790702'
+dag_version_hash: d131ab06e0448ce0ca06e96cba9cbb5daa8404669ad95ba1b6630376a2728f3c
+created_at: '2026-02-11T11:52:16.022763'
 data_provenance:
   treatment_source:
     connector: parquet_file
@@ -32,9 +32,9 @@ data_provenance:
   panel_dimensions: null
   entity_boundary_note: null
   kpi_definitions: null
-spec_hash: b327b4b58bb76c861cb9ea83d801f78185de731f39d0cf1487f8bfe48ffdf5b0
+spec_hash: 01680b18cda1f01dfbd3f06a49c2803c68c79f6d179eeb330e7d4ff373b23b43
 spec_details:
-  design: LOCAL_PROJECTIONS
+  design: DATA_INSUFFICIENT
   controls:
   - y_lag1
   - y_lag2
@@ -44,7 +44,7 @@ spec_details:
   fixed_effects: []
   se_method: HAC_newey_west
   sample_filter: null
-  horizon: &id001
+  horizon:
   - 0
   - 1
   - 2
@@ -53,38 +53,7 @@ spec_details:
   - 5
   - 6
   bandwidth: null
-estimates:
-  point: 0.0
-  se: 0.0
-  ci_95:
-  - 0.0
-  - 0.0
-  pvalue: null
-  horizons: *id001
-  irf:
-  - .nan
-  - .nan
-  - .nan
-  - .nan
-  - .nan
-  - .nan
-  - .nan
-  irf_ci_lower:
-  - .nan
-  - .nan
-  - .nan
-  - .nan
-  - .nan
-  - .nan
-  - .nan
-  irf_ci_upper:
-  - .nan
-  - .nan
-  - .nan
-  - .nan
-  - .nan
-  - .nan
-  - .nan
+estimates: null
 diagnostics:
   hac_bandwidth:
     name: hac_bandwidth
@@ -141,23 +110,23 @@ failure_flags:
   high_missing_rate: false
   entity_boundary_change: false
   definition_inconsistency: false
+  data_insufficient: true
 counterfactual:
   supports_shock_path: true
   supports_policy_intervention: false
   intervention_note: Reduced-form LP estimate
   external_validity: ''
-credibility_rating: B
-credibility_score: 0.6300000000000001
+credibility_rating: D
+credibility_score: 0.0
 identification:
-  claim_level: REDUCED_FORM
+  claim_level: DESCRIPTIVE
   risks:
     unmeasured_confounding: medium
     simultaneity: low
     weak_variation: low
     measurement_error: low
     selection: low
-  untestable_assumptions:
-  - No omitted common cause of treatment and outcome
+  untestable_assumptions: []
   testable_threats_passed:
   - hac_bandwidth
   - sign_consistency
@@ -171,21 +140,21 @@ identification:
 counterfactual_block:
   shock_scenario_allowed: false
   policy_intervention_allowed: false
-  reason_shock_blocked: Design LOCAL_PROJECTIONS provides REDUCED_FORM level only
+  reason_shock_blocked: Shock CF requires REDUCED_FORM+, edge has DESCRIPTIVE
   reason_policy_blocked: REDUCED_FORM mode does not allow policy interventions
   allowed: false
-  reason_blocked: Design LOCAL_PROJECTIONS provides REDUCED_FORM level only
+  reason_blocked: Shock CF requires REDUCED_FORM+, edge has DESCRIPTIVE
 propagation_role:
-  role: reduced_form
+  role: diagnostic_only
   overlapping_paths: []
-  selected_for_counterfactual: true
+  selected_for_counterfactual: false
   mode_propagation_allowed:
     STRUCTURAL: false
-    REDUCED_FORM: true
+    REDUCED_FORM: false
     DESCRIPTIVE: true
   mode_shock_cf_allowed:
     STRUCTURAL: false
-    REDUCED_FORM: true
+    REDUCED_FORM: false
     DESCRIPTIVE: false
   mode_policy_cf_allowed:
     STRUCTURAL: false
@@ -280,7 +249,7 @@ literature:
     source: semantic_scholar
     pdf_url: ''
   search_status: SEARCHED
-  search_timestamp: '2026-02-11T11:28:39.790928'
+  search_timestamp: '2026-02-11T11:52:16.022836'
   search_query: Headline CPI Real monetary income causal effect
   total_results: 5
 companion_edge_id: null

@@ -356,6 +356,7 @@ class FailureFlags:
     high_missing_rate: bool = False
     entity_boundary_change: bool = False  # Entity definition changed across sample
     definition_inconsistency: bool = False  # KPI definitions differ across panel units
+    data_insufficient: bool = False  # Zero or near-zero observations after alignment
 
     def any_flagged(self) -> bool:
         """Check if any flags are raised."""
@@ -368,6 +369,7 @@ class FailureFlags:
             self.high_missing_rate,
             self.entity_boundary_change,
             self.definition_inconsistency,
+            self.data_insufficient,
         ])
 
     def to_dict(self) -> dict[str, bool]:
@@ -381,6 +383,7 @@ class FailureFlags:
             "high_missing_rate": self.high_missing_rate,
             "entity_boundary_change": self.entity_boundary_change,
             "definition_inconsistency": self.definition_inconsistency,
+            "data_insufficient": self.data_insufficient,
         }
 
 
