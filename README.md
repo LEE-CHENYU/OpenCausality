@@ -978,6 +978,9 @@ propagated effects with an independence assumption caveat.
 - **User data guidance** -- When DataScout cannot auto-fetch data for a node, actionable
   guidance is logged: file format, expected columns, and the `opencausality data ingest`
   command to run after dropping files in `data/raw/`.
+- **Adaptive Data Discovery** -- DataResolverAgent uses LLM tool-use to discover data
+  sources for DAG nodes that lack pre-configured connectors. Searches FRED catalog,
+  matches series by semantic similarity, and registers loaders automatically.
 - **Auto-ingest at startup** -- `run()` now calls `auto_ingest()` before estimation,
   automatically profiling and registering any user-dropped files in `data/raw/`.
 - **DAG auto-repair** -- LLM-assisted validation loop detects and fixes DAG errors

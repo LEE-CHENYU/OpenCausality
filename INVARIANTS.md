@@ -356,6 +356,7 @@ Phase 0a: Auto-ingest raw data
 Phase 0b: DAG validation + LLM auto-repair (max 3 attempts)
 Phase 1:  DataScout (data availability, download)
 Phase 1.5: PaperScout (literature search)
+Phase 1.7: DataResolverAgent (adaptive discovery for nodes without sources)
 ─── ITERATION LOOP (max_iterations) ───
   Phase 2: Estimate/re-estimate ready tasks
   Phase 3: Post-run issue detection (30 rules)
@@ -378,6 +379,7 @@ Output:    System report, EdgeCards, panels
 | **Estimator** | Phase 2 | Execute ModelSpecs; run diagnostics; produce EdgeCards |
 | **Judge** | Phase 3–4 | Score credibility; flag weak links; propose refinements within RefinementWhitelist bounds |
 | **PatchBot** | Phase 6 | Apply auto-fixes within PatchPolicy; re-queue affected edges |
+| **DataResolverAgent** | Phase 1.7 | LLM tool-use discovery for nodes without source specs; searches catalogs (FRED, etc.); registers loaders |
 
 **Invariants:**
 - Phases must not be reordered.
@@ -1015,6 +1017,7 @@ Adding a new domain requires:
 1. A data client in `shared/data/` (or files in `data/raw/` for auto-ingest)
 2. A DAG YAML specification
 3. (Optional) A variable catalog for NL-to-DAG matching
+4. (Optional) Nodes without source specs trigger DataResolverAgent for adaptive discovery
 
 No estimation, governance, or identification code should contain domain-specific logic.
 If domain assumptions leak into the core, that is a bug.
@@ -1046,7 +1049,20 @@ from configured connectors.
 - When auto-download fails, actionable guidance is logged (§21.2).
 - DataScout never modifies the DAG structure. It populates data availability metadata only.
 
-### 32.3 DAG Auto-Repair
+### 32.3 DataResolverAgent
+
+DataResolverAgent discovers data sources for DAG nodes that lack pre-configured
+connectors, using LLM tool-use to search data catalogs (FRED, etc.).
+
+**Invariants:**
+- Discovery is attempted only for nodes with missing or empty source specs.
+- Discovered series are registered as loaders via the standard connector pipeline.
+- DataResolverAgent never modifies the DAG structure, edge definitions, or causal semantics.
+- All discovery actions are logged in the audit trail with the search query and matched series.
+- If discovery fails, the node remains without a loader and dependent edges are blocked
+  with an actionable error message.
+
+### 32.4 DAG Auto-Repair
 
 LLM-assisted validation detects and fixes DAG schema errors (invalid edge IDs, missing
 node specs, dependency mismatches).
