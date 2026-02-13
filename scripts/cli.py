@@ -289,6 +289,7 @@ def init_project():
         f"ANTHROPIC_API_KEY={anthropic_key}",
         f"LLM_PROVIDER={llm_provider}",
         f"LLM_MODEL={llm_model}",
+        "QUERY_FREEFORM_PROVIDER=codex",
         "",
         f"FRED_API_KEY={fred_key}",
         f"SEMANTIC_SCHOLAR_API_KEY={s2_key}",
@@ -428,6 +429,7 @@ def config_show():
 
     table.add_row("llm_provider", settings.llm_provider)
     table.add_row("llm_model", settings.llm_model)
+    table.add_row("query_freeform_provider", settings.query_freeform_provider)
     table.add_row("anthropic_api_key", _mask_key(settings.anthropic_api_key))
     table.add_row("fred_api_key", _mask_key(settings.fred_api_key))
     table.add_row("semantic_scholar_api_key", _mask_key(settings.semantic_scholar_api_key))
@@ -496,6 +498,18 @@ def config_doctor():
         ok.append("Semantic Scholar API key is set")
     else:
         issues.append("SEMANTIC_SCHOLAR_API_KEY not set (literature search may be rate-limited)")
+
+    # Check freeform provider
+    valid_freeform = {"codex", "claude_cli", "anthropic", "litellm", "none"}
+    if settings.query_freeform_provider in valid_freeform:
+        ok.append(f"query_freeform_provider is valid: {settings.query_freeform_provider}")
+        if settings.query_freeform_provider == "anthropic" and not settings.anthropic_api_key:
+            issues.append("query_freeform_provider=anthropic but ANTHROPIC_API_KEY not set (will fall back to codex)")
+    else:
+        issues.append(
+            f"query_freeform_provider '{settings.query_freeform_provider}' is not valid "
+            f"(expected: {', '.join(sorted(valid_freeform))})"
+        )
 
     # Check default DAG file
     dag_path = resolve_path(settings.default_dag_path)

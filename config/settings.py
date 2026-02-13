@@ -33,6 +33,10 @@ class Settings(BaseSettings):
         default="gpt-5.3-codex",
         description="Model for codex CLI provider",
     )
+    query_freeform_provider: str = Field(
+        default="codex",
+        description="Freeform query backend: codex | claude_cli | anthropic | litellm | none",
+    )
 
     # API Keys
     fred_api_key: str = Field(default="", description="FRED API key")

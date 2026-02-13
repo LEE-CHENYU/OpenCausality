@@ -38,7 +38,7 @@ INTENT_SCHEMA = {
                 "edge_inspect", "identification_query", "mode_compare",
                 "mode_switch", "node_list", "edge_list",
                 "paper_search", "propose_edges",
-                "help", "unknown",
+                "freeform", "help", "unknown",
             ],
         },
         "source_node": {"type": "string"},
@@ -151,6 +151,23 @@ def _fuzzy_match_edge(text: str, node_ids: list[str]) -> str | None:
 # ──────────────────────────────────────────────────────────────────────
 # LLM Narration (constrained)
 # ──────────────────────────────────────────────────────────────────────
+
+FREEFORM_SYSTEM = """You are a causal inference assistant answering questions about a DAG.
+
+HARD RULES:
+1. NEVER say "causes" or "causal effect" unless the edge has claim_level == "IDENTIFIED_CAUSAL".
+2. Use hedged language: "is associated with", "predicts", "co-moves with".
+3. Ground answers in the DAG context provided. Do not invent edges or nodes.
+4. If the DAG context is insufficient to answer, say so explicitly.
+
+RESPONSE STYLE:
+- Start with a **one-sentence summary** (use **bold** markers).
+- Use bullet points (- item) for lists of edges, nodes, or issues.
+- Include specific numbers (coefficients, ratings, SE) when available in the context.
+- End with a one-line caveat or suggested next step.
+- Do NOT use markdown headers (#). Keep it flat: summary then details then caveat.
+- Keep total length to 4-8 sentences.
+"""
 
 NARRATION_SYSTEM = """You are a causal inference assistant narrating propagation results.
 
@@ -333,6 +350,150 @@ class QueryREPL:
             self.issue_ledger = ledger
 
     # ──────────────────────────────────────────────────────────────────
+    # Freeform conversational handler
+    # ──────────────────────────────────────────────────────────────────
+
+    def _build_dag_context(self, max_chars: int = 6000) -> str:
+        """Build compact DAG context string for freeform LLM queries."""
+        parts: list[str] = []
+        parts.append(f"DAG: {self.dag.metadata.name}")
+        if self.dag.metadata.target_node:
+            parts.append(f"Target: {self.dag.metadata.target_node}")
+        parts.append(f"Mode: {self.mode}")
+
+        # Nodes
+        node_lines = []
+        for n in self.dag.nodes:
+            node_lines.append(f"  {n.id} ({n.name}, freq={n.frequency})")
+        parts.append("Nodes:\n" + "\n".join(node_lines))
+
+        # Edges with card info
+        edge_lines = []
+        for e in self.dag.edges:
+            card = self.edge_cards.get(e.id)
+            line = f"  {e.id}: {e.from_node} -> {e.to_node}, type={e.edge_type}"
+            if card:
+                claim = card.identification.claim_level or "?"
+                rating = card.credibility_rating or "?"
+                coeff = f"{card.estimates.point:.4f}" if card.estimates else "?"
+                line += f", claim={claim}, rating={rating}, coeff={coeff}"
+            edge_lines.append(line)
+        parts.append("Edges:\n" + "\n".join(edge_lines))
+
+        # Open issues (max 10)
+        if self.issue_ledger:
+            open_issues = [i for i in self.issue_ledger.issues if i.is_open][:10]
+            if open_issues:
+                issue_lines = []
+                for iss in open_issues:
+                    issue_lines.append(
+                        f"  [{iss.severity}] {iss.rule_id} on {iss.edge_id}: {iss.message}"
+                    )
+                parts.append("Open issues:\n" + "\n".join(issue_lines))
+
+        text = "\n".join(parts)
+        if len(text) > max_chars:
+            text = text[:max_chars] + "\n... (truncated)"
+        return text
+
+    def _get_freeform_client(self) -> Any:
+        """Lazy-init freeform LLM client based on query_freeform_provider setting."""
+        if hasattr(self, "_freeform_client"):
+            return self._freeform_client
+
+        from config.settings import get_settings
+        settings = get_settings()
+        provider = settings.query_freeform_provider
+
+        if provider == "none":
+            self._freeform_client = None
+        elif provider in ("codex", "claude_cli"):
+            from shared.llm.client import CodexCLIClient
+            codex_model = settings.codex_model
+            self._freeform_client = CodexCLIClient(
+                provider=provider, model=codex_model,
+            )
+        elif provider == "anthropic":
+            if settings.anthropic_api_key:
+                from shared.llm.client import AnthropicClient
+                self._freeform_client = AnthropicClient(
+                    api_key=settings.anthropic_api_key,
+                    model=settings.llm_model,
+                )
+            else:
+                logger.warning("Freeform: anthropic requested but no API key; falling back to codex")
+                from shared.llm.client import CodexCLIClient
+                self._freeform_client = CodexCLIClient(
+                    provider="codex", model=settings.codex_model,
+                )
+        elif provider == "litellm":
+            from shared.llm.client import LiteLLMClient
+            self._freeform_client = LiteLLMClient(model=settings.llm_model)
+        else:
+            logger.warning(f"Unknown freeform provider '{provider}', disabling")
+            self._freeform_client = None
+
+        return self._freeform_client
+
+    def _handle_freeform(
+        self, raw_text: str, handler_context: str | None = None,
+    ) -> None:
+        """Route all queries through freeform LLM.
+
+        If *handler_context* is provided (captured output from a structured
+        handler), it is included so the LLM can narrate the computed data.
+        When freeform is disabled (provider=none), falls back to printing
+        raw handler output or a generic message.
+        """
+        client = self._get_freeform_client()
+        if client is None:
+            # Freeform disabled — show raw handler output or fallback
+            if handler_context:
+                sys.stdout.write(handler_context)
+            else:
+                console.print(
+                    "[dim]I didn't understand that. Try /help for commands.[/dim]"
+                )
+            return
+
+        console.print("[dim]Thinking...[/dim]")
+        try:
+            dag_context = self._build_dag_context()
+            parts = [f"DAG Context:\n{dag_context}"]
+            if handler_context:
+                # Strip ANSI escapes so the LLM sees plain text
+                clean = re.sub(r"\x1b\[[0-9;]*[a-zA-Z]", "", handler_context)
+                parts.append(f"Structured query result:\n{clean}")
+            parts.append(f"Question: {raw_text}")
+            user_msg = "\n\n".join(parts)
+
+            response = client.complete(FREEFORM_SYSTEM, user_msg, max_tokens=512)
+            if response:
+                console.print(Panel(
+                    response,
+                    title="[bold]Analysis[/bold]",
+                    subtitle="Draft — requires analyst review",
+                    border_style="blue",
+                    padding=(1, 2),
+                ))
+            else:
+                # Empty response — fall back to handler output
+                if handler_context:
+                    sys.stdout.write(handler_context)
+                else:
+                    console.print("[dim]No response from freeform backend.[/dim]")
+        except Exception as e:
+            logger.warning(f"Freeform query failed: {e}")
+            if handler_context:
+                sys.stdout.write(handler_context)
+                console.print(
+                    f"\n[dim yellow]Freeform narration unavailable: {e}[/dim yellow]"
+                )
+            else:
+                console.print(f"[yellow]Freeform query failed: {e}[/yellow]")
+                console.print("[dim]Try /help for structured commands.[/dim]")
+
+    # ──────────────────────────────────────────────────────────────────
     # REPL loop
     # ──────────────────────────────────────────────────────────────────
 
@@ -362,10 +523,14 @@ class QueryREPL:
     def _print_welcome(self) -> None:
         from scripts.cli import BANNER
 
+        from config.settings import get_settings
+        settings = get_settings()
+
         n_nodes = len(self.dag.nodes)
         n_edges = len(self.dag.edges)
         n_cards = len(self.edge_cards)
         llm_status = "LLM" if self.llm else "regex-only"
+        freeform_provider = settings.query_freeform_provider
 
         console.print(BANNER)
         console.print(Panel(
@@ -373,7 +538,7 @@ class QueryREPL:
             f"DAG: [cyan]{self.dag.metadata.name}[/cyan] "
             f"({n_nodes} nodes, {n_edges} edges)\n"
             f"Cards: {n_cards} | Mode: [yellow]{self.mode}[/yellow] | "
-            f"Backend: {llm_status}\n\n"
+            f"Backend: {llm_status} | Freeform: {freeform_provider}\n\n"
             f"Type a question or /help for commands.",
             title="Welcome",
         ))
@@ -392,7 +557,10 @@ class QueryREPL:
                 system_prompt = (
                     "You classify causal inference queries. "
                     f"Available nodes: {node_list}. "
-                    "Return structured intent matching the schema."
+                    "Return structured intent matching the schema. "
+                    "Use 'freeform' for open-ended questions, reviews, opinions, "
+                    "summaries, or anything that doesn't fit a specific structured intent. "
+                    "Only use 'help' when the user explicitly asks for help or commands."
                 )
                 result = self.llm.complete_structured(
                     system_prompt, text, INTENT_SCHEMA,
@@ -410,25 +578,41 @@ class QueryREPL:
 
     def _dispatch(self, intent: dict, raw_text: str) -> None:
         intent_type = intent.get("intent", "unknown")
-        handler = {
+
+        # Side-effect / interactive handlers — run directly, skip freeform
+        direct_handlers = {
+            "help": self._handle_help,
+            "mode_switch": self._handle_mode_switch,
+            "paper_search": self._handle_paper_search,
+            "propose_edges": self._handle_propose_edges,
+        }
+        if intent_type in direct_handlers:
+            direct_handlers[intent_type](intent, raw_text)
+            return
+
+        # Data handlers — capture output, feed as context to freeform
+        data_handlers = {
             "shock_scenario": self._handle_shock,
             "policy_scenario": self._handle_policy,
             "path_query": self._handle_path,
             "edge_inspect": self._handle_edge_inspect,
             "identification_query": self._handle_identification,
             "mode_compare": self._handle_mode_compare,
-            "mode_switch": self._handle_mode_switch,
             "node_list": self._handle_nodes,
             "edge_list": self._handle_edges,
-            "paper_search": self._handle_paper_search,
-            "propose_edges": self._handle_propose_edges,
-            "help": self._handle_help,
-        }.get(intent_type)
-
+        }
+        handler = data_handlers.get(intent_type)
         if handler:
-            handler(intent, raw_text)
+            try:
+                with console.capture() as capture:
+                    handler(intent, raw_text)
+                handler_output = capture.get()
+            except Exception as e:
+                handler_output = f"Error computing result: {e}"
+            self._handle_freeform(raw_text, handler_context=handler_output)
         else:
-            console.print("[dim]I didn't understand that. Try /help for commands.[/dim]")
+            # "freeform", "unknown", or anything unrecognized
+            self._handle_freeform(raw_text)
 
     # ──────────────────────────────────────────────────────────────────
     # Slash command dispatcher
