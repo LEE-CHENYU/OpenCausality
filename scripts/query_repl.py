@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 from rich.console import Console
+from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.table import Table
 from rich.tree import Tree
@@ -470,7 +471,7 @@ class QueryREPL:
             response = client.complete(FREEFORM_SYSTEM, user_msg, max_tokens=512)
             if response:
                 console.print(Panel(
-                    response,
+                    Markdown(response),
                     title="[bold]Analysis[/bold]",
                     subtitle="Draft — requires analyst review",
                     border_style="blue",
