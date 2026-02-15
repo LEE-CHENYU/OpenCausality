@@ -11,6 +11,7 @@ Supports:
 from __future__ import annotations
 
 import logging
+import math
 import re
 import sys
 from pathlib import Path
@@ -38,7 +39,7 @@ INTENT_SCHEMA = {
                 "shock_scenario", "policy_scenario", "path_query",
                 "edge_inspect", "identification_query", "mode_compare",
                 "mode_switch", "node_list", "edge_list",
-                "paper_search", "propose_edges",
+                "paper_search", "propose_edges", "placebo_falsification",
                 "freeform", "help", "unknown",
             ],
         },
@@ -116,6 +117,10 @@ def _classify_intent_regex(text: str, node_ids: list[str]) -> dict:
     ]):
         target = _fuzzy_match_node(text_lower, node_ids)
         return {"intent": "path_query", "target_node": target or ""}
+
+    # Placebo falsification
+    if any(w in text_lower for w in ["placebo", "falsif", "null link", "missing edge"]):
+        return {"intent": "placebo_falsification"}
 
     # Node-level queries (mentions a known node)
     matched_node = _fuzzy_match_node(text_lower, node_ids)
@@ -601,6 +606,7 @@ class QueryREPL:
             "mode_compare": self._handle_mode_compare,
             "node_list": self._handle_nodes,
             "edge_list": self._handle_edges,
+            "placebo_falsification": self._handle_placebo,
         }
         handler = data_handlers.get(intent_type)
         if handler:
@@ -653,6 +659,8 @@ class QueryREPL:
             self._handle_paper_search({}, raw)
         elif cmd == "/propose":
             self._handle_propose_edges({}, raw)
+        elif cmd == "/placebo":
+            self._handle_placebo({}, raw)
         elif cmd == "/doctor":
             self._handle_doctor()
         elif cmd in ("/quit", "/exit", "/q"):
@@ -677,6 +685,7 @@ class QueryREPL:
             "  /path <source> <target>          Show all paths\n"
             "  /papers                          Search literature\n"
             "  /propose                         Propose edges from papers\n"
+            "  /placebo                         Run placebo falsification tests\n"
             "  /doctor                          DAG health check\n"
             "  /quit                            Exit REPL\n\n"
             "[bold]Natural Language Examples[/bold]\n"
@@ -1132,6 +1141,66 @@ class QueryREPL:
             )
 
         console.print(table)
+
+    def _handle_placebo(self, intent: dict, raw: str) -> None:
+        """Run placebo falsification tests on null links."""
+        from shared.agentic.falsification import PlaceboFalsifier
+
+        console.print("[dim]Running placebo falsification tests...[/dim]")
+        falsifier = PlaceboFalsifier(
+            dag=self.dag,
+            issue_ledger=self.issue_ledger,
+        )
+        results = falsifier.run()
+
+        if not results:
+            console.print("[dim]No testable null links found.[/dim]")
+            return
+
+        table = Table(title="Placebo Falsification Results")
+        table.add_column("From", style="cyan")
+        table.add_column("To", style="cyan")
+        table.add_column("\u03b2", style="white", justify="right")
+        table.add_column("SE", style="white", justify="right")
+        table.add_column("p-value", style="white", justify="right")
+        table.add_column("N", style="white", justify="right")
+        table.add_column("Result", style="white")
+        table.add_column("Dist", style="dim", justify="right")
+        table.add_column("Status", style="dim")
+
+        for r in results:
+            if r.data_status == "missing":
+                style = "dim"
+                result_str = "[dim]SKIP[/dim]"
+            elif r.passed:
+                style = "green"
+                result_str = "[green]PASS[/green]"
+            else:
+                style = "red"
+                result_str = "[red]FAIL[/red]"
+
+            coeff_str = f"{r.coefficient:.4f}" if not math.isnan(r.coefficient) else "-"
+            se_str = f"{r.se:.4f}" if not math.isnan(r.se) else "-"
+            pval_str = f"{r.pvalue:.4f}" if r.data_status != "missing" else "-"
+            dist_str = str(r.dag_distance) if r.dag_distance >= 0 else "\u221e"
+
+            table.add_row(
+                r.from_node, r.to_node,
+                coeff_str, se_str, pval_str,
+                str(r.n_obs), result_str, dist_str,
+                r.data_status,
+            )
+
+        console.print(table)
+
+        n_tested = sum(1 for r in results if r.data_status != "missing")
+        n_failed = sum(1 for r in results if not r.passed and r.data_status != "missing")
+        n_skipped = sum(1 for r in results if r.data_status == "missing")
+        console.print(
+            f"\n[dim]Tested: {n_tested} | "
+            f"Failed: {n_failed} | "
+            f"Skipped: {n_skipped}[/dim]"
+        )
 
     def _handle_doctor(self) -> None:
         """DAG health check."""

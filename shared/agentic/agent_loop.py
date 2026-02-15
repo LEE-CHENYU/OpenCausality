@@ -429,6 +429,10 @@ class AgentLoop:
             self._process_ready_tasks()
             edges_estimated += ready_before
 
+        # Phase 2.5: Placebo falsification (EXPLORATION mode only)
+        if self.mode == "EXPLORATION":
+            self._run_placebo_falsification()
+
         # Phase 3: Post-run issue detection
         edge_cards = self.artifact_store.get_all_edge_cards()
         edge_card_dict = {c.edge_id: c for c in edge_cards}
@@ -899,6 +903,30 @@ class AgentLoop:
             for node_id, asset in self.catalog.assets.items()
         }, sort_keys=True)
         return hashlib.sha256(content.encode()).hexdigest()
+
+    def _run_placebo_falsification(self) -> None:
+        """Phase 2.5: Run placebo tests on null links."""
+        from shared.agentic.falsification import PlaceboFalsifier
+
+        falsifier = PlaceboFalsifier(
+            dag=self.dag,
+            max_tests=10,
+            data_scout=self.data_scout,
+            issue_ledger=self.issue_ledger,
+        )
+        results = falsifier.run()
+        n_failed = sum(1 for r in results if not r.passed)
+        n_tested = sum(1 for r in results if r.data_status != "missing")
+        logger.info(
+            f"Placebo falsification: {n_tested} tested, "
+            f"{n_failed} failures"
+        )
+        if n_failed:
+            logger.warning(
+                f"Placebo falsification: {n_failed} null links "
+                f"show significant associations"
+            )
+        self._placebo_results = results
 
     def _process_ready_tasks(self) -> None:
         """Process all ready tasks."""
