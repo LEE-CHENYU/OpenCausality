@@ -429,8 +429,8 @@ class AgentLoop:
             self._process_ready_tasks()
             edges_estimated += ready_before
 
-        # Phase 2.5: Placebo falsification (EXPLORATION mode only)
-        if self.mode == "EXPLORATION":
+        # Phase 2.5: Placebo falsification (EXPLORATION mode, first iteration only)
+        if self.mode == "EXPLORATION" and self.iteration == 0:
             self._run_placebo_falsification()
 
         # Phase 3: Post-run issue detection
