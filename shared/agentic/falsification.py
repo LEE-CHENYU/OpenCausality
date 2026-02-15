@@ -1,18 +1,28 @@
 """
-Placebo Falsification for Null Links.
+Placebo Falsification for Null Links (d-separation based).
 
-The DAG declares which edges exist, but every node pair *without* an edge
-is an implicit claim: "no direct effect."  PlaceboFalsifier tests these
-null-link claims by running OLS regressions on pairs where the DAG says
-no link should exist.  A significant coefficient is a red flag for
-mis-specification.
+The DAG declares which edges exist, but every missing edge is an implicit
+claim: "no **direct** effect."  Two non-adjacent nodes can still be
+marginally correlated through paths — that is expected, not a problem.
+
+The correct test is based on the **Markov property**: if A and B are not
+adjacent, there exists a conditioning set S such that A ⊥⊥ B | S.
+Specifically, the DAG implies that a node is independent of all
+non-descendants given its parents.  So for a non-edge A → B:
+
+    B ⊥⊥ A | parents(B)
+
+If regressing B on A **controlling for parents(B)** still yields a
+significant coefficient on A, that is a genuine falsification of the
+DAG's structural claim.
 
 Agentic flow:
 1. Enumerate candidate null links from the DAG.
-2. Prioritise by structural interestingness (DAG distance, shared neighbors).
+2. For each pair (A, B) where A → B is absent, derive the conditioning
+   set: parents(B) minus A.
 3. Data gate — check availability, optionally dispatch DataScout.
-4. Run HAC-robust OLS placebo regressions.
-5. Write failures to the issue ledger.
+4. Run HAC-robust OLS:  B ~ A + parents(B).
+5. Test the coefficient on A.  Significant → issue to ledger.
 """
 
 from __future__ import annotations
@@ -44,6 +54,7 @@ class PlaceboResult:
     n_obs: int
     passed: bool               # pvalue >= alpha  →  null confirmed
     dag_distance: int          # shortest undirected path, -1 if disconnected
+    conditioning_set: list[str] = field(default_factory=list)
     shared_neighbors: list[str] = field(default_factory=list)
     data_status: str = "available"  # "available" | "fetched" | "missing"
     message: str = ""
@@ -55,6 +66,10 @@ class PlaceboResult:
 
 class PlaceboFalsifier:
     """Agentic placebo falsification for DAG null links.
+
+    Tests the DAG's Markov property: for every non-edge A → B, regress
+    B on A **conditioning on parents(B)**.  A significant partial
+    coefficient on A implies the DAG is missing a direct link.
 
     Parameters
     ----------
@@ -84,8 +99,9 @@ class PlaceboFalsifier:
         self.data_scout = data_scout
         self.issue_ledger = issue_ledger
 
-        # Pre-compute adjacency
-        self._adj = self._build_adjacency()
+        # Pre-compute directed parent map and undirected adjacency
+        self._parents: dict[str, set[str]] = self._build_parent_map()
+        self._adj: dict[str, set[str]] = self._build_adjacency()
 
     # ------------------------------------------------------------------
     # Public
@@ -162,32 +178,29 @@ class PlaceboFalsifier:
     # ------------------------------------------------------------------
 
     def _test_pair(self, from_node: str, to_node: str) -> PlaceboResult:
-        """Check data availability and run placebo OLS for one pair."""
+        """Check data availability and run conditional placebo OLS."""
         dist = self._dag_distance(from_node, to_node)
         shared = self._shared_neighbors(from_node, to_node)
 
-        from_ok = self._check_data(from_node)
-        to_ok = self._check_data(to_node)
+        # Conditioning set: parents(B) minus A (the d-separation set)
+        cond_set = sorted(self._parents.get(to_node, set()) - {from_node})
+
+        # All nodes we need data for: from_node, to_node, and conditioning set
+        required_nodes = [from_node, to_node] + cond_set
+        missing_nodes = [n for n in required_nodes if not self._check_data(n)]
 
         # Attempt DataScout fetch for missing nodes
         data_status = "available"
-        if not (from_ok and to_ok) and self.data_scout is not None:
-            missing = []
-            if not from_ok:
-                missing.append(from_node)
-            if not to_ok:
-                missing.append(to_node)
+        if missing_nodes and self.data_scout is not None:
             try:
-                report = self.data_scout.download_missing(self.dag, missing)
+                report = self.data_scout.download_missing(self.dag, missing_nodes)
                 if report.downloaded > 0:
                     data_status = "fetched"
-                    # Re-check
-                    from_ok = self._check_data(from_node)
-                    to_ok = self._check_data(to_node)
+                    missing_nodes = [n for n in required_nodes if not self._check_data(n)]
             except Exception as e:
-                logger.debug(f"DataScout fetch failed for {missing}: {e}")
+                logger.debug(f"DataScout fetch failed for {missing_nodes}: {e}")
 
-        if not (from_ok and to_ok):
+        if missing_nodes:
             return PlaceboResult(
                 from_node=from_node,
                 to_node=to_node,
@@ -197,28 +210,35 @@ class PlaceboFalsifier:
                 n_obs=0,
                 passed=True,  # can't test → don't flag
                 dag_distance=dist,
+                conditioning_set=cond_set,
                 shared_neighbors=shared,
                 data_status="missing",
-                message=f"Data unavailable for {'both' if not from_ok and not to_ok else from_node if not from_ok else to_node}",
+                message=f"Data unavailable for: {', '.join(missing_nodes)}",
             )
 
-        # Run placebo regression
-        return self._run_placebo(from_node, to_node, dist, shared, data_status)
+        # Run conditional placebo regression
+        return self._run_placebo(from_node, to_node, cond_set, dist, shared, data_status)
 
     def _run_placebo(
         self,
         from_node: str,
         to_node: str,
+        cond_set: list[str],
         dist: int,
         shared: list[str],
         data_status: str,
     ) -> PlaceboResult:
-        """Run OLS placebo regression for a single null-link pair."""
+        """Run OLS placebo:  outcome ~ treatment + controls (parents of outcome).
+
+        The coefficient of interest is on `treatment` (from_node).  If the
+        DAG is correct, this should be zero after conditioning on parents(B).
+        """
         from shared.engine.data_assembler import load_node_series, _align_frequencies
 
         try:
-            treatment = load_node_series(from_node)
-            outcome = load_node_series(to_node)
+            series_map: dict[str, pd.Series] = {}
+            for node_id in [from_node, to_node] + cond_set:
+                series_map[node_id] = load_node_series(node_id)
         except Exception as e:
             return PlaceboResult(
                 from_node=from_node,
@@ -229,19 +249,27 @@ class PlaceboFalsifier:
                 n_obs=0,
                 passed=True,
                 dag_distance=dist,
+                conditioning_set=cond_set,
                 shared_neighbors=shared,
                 data_status="missing",
                 message=f"Load failed: {e}",
             )
 
-        # Align frequencies
-        treatment, outcome = _align_frequencies(treatment, outcome)
+        # Align all series to common frequency pairwise against outcome
+        outcome_series = series_map[to_node]
+        aligned: dict[str, pd.Series] = {}
+        for node_id, s in series_map.items():
+            if node_id == to_node:
+                continue
+            s_aligned, o_aligned = _align_frequencies(s, outcome_series)
+            aligned[node_id] = s_aligned
+            # Use the outcome aligned to the first regressor's frequency
+            # (all should agree after pairwise alignment)
+            if to_node not in aligned:
+                aligned[to_node] = o_aligned
 
-        # Build aligned DataFrame and drop NaN
-        combined = pd.DataFrame({
-            "treatment": treatment,
-            "outcome": outcome,
-        }).dropna()
+        # Build combined DataFrame and drop NaN
+        combined = pd.DataFrame(aligned).dropna()
 
         n_obs = len(combined)
         if n_obs < 12:
@@ -254,22 +282,26 @@ class PlaceboFalsifier:
                 n_obs=n_obs,
                 passed=True,
                 dag_distance=dist,
+                conditioning_set=cond_set,
                 shared_neighbors=shared,
                 data_status=data_status,
                 message=f"Insufficient observations ({n_obs} < 12)",
             )
 
-        # OLS with HAC standard errors
+        # OLS with HAC standard errors:  outcome ~ const + treatment + controls
         import statsmodels.api as sm
 
-        X = sm.add_constant(combined["treatment"].values)
-        y = combined["outcome"].values
+        y = combined[to_node].values
+        # Treatment is the first regressor column (from_node)
+        regressor_cols = [from_node] + cond_set
+        X = sm.add_constant(combined[regressor_cols].values)
 
         try:
             model = sm.OLS(y, X).fit(
                 cov_type="HAC",
                 cov_kwds={"maxlags": min(4, n_obs // 4)},
             )
+            # Index 1 = coefficient on from_node (index 0 is constant)
             coeff = float(model.params[1])
             se = float(model.bse[1])
             pvalue = float(model.pvalues[1])
@@ -283,18 +315,20 @@ class PlaceboFalsifier:
                 n_obs=n_obs,
                 passed=True,
                 dag_distance=dist,
+                conditioning_set=cond_set,
                 shared_neighbors=shared,
                 data_status=data_status,
                 message=f"OLS failed: {e}",
             )
 
         passed = pvalue >= self.alpha
+        cond_label = f" | {', '.join(cond_set)}" if cond_set else " (unconditional)"
         if passed:
-            msg = f"Null confirmed (p={pvalue:.4f})"
+            msg = f"Null confirmed{cond_label} (p={pvalue:.4f})"
         else:
             msg = (
-                f"Null link {from_node}->{to_node} shows significant association "
-                f"(beta={coeff:.4f}, p={pvalue:.4f}, N={n_obs}). "
+                f"Null link {from_node}->{to_node}{cond_label}: significant "
+                f"partial association (beta={coeff:.4f}, p={pvalue:.4f}, N={n_obs}). "
                 f"DAG may need this edge."
             )
 
@@ -307,6 +341,7 @@ class PlaceboFalsifier:
             n_obs=n_obs,
             passed=passed,
             dag_distance=dist,
+            conditioning_set=cond_set,
             shared_neighbors=shared,
             data_status=data_status,
             message=msg,
@@ -319,14 +354,15 @@ class PlaceboFalsifier:
     def _write_issue(self, r: PlaceboResult) -> None:
         """Write a NULL_LINK_SIGNIFICANT issue to the ledger."""
         severity = "HIGH" if r.pvalue < 0.01 else "MEDIUM"
+        cond_label = f" | {', '.join(r.conditioning_set)}" if r.conditioning_set else ""
         self.issue_ledger.add_from_rule(
             rule_id="NULL_LINK_SIGNIFICANT",
             severity=severity,
             scope="dag",
             message=(
-                f"Null link {r.from_node}->{r.to_node} shows significant association "
-                f"(beta={r.coefficient:.4f}, p={r.pvalue:.4f}, N={r.n_obs}). "
-                f"DAG may need this edge."
+                f"Null link {r.from_node}->{r.to_node}{cond_label}: significant "
+                f"partial association (beta={r.coefficient:.4f}, p={r.pvalue:.4f}, "
+                f"N={r.n_obs}). DAG may need this edge."
             ),
             evidence={
                 "from_node": r.from_node,
@@ -336,6 +372,7 @@ class PlaceboFalsifier:
                 "pvalue": r.pvalue,
                 "n_obs": r.n_obs,
                 "dag_distance": r.dag_distance,
+                "conditioning_set": r.conditioning_set,
                 "shared_neighbors": r.shared_neighbors,
             },
             auto_fixable=False,
@@ -345,6 +382,15 @@ class PlaceboFalsifier:
     # ------------------------------------------------------------------
     # Graph helpers
     # ------------------------------------------------------------------
+
+    def _build_parent_map(self) -> dict[str, set[str]]:
+        """Build directed parent map: node -> set of parent node IDs."""
+        parents: dict[str, set[str]] = {}
+        for node in self.dag.nodes:
+            parents[node.id] = set()
+        for edge in self.dag.edges:
+            parents.setdefault(edge.to_node, set()).add(edge.from_node)
+        return parents
 
     def _build_adjacency(self) -> dict[str, set[str]]:
         """Build undirected adjacency dict from DAG edges."""

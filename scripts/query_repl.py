@@ -1157,37 +1157,34 @@ class QueryREPL:
             console.print("[dim]No testable null links found.[/dim]")
             return
 
-        table = Table(title="Placebo Falsification Results")
+        table = Table(title="Placebo Falsification (d-separation)")
         table.add_column("From", style="cyan")
         table.add_column("To", style="cyan")
+        table.add_column("Cond. Set", style="dim")
         table.add_column("\u03b2", style="white", justify="right")
         table.add_column("SE", style="white", justify="right")
         table.add_column("p-value", style="white", justify="right")
         table.add_column("N", style="white", justify="right")
         table.add_column("Result", style="white")
-        table.add_column("Dist", style="dim", justify="right")
         table.add_column("Status", style="dim")
 
         for r in results:
             if r.data_status == "missing":
-                style = "dim"
                 result_str = "[dim]SKIP[/dim]"
             elif r.passed:
-                style = "green"
                 result_str = "[green]PASS[/green]"
             else:
-                style = "red"
                 result_str = "[red]FAIL[/red]"
 
             coeff_str = f"{r.coefficient:.4f}" if not math.isnan(r.coefficient) else "-"
             se_str = f"{r.se:.4f}" if not math.isnan(r.se) else "-"
             pval_str = f"{r.pvalue:.4f}" if r.data_status != "missing" else "-"
-            dist_str = str(r.dag_distance) if r.dag_distance >= 0 else "\u221e"
+            cond_str = ", ".join(r.conditioning_set) if r.conditioning_set else "(none)"
 
             table.add_row(
-                r.from_node, r.to_node,
+                r.from_node, r.to_node, cond_str,
                 coeff_str, se_str, pval_str,
-                str(r.n_obs), result_str, dist_str,
+                str(r.n_obs), result_str,
                 r.data_status,
             )
 
