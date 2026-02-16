@@ -41,11 +41,14 @@ _UNIT_PATTERNS: list[tuple[str, str]] = [
     (r"pp\b|percentage\s*point", "pp"),
     (r"\bpct\b|percent|%", "pct"),
     (r"\blog[_ ]?point", "log_point"),
+    (r"\blog\b", "log_point"),  # bare "log" → semi-elasticity
     (r"\bbn[_ ]?kzt\b", "bn_kzt"),
     (r"\bratio\b", "ratio"),
+    (r"\bshare\b", "ratio"),    # share ≈ ratio for compatibility
     (r"\bindex\b", "index"),
     (r"\bsd\b|standard\s*deviation", "sd"),
     (r"\bbps\b|basis\s*point", "bps"),
+    (r"\binnovation\b", "sd"),  # innovation ≈ 1 SD shock
 ]
 
 
@@ -184,7 +187,12 @@ def _resolve_treatment_unit(edge_spec: Any) -> UnitSpec:
         if kind != "unknown":
             return UnitSpec.from_structured(kind, scale)
 
-    # 2. Free-text from estimates or edge card
+    # 2. unit_specification dict from DAG YAML
+    uspec = getattr(edge_spec, "unit_specification", None)
+    if isinstance(uspec, dict) and uspec.get("treatment_unit"):
+        return UnitSpec.parse(uspec["treatment_unit"])
+
+    # 3. Free-text from estimates or edge card
     est = getattr(edge_spec, "estimates", None)
     if est and getattr(est, "treatment_unit", ""):
         return UnitSpec.parse(est.treatment_unit)
@@ -200,6 +208,11 @@ def _resolve_outcome_unit(edge_spec: Any) -> UnitSpec:
         scale = uk.get("outcome_scale", 1.0)
         if kind != "unknown":
             return UnitSpec.from_structured(kind, scale)
+
+    # unit_specification dict from DAG YAML
+    uspec = getattr(edge_spec, "unit_specification", None)
+    if isinstance(uspec, dict) and uspec.get("outcome_unit"):
+        return UnitSpec.parse(uspec["outcome_unit"])
 
     est = getattr(edge_spec, "estimates", None)
     if est and getattr(est, "outcome_unit", ""):
@@ -648,12 +661,15 @@ class PropagationEngine:
         if len(edges_in_path) > 1:
             frequencies = {e.frequency for e in edges_in_path}
             if len(frequencies) > 1:
-                # Check for frequency bridge edges
+                # Check for frequency bridge edges:
+                # 1. Explicit frequency_bridge=True in DAG YAML
+                # 2. Identity/bridge edges implicitly bridge frequencies
+                #    (accounting relations work at any frequency)
                 has_bridge = any(
-                    e.role in ("bridge", "identity")
-                    and getattr(
-                        self.dag.get_edge(e.edge_id), "frequency_bridge", False
-                    )
+                    (e.role in ("bridge", "identity")
+                     or getattr(
+                         self.dag.get_edge(e.edge_id), "frequency_bridge", False
+                     ))
                     for e in edges_in_path
                 )
                 if not has_bridge:

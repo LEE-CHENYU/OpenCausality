@@ -197,7 +197,7 @@ rules:
       weak or if you only need the total effect.
 
   - rule_id: SIGNIFICANT_BUT_NOT_IDENTIFIED
-    severity: CRITICAL
+    severity: HIGH
     trigger: post_run
     auto_fixable: false
     requires_human: true
