@@ -562,6 +562,7 @@ class EdgeSpec:
             "IDENTITY": "identity",
             "ESTIMABLE_REDUCED_FORM": "causal",
             "NEEDS_CONNECTOR": "causal",
+            "BLOCKED_DECOMPOSITION": "mechanical",
         }
         return status_map.get(self.edge_status, "causal")
 
