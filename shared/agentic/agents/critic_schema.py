@@ -152,6 +152,7 @@ class CriticFeedback:
     edges_missing_identification: list[str] = field(default_factory=list)
     edges_missing_units: list[str] = field(default_factory=list)
     formula_violations: list[dict[str, Any]] = field(default_factory=list)
+    structural_gaps: list[dict[str, Any]] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -162,6 +163,7 @@ class CriticFeedback:
             "edges_missing_identification": self.edges_missing_identification,
             "edges_missing_units": self.edges_missing_units,
             "formula_violations": self.formula_violations,
+            "structural_gaps": self.structural_gaps,
         }
 
 
@@ -236,8 +238,32 @@ class CriticRevisionValidator:
         return validator(revision)
 
     def validate_batch(self, revisions: list[CriticRevision]) -> list[CriticRevision]:
-        """Validate a batch of revisions."""
-        return [self.validate(r) for r in revisions]
+        """Validate a batch of revisions.
+
+        Sorts ADD_MISSING_NODE before ADD_MISSING_EDGE so that newly
+        added nodes are registered before edge validation checks endpoints.
+        """
+        def _order(r: CriticRevision) -> int:
+            if r.revision_type == RevisionType.ADD_MISSING_NODE:
+                return 0
+            if r.revision_type == RevisionType.ADD_MISSING_EDGE:
+                return 2
+            return 1
+
+        sorted_revs = sorted(revisions, key=_order)
+        results: list[CriticRevision] = []
+        for r in sorted_revs:
+            validated = self.validate(r)
+            # Register validated nodes so subsequent edge validation sees them
+            if (
+                validated.validated
+                and validated.revision_type == RevisionType.ADD_MISSING_NODE
+            ):
+                node_id = validated.details.get("node_definition", {}).get("id", "")
+                if node_id:
+                    self.nodes[node_id] = {"id": node_id}
+            results.append(validated)
+        return results
 
     # ── Type-specific validators ──────────────────────────────────
 

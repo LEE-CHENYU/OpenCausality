@@ -108,6 +108,32 @@ structural_rules:
       revision_type: add_structural_metadata
 
 # ──────────────────────────────────────────────────────────────────
+# Structural Gap Rules (domain-agnostic, graph-theoretic)
+# These detect missing nodes/edges that the critic can propose adding.
+# ──────────────────────────────────────────────────────────────────
+
+structural_gap_rules:
+  - id: undriven_identity_dependency
+    predicate: "node in identity.depends_on AND in_degree == 0 AND not exogenous root"
+    signal: "Leaf identity dependency may need upstream driver"
+    severity: warning
+
+  - id: dead_end_leaf
+    predicate: "non-target node with in_degree > 0 AND out_degree == 0"
+    signal: "Dead-end node may need downstream connection"
+    severity: warning
+
+  - id: endogenous_root
+    predicate: "node with out_degree > 0 AND in_degree == 0 AND not exogenous/latent/shock"
+    signal: "Root node without exogenous justification may need upstream driver"
+    severity: warning
+
+  - id: paper_mentioned_variable
+    predicate: "PaperScout literature mentions variable name not matching any DAG node"
+    signal: "Literature-referenced variable may be a missing node"
+    severity: info
+
+# ──────────────────────────────────────────────────────────────────
 # Layer 2: Domain Extraction Questions (fed to LLM per edge)
 # Papers from PaperScout are injected as context alongside these.
 # ──────────────────────────────────────────────────────────────────

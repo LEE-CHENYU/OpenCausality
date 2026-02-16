@@ -413,11 +413,22 @@ You may ONLY propose revisions of these types:
 For each edge, consider:
 {domain_questions}
 
+## Structural Gaps (expansion opportunities)
+
+The following graph-theoretic rules detect missing nodes/edges:
+{structural_gap_rules}
+
+When structural gaps are reported, consider proposing add_missing_node or
+add_missing_edge revisions. Only propose additions you are confident about
+(>= {confidence_threshold}). For add_missing_node, the new node must have a
+clear role in the causal story. For add_missing_edge, both endpoints must exist
+(propose the node first if needed).
+
 ## Output Format
 
 Return a JSON array of revision objects. Each object has:
 - "revision_type": one of the 8 types above (string)
-- "target_edge_id": the edge ID to modify (string)
+- "target_edge_id": the edge ID to modify (string, use "N/A" for add_missing_node)
 - "confidence": 0.0 to 1.0 (float) — only revisions >= {confidence_threshold} will be applied
 - "reasoning": why this revision improves the DAG (string)
 - "details": type-specific fields (object):
@@ -429,6 +440,9 @@ Return a JSON array of revision objects. Each object has:
     - add_structural_metadata: {{"metadata": {{"expected_sign": "positive|negative|any", "timing": {{"lag": N}}, "forbidden_controls": [...]}}}}
     - add_unit_specification: {{"unit_specification": {{"treatment_unit": "...", "outcome_unit": "..."}}}}
     - invert_edge_direction: {{}}
+
+When proposing both add_missing_node AND add_missing_edge for the same new node,
+include both revisions in the array — the validator processes nodes before edges.
 
 Return an EMPTY array [] if no revisions are needed.
 Do NOT propose changes you are not confident about.
@@ -467,6 +481,10 @@ DAG_CRITIC_USER = """\
 ## Formula Violations
 
 {formula_violations}
+
+## Structural Gaps (expansion opportunities)
+
+{structural_gaps}
 
 ## Placebo Falsification Results
 
