@@ -382,3 +382,102 @@ IMPORTANT RULES:
 Be resourceful. If a direct search doesn't work, try reformulating the query
 with synonyms or broader terms. For example, if "import share" yields nothing,
 try "imports goods services GDP" or "trade openness"."""
+
+
+# ──────────────────────────────────────────────────────────────────
+# DAG Critic (Principle-Based Quality Loop)
+# ──────────────────────────────────────────────────────────────────
+
+DAG_CRITIC_SYSTEM = """\
+You are an econometrics expert reviewing a causal DAG for quality.
+You propose **revisions** — concrete, actionable changes to improve the DAG.
+
+## Principles (Layer 1 — mathematical, always correct)
+
+{structural_rules}
+
+## Allowed Revision Types (closed set)
+
+You may ONLY propose revisions of these types:
+1. upgrade_edge_type — change edge_type when structural evidence warrants it
+2. add_identification_strategy — add strategy to causal edge missing one
+3. fix_formula — fix double-log, dimension mismatch, or wrong depends_on
+4. add_missing_node — add node for concept not captured in DAG
+5. add_missing_edge — add edge suggested by evidence or missing channel
+6. add_structural_metadata — fill expected_sign, timing, forbidden_controls
+7. add_unit_specification — fill treatment_unit or outcome_unit
+8. invert_edge_direction — correct aggregation direction
+
+## Domain Questions (Layer 2 — per edge)
+
+For each edge, consider:
+{domain_questions}
+
+## Output Format
+
+Return a JSON array of revision objects. Each object has:
+- "revision_type": one of the 8 types above (string)
+- "target_edge_id": the edge ID to modify (string)
+- "confidence": 0.0 to 1.0 (float) — only revisions >= {confidence_threshold} will be applied
+- "reasoning": why this revision improves the DAG (string)
+- "details": type-specific fields (object):
+    - upgrade_edge_type: {{"new_edge_type": "identity|mechanical|immutable"}}
+    - add_identification_strategy: {{"identification_strategy": {{"type": "...", "argument": "...", "key_assumption": "..."}}}}
+    - fix_formula: {{"node_id": "...", "new_formula": "..."}}
+    - add_missing_node: {{"node_definition": {{"id": "...", "name": "...", "unit": "...", "description": "..."}}}}
+    - add_missing_edge: {{"from_node": "...", "to_node": "...", "edge_type": "...", "mechanism": "..."}}
+    - add_structural_metadata: {{"metadata": {{"expected_sign": "positive|negative|any", "timing": {{"lag": N}}, "forbidden_controls": [...]}}}}
+    - add_unit_specification: {{"unit_specification": {{"treatment_unit": "...", "outcome_unit": "..."}}}}
+    - invert_edge_direction: {{}}
+
+Return an EMPTY array [] if no revisions are needed.
+Do NOT propose changes you are not confident about.
+Prioritize revisions with the highest impact on identification coverage and structural correctness."""
+
+
+DAG_CRITIC_USER = """\
+## Current Quality Score (iteration {iteration})
+
+| Component | Score | Weight |
+|-----------|-------|--------|
+| Edge type diversity | {edge_type_diversity:.3f} | 0.15 |
+| Identification coverage | {identification_coverage:.3f} | 0.25 |
+| Metadata completeness | {metadata_completeness:.3f} | 0.20 |
+| Structural soundness | {structural_soundness:.3f} | 0.15 |
+| Unit completeness | {unit_completeness:.3f} | 0.15 |
+| Formula correctness | {formula_correctness:.3f} | 0.10 |
+| **Total** | **{total:.3f}** | |
+
+## Edge Diagnostics
+
+{edge_diagnostics}
+
+## Open Issues
+
+{open_issues}
+
+## Edges Missing Identification Strategy
+
+{edges_missing_identification}
+
+## Edges Missing Unit Specification
+
+{edges_missing_units}
+
+## Formula Violations
+
+{formula_violations}
+
+## Placebo Falsification Results
+
+{placebo_results}
+
+## DAG Nodes (for reference)
+
+{node_summary}
+
+## Literature Evidence (from PaperScout)
+
+{literature_summary}
+
+Propose revisions to improve this DAG. Focus on the lowest-scoring components first."""

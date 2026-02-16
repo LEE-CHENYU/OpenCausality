@@ -1646,21 +1646,128 @@ def dag_generate(
         None, "--output", "-o",
         help="Output path for generated DAG YAML",
     ),
+    critic_iterations: int = typer.Option(
+        0, "--critic-iterations", "-n",
+        help="Number of critic quality-improvement iterations (0=generate only)",
+    ),
+    critic_backend: str = typer.Option(
+        "claude-code", "--critic-backend",
+        help="LLM backend for critique: claude-code, codex, api",
+    ),
+    no_estimation: bool = typer.Option(
+        False, "--no-estimation",
+        help="Skip AgentLoop estimation between critic iterations",
+    ),
 ):
-    """Generate a DAG from a natural language narrative via LLM extraction."""
-    from scripts.generate_narrative_dag import generate, DEFAULT_BASE_DAG, DEFAULT_OUT
+    """Generate a DAG from a natural language narrative via LLM extraction.
 
-    console.print(f"[bold cyan]Generating DAG from narrative: {narrative}[/bold cyan]")
-    try:
-        result = generate(
-            narrative_path=narrative,
-            base_dag_path=base_dag or DEFAULT_BASE_DAG,
-            output_path=output or DEFAULT_OUT,
+    With --critic-iterations N, runs a principle-based quality improvement
+    loop after initial generation. Each iteration collects structured
+    feedback, proposes LLM revisions, validates them by code, and applies.
+
+    Example:
+        opencausality dag generate examples/kaspi_narrative.txt --critic-iterations 3
+    """
+    from scripts.generate_narrative_dag import DEFAULT_BASE_DAG, DEFAULT_OUT
+
+    effective_base = resolve_path(base_dag) if base_dag else DEFAULT_BASE_DAG
+    effective_out = resolve_path(output) if output else DEFAULT_OUT
+
+    if critic_iterations > 0:
+        # Run full critic loop
+        from scripts.narrative_critic_loop import NarrativeCriticLoop, CriticLoopConfig
+
+        console.print(f"[bold cyan]Generating DAG with {critic_iterations} critic iteration(s)[/bold cyan]")
+        console.print(f"  Narrative: {narrative}")
+        console.print(f"  Backend: {critic_backend}")
+
+        config = CriticLoopConfig(
+            max_iterations=critic_iterations,
+            critic_backend=critic_backend,
+            run_estimation=not no_estimation,
         )
-        console.print(f"[green]Written: {result}[/green]")
-    except Exception as e:
-        console.print(f"[bold red]Error: {e}[/bold red]")
+        loop = NarrativeCriticLoop(
+            narrative_path=resolve_path(narrative),
+            base_dag_path=effective_base,
+            output_dag_path=effective_out,
+            config=config,
+        )
+        try:
+            report = loop.run()
+            console.print(f"[green]Written: {effective_out}[/green]")
+        except Exception as e:
+            console.print(f"[bold red]Error: {e}[/bold red]")
+            raise typer.Exit(1)
+    else:
+        # Single-pass generation (existing behavior)
+        from scripts.generate_narrative_dag import generate
+
+        console.print(f"[bold cyan]Generating DAG from narrative: {narrative}[/bold cyan]")
+        try:
+            result = generate(
+                narrative_path=resolve_path(narrative),
+                base_dag_path=effective_base,
+                output_path=effective_out,
+            )
+            console.print(f"[green]Written: {result}[/green]")
+        except Exception as e:
+            console.print(f"[bold red]Error: {e}[/bold red]")
+            raise typer.Exit(1)
+
+
+@dag_app.command("critic-feedback")
+def dag_critic_feedback(
+    dag_path: Path = typer.Argument(
+        ...,
+        help="Path to DAG YAML",
+    ),
+    output_dir: Optional[Path] = typer.Option(
+        None, "--output-dir", "-o",
+        help="Output directory for run artifacts (default: per-DAG)",
+    ),
+    json_output: bool = typer.Option(
+        True, "--json/--table",
+        help="Output format: JSON (default) or table",
+    ),
+):
+    """Dump raw structured feedback JSON for a DAG.
+
+    Useful for manual review or piping into any LLM tool.
+
+    Example:
+        opencausality dag critic-feedback config/agentic/dags/kspi_k2_narrative.yaml
+        opencausality dag critic-feedback my_dag.yaml | claude -p "Review this"
+    """
+    import json as _json
+    from shared.agentic.agents.dag_critic import DAGCritic
+
+    dag_path = resolve_path(dag_path)
+    if not dag_path.exists():
+        console.print(f"[red]DAG file not found: {dag_path}[/red]")
         raise typer.Exit(1)
+
+    effective_dir = output_dir or get_dag_output_dir(dag_path)
+
+    critic = DAGCritic(
+        dag_path=dag_path,
+        output_dir=effective_dir,
+    )
+    feedback = critic.collect_feedback()
+
+    if json_output:
+        print(_json.dumps(feedback.to_dict(), indent=2))
+    else:
+        console.print(f"\n[bold cyan]Quality Score: {feedback.quality_score.total:.3f}[/bold cyan]")
+        console.print(f"  Edge type diversity: {feedback.quality_score.edge_type_diversity:.3f}")
+        console.print(f"  Identification coverage: {feedback.quality_score.identification_coverage:.3f}")
+        console.print(f"  Metadata completeness: {feedback.quality_score.metadata_completeness:.3f}")
+        console.print(f"  Structural soundness: {feedback.quality_score.structural_soundness:.3f}")
+        console.print(f"  Unit completeness: {feedback.quality_score.unit_completeness:.3f}")
+        console.print(f"  Formula correctness: {feedback.quality_score.formula_correctness:.3f}")
+        console.print(f"\n  Missing identification: {len(feedback.edges_missing_identification)} edges")
+        console.print(f"  Missing units: {len(feedback.edges_missing_units)} edges")
+        console.print(f"  Formula violations: {len(feedback.formula_violations)}")
+        console.print(f"  Open issues: {len(feedback.open_issues)}")
 
 
 # ============================================================================

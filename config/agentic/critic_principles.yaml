@@ -1,0 +1,195 @@
+# Critic Principles: Quality Rules, Weights, and Convergence Criteria
+#
+# Layer 1 rules are mathematical/structural and verifiable by code.
+# Layer 2 domain knowledge comes from PaperScout + LLM at runtime.
+#
+# Editing this file changes critic behavior without code changes.
+
+version: "1.0"
+
+# ──────────────────────────────────────────────────────────────────
+# Layer 1: Structural Rules (code-verifiable)
+# ──────────────────────────────────────────────────────────────────
+
+structural_rules:
+  edge_type_correctness:
+    - id: identity_from_formula
+      predicate: "node.derived == true AND node.identity.formula exists AND edge connects identity.depends_on nodes"
+      required: "edge_type == identity"
+      severity: error
+      revision_type: upgrade_edge_type
+
+    - id: immutable_from_evidence
+      predicate: "edge has validated_evidence.immutable == true"
+      required: "edge_type == immutable"
+      severity: error
+      revision_type: upgrade_edge_type
+
+    - id: edge_type_in_closed_set
+      predicate: "edge.edge_type exists"
+      required: "edge_type in {causal, reaction_function, mechanical, immutable, identity}"
+      severity: error
+      revision_type: upgrade_edge_type
+
+  formula_correctness:
+    - id: no_double_log
+      predicate: "node.transforms contains 'log' AND identity.formula wraps node in log()"
+      required: "remove outer log() from formula"
+      severity: error
+      revision_type: fix_formula
+
+    - id: depends_on_from_formula
+      predicate: "node.identity.depends_on is derivable from identity.formula via regex"
+      required: "depends_on matches formula variables"
+      severity: error
+      revision_type: fix_formula
+
+    - id: no_dimension_mismatch
+      predicate: "identity formula mixes log-level and level operands"
+      required: "all operands at same dimension"
+      severity: error
+      revision_type: fix_formula
+
+  structural_connectivity:
+    - id: dag_acyclic
+      predicate: "DAG adjacency graph"
+      required: "no directed cycles"
+      severity: error
+
+    - id: target_reachable
+      predicate: "target_node in DAG metadata"
+      required: "reachable from at least one root via directed edges"
+      severity: error
+
+    - id: no_orphan_sinks
+      predicate: "non-target node with incoming but no outgoing edges"
+      required: "every non-target intermediate node has outgoing edges"
+      severity: warning
+
+    - id: edge_endpoints_exist
+      predicate: "edge.from and edge.to"
+      required: "both reference existing node IDs"
+      severity: error
+
+    - id: identity_deps_complete
+      predicate: "derived node with identity.depends_on"
+      required: "edge exists from each dependency to the derived node"
+      severity: error
+
+  unit_compatibility:
+    - id: edge_has_units
+      predicate: "every edge"
+      required: "has both treatment_unit and outcome_unit"
+      severity: warning
+      revision_type: add_unit_specification
+
+    - id: chain_units_compatible
+      predicate: "consecutive edges A->B, B->C"
+      required: "upstream outcome_unit and downstream treatment_unit share meaningful tokens"
+      severity: warning
+
+  metadata_completeness:
+    - id: expected_sign_present
+      predicate: "causal edge"
+      required: "acceptance_criteria.plausibility.expected_sign is set"
+      severity: warning
+      revision_type: add_structural_metadata
+
+    - id: timing_present
+      predicate: "causal edge"
+      required: "timing.lag and timing.lag_unit are set"
+      severity: warning
+      revision_type: add_structural_metadata
+
+    - id: forbidden_controls_present
+      predicate: "causal edge"
+      required: "forbidden_controls list exists (may be empty)"
+      severity: warning
+      revision_type: add_structural_metadata
+
+# ──────────────────────────────────────────────────────────────────
+# Layer 2: Domain Extraction Questions (fed to LLM per edge)
+# Papers from PaperScout are injected as context alongside these.
+# ──────────────────────────────────────────────────────────────────
+
+domain_extraction_questions:
+  mechanism: >
+    Given the literature excerpts and node descriptions, what is the
+    mechanism for {from} -> {to}? Is it definitional, mechanical,
+    policy response, or causal?
+  expected_sign: >
+    Based on the supporting papers and theory, what sign would you
+    expect for {from} -> {to}, and what magnitude range?
+  identification: >
+    What confounders could bias {from} -> {to}? Do the methodological
+    papers suggest applicable identification strategies?
+  missing_channels: >
+    Do the papers or theory suggest important intermediate nodes or
+    parallel channels not captured in this DAG?
+  evidence_quality: >
+    Are the supporting papers actually relevant to this specific edge?
+    Flag any misclassified citations.
+
+# ──────────────────────────────────────────────────────────────────
+# Quality Weights (sum to 1.0)
+# ──────────────────────────────────────────────────────────────────
+
+quality_weights:
+  edge_type_diversity: 0.15
+  identification_coverage: 0.25
+  metadata_completeness: 0.20
+  structural_soundness: 0.15
+  unit_completeness: 0.15
+  formula_correctness: 0.10
+
+# ──────────────────────────────────────────────────────────────────
+# Convergence Criteria
+# ──────────────────────────────────────────────────────────────────
+
+convergence:
+  min_delta: 0.02
+  stable_iterations: 2
+  max_iterations: 5
+
+# ──────────────────────────────────────────────────────────────────
+# Revision Confidence Threshold
+# ──────────────────────────────────────────────────────────────────
+
+confidence_threshold: 0.7
+
+# ──────────────────────────────────────────────────────────────────
+# Allowed Revision Types (closed set)
+# ──────────────────────────────────────────────────────────────────
+
+allowed_revision_types:
+  - type: upgrade_edge_type
+    description: "Change edge_type when node has identity formula or validated evidence"
+    requires_reestimation: true
+
+  - type: add_identification_strategy
+    description: "Add identification_strategy to causal edge missing one"
+    requires_reestimation: false
+
+  - type: fix_formula
+    description: "Fix double-log, dimension mismatch, or wrong depends_on"
+    requires_reestimation: true
+
+  - type: add_missing_node
+    description: "Add node mentioned in narrative but not captured"
+    requires_reestimation: true
+
+  - type: add_missing_edge
+    description: "Add edge suggested by placebo falsification or missing channel"
+    requires_reestimation: true
+
+  - type: add_structural_metadata
+    description: "Fill expected_sign, timing, forbidden_controls"
+    requires_reestimation: false
+
+  - type: add_unit_specification
+    description: "Fill treatment_unit or outcome_unit"
+    requires_reestimation: false
+
+  - type: invert_edge_direction
+    description: "Correct aggregation direction (components -> aggregate)"
+    requires_reestimation: true
