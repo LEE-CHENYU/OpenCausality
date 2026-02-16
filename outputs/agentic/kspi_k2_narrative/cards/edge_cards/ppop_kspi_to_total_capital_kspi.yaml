@@ -1,6 +1,6 @@
 edge_id: ppop_kspi_to_total_capital_kspi
 dag_version_hash: 26653d57356dd32eb34df1c02cad048b14bf6e9e53feb889643aa7d1ae6f233e
-created_at: '2026-02-11T12:10:04.098864'
+created_at: '2026-02-16T08:08:52.393547'
 data_provenance:
   treatment_source:
     connector: parquet_file
@@ -324,7 +324,7 @@ literature:
     source: arxiv
     pdf_url: https://arxiv.org/pdf/2209.03013v1
   search_status: SEARCHED
-  search_timestamp: '2026-02-11T12:10:04.098932'
+  search_timestamp: '2026-02-16T08:08:52.393624'
   search_query: KSPI pre-provision operating profit KSPI total capital causal effect
   total_results: 5
 companion_edge_id: null

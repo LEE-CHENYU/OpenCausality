@@ -1,0 +1,78 @@
+{
+  "manifest_version": "1.0",
+  "updated_at": "2026-02-16T16:06:41.223595+00:00",
+  "datasets": [
+    {
+      "file_id": "api_downloads__world_bank__e_import_share",
+      "original_path": "data/raw/api_downloads/world_bank/E_import_share.parquet",
+      "format": "parquet",
+      "rows": 22,
+      "columns": [
+        {
+          "name": "value",
+          "dtype": "numeric",
+          "non_null_count": 22,
+          "null_count": 0,
+          "mean": 31.263806977848354,
+          "std": 7.164527367974098,
+          "min_val": 24.427634998983,
+          "max_val": 44.5681447702344
+        }
+      ],
+      "date_column": null,
+      "frequency": "annual",
+      "date_range": [
+        "2003-01-01",
+        "2024-01-01"
+      ],
+      "value_columns": [
+        "value"
+      ],
+      "primary_value_column": "value",
+      "output_path": "data/processed/ingested/api_downloads__world_bank__e_import_share.parquet",
+      "ingested_at": "2026-02-16T16:06:41.220358+00:00",
+      "file_hash": "38c4186d85f0801b75cfd4bb354094ceee5faacdbb8ae6b2350c9e12c5aa4fcf",
+      "file_size": 2425,
+      "mtime": 1771228644.5441453,
+      "n_unique_dates": 22,
+      "n_duplicate_dates": 0,
+      "sidecar": null
+    },
+    {
+      "file_id": "api_downloads__world_bank__imported_inflation_instrument",
+      "original_path": "data/raw/api_downloads/world_bank/imported_inflation_instrument.parquet",
+      "format": "parquet",
+      "rows": 5,
+      "columns": [
+        {
+          "name": "value",
+          "dtype": "numeric",
+          "non_null_count": 5,
+          "null_count": 0,
+          "mean": 444.83066666666656,
+          "std": 24.084252573287262,
+          "min_val": 412.953333333333,
+          "max_val": 468.9625
+        }
+      ],
+      "date_column": null,
+      "frequency": "annual",
+      "date_range": [
+        "2020-01-01",
+        "2024-01-01"
+      ],
+      "value_columns": [
+        "value"
+      ],
+      "primary_value_column": "value",
+      "output_path": "data/processed/ingested/api_downloads__world_bank__imported_inflation_instrument.parquet",
+      "ingested_at": "2026-02-16T16:06:41.223585+00:00",
+      "file_hash": "bf82d2b7d343d46472fce32ccd3c284e5a4ed310c5819b2c5808903c7f58e9a1",
+      "file_size": 2117,
+      "mtime": 1771228605.5455534,
+      "n_unique_dates": 5,
+      "n_duplicate_dates": 0,
+      "sidecar": null
+    }
+  ]
+}
