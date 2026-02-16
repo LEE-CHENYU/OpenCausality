@@ -547,23 +547,29 @@ Var(τ̂) = Σᵢ (∏ⱼ≠ᵢ βⱼ)² · SEᵢ²
 **Invariant:** No open `CRITICAL` issue may exist when entering CONFIRMATION mode.
 The `block_confirmation` gate is non-negotiable.
 
-### 16.1 Critical Issue Rules (Must Always Be Present)
+### 16.1 Architecturally Essential Issue Rules (Must Always Be Present)
 
 The issue registry (currently 30 rules) is the governance layer's detection capability.
-The following seven `CRITICAL`-severity rules are architecturally essential — removing
-any of them silently degrades the system's correctness guarantees:
+The following seven rules are architecturally essential — removing any of them silently
+degrades the system's correctness guarantees:
 
-| Rule ID | What It Guards |
-|---------|---------------|
-| `FREQUENCY_ALIGNMENT_ERROR` | Blocks estimation on mixed frequencies without explicit aggregation |
-| `REACTION_FUNCTION_EDGE` | Prevents policy reaction edges from entering shock propagation |
-| `TIME_FE_ABSORBS_SHOCK` | Detects when time FE absorbs the treatment; requires exposure interaction |
-| `EXPOSURE_NOT_PREDETERMINED` | Ensures exposure variable is measured pre-treatment |
-| `SIGNIFICANT_BUT_NOT_IDENTIFIED` | Prevents overclaiming: significance without valid identification |
-| `LEADS_SIGNIFICANT_TIMING_FAIL` | Catches reversed temporal ordering in causal claims |
-| `UNIT_MISSING_IN_EDGECARD` | Blocks uninterpretable coefficients lacking unit specs |
+| Rule ID | Severity | What It Guards |
+|---------|----------|---------------|
+| `FREQUENCY_ALIGNMENT_ERROR` | CRITICAL | Blocks estimation on mixed frequencies without explicit aggregation |
+| `REACTION_FUNCTION_EDGE` | CRITICAL | Prevents policy reaction edges from entering shock propagation |
+| `TIME_FE_ABSORBS_SHOCK` | CRITICAL | Detects when time FE absorbs the treatment; requires exposure interaction |
+| `EXPOSURE_NOT_PREDETERMINED` | CRITICAL | Ensures exposure variable is measured pre-treatment |
+| `LEADS_SIGNIFICANT_TIMING_FAIL` | CRITICAL | Catches reversed temporal ordering in causal claims |
+| `UNIT_MISSING_IN_EDGECARD` | CRITICAL | Blocks uninterpretable coefficients lacking unit specs |
+| `SIGNIFICANT_BUT_NOT_IDENTIFIED` | HIGH | Prevents overclaiming: blocks counterfactual use only |
 
-The total rule count may grow but must never shrink below these seven critical rules.
+Six of these are `CRITICAL` (block all propagation). `SIGNIFICANT_BUT_NOT_IDENTIFIED`
+is `HIGH`: it blocks counterfactual scenarios (shock/policy) but allows plain
+reduced-form propagation. This distinction is enforced by rule-specific logic in the
+propagation engine (Guardrail 4), not by the generic severity check — ensuring
+consistent behavior regardless of stored severity in JSONL ledger files.
+
+The total rule count may grow but must never shrink below these seven rules.
 Adding rules is allowed; removing or disabling any rule listed above is a bug.
 
 **Note:** The anti-p-hacking concerns (null dropping, control shopping, specification

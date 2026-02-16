@@ -324,7 +324,7 @@ class PropagationEngine:
         source: str,
         target: str,
         mode: str = "REDUCED_FORM",
-        scenario_type: str = "shock",
+        scenario_type: str | None = None,
         aggregation: str = "single_path",
         max_depth: int = 10,
         allow_unknown_units: bool = False,
@@ -612,19 +612,33 @@ class PropagationEngine:
                 for issue in edge_issues:
                     if not issue.is_open:
                         continue
+                    # Rule-specific handlers take priority over generic
+                    # severity check.  This ensures consistent behavior
+                    # regardless of stored severity in JSONL ledger files.
+
+                    # SBNI: CF-only blocking (HIGH severity)
+                    if issue.rule_id == "SIGNIFICANT_BUT_NOT_IDENTIFIED":
+                        if scenario_type in ("shock", "policy"):
+                            blocked_reasons.append(
+                                f"issue_cf_block: {edge_spec.id} "
+                                f"{issue.rule_id} - p-value significant but "
+                                f"claim not IDENTIFIED_CAUSAL"
+                            )
+                        continue
+
+                    # LEADS: blocks ALL propagation (timing violation)
+                    if issue.rule_id == "LEADS_SIGNIFICANT_TIMING_FAIL":
+                        blocked_reasons.append(
+                            f"issue_ledger_block: {edge_spec.id} "
+                            f"{issue.rule_id} - effects appear before shock"
+                        )
+                        continue
+
                     # Block propagation for CRITICAL issues
                     if issue.is_critical:
                         blocked_reasons.append(
                             f"issue_ledger_block: {edge_spec.id} "
                             f"{issue.rule_id} - {issue.message}"
-                        )
-                    # Block counterfactuals for SIGNIFICANT_BUT_NOT_IDENTIFIED
-                    if (issue.rule_id == "SIGNIFICANT_BUT_NOT_IDENTIFIED"
-                            and scenario_type in ("shock", "policy")):
-                        blocked_reasons.append(
-                            f"issue_cf_block: {edge_spec.id} "
-                            f"{issue.rule_id} - p-value significant but "
-                            f"claim not IDENTIFIED_CAUSAL"
                         )
 
             # ── Guardrail 5: Reaction function always blocked ──

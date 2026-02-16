@@ -168,6 +168,7 @@ class ArtifactStore:
         )
         from shared.agentic.output.provenance import (
             DataProvenance,
+            SourceProvenance,
             SpecDetails,
         )
 
@@ -176,9 +177,9 @@ class ArtifactStore:
         if data.get("estimates"):
             est = data["estimates"]
             estimates = Estimates(
-                point=est["point"],
-                se=est["se"],
-                ci_95=tuple(est["ci_95"]),
+                point=est.get("point", 0.0),
+                se=est.get("se", 0.0),
+                ci_95=tuple(est.get("ci_95", (0.0, 0.0))),
                 pvalue=est.get("pvalue"),
                 horizons=est.get("horizons"),
                 irf=est.get("irf"),
@@ -288,10 +289,75 @@ class ArtifactStore:
             mode_policy_cf_allowed=pr_data.get("mode_policy_cf_allowed", {}),
         )
 
+        # Parse data provenance
+        dp_data = data.get("data_provenance", {})
+        data_prov = DataProvenance()
+        if dp_data:
+            if dp_data.get("treatment_source"):
+                ts = dp_data["treatment_source"]
+                data_prov.treatment_source = SourceProvenance(
+                    connector=ts.get("connector", ""),
+                    dataset=ts.get("dataset", ""),
+                    series=ts.get("series"),
+                    file_path=ts.get("file_path"),
+                    file_checksum=ts.get("file_checksum"),
+                    row_count=ts.get("row_count"),
+                    column_count=ts.get("column_count"),
+                    date_range=tuple(ts["date_range"]) if ts.get("date_range") else None,
+                    cache_key=ts.get("cache_key"),
+                )
+            if dp_data.get("outcome_source"):
+                os_ = dp_data["outcome_source"]
+                data_prov.outcome_source = SourceProvenance(
+                    connector=os_.get("connector", ""),
+                    dataset=os_.get("dataset", ""),
+                    series=os_.get("series"),
+                    file_path=os_.get("file_path"),
+                    file_checksum=os_.get("file_checksum"),
+                    row_count=os_.get("row_count"),
+                    column_count=os_.get("column_count"),
+                    date_range=tuple(os_["date_range"]) if os_.get("date_range") else None,
+                    cache_key=os_.get("cache_key"),
+                )
+            for name, cs in dp_data.get("control_sources", {}).items():
+                data_prov.control_sources[name] = SourceProvenance(
+                    connector=cs.get("connector", ""),
+                    dataset=cs.get("dataset", ""),
+                    series=cs.get("series"),
+                    file_path=cs.get("file_path"),
+                    file_checksum=cs.get("file_checksum"),
+                    row_count=cs.get("row_count"),
+                    column_count=cs.get("column_count"),
+                    date_range=tuple(cs["date_range"]) if cs.get("date_range") else None,
+                    cache_key=cs.get("cache_key"),
+                )
+            for name, ins in dp_data.get("instrument_sources", {}).items():
+                data_prov.instrument_sources[name] = SourceProvenance(
+                    connector=ins.get("connector", ""),
+                    dataset=ins.get("dataset", ""),
+                    series=ins.get("series"),
+                    file_path=ins.get("file_path"),
+                    file_checksum=ins.get("file_checksum"),
+                    row_count=ins.get("row_count"),
+                    column_count=ins.get("column_count"),
+                    date_range=tuple(ins["date_range"]) if ins.get("date_range") else None,
+                    cache_key=ins.get("cache_key"),
+                )
+            data_prov.combined_row_count = dp_data.get("combined_row_count")
+            data_prov.combined_date_range = (
+                tuple(dp_data["combined_date_range"])
+                if dp_data.get("combined_date_range") else None
+            )
+            data_prov.missing_rate = dp_data.get("missing_rate")
+            data_prov.panel_dimensions = dp_data.get("panel_dimensions")
+            data_prov.entity_boundary_note = dp_data.get("entity_boundary_note")
+            data_prov.kpi_definitions = dp_data.get("kpi_definitions")
+
         return EdgeCard(
             edge_id=data["edge_id"],
             dag_version_hash=data.get("dag_version_hash", ""),
             created_at=datetime.fromisoformat(data.get("created_at", datetime.now().isoformat())),
+            data_provenance=data_prov,
             spec_hash=data.get("spec_hash", ""),
             spec_details=spec_details,
             estimates=estimates,
