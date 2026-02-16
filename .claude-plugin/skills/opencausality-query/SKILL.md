@@ -21,7 +21,7 @@ and the **hard language rules** you must follow when narrating results.
 
 1. **Always call `load_dag` first** before any other tool. Ask the user
    for the DAG path if not obvious, or try the project default at
-   `config/agentic/dag_kspi_k2_stress.yaml`.
+   `config/agentic/dags/kspi_k2_full.yaml`.
 2. Use the query tools (`propagate_shock`, `find_paths`, etc.) based on
    what the user asks.
 3. Format results using markdown tables. Bold key numbers.

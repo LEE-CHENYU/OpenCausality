@@ -1,0 +1,18 @@
+{
+  "name": "opencausality-query",
+  "version": "0.1.0",
+  "description": "Causal DAG query tools for OpenCausality — shock propagation, policy scenarios, edge inspection, placebo falsification, and identification analysis with hedged language enforcement",
+  "author": {
+    "name": "OpenCausality Team"
+  },
+  "license": "MIT",
+  "keywords": [
+    "causal-inference",
+    "econometrics",
+    "dag",
+    "propagation",
+    "stress-testing",
+    "identification"
+  ],
+  "mcpServers": "./.mcp.json"
+}
