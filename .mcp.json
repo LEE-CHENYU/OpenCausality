@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "opencausality-query": {
+      "command": "python",
+      "args": ["-m", "shared.mcp.query_server"],
+      "env": {
+        "PYTHONPATH": "."
+      }
+    }
+  }
+}

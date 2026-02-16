@@ -50,6 +50,7 @@ dev = [
     "jupyter>=1.0.0",
 ]
 
+mcp = ["mcp>=1.0.0"]
 litellm = ["litellm>=1.0.0"]
 pdf = ["pymupdf>=1.23.0"]
 rdd = [
