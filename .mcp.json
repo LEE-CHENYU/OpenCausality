@@ -3,9 +3,8 @@
     "opencausality-query": {
       "command": "python",
       "args": ["-m", "shared.mcp.query_server"],
-      "cwd": "${CLAUDE_PROJECT_ROOT}",
       "env": {
-        "PYTHONPATH": "${CLAUDE_PROJECT_ROOT}"
+        "PYTHONPATH": "."
       }
     }
   }

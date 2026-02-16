@@ -1,3 +1,12 @@
+---
+name: research-pipeline
+description: >
+  Use when the user asks about data downloads, pipeline status, data
+  verification, fetching sources, or running the research data pipeline.
+  Triggers on "pipeline", "download data", "fetch", "data status",
+  "verify data", "synthetic data", or "research pipeline".
+---
+
 # Research Pipeline Skill
 
 A skill for managing the Kazakhstan econometric research data pipeline.
