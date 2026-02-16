@@ -212,7 +212,7 @@
         "relevance": "supporting",
         "edge_id": "imported_inflation_instrument_to_real_income",
         "paper_id": "",
-        "citation_count": 1650,
+        "citation_count": 1651,
         "search_query": "Imported inflation IV Real monetary income causal effect",
         "source": "openalex",
         "pdf_url": "https://doi.org/10.3386/w10766"
@@ -229,7 +229,7 @@
         "relevance": "methodological",
         "edge_id": "imported_inflation_instrument_to_real_income",
         "paper_id": "",
-        "citation_count": 1085,
+        "citation_count": 1089,
         "search_query": "Imported inflation IV Real monetary income causal effect",
         "source": "openalex",
         "pdf_url": "https://www.aeaweb.org/articles/pdf/doi/10.1257/jep.15.4.101"
@@ -301,7 +301,7 @@
         "relevance": "supporting",
         "edge_id": "cpi_headline_to_real_income",
         "paper_id": "",
-        "citation_count": 581,
+        "citation_count": 582,
         "search_query": "Headline CPI Real monetary income causal effect",
         "source": "openalex",
         "pdf_url": "https://doi.org/10.3386/w15836"
@@ -393,7 +393,7 @@
         "relevance": "supporting",
         "edge_id": "imported_inflation_instrument_to_real_expenditure_negative",
         "paper_id": "",
-        "citation_count": 1650,
+        "citation_count": 1651,
         "search_query": "Imported inflation IV Real consumption expenditure causal effect",
         "source": "openalex",
         "pdf_url": "https://doi.org/10.3386/w10766"
@@ -410,7 +410,7 @@
         "relevance": "methodological",
         "edge_id": "imported_inflation_instrument_to_real_expenditure_negative",
         "paper_id": "",
-        "citation_count": 1085,
+        "citation_count": 1089,
         "search_query": "Imported inflation IV Real consumption expenditure causal effect",
         "source": "openalex",
         "pdf_url": "https://www.aeaweb.org/articles/pdf/doi/10.1257/jep.15.4.101"
@@ -464,7 +464,7 @@
         "relevance": "supporting",
         "edge_id": "transfer_income_to_nominal_income_buffering",
         "paper_id": "",
-        "citation_count": 2136,
+        "citation_count": 2141,
         "search_query": "Transfer income Nominal monetary income causal effect",
         "source": "openalex",
         "pdf_url": "https://onlinelibrary.wiley.com/doi/pdfdirect/10.1111/j.1468-0335.2009.00843.x"
@@ -481,7 +481,7 @@
         "relevance": "supporting",
         "edge_id": "transfer_income_to_nominal_income_buffering",
         "paper_id": "",
-        "citation_count": 1897,
+        "citation_count": 1898,
         "search_query": "Transfer income Nominal monetary income causal effect",
         "source": "openalex",
         "pdf_url": "https://www.journals.uchicago.edu/doi/epdf/10.1086/654340"
@@ -1220,7 +1220,7 @@
         "relevance": "challenging",
         "edge_id": "e_import_share_to_imported_inflation_instrument",
         "paper_id": "",
-        "citation_count": 2115,
+        "citation_count": 2126,
         "search_query": "Pre-period import share Imported inflation IV causal effect",
         "source": "openalex",
         "pdf_url": "https://academic.oup.com/qje/article-pdf/134/3/1405/29173920/qjz014.pdf"
@@ -1283,72 +1283,6 @@
     "citations": [
       {
         "doi": "",
-        "title": "Levels of pharmaceuticals and endocrine disruptors in commercially available seafood before and after cooking",
-        "authors": [
-          "Barcelo, D.",
-          "Caceres, N.",
-          "Fernandez-Tejedor, M.",
-          "Granby, Kit",
-          "M. Marques, A.",
-          "Maulvault, A.",
-          "Munoz, D. A.",
-          "Robbens, Johan",
-          "Rodr\u00edguez-Mozaz, S",
-          "Serra, A.",
-          "Sioen, Isabelle",
-          "Tediosi, A.",
-          "Verbeke, K.",
-          "Williamson, J."
-        ],
-        "year": 2016,
-        "excerpt": "",
-        "relevance": "supporting",
-        "edge_id": "total_capital_kspi_to_k2_ratio_kspi",
-        "paper_id": "",
-        "citation_count": 0,
-        "search_query": "KSPI total capital KSPI K2 capital ratio causal effect",
-        "source": "core",
-        "pdf_url": "https://core.ac.uk/download/84002501.pdf"
-      },
-      {
-        "doi": "",
-        "title": "Exposure to Chemicals in Consumer Products: The Role of the Near-Field Environment",
-        "authors": [
-          "Ernstoff, Alexi",
-          "Fantke, Peter",
-          "Huang, L.",
-          "Jolliet, O."
-        ],
-        "year": 2016,
-        "excerpt": "",
-        "relevance": "supporting",
-        "edge_id": "total_capital_kspi_to_k2_ratio_kspi",
-        "paper_id": "",
-        "citation_count": 0,
-        "search_query": "KSPI total capital KSPI K2 capital ratio causal effect",
-        "source": "core",
-        "pdf_url": "https://core.ac.uk/download/84002493.pdf"
-      },
-      {
-        "doi": "",
-        "title": "The development of an operational LCIA-methodology with impact categories based on the control variables in the Planetary Boundaries framework",
-        "authors": [
-          "Hauschild, Michael Zwicky",
-          "Owsianiak, Mikolaj",
-          "Ryberg, Morten"
-        ],
-        "year": 2016,
-        "excerpt": "",
-        "relevance": "supporting",
-        "edge_id": "total_capital_kspi_to_k2_ratio_kspi",
-        "paper_id": "",
-        "citation_count": 0,
-        "search_query": "KSPI total capital KSPI K2 capital ratio causal effect",
-        "source": "core",
-        "pdf_url": "https://core.ac.uk/download/84003389.pdf"
-      },
-      {
-        "doi": "",
         "title": "The Theory of Crowd Capital",
         "authors": [
           "John Prpic",
@@ -1381,6 +1315,24 @@
         "search_query": "KSPI total capital KSPI K2 capital ratio causal effect",
         "source": "arxiv",
         "pdf_url": "https://arxiv.org/pdf/1511.02429v1"
+      },
+      {
+        "doi": "",
+        "title": "A Mathematical Model of Foreign Capital Inflow",
+        "authors": [
+          "Gopal K. Basak",
+          "Pranab Kumar Das",
+          "Allena Rohit"
+        ],
+        "year": 2016,
+        "excerpt": "The paper models foreign capital inflow from the developed to the developing countries in a stochastic dynamic programming (SDP) framework. Under some regularity conditions, the existence of the solutions to the SDP problem is proved and they are then obtained by numerical technique because of the n",
+        "relevance": "supporting",
+        "edge_id": "total_capital_kspi_to_k2_ratio_kspi",
+        "paper_id": "1603.02438v2",
+        "citation_count": 0,
+        "search_query": "KSPI total capital KSPI K2 capital ratio causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/1603.02438v2"
       }
     ]
   },
@@ -1400,7 +1352,7 @@
         "relevance": "supporting",
         "edge_id": "nominal_expenditure_to_real_expenditure",
         "paper_id": "",
-        "citation_count": 4101,
+        "citation_count": 4112,
         "search_query": "Nominal consumption expenditure Real consumption expenditure causal effect",
         "source": "openalex",
         "pdf_url": "https://www.aeaweb.org/articles/pdf/doi/10.1257/aer.103.6.2121"
@@ -1417,7 +1369,7 @@
         "relevance": "supporting",
         "edge_id": "nominal_expenditure_to_real_expenditure",
         "paper_id": "",
-        "citation_count": 1897,
+        "citation_count": 1898,
         "search_query": "Nominal consumption expenditure Real consumption expenditure causal effect",
         "source": "openalex",
         "pdf_url": "https://www.journals.uchicago.edu/doi/epdf/10.1086/654340"
@@ -1437,7 +1389,7 @@
         "relevance": "supporting",
         "edge_id": "nominal_expenditure_to_real_expenditure",
         "paper_id": "",
-        "citation_count": 1578,
+        "citation_count": 1579,
         "search_query": "Nominal consumption expenditure Real consumption expenditure causal effect",
         "source": "openalex",
         "pdf_url": "https://www.jstor.org/institutionSearch?redirectUri=%2fstable%2f2534702"
@@ -1612,7 +1564,7 @@
         "relevance": "supporting",
         "edge_id": "nominal_income_to_real_income",
         "paper_id": "",
-        "citation_count": 1897,
+        "citation_count": 1898,
         "search_query": "Nominal monetary income Real monetary income causal effect",
         "source": "openalex",
         "pdf_url": "https://www.journals.uchicago.edu/doi/epdf/10.1086/654340"
@@ -1628,7 +1580,7 @@
         "relevance": "supporting",
         "edge_id": "nominal_income_to_real_income",
         "paper_id": "",
-        "citation_count": 1875,
+        "citation_count": 1881,
         "search_query": "Nominal monetary income Real monetary income causal effect",
         "source": "openalex",
         "pdf_url": "https://doi.org/10.3386/w21162"
@@ -1697,20 +1649,20 @@
         "pdf_url": "https://www.mdpi.com/2071-1050/15/8/6420/pdf?version=1681111230"
       },
       {
-        "doi": "10.18174/210632",
-        "title": "Quantitative analysis of selected land-use systems with sunflower",
+        "doi": "10.25501/soas.00029228",
+        "title": "Emerging stock markets in the Pacific Basin : An empirical analysis with particular reference to the Korean stock market.",
         "authors": [
-          "J.M.C. de Barros"
+          "Hyun-Jung Ryoo"
         ],
-        "year": 1997,
-        "excerpt": "Land-use systems with sunflower were quantified using a dynamic crop-growth simulation model for calculating the biophysical production potential and water-limited production potential.Crop data were collected in 1993 and 1994 in field experiments with three varieties of sunflower and three water re",
-        "relevance": "methodological",
+        "year": 2001,
+        "excerpt": "This thesis investigates emerging stock markets in the Pacific Basin with particular reference to the Korean stock market, which is representative of typical, fast-growing emerging markets. Using a broader range of econometric models, the short-run and long-run behaviour of stock prices, the impact ",
+        "relevance": "supporting",
         "edge_id": "cor_kspi_to_total_capital_kspi",
         "paper_id": "",
-        "citation_count": 2,
+        "citation_count": 1,
         "search_query": "KSPI cost of risk KSPI total capital causal effect",
         "source": "openalex",
-        "pdf_url": "http://hdl.handle.net/10261/81248"
+        "pdf_url": "https://eprints.soas.ac.uk/29228/1/10731323.pdf"
       },
       {
         "doi": "",
@@ -1776,7 +1728,7 @@
         "relevance": "supporting",
         "edge_id": "cpi_nontradable_to_cpi_headline",
         "paper_id": "",
-        "citation_count": 581,
+        "citation_count": 582,
         "search_query": "Non-tradable CPI Headline CPI causal effect",
         "source": "openalex",
         "pdf_url": "https://doi.org/10.3386/w15836"
@@ -1866,7 +1818,7 @@
         "relevance": "supporting",
         "edge_id": "cpi_tradable_to_cpi_headline",
         "paper_id": "",
-        "citation_count": 581,
+        "citation_count": 582,
         "search_query": "Tradable CPI Headline CPI causal effect",
         "source": "openalex",
         "pdf_url": "https://doi.org/10.3386/w15836"
@@ -1958,7 +1910,7 @@
         "relevance": "supporting",
         "edge_id": "real_income_to_real_expenditure",
         "paper_id": "",
-        "citation_count": 4367,
+        "citation_count": 4368,
         "search_query": "Real monetary income Real consumption expenditure causal effect",
         "source": "openalex",
         "pdf_url": "https://www.cambridge.org/core/services/aop-cambridge-core/content/view/238A600FEFE7EDBC2DDAB30E6A28B4D9/S0020818300018993a.pdf/div-class-title-international-regimes-transactions-and-change-embedded-liberalism-in-the-postwar-economic-order-div.pdf"
@@ -1991,7 +1943,7 @@
         "relevance": "supporting",
         "edge_id": "real_income_to_real_expenditure",
         "paper_id": "",
-        "citation_count": 1897,
+        "citation_count": 1898,
         "search_query": "Real monetary income Real consumption expenditure causal effect",
         "source": "openalex",
         "pdf_url": "https://www.journals.uchicago.edu/doi/epdf/10.1086/654340"
@@ -2015,17 +1967,16 @@
         "pdf_url": ""
       },
       {
-        "doi": "10.22219/jibe.v8i01.29447",
-        "title": "Bank lending channel and household consumption expenditure in Nigeria",
+        "doi": "10.2139/ssrn.6064387",
+        "title": "Monetary Policy & Household Consumption Inequality in India",
         "authors": [
-          "A. Onanuga",
-          "K. Arikewuyo"
+          "Mayukh Banerjee"
         ],
-        "year": 2024,
-        "excerpt": "The primary objective of this paper is to analyze the effect of the bank lending channel on household consumption expenditure in Nigeria. Utilizing annual secondary data from the United Nations Statistical Division Database and the Central Bank of Nigeria Database, and employing the Generalized Meth",
-        "relevance": "supporting",
+        "year": 2026,
+        "excerpt": "This study shows that conventional contractionary monetary policy shocks can reduce household consumption inequality. This study follows the modern state of the art of identifying monetary policy shocks with external instruments followed by Local Projection Instrumental Variable (LP-IV) regression t",
+        "relevance": "methodological",
         "edge_id": "real_income_to_real_expenditure",
-        "paper_id": "378dc1701be5cd05ea2beed921fdeaad238f1f75",
+        "paper_id": "a37471f1b4f7d8596a799e7895c29317305d3fa4",
         "citation_count": 0,
         "search_query": "Real monetary income Real consumption expenditure causal effect",
         "source": "semantic_scholar",

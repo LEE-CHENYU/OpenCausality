@@ -163,7 +163,11 @@ class DAGCritic:
         )
 
     def _compute_structural_soundness(self) -> float:
-        """Run DAGValidator pre-estimation checks and score."""
+        """Run DAGValidator pre-estimation checks and score.
+
+        Applies a gap penalty: each structural gap reduces soundness
+        by 5%, capped at 50% total reduction.
+        """
         from shared.agentic.validation import DAGValidator
 
         validator = DAGValidator(self.dag)
@@ -171,10 +175,188 @@ class DAGCritic:
         n_errors = result.error_count()
         n_checks = len(result.checks_run)
         if n_checks == 0:
-            return 1.0
-        # Penalty per error: lose 1/n_checks per error
-        penalty = min(n_errors / n_checks, 1.0)
-        return 1.0 - penalty
+            base = 1.0
+        else:
+            # Penalty per error: lose 1/n_checks per error
+            penalty = min(n_errors / n_checks, 1.0)
+            base = 1.0 - penalty
+
+        # Gap penalty: each gap reduces soundness by 5%, capped at 50%
+        n_gaps = len(self._detect_structural_gaps())
+        gap_factor = max(0.5, 1.0 - n_gaps * 0.05)
+        return base * gap_factor
+
+    # ──────────────────────────────────────────────────────────────
+    # Structural Gap Detection
+    # ──────────────────────────────────────────────────────────────
+
+    def _detect_structural_gaps(self) -> list[dict[str, Any]]:
+        """Detect structural gaps using domain-agnostic graph rules.
+
+        Returns a list of gap dicts with keys: rule, node_id, context.
+        """
+        gaps: list[dict[str, Any]] = []
+        target = self.dag.get("target_node", "")
+        exogenous = set(self.dag.get("exogenous_nodes", []))
+        latents = {
+            a.get("latent", "")
+            for a in self.dag.get("assumptions", [])
+            if a.get("latent")
+        }
+
+        # Build in/out degree maps
+        in_degree: dict[str, int] = {nid: 0 for nid in self.nodes}
+        out_degree: dict[str, int] = {nid: 0 for nid in self.nodes}
+        for e in self.edges.values():
+            fn, tn = e.get("from", ""), e.get("to", "")
+            if tn in in_degree:
+                in_degree[tn] += 1
+            if fn in out_degree:
+                out_degree[fn] += 1
+
+        gap_rules = self.principles.get("structural_gap_rules", [])
+        rule_ids = {r["id"] for r in gap_rules}
+
+        # Rule 1: undriven_identity_dependency
+        if "undriven_identity_dependency" in rule_ids:
+            seen: set[str] = set()
+            for nid, node in self.nodes.items():
+                deps = (
+                    node.get("identity", {}).get("depends_on")
+                    or node.get("depends_on", [])
+                )
+                for dep in deps:
+                    if (
+                        dep in self.nodes
+                        and dep not in seen
+                        and in_degree.get(dep, 0) == 0
+                        and dep not in exogenous
+                        and dep not in latents
+                    ):
+                        gaps.append({
+                            "rule": "undriven_identity_dependency",
+                            "node_id": dep,
+                            "context": (
+                                f"Required by {nid}'s identity formula "
+                                f"but has no incoming edges"
+                            ),
+                        })
+                        seen.add(dep)
+
+        # Rule 2: dead_end_leaf
+        if "dead_end_leaf" in rule_ids:
+            for nid in self.nodes:
+                if (
+                    nid != target
+                    and in_degree.get(nid, 0) > 0
+                    and out_degree.get(nid, 0) == 0
+                ):
+                    gaps.append({
+                        "rule": "dead_end_leaf",
+                        "node_id": nid,
+                        "context": (
+                            f"Has {in_degree[nid]} incoming but "
+                            f"0 outgoing edges (dead-end)"
+                        ),
+                    })
+
+        # Rule 3: endogenous_root
+        if "endogenous_root" in rule_ids:
+            for nid in self.nodes:
+                if (
+                    out_degree.get(nid, 0) > 0
+                    and in_degree.get(nid, 0) == 0
+                    and nid not in exogenous
+                    and nid not in latents
+                    and not self.nodes[nid].get("exogenous")
+                ):
+                    gaps.append({
+                        "rule": "endogenous_root",
+                        "node_id": nid,
+                        "context": (
+                            "Root node (no incoming edges) "
+                            "but not marked exogenous"
+                        ),
+                    })
+
+        # Rule 4: paper_mentioned_variable
+        if "paper_mentioned_variable" in rule_ids:
+            gaps.extend(self._extract_paper_mentioned_variables())
+
+        return gaps
+
+    # Common statistical/method abbreviations to exclude from paper variable extraction
+    _METHOD_STOPWORDS = frozenset({
+        "ols", "iv", "2sls", "gmm", "ml", "mle", "var", "svar", "vecm",
+        "arima", "garch", "did", "rdd", "rct", "fe", "re", "lp", "irf",
+        "capm", "apt", "dsge", "nber", "imf", "bis", "ecb", "fed",
+        "gdp", "eme", "sdp", "usa", "usd", "eur", "cee", "see",
+        "log", "ln", "pp", "bp", "bps", "pct", "std", "se",
+        "trumps", "covid", "pandemic", "crisis",
+    })
+
+    def _extract_paper_mentioned_variables(self) -> list[dict[str, Any]]:
+        """Extract variable mentions from literature that don't match DAG nodes."""
+        cards_dir = self.output_dir / "cards" / "edge_cards"
+        if not cards_dir.exists():
+            return []
+
+        # Collect all node IDs and names (lowercased) for matching
+        known = set()
+        for nid, node in self.nodes.items():
+            known.add(nid.lower())
+            name = node.get("name", "")
+            if name:
+                known.add(name.lower())
+                # Also add individual words for fuzzy matching
+                for word in name.lower().split():
+                    if len(word) > 3:
+                        known.add(word)
+
+        # Scan excerpts for quoted terms or parenthetical abbreviations
+        mentioned: dict[str, str] = {}  # variable -> first edge context
+        for card_path in sorted(cards_dir.glob("*.yaml")):
+            try:
+                with open(card_path) as f:
+                    card_data = yaml.safe_load(f)
+                lit = card_data.get("literature", {})
+                if not lit:
+                    continue
+                edge_id = card_data.get("edge_id", card_path.stem)
+                for category in ("supporting", "challenging", "methodological"):
+                    for paper in lit.get(category, []):
+                        excerpt = paper.get("excerpt", "")
+                        if not excerpt:
+                            continue
+                        # Find quoted terms: "term" or 'term'
+                        for match in re.findall(r'["\']([a-zA-Z][a-zA-Z_ ]{2,30})["\']', excerpt):
+                            term = match.strip().lower()
+                            if (
+                                term not in known
+                                and term not in mentioned
+                                and term not in self._METHOD_STOPWORDS
+                            ):
+                                mentioned[term] = edge_id
+                        # Find parenthetical abbreviations: (ABC)
+                        for match in re.findall(r'\(([A-Z]{2,8})\)', excerpt):
+                            term = match.lower()
+                            if (
+                                term not in known
+                                and term not in mentioned
+                                and term not in self._METHOD_STOPWORDS
+                            ):
+                                mentioned[term] = edge_id
+            except (yaml.YAMLError, OSError):
+                continue
+
+        return [
+            {
+                "rule": "paper_mentioned_variable",
+                "node_id": var,
+                "context": f"Mentioned in literature for {ctx} but not in DAG",
+            }
+            for var, ctx in list(mentioned.items())[:10]  # cap at 10
+        ]
 
     # ──────────────────────────────────────────────────────────────
     # Feedback Collection
@@ -239,6 +421,9 @@ class DAGCritic:
                     "formula": node.get("identity", {}).get("formula", ""),
                 })
 
+        # Structural gaps
+        structural_gaps = self._detect_structural_gaps()
+
         return CriticFeedback(
             quality_score=quality,
             edge_diagnostics=edge_diagnostics,
@@ -246,6 +431,7 @@ class DAGCritic:
             edges_missing_identification=edges_missing_id,
             edges_missing_units=edges_missing_units,
             formula_violations=formula_violations,
+            structural_gaps=structural_gaps,
         )
 
     def _load_open_issues(self) -> list[dict[str, Any]]:
@@ -302,9 +488,13 @@ class DAGCritic:
             f"- **{key}**: {val}" for key, val in questions.items()
         )
 
+        gap_rules = self.principles.get("structural_gap_rules", [])
+        gap_rules_text = _format_gap_rules(gap_rules)
+
         return DAG_CRITIC_SYSTEM.format(
             structural_rules=rules_text,
             domain_questions=questions_text,
+            structural_gap_rules=gap_rules_text,
             confidence_threshold=self.confidence_threshold,
         )
 
@@ -360,6 +550,13 @@ class DAGCritic:
         # Literature summary (from edge cards)
         literature_str = self._collect_literature_summary()
 
+        # Structural gaps
+        gap_lines = [
+            f"- [{g['rule']}] {g['node_id']}: {g['context']}"
+            for g in feedback.structural_gaps
+        ]
+        structural_gaps_str = "\n".join(gap_lines) or "None"
+
         return DAG_CRITIC_USER.format(
             iteration=iteration,
             edge_type_diversity=qs.edge_type_diversity,
@@ -374,6 +571,7 @@ class DAGCritic:
             edges_missing_identification=missing_id_str,
             edges_missing_units=missing_units_str,
             formula_violations=formula_str,
+            structural_gaps=structural_gaps_str,
             placebo_results="None",  # populated when placebo data available
             node_summary=node_summary_str,
             literature_summary=literature_str,
@@ -688,6 +886,20 @@ def _format_rules(rules: dict) -> str:
             req = rule.get("required", "")
             sev = rule.get("severity", "warning")
             lines.append(f"- [{sev.upper()}] **{rid}**: IF {pred} THEN {req}")
+    return "\n".join(lines)
+
+
+def _format_gap_rules(gap_rules: list[dict]) -> str:
+    """Format structural gap rules from YAML into numbered text."""
+    if not gap_rules:
+        return "No structural gap rules configured."
+    lines = []
+    for rule in gap_rules:
+        rid = rule.get("id", "")
+        pred = rule.get("predicate", "")
+        signal = rule.get("signal", "")
+        sev = rule.get("severity", "info")
+        lines.append(f"- [{sev.upper()}] **{rid}**: IF {pred} THEN {signal}")
     return "\n".join(lines)
 
 

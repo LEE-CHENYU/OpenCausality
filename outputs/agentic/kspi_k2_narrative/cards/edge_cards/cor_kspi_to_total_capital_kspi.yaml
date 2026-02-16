@@ -1,6 +1,6 @@
 edge_id: cor_kspi_to_total_capital_kspi
 dag_version_hash: 26653d57356dd32eb34df1c02cad048b14bf6e9e53feb889643aa7d1ae6f233e
-created_at: '2026-02-11T12:10:04.042511'
+created_at: '2026-02-16T08:08:52.310974'
 data_provenance:
   treatment_source:
     connector: parquet_file
@@ -254,6 +254,23 @@ literature:
     search_query: KSPI cost of risk KSPI total capital causal effect
     source: openalex
     pdf_url: https://www.mdpi.com/2071-1050/15/8/6420/pdf?version=1681111230
+  - doi: 10.25501/soas.00029228
+    title: 'Emerging stock markets in the Pacific Basin : An empirical analysis with
+      particular reference to the Korean stock market.'
+    authors:
+    - Hyun-Jung Ryoo
+    year: 2001
+    excerpt: 'This thesis investigates emerging stock markets in the Pacific Basin
+      with particular reference to the Korean stock market, which is representative
+      of typical, fast-growing emerging markets. Using a broader range of econometric
+      models, the short-run and long-run behaviour of stock prices, the impact '
+    relevance: supporting
+    edge_id: cor_kspi_to_total_capital_kspi
+    paper_id: ''
+    citation_count: 1
+    search_query: KSPI cost of risk KSPI total capital causal effect
+    source: openalex
+    pdf_url: https://eprints.soas.ac.uk/29228/1/10731323.pdf
   - doi: ''
     title: 'Foundations of a Welfare Regime: The Case of Indonesia'
     authors:
@@ -301,25 +318,9 @@ literature:
     source: core
     pdf_url: https://core.ac.uk/download/477680585.pdf
   challenging: []
-  methodological:
-  - doi: 10.18174/210632
-    title: Quantitative analysis of selected land-use systems with sunflower
-    authors:
-    - J.M.C. de Barros
-    year: 1997
-    excerpt: Land-use systems with sunflower were quantified using a dynamic crop-growth
-      simulation model for calculating the biophysical production potential and water-limited
-      production potential.Crop data were collected in 1993 and 1994 in field experiments
-      with three varieties of sunflower and three water re
-    relevance: methodological
-    edge_id: cor_kspi_to_total_capital_kspi
-    paper_id: ''
-    citation_count: 2
-    search_query: KSPI cost of risk KSPI total capital causal effect
-    source: openalex
-    pdf_url: http://hdl.handle.net/10261/81248
+  methodological: []
   search_status: SEARCHED
-  search_timestamp: '2026-02-11T12:10:04.042571'
+  search_timestamp: '2026-02-16T08:08:52.311044'
   search_query: KSPI cost of risk KSPI total capital causal effect
   total_results: 5
 companion_edge_id: null

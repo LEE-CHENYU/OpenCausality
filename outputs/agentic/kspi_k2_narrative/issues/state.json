@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-02-11T20:10:04.144755+00:00",
+  "last_updated": "2026-02-16T16:08:52.805121+00:00",
   "baseline_run_id": "",
   "baseline_mode": "",
   "baseline_dag_hash": "",
@@ -122,6 +122,27 @@
       "severity": "HIGH",
       "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
       "message": "A-rating despite failed diagnostics."
+    },
+    "NULL_LINK_SIGNIFICANT:global": {
+      "status": "OPEN",
+      "opened_run": "1760dc54",
+      "severity": "HIGH",
+      "rule_id": "NULL_LINK_SIGNIFICANT",
+      "message": "Null link cpi_headline->cpi_nontradable | kzt_usd: significant partial association (beta=0.5442, p=0.0000, N=178). DAG may need this edge."
+    },
+    "DATA_INSUFFICIENT_EDGE:nominal_expenditure_to_real_expenditure": {
+      "status": "OPEN",
+      "opened_run": "1760dc54",
+      "severity": "HIGH",
+      "rule_id": "DATA_INSUFFICIENT_EDGE",
+      "message": "Edge 'nominal_expenditure_to_real_expenditure' has insufficient data for estimation (fewer than 5 observations after alignment)."
+    },
+    "DATA_INSUFFICIENT_EDGE:transfer_income_to_nominal_income_buffering": {
+      "status": "OPEN",
+      "opened_run": "1760dc54",
+      "severity": "HIGH",
+      "rule_id": "DATA_INSUFFICIENT_EDGE",
+      "message": "Edge 'transfer_income_to_nominal_income_buffering' has insufficient data for estimation (fewer than 5 observations after alignment)."
     }
   }
 }

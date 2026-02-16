@@ -459,7 +459,10 @@ If `EdgeSpec.validated_evidence.immutable = True`:
 1. **Acyclicity:** DFS-based, including temporal expansion for contemporaneous edges.
 2. **Unit presence:** Every edge must have treatment and outcome units.
 3. **Edge type labeling:** Every edge must declare its type from the closed set:
-   `{causal, reaction_function, bridge, identity}`. Unknown edge types are rejected.
+   `{causal, reaction_function, mechanical, immutable, identity}`.
+   `mechanical` is the DAG-level name; the propagation engine maps it to the
+   `bridge` role. `immutable` denotes validated prior evidence (forced
+   `IDENTIFIED_CAUSAL`). Unknown edge types are rejected.
 4. **Node-source bindings:** Observed nodes must have data source specifications.
 5. **Endpoint existence:** All edge endpoints must exist as nodes.
 
@@ -1130,6 +1133,7 @@ Every gate, permission, and allowance defaults to the restrictive option:
 - **Propagation role** (can the edge participate?) is separate from **counterfactual eligibility** (can we do "what if?").
 - **Estimation** (fitting models) is separate from **identification** (whether the design supports causal claims).
 - **Issue detection** (finding problems) is separate from **issue resolution** (deciding what to do).
+- **Sentinel** (schema validation + metadata repair) is separate from **Critic** (structural quality + DAG expansion). See §35.7.
 
 ### 34.4 Domain Agnosticism (see §31)
 
@@ -1143,6 +1147,109 @@ The audit trail is not a byproduct — it is a primary output artifact. Every
 specification change, estimation decision, diagnostic result, issue flag, patch
 application, HITL decision, and LLM repair is logged with cryptographic integrity.
 The entire history can be committed to version control and independently verified.
+
+---
+
+## 35. DAG Critic Loop Invariants
+
+### 35.1 Governance Tier
+
+The DAG Critic operates at a **higher governance tier** than PatchBot and the Sentinel:
+
+| System | May modify | Governance |
+|--------|-----------|------------|
+| **Sentinel** (§20) | EdgeCard metadata (unit specs, edge IDs) | PatchPolicy-bounded, non-destructive |
+| **PatchBot** (§32.4) | EdgeCard fields within fixed DAG structure | PatchPolicy-bounded, schema-only |
+| **DAG Critic** | DAG structure: edge types, identification strategies, formulas, nodes, edges | Principle-based LLM + code validation |
+
+**Invariants:**
+- `change_edge_type` is **forbidden** for PatchBot — only the Critic owns this action.
+- Sentinel never modifies estimation results, designs, or claim levels (§20.3). Critic **may**.
+- All Critic revisions are code-validated by `CriticRevisionValidator` before application.
+- Only revisions with confidence >= threshold (default 0.7) are applied.
+
+### 35.2 Two-Layer Quality Framework
+
+- **Layer 1** (code-verifiable): Mathematical and structural rules encoded in
+  `config/agentic/critic_principles.yaml`. Domain-agnostic, always correct.
+- **Layer 2** (LLM + papers): Domain knowledge from PaperScout literature and
+  LLM reasoning. Gated by code validation and confidence threshold.
+
+Layer 1 runs first. Layer 2 reviews remaining gaps. Both layers feed into
+`CriticRevisionValidator` which gates all proposals.
+
+### 35.3 Allowed Revision Types (Closed Set)
+
+The Critic may only emit these 8 revision types:
+
+1. `upgrade_edge_type` — change edge_type when structural evidence warrants it
+2. `add_identification_strategy` — add strategy to causal edge missing one
+3. `fix_formula` — fix double-log, dimension mismatch, or wrong depends_on
+4. `add_missing_node` — add node for concept not captured in DAG
+5. `add_missing_edge` — add edge suggested by evidence or missing channel
+6. `add_structural_metadata` — fill expected_sign, timing, forbidden_controls
+7. `add_unit_specification` — fill treatment_unit or outcome_unit
+8. `invert_edge_direction` — correct aggregation direction
+
+Any revision type not in this set is rejected. The set is defined in
+`RevisionType` enum and mirrors `allowed_revision_types` in the principles YAML.
+
+### 35.4 Structural Gap Detection
+
+Four domain-agnostic, graph-theoretic rules detect missing nodes/edges:
+
+| Rule | Predicate | Signal |
+|------|-----------|--------|
+| `undriven_identity_dependency` | Node in `identity.depends_on` with zero incoming edges and not exogenous | May need upstream driver |
+| `dead_end_leaf` | Non-target node with incoming but no outgoing edges | May need downstream connection |
+| `endogenous_root` | Root node (no incoming edges) not tagged exogenous/latent | May need upstream driver |
+| `paper_mentioned_variable` | Literature mentions variable not matching any DAG node | Potential missing node |
+
+**Invariants:**
+- Rules 1-3 are code-detectable (no LLM involved).
+- Rule 4 extracts mentions from PaperScout excerpts; the LLM judges relevance.
+- Structural gaps feed a quality score penalty in `structural_soundness` (5% per
+  gap, capped at 50% reduction).
+- Gap signals are presented to the LLM alongside existing feedback; the LLM
+  decides whether to propose `add_missing_node` / `add_missing_edge` revisions.
+- All proposed expansions pass through `CriticRevisionValidator`: acyclicity
+  check, node existence check, snake_case validation, confidence gate.
+
+### 35.5 Validator Ordering
+
+When the LLM proposes both `add_missing_node(X)` and `add_missing_edge(A → X)`
+in the same batch, `validate_batch()` sorts `ADD_MISSING_NODE` before
+`ADD_MISSING_EDGE` and registers validated nodes before edge validation. This
+ensures the edge validator can see newly added nodes.
+
+### 35.6 Quality Score
+
+Six-component composite score (avoids significance/p-values per §1, §7):
+
+| Component | Weight | Source |
+|-----------|--------|--------|
+| Edge type diversity | 15% | `1 - (n_causal / n_total)` |
+| Identification coverage | 25% | Fraction of causal edges with strategy |
+| Metadata completeness | 20% | Fraction with expected_sign + timing + forbidden_controls |
+| Structural soundness | 15% | DAGValidator check pass rate × gap penalty |
+| Unit completeness | 15% | Fraction with treatment + outcome units |
+| Formula correctness | 10% | Fraction of identity edges with valid formulas |
+
+Convergence: `quality_delta < 0.02` for 2 consecutive iterations, OR zero
+revisions proposed, OR max iterations reached.
+
+### 35.7 Separation from Sentinel (§20)
+
+The Critic and Sentinel detect overlapping patterns (e.g., orphan sinks) but
+have fundamentally different responses:
+
+- **Sentinel detects "this is broken"** → PatchBot fixes metadata (non-destructive).
+- **Critic detects "this is incomplete"** → LLM proposes structural expansion.
+
+The Sentinel's orphan/sink checks flag validation *errors* but never expand the
+DAG — doing so would violate §20.3. The Critic's gap detection flags the same
+patterns as *expansion opportunities* and proposes `add_missing_node` /
+`add_missing_edge` revisions at a higher governance tier.
 
 ---
 
@@ -1181,7 +1288,7 @@ Before merging any change, verify:
 - [ ] Issue lifecycle is append-only (no reopen, only new issue)
 - [ ] LLM repairs limited to schema validity — never causal semantics
 - [ ] Task queue transitions are forward-only (no backward from terminal states)
-- [ ] Edge types restricted to closed set: {causal, reaction_function, bridge, identity}
+- [ ] Edge types restricted to closed set: {causal, reaction_function, mechanical, immutable, identity}
 
 **Sentinel & Data (§§20-21)**
 - [ ] Sentinel repairs are logged with `source: "sentinel"` and governed by PatchPolicy
@@ -1216,3 +1323,11 @@ Before merging any change, verify:
 - [ ] No domain-specific logic in core modules (estimation, governance, propagation)
 - [ ] Unit type set changes are deliberate and documented
 - [ ] DAG auto-repair targets schema only, never causal semantics
+
+**DAG Critic (§35)**
+- [ ] Critic revision types limited to the closed set of 8 (§35.3)
+- [ ] All revisions pass CriticRevisionValidator before application
+- [ ] Confidence threshold enforced (default 0.7)
+- [ ] Structural gap rules are domain-agnostic (graph-theoretic only)
+- [ ] Sentinel never expands DAG structure — only Critic does (§35.7)
+- [ ] Quality score avoids significance/p-values (§35.6)

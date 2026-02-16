@@ -26,6 +26,11 @@ logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Server state (populated by load_dag)
+#
+# IMPORTANT: Each call to load_dag fully replaces all state — the DAG, edge
+# cards, TSGuard results, issue ledger, and propagation engine are all scoped
+# to the most recently loaded DAG.  Loading a different DAG discards the
+# previous state entirely.  There is no cross-DAG state sharing.
 # ---------------------------------------------------------------------------
 
 _state: dict[str, Any] = {
@@ -102,6 +107,19 @@ def _propagation_result_to_dict(result: Any) -> dict:
 # Tool implementations
 # ---------------------------------------------------------------------------
 
+def _get_dag_output_dir(dag_path: Path) -> Path:
+    """Derive per-DAG output directory from the DAG YAML path.
+
+    Mirrors the logic in scripts/cli.py:get_dag_output_dir() so that the
+    MCP server reads from the same artifact directories as the CLI.
+    The returned path is absolute (anchored to project root) so that it
+    works regardless of the MCP server's working directory.
+    """
+    project_root = Path(__file__).resolve().parent.parent.parent
+    slug = dag_path.stem  # e.g. "kspi_k2_full"
+    return project_root / "outputs" / "agentic" / slug
+
+
 def _do_load_dag(dag_path: str) -> dict:
     """Load and initialise DAG, edge cards, TSGuard, issues, and engine."""
     # Resolve path relative to project root
@@ -118,12 +136,11 @@ def _do_load_dag(dag_path: str) -> dict:
     _state["dag"] = dag
     _state["dag_path"] = dp
 
-    # Settings
-    from config.settings import get_settings
-    settings = get_settings()
+    # Per-DAG artifact directory (matches CLI output layout)
+    dag_out = _get_dag_output_dir(dp)
 
-    # Edge cards
-    cards_dir = Path(settings.output_dir) / "agentic" / "edge_cards"
+    # Edge cards — per-DAG: outputs/agentic/{dag_stem}/cards/edge_cards/
+    cards_dir = dag_out / "cards" / "edge_cards"
     edge_cards: dict[str, Any] = {}
     if cards_dir.exists():
         from shared.agentic.artifact_store import ArtifactStore
@@ -132,9 +149,9 @@ def _do_load_dag(dag_path: str) -> dict:
             edge_cards[card.edge_id] = card
     _state["edge_cards"] = edge_cards
 
-    # TSGuard results
+    # TSGuard results — per-DAG: outputs/agentic/{dag_stem}/tsguard/
     import yaml
-    tsguard_dir = Path(settings.output_dir) / "agentic" / "tsguard"
+    tsguard_dir = dag_out / "tsguard"
     tsguard_results: dict[str, Any] = {}
     if tsguard_dir.exists():
         from shared.agentic.ts_guard import TSGuardResult
@@ -155,8 +172,8 @@ def _do_load_dag(dag_path: str) -> dict:
                 pass
     _state["tsguard_results"] = tsguard_results
 
-    # Issue ledger
-    issues_dir = Path(settings.output_dir) / "agentic" / "issues"
+    # Issue ledger — per-DAG: outputs/agentic/{dag_stem}/issues/
+    issues_dir = dag_out / "issues"
     issue_ledger = None
     if issues_dir.exists():
         from shared.agentic.issues.issue_ledger import IssueLedger

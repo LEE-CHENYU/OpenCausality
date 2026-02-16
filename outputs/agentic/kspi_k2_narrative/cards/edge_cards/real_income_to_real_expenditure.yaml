@@ -1,6 +1,6 @@
 edge_id: real_income_to_real_expenditure
 dag_version_hash: 26653d57356dd32eb34df1c02cad048b14bf6e9e53feb889643aa7d1ae6f233e
-created_at: '2026-02-11T12:10:04.003080'
+created_at: '2026-02-16T08:08:52.251637'
 data_provenance:
   treatment_source:
     connector: parquet_file
@@ -245,7 +245,7 @@ literature:
     relevance: supporting
     edge_id: real_income_to_real_expenditure
     paper_id: ''
-    citation_count: 4367
+    citation_count: 4368
     search_query: Real monetary income Real consumption expenditure causal effect
     source: openalex
     pdf_url: https://www.cambridge.org/core/services/aop-cambridge-core/content/view/238A600FEFE7EDBC2DDAB30E6A28B4D9/S0020818300018993a.pdf/div-class-title-international-regimes-transactions-and-change-embedded-liberalism-in-the-postwar-economic-order-div.pdf
@@ -279,7 +279,7 @@ literature:
     relevance: supporting
     edge_id: real_income_to_real_expenditure
     paper_id: ''
-    citation_count: 1897
+    citation_count: 1898
     search_query: Real monetary income Real consumption expenditure causal effect
     source: openalex
     pdf_url: https://www.journals.uchicago.edu/doi/epdf/10.1086/654340
@@ -302,27 +302,26 @@ literature:
     search_query: Real monetary income Real consumption expenditure causal effect
     source: semantic_scholar
     pdf_url: ''
-  - doi: 10.22219/jibe.v8i01.29447
-    title: Bank lending channel and household consumption expenditure in Nigeria
+  challenging: []
+  methodological:
+  - doi: 10.2139/ssrn.6064387
+    title: Monetary Policy & Household Consumption Inequality in India
     authors:
-    - A. Onanuga
-    - K. Arikewuyo
-    year: 2024
-    excerpt: The primary objective of this paper is to analyze the effect of the bank
-      lending channel on household consumption expenditure in Nigeria. Utilizing annual
-      secondary data from the United Nations Statistical Division Database and the
-      Central Bank of Nigeria Database, and employing the Generalized Meth
-    relevance: supporting
+    - Mayukh Banerjee
+    year: 2026
+    excerpt: This study shows that conventional contractionary monetary policy shocks
+      can reduce household consumption inequality. This study follows the modern state
+      of the art of identifying monetary policy shocks with external instruments followed
+      by Local Projection Instrumental Variable (LP-IV) regression t
+    relevance: methodological
     edge_id: real_income_to_real_expenditure
-    paper_id: 378dc1701be5cd05ea2beed921fdeaad238f1f75
+    paper_id: a37471f1b4f7d8596a799e7895c29317305d3fa4
     citation_count: 0
     search_query: Real monetary income Real consumption expenditure causal effect
     source: semantic_scholar
     pdf_url: ''
-  challenging: []
-  methodological: []
   search_status: SEARCHED
-  search_timestamp: '2026-02-11T12:10:04.003130'
+  search_timestamp: '2026-02-16T08:08:52.251718'
   search_query: Real monetary income Real consumption expenditure causal effect
   total_results: 5
 companion_edge_id: null

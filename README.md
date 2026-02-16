@@ -293,18 +293,23 @@ build one from scratch.
 
 ### Comparison
 
-| Metric                         | Expert DAG | NL-Extracted DAG |
-|--------------------------------|------------|------------------|
-| Nodes                          | 32         | 18               |
-| Edges                          | 23         | 12               |
-| Structural matches             | --         | 3 / 23 (13%)     |
-| Novel edges (not in expert)    | --         | 9                |
-| Missing edges (expert only)    | --         | 20               |
-| Estimate match (common edges)  | --         | 3/3 (100%)       |
+| Metric                         | Expert DAG | NL-Extracted | Critic-Refined (2 iters) |
+|--------------------------------|------------|--------------|--------------------------|
+| Nodes                          | 32         | 18           | 18                       |
+| Edges                          | 23         | 22\*         | 22                       |
+| Edge types used                | 5          | 3            | 3                        |
+| Identification coverage        | 91%        | 0%           | 100%                     |
+| Expected signs specified       | 100%       | 0%           | 100%                     |
+| Forbidden controls specified   | 100%       | 0%           | 100%                     |
+| Quality score                  | --         | 0.461        | 0.916                    |
+
+\*22 = 12 NL-extracted + 10 auto-bridged identity/repair edges.
 
 The NL pipeline extracts causal claims from a single paragraph; recall improves
 with longer or multi-document input. All 3 overlapping edges produce identical
-estimates to the expert manual pipeline.
+estimates to the expert manual pipeline. The critic loop closes the metadata
+and identification gap without adding nodes or edges -- it enriches what the
+NL pipeline already extracted.
 
 ### What NL Found That Experts Missed
 
@@ -325,6 +330,57 @@ monetary policy mechanics (CPI and FX to policy rate), banking balance sheet mec
 country-specific institutional details (the IV instrument construction, nominal-to-real
 deflation identities). Literature-based extraction from a single paragraph cannot
 capture the full chain from global shocks to bank capital.
+
+### Approach 3: Iterative Critic Refinement
+
+Single-pass NL extraction produces structurally sound DAGs but leaves metadata sparse:
+no identification strategies, no expected signs, no forbidden controls. The critic loop
+applies principle-based iterative refinement to close this gap.
+
+```bash
+# Generate narrative DAG with 3 critic iterations
+opencausality dag generate examples/kaspi_narrative.txt --critic-iterations 3
+
+# Or run critic on an existing DAG
+opencausality dag critic-feedback config/agentic/dags/kspi_k2_narrative.yaml \
+    outputs/agentic/kspi_k2_narrative/
+```
+
+The critic operates in two layers:
+
+1. **Layer 1 (code-verifiable):** Mathematical/structural rules that are always correct
+   and domain-agnostic -- identity edges from formulas, no double-log transforms,
+   acyclicity, unit compatibility, metadata completeness. Violations are auto-detected.
+
+2. **Layer 2 (LLM + papers):** PaperScout literature + LLM reasoning proposes
+   identification strategies, expected signs, forbidden controls, and edge type
+   refinements. Each proposal carries a confidence score and is code-validated
+   before application.
+
+Each iteration runs: AgentLoop estimation, structured feedback collection, LLM
+critique, code validation, revision application, structural repair, and quality
+scoring. Convergence is declared when the quality delta falls below 0.02 for 2
+consecutive iterations.
+
+**End-to-end test results** on the Kazakhstan narrative DAG:
+
+| Metric | Pre-Critic | Post-Critic (2 iters) | Delta |
+|--------|------------|----------------------|-------|
+| Quality score | 0.461 | 0.916 | +0.455 |
+| Identification coverage | 0% | 100% | +100pp |
+| Metadata completeness | 4.5% | ~95% | +90pp |
+| Edge type diversity | 59.1% | improved | -- |
+| Unit completeness | 95.5% | 95.5% | 0 |
+| Formula correctness | 100% | 100% | 0 |
+
+34 revisions applied across 2 iterations (9 identification strategies,
+18 structural metadata additions, 2 edge type upgrades, 4 refinements, 1 unit
+specification), 0 rejected. The critic's confidence threshold (0.7) and code
+validation gate ensure only well-grounded revisions are applied.
+
+Quality score components (weights): identification coverage (25%), metadata
+completeness (20%), edge type diversity (15%), structural soundness (15%),
+unit completeness (15%), formula correctness (10%).
 
 ### Generated Panels
 
@@ -679,7 +735,7 @@ shared/
 ├── agentic/
 │   ├── dag/              # DAG parser, schema, validator
 │   ├── agents/           # DAGScout, PaperScout, ModelSmithCritic, PatchBot,
-│   │                     #   PaperDAGExtractor
+│   │                     #   PaperDAGExtractor, DAGCritic
 │   ├── governance/       # HITL gate, audit log, patch policy, notifier
 │   ├── issues/           # Issue ledger, registry (30 rules), gates
 │   ├── identification/   # Identifiability screen (back-door, front-door)
@@ -707,6 +763,7 @@ config/
 │   ├── dags/             # DAG YAML specifications
 │   │   ├── kspi_k2_full.yaml
 │   │   └── ...
+│   ├── critic_principles.yaml  # Critic rules, quality weights, convergence
 │   ├── issue_registry.yaml   # 30 issue type definitions
 │   └── hitl_actions.yaml     # Action definitions for HITL panel
 └── settings.py           # Global settings (API keys, paths, defaults)
@@ -717,6 +774,7 @@ scripts/
 ├── build_hitl_panel.py       # Generate HITL HTML panel from issue ledger
 ├── build_dag_viz.py          # Generate interactive D3.js DAG visualization
 ├── generate_narrative_dag.py # NL-to-DAG generation script
+├── narrative_critic_loop.py  # Iterative DAG critic loop orchestrator
 ├── enrich_hitl_text.py       # Enrich HITL panel with LLM-generated explanations
 ├── query_repl.py             # Natural language causal query REPL
 └── codex_loop/               # Sentinel loop infrastructure
@@ -771,6 +829,7 @@ OpenCausality includes a 4-agent agentic loop that uses LLM reasoning (via CodeX
 | **ModelSmith** | Selects designs from the registry, writes ModelSpecs with identification assumptions | `config/agentic/prompts/modelsmith.txt` |
 | **Estimator** | Executes ModelSpecs, runs diagnostics, produces EdgeCards | `config/agentic/prompts/estimator.txt` |
 | **Judge** | Scores credibility, flags weak links, proposes refinements | `config/agentic/prompts/judge.txt` |
+| **DAGCritic** | Iterative principle-based DAG refinement: identification strategies, edge types, metadata | `config/agentic/critic_principles.yaml` |
 
 ### Running Agents
 
@@ -847,6 +906,8 @@ Features: "Draft Proposal" banner, node/edge tooltips, edge type legend, risk in
 | `opencausality config show` | Display current configuration (redacts API keys) |
 | `opencausality config set <key> <value>` | Set a configuration value in `.env` |
 | `opencausality config doctor` | Diagnose configuration: check keys, paths, dependencies |
+| `opencausality dag generate <narrative> [--critic-iterations N]` | Generate DAG from narrative text with optional critic refinement |
+| `opencausality dag critic-feedback <dag> <run-dir>` | Dump structured critic feedback as JSON (for manual review or piping) |
 | `opencausality dag viz [path]` | Generate interactive D3.js DAG visualization HTML |
 | `opencausality agent round` | Run one full round of all 4 agents sequentially |
 | `opencausality agent run <name>` | Run a single agent (datascout, modelsmith, estimator, judge) |
@@ -864,6 +925,9 @@ Features: "Draft Proposal" banner, node/edge tooltips, edge type legend, risk in
 
 | Flag | Applies To | Description |
 |------|-----------|-------------|
+| `--critic-iterations` / `-n` | `dag generate` | Number of critic iterations (0 = generate only, default 3) |
+| `--critic-backend` | `dag generate` | LLM backend: `claude-code` (default), `codex`, `api` |
+| `--no-estimation` | `dag generate` | Skip AgentLoop estimation between critic iterations |
 | `--verbose` / `-v` | `dag run` | Print detailed estimation output to stdout |
 | `--mode` | `dag run` | Estimation mode: `EXPLORATION` (default) or `CONFIRMATION` |
 | `--edge` | `dag run` | Run estimation for a single edge only |
@@ -1049,6 +1113,13 @@ fallback for environments without Claude Code.
 
 ### New Features
 
+- **Principle-Based DAG Critic Loop** -- Iterative refinement of NL-extracted DAGs
+  using a two-layer quality framework: code-verifiable structural rules (Layer 1) and
+  LLM + PaperScout domain knowledge (Layer 2). Each iteration proposes and validates
+  revisions from a closed set of 8 types (identification strategies, edge type
+  upgrades, metadata, formulas, units, missing nodes/edges, direction inversions).
+  Convergence by quality delta. Three LLM backends: `claude-code`, `codex`, `api`.
+  End-to-end test: quality 0.461 -> 0.916 in 2 iterations, 34 revisions applied.
 - **Panel FE Backdoor adapter** -- Dedicated panel fixed-effects estimator using
   `linearmodels.PanelOLS` with entity+time FE and clustered standard errors.
   Previously, `PANEL_FE_BACKDOOR` incorrectly reused the time-series `LPAdapter`.

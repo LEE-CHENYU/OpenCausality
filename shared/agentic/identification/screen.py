@@ -21,13 +21,8 @@ from typing import Any, Literal
 
 logger = logging.getLogger(__name__)
 
-# Claim level hierarchy (ordered from strongest to weakest)
-CLAIM_LEVELS = [
-    "IDENTIFIED_CAUSAL",   # Causal identification achieved
-    "REDUCED_FORM",        # Statistical relationship, not fully identified
-    "DESCRIPTIVE",         # Descriptive association only
-    "BLOCKED_ID",          # Cannot make any causal claim
-]
+# Claim level hierarchy — imported from the single source of truth
+from shared.agentic.query_mode import CLAIM_HIERARCHY as CLAIM_LEVELS  # noqa: E402
 
 
 @dataclass
