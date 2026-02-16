@@ -960,6 +960,91 @@ propagated effects with an independence assumption caveat.
 
 ---
 
+## Claude Code Plugin
+
+OpenCausality ships as a [Claude Code](https://docs.anthropic.com/en/docs/claude-code)
+plugin. When you open the project in Claude Code, it auto-discovers the plugin and
+exposes 13 MCP tools for querying causal DAGs through natural conversation — no REPL
+needed.
+
+### What You Get
+
+Instead of memorizing slash commands, just ask Claude:
+
+```
+You:   "What if oil drops 30%?"
+Claude: calls propagate_shock(source="brent_price", magnitude=-0.30, unit="pct")
+        → narrates results with hedged language
+
+You:   "Which edges are weakly identified?"
+Claude: calls get_identification()
+        → formats a table of claim levels and risks
+
+You:   "Run placebo tests, then inspect the edges that failed"
+Claude: chains run_placebo() → inspect_edge() for each failure
+        → synthesizes a narrative across tool results
+```
+
+Claude handles NL understanding; the MCP server handles the computation.
+
+### Available Tools
+
+| Tool | Purpose |
+|------|---------|
+| `load_dag` | Load a DAG YAML and initialize the query engine |
+| `list_nodes` / `list_edges` | Explore DAG structure |
+| `switch_mode` | Change query mode (STRUCTURAL / REDUCED_FORM / DESCRIPTIVE) |
+| `propagate_shock` | Shock scenario propagation with full guardrails |
+| `propagate_policy` | Policy intervention (requires STRUCTURAL mode) |
+| `find_paths` | All causal paths between two nodes |
+| `target_contributors` | Rank sources by effect size on a target |
+| `inspect_edge` | Full edge card: estimates, identification, TSGuard, issues, literature |
+| `get_identification` | Identification summary across all edges |
+| `compare_modes` | Edge permissions across all three modes |
+| `run_placebo` | Placebo falsification on null links (d-separation tests) |
+| `dag_doctor` | DAG health check: coverage, issues, card gaps |
+
+### Setup
+
+The plugin activates automatically when you open the project in Claude Code.
+The only prerequisite is the `mcp` Python package:
+
+```bash
+pip install "mcp>=1.0.0"
+```
+
+Verify with `/mcp` in Claude Code — you should see `opencausality-query` with 13 tools.
+
+### Hedged Language Enforcement
+
+The plugin includes a skill that instructs Claude to follow the project's
+[hedged language rules](INVARIANTS.md) (Section 23.1). Claude will never say
+"causes" unless every edge in the path is `IDENTIFIED_CAUSAL`, will always
+state the query mode and weakest claim level, and will include SE independence
+disclaimers for multi-edge paths. All results are framed as drafts requiring
+analyst review.
+
+### Plugin Structure
+
+```
+.claude-plugin/
+  plugin.json              # Plugin manifest
+skills/
+  opencausality-query/
+    SKILL.md               # Domain knowledge + language rules
+    references/
+      modes.md             # Mode semantics
+      language-rules.md    # Hedged language specification
+.mcp.json                  # MCP server config (auto-discovered)
+shared/mcp/
+  query_server.py          # MCP stdio server (13 tools)
+```
+
+The standalone Query REPL (`opencausality query`) remains available as a
+fallback for environments without Claude Code.
+
+---
+
 ## Recent Changes (v0.3.0)
 
 ### New Features
