@@ -375,6 +375,8 @@ class PropagationEngine:
             if card:
                 claim_level = getattr(card.identification, "claim_level", "")
             edge_type = edge.get_edge_type()
+            if edge_type in ("identity", "mechanical", "bridge", "immutable"):
+                claim_level = "IDENTIFIED_CAUSAL"
             role = derive_propagation_role(edge_type, claim_level)
             allowed = is_edge_allowed_for_propagation(role, mode_spec)
             coeff = card.estimates.point if card and card.estimates else None
@@ -448,6 +450,8 @@ class PropagationEngine:
 
         path = PropagationPath()
         edges_in_path: list[EdgeInPath] = []
+        # Unified blocking: all guardrails (mode, CF, TSGuard, issues, units,
+        # frequency) append to the same list.  Path is blocked iff non-empty.
         blocked_reasons: list[str] = []
 
         for from_node, to_node, edge_spec in raw_path:
@@ -455,8 +459,21 @@ class PropagationEngine:
             claim_level = ""
             if card:
                 claim_level = getattr(card.identification, "claim_level", "")
+            elif edge_spec.get_edge_type() == "causal":
+                logger.warning(
+                    "No edge card for causal edge %s — claim_level defaults "
+                    "to empty, role will be diagnostic_only", edge_spec.id
+                )
 
             edge_type = edge_spec.get_edge_type()
+
+            # Identity/bridge/mechanical/immutable edges are definitionally
+            # IDENTIFIED_CAUSAL regardless of what the edge card says.
+            # Estimation may have incorrectly downgraded them by running
+            # statistical tests on accounting relations.
+            if edge_type in ("identity", "mechanical", "bridge", "immutable"):
+                claim_level = "IDENTIFIED_CAUSAL"
+
             role = derive_propagation_role(edge_type, claim_level)
 
             # Get coefficient and SE from edge card
@@ -505,6 +522,8 @@ class PropagationEngine:
             )
             edges_in_path.append(edge_in_path)
 
+            is_definitional = edge_type in ("identity", "mechanical", "bridge", "immutable")
+
             # ── Guardrail 1: Mode gating ──
             if not is_edge_allowed_for_propagation(role, mode_spec):
                 blocked_reasons.append(
@@ -512,19 +531,26 @@ class PropagationEngine:
                 )
 
             # ── Guardrail 2: Counterfactual gating ──
+            # For definitional edges (identity/bridge/mechanical/immutable),
+            # always use the claim-level check with overridden IDENTIFIED_CAUSAL
+            # since stored mode_shock_cf_allowed may be stale from incorrect
+            # estimation.  For causal edges, prefer stored mode-specific
+            # permissions from propagation_role when populated.
             if scenario_type == "shock":
-                cf_blocked = False
-                if card and hasattr(card, "counterfactual_block"):
-                    cf_block = card.counterfactual_block
-                    if hasattr(cf_block, "shock_scenario_allowed"):
-                        if not cf_block.shock_scenario_allowed:
-                            cf_blocked = True
-                            reason = getattr(cf_block, "reason_shock_blocked", "") or ""
-                            blocked_reasons.append(
-                                f"counterfactual_blocked: {edge_spec.id} shock CF blocked"
-                                + (f" ({reason})" if reason else "")
-                            )
-                if not cf_blocked and claim_level:
+                if is_definitional:
+                    # Definitional edges: use claim_level check (IDENTIFIED_CAUSAL)
+                    allowed, reason = is_shock_cf_allowed(claim_level, mode_spec)
+                    if not allowed and reason:
+                        blocked_reasons.append(
+                            f"counterfactual_blocked: {edge_spec.id} {reason}"
+                        )
+                elif card and card.propagation_role.mode_shock_cf_allowed:
+                    if not card.propagation_role.is_shock_cf_allowed(mode):
+                        blocked_reasons.append(
+                            f"counterfactual_blocked: {edge_spec.id} "
+                            f"shock CF not allowed in {mode} mode"
+                        )
+                elif claim_level:
                     allowed, reason = is_shock_cf_allowed(claim_level, mode_spec)
                     if not allowed and reason:
                         blocked_reasons.append(
@@ -532,18 +558,19 @@ class PropagationEngine:
                         )
 
             elif scenario_type == "policy":
-                cf_blocked = False
-                if card and hasattr(card, "counterfactual_block"):
-                    cf_block = card.counterfactual_block
-                    if hasattr(cf_block, "policy_intervention_allowed"):
-                        if not cf_block.policy_intervention_allowed:
-                            cf_blocked = True
-                            reason = getattr(cf_block, "reason_policy_blocked", "") or ""
-                            blocked_reasons.append(
-                                f"counterfactual_blocked: {edge_spec.id} policy CF blocked"
-                                + (f" ({reason})" if reason else "")
-                            )
-                if not cf_blocked and claim_level:
+                if is_definitional:
+                    allowed, reason = is_policy_cf_allowed(claim_level, mode_spec)
+                    if not allowed and reason:
+                        blocked_reasons.append(
+                            f"counterfactual_blocked: {edge_spec.id} {reason}"
+                        )
+                elif card and card.propagation_role.mode_policy_cf_allowed:
+                    if not card.propagation_role.is_policy_cf_allowed(mode):
+                        blocked_reasons.append(
+                            f"counterfactual_blocked: {edge_spec.id} "
+                            f"policy CF not allowed in {mode} mode"
+                        )
+                elif claim_level:
                     allowed, reason = is_policy_cf_allowed(claim_level, mode_spec)
                     if not allowed and reason:
                         blocked_reasons.append(
@@ -564,13 +591,27 @@ class PropagationEngine:
                     )
 
             # ── Guardrail 4: IssueLedger gating ──
-            if self.issue_ledger:
+            # Skip issue checks for identity/bridge/mechanical edges — these
+            # may have spurious issues from running statistical tests on
+            # definitional relationships.
+            if self.issue_ledger and not is_definitional:
                 edge_issues = self.issue_ledger.get_issues_for_edge(edge_spec.id)
                 for issue in edge_issues:
-                    if issue.is_open and issue.is_critical:
+                    if not issue.is_open:
+                        continue
+                    # Block propagation for CRITICAL issues
+                    if issue.is_critical:
                         blocked_reasons.append(
                             f"issue_ledger_block: {edge_spec.id} "
                             f"{issue.rule_id} - {issue.message}"
+                        )
+                    # Block counterfactuals for SIGNIFICANT_BUT_NOT_IDENTIFIED
+                    if (issue.rule_id == "SIGNIFICANT_BUT_NOT_IDENTIFIED"
+                            and scenario_type in ("shock", "policy")):
+                        blocked_reasons.append(
+                            f"issue_cf_block: {edge_spec.id} "
+                            f"{issue.rule_id} - p-value significant but "
+                            f"claim not IDENTIFIED_CAUSAL"
                         )
 
             # ── Guardrail 5: Reaction function always blocked ──

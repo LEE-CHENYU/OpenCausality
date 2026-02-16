@@ -459,7 +459,10 @@ If `EdgeSpec.validated_evidence.immutable = True`:
 1. **Acyclicity:** DFS-based, including temporal expansion for contemporaneous edges.
 2. **Unit presence:** Every edge must have treatment and outcome units.
 3. **Edge type labeling:** Every edge must declare its type from the closed set:
-   `{causal, reaction_function, bridge, identity}`. Unknown edge types are rejected.
+   `{causal, reaction_function, mechanical, immutable, identity}`.
+   `mechanical` is the DAG-level name; the propagation engine maps it to the
+   `bridge` role. `immutable` denotes validated prior evidence (forced
+   `IDENTIFIED_CAUSAL`). Unknown edge types are rejected.
 4. **Node-source bindings:** Observed nodes must have data source specifications.
 5. **Endpoint existence:** All edge endpoints must exist as nodes.
 
@@ -1285,7 +1288,7 @@ Before merging any change, verify:
 - [ ] Issue lifecycle is append-only (no reopen, only new issue)
 - [ ] LLM repairs limited to schema validity — never causal semantics
 - [ ] Task queue transitions are forward-only (no backward from terminal states)
-- [ ] Edge types restricted to closed set: {causal, reaction_function, bridge, identity}
+- [ ] Edge types restricted to closed set: {causal, reaction_function, mechanical, immutable, identity}
 
 **Sentinel & Data (§§20-21)**
 - [ ] Sentinel repairs are logged with `source: "sentinel"` and governed by PatchPolicy

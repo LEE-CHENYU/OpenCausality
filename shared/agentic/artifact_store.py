@@ -161,6 +161,9 @@ class ArtifactStore:
             Interpretation,
             FailureFlags,
             CounterfactualApplicability,
+            IdentificationBlock,
+            CounterfactualBlock,
+            PropagationRole,
             LiteratureBlock,
         )
         from shared.agentic.output.provenance import (
@@ -168,7 +171,7 @@ class ArtifactStore:
             SpecDetails,
         )
 
-        # Parse estimates
+        # Parse estimates (including unit fields)
         estimates = None
         if data.get("estimates"):
             est = data["estimates"]
@@ -177,6 +180,15 @@ class ArtifactStore:
                 se=est["se"],
                 ci_95=tuple(est["ci_95"]),
                 pvalue=est.get("pvalue"),
+                horizons=est.get("horizons"),
+                irf=est.get("irf"),
+                irf_ci_lower=est.get("irf_ci_lower"),
+                irf_ci_upper=est.get("irf_ci_upper"),
+                treatment_unit=est.get("treatment_unit", ""),
+                outcome_unit=est.get("outcome_unit", ""),
+                n_calendar_periods=est.get("n_calendar_periods"),
+                n_effective_obs_h0=est.get("n_effective_obs_h0"),
+                n_effective_obs_by_horizon=est.get("n_effective_obs_by_horizon"),
             )
 
         # Parse diagnostics
@@ -243,6 +255,39 @@ class ArtifactStore:
             total_results=lit_data.get("total_results", 0),
         )
 
+        # Parse identification block
+        id_data = data.get("identification", {})
+        identification = IdentificationBlock(
+            claim_level=id_data.get("claim_level", ""),
+            risks=id_data.get("risks", {}),
+            untestable_assumptions=id_data.get("untestable_assumptions", []),
+            testable_threats_passed=id_data.get("testable_threats_passed", []),
+            testable_threats_failed=id_data.get("testable_threats_failed", []),
+            strategy_type=id_data.get("strategy_type", ""),
+            strategy_argument=id_data.get("strategy_argument", ""),
+            strategy_key_assumption=id_data.get("strategy_key_assumption", ""),
+        )
+
+        # Parse counterfactual block (split shock/policy)
+        cfb_data = data.get("counterfactual_block", {})
+        counterfactual_block = CounterfactualBlock(
+            shock_scenario_allowed=cfb_data.get("shock_scenario_allowed", False),
+            policy_intervention_allowed=cfb_data.get("policy_intervention_allowed", False),
+            reason_shock_blocked=cfb_data.get("reason_shock_blocked"),
+            reason_policy_blocked=cfb_data.get("reason_policy_blocked"),
+        )
+
+        # Parse propagation role
+        pr_data = data.get("propagation_role", {})
+        propagation_role = PropagationRole(
+            role=pr_data.get("role", "reduced_form"),
+            overlapping_paths=pr_data.get("overlapping_paths", []),
+            selected_for_counterfactual=pr_data.get("selected_for_counterfactual", False),
+            mode_propagation_allowed=pr_data.get("mode_propagation_allowed", {}),
+            mode_shock_cf_allowed=pr_data.get("mode_shock_cf_allowed", {}),
+            mode_policy_cf_allowed=pr_data.get("mode_policy_cf_allowed", {}),
+        )
+
         return EdgeCard(
             edge_id=data["edge_id"],
             dag_version_hash=data.get("dag_version_hash", ""),
@@ -256,6 +301,9 @@ class ArtifactStore:
             counterfactual=counterfactual,
             credibility_rating=data.get("credibility_rating", "D"),
             credibility_score=data.get("credibility_score", 0.0),
+            identification=identification,
+            counterfactual_block=counterfactual_block,
+            propagation_role=propagation_role,
             literature=literature,
             is_precisely_null=data.get("is_precisely_null", False),
             null_equivalence_bound=data.get("null_equivalence_bound"),

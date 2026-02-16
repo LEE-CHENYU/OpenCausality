@@ -26,6 +26,11 @@ logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Server state (populated by load_dag)
+#
+# IMPORTANT: Each call to load_dag fully replaces all state — the DAG, edge
+# cards, TSGuard results, issue ledger, and propagation engine are all scoped
+# to the most recently loaded DAG.  Loading a different DAG discards the
+# previous state entirely.  There is no cross-DAG state sharing.
 # ---------------------------------------------------------------------------
 
 _state: dict[str, Any] = {
