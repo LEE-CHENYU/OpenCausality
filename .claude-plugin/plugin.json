@@ -13,6 +13,5 @@
     "propagation",
     "stress-testing",
     "identification"
-  ],
-  "mcpServers": "./.mcp.json"
+  ]
 }
