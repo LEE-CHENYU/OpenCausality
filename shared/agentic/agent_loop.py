@@ -424,6 +424,7 @@ class AgentLoop:
                     cards_dir=cards_dir,
                     state_path=state_path,
                     output_path=self.config.output_dir / "dag_visualization.html",
+                    cache_dir=self.config.output_dir / "llm_cache",
                 )
                 logger.info(f"DAG visualization built: {viz_path}")
             except Exception as e:

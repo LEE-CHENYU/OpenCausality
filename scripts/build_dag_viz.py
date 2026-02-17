@@ -1925,6 +1925,12 @@ def main():
         default=None,
         help="Path to issue_registry.yaml (default: config/agentic/issue_registry.yaml)",
     )
+    parser.add_argument(
+        "--cache-dir",
+        type=Path,
+        default=None,
+        help="Per-DAG LLM cache directory (default: outputs/agentic/llm_cache)",
+    )
     args = parser.parse_args()
 
     cards_dir = args.cards or DEFAULT_CARDS_DIR
@@ -1934,6 +1940,7 @@ def main():
     build(
         args.dag_path, cards_dir, state_path, args.output, args.llm_annotate,
         actions_path=args.actions_file, registry_path=args.registry_file,
+        cache_dir=args.cache_dir,
     )
     print("Done.")
 

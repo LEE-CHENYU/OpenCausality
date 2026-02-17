@@ -1549,16 +1549,16 @@ def build(
     dag_nodes = load_dag_nodes(dag_path)
     print(f"  {len(dag_edges)} DAG edges, {len(dag_nodes)} DAG nodes loaded")
 
-    # 6b. LLM annotations via shared cache
+    # 6b. LLM annotations via per-output-dir cache
     from shared.llm.guidance_cache import load_cache, generate_and_cache
 
-    cache_dir = PROJECT_ROOT / "outputs" / "agentic" / "llm_cache"
+    cache_dir = output_dir / "llm_cache"
     cache = load_cache(cache_dir)
     if cache is None and llm_annotate:
-        print("  Generating LLM annotations (shared cache)...")
+        print(f"  Generating LLM annotations ({cache_dir})...")
         cache = generate_and_cache(state_path, cards_dir, dag_path, cache_dir)
     elif cache is not None:
-        print("  Loaded LLM annotations from cache")
+        print(f"  Loaded LLM annotations from cache ({cache_dir})")
 
     llm_guidance: dict[str, str] = cache["issue_guidance"] if cache else {}
     llm_edge_annotations: dict[str, str] = cache["edge_annotations"] if cache else {}

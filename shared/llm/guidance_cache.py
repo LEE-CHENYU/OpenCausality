@@ -381,13 +381,24 @@ def generate_and_cache(
     with open(dag_path) as f:
         dag = yaml.safe_load(f) or {}
 
-    # Load state (open issues)
+    # Load state (open issues) — handle both nested and flat formats
     open_issues: dict[str, dict] = {}
     if state_path.exists():
         with open(state_path) as f:
             state = json.load(f)
-        for key, issue in state.get("issues", {}).items():
+        # Nested format: {"issues": {"RULE_ID:edge_id": {...}}}
+        all_issues = state.get("issues", None)
+        if all_issues is None:
+            # Flat format: {"edge/edge_id/RULE_ID": {...}, ...}
+            all_issues = {k: v for k, v in state.items()
+                          if isinstance(v, dict) and "rule_id" in v}
+        for key, issue in all_issues.items():
             if issue.get("status") == "OPEN":
+                # Normalize key to canonical RULE_ID:edge_id format
+                if ":" not in key and "/" in key:
+                    parts = key.split("/")
+                    if len(parts) == 3:
+                        key = f"{parts[2]}:{parts[1]}"
                 open_issues[key] = issue
 
     # Collect all edge IDs (from issues + dag edges)
