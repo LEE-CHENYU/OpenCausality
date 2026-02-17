@@ -1780,19 +1780,14 @@ def build(
     rules = load_rule_info(reg_path)
     print(f"  {len(actions)} action rules, {len(rules)} rule descriptions loaded")
 
-    # LLM annotations via per-DAG cache
-    from shared.llm.guidance_cache import load_cache, generate_and_cache
+    # LLM annotations via per-DAG cache (auto-syncs with DAG)
+    from shared.llm.guidance_cache import sync_cache
 
     effective_cache_dir = cache_dir or (PROJECT_ROOT / "outputs" / "agentic" / "llm_cache")
-    cache = load_cache(effective_cache_dir)
-    if cache is None and llm_annotate:
-        print("Generating LLM annotations (per-DAG cache)...")
-        cache = generate_and_cache(
-            state_path or DEFAULT_STATE, cards_dir or DEFAULT_CARDS_DIR,
-            dag_path, effective_cache_dir,
-        )
-    elif cache is not None:
-        print(f"  Loaded LLM annotations from cache ({effective_cache_dir})")
+    cache = sync_cache(
+        dag_path, state_path or DEFAULT_STATE,
+        cards_dir or DEFAULT_CARDS_DIR, effective_cache_dir,
+    ) if llm_annotate else None
 
     annotations = cache["edge_annotations"] if cache else None
     issue_guidance: dict[str, str] = cache["issue_guidance"] if cache else {}
