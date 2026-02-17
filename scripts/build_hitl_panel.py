@@ -68,9 +68,9 @@ def load_edge_summary(card_path: Path) -> dict | None:
     if not card:
         return None
 
-    estimates = card.get("estimates", {})
-    diagnostics_raw = card.get("diagnostics", {})
-    failure_flags_raw = card.get("failure_flags", {})
+    estimates = card.get("estimates") or {}
+    diagnostics_raw = card.get("diagnostics") or {}
+    failure_flags_raw = card.get("failure_flags") or {}
     panel_dims = (card.get("data_provenance") or {}).get("panel_dimensions")
     identification = card.get("identification", {})
     spec = card.get("spec_details", {})
