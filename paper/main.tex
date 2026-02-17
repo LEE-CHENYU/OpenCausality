@@ -29,7 +29,7 @@ with DAG-Based Reasoning and LLM-Assisted Discovery}
 %% ABSTRACT
 %% ============================================================
 \begin{abstract}
-We introduce \oc{}, an open-source platform that resolves the automation--transparency tradeoff in applied causal inference. \oc{} combines DAG-based causal reasoning with agentic estimation pipelines, where every modeling decision---from identification strategy selection to effect propagation---is logged in a hash-chained audit trail. An always-on \emph{sentinel loop} runs continuously in the background, re-validating the DAG after every change, auto-fixing schema regressions, and surfacing interactive review panels---so analysts never have to hunt for results or wonder whether the specification is still valid. The platform enforces 30 issue-detection rules that catch overclaiming, control shopping, and specification drift; a 7-guardrail propagation engine that performs unit-aware dimensional analysis across multi-edge causal paths; and a 3-stage identifiability screen that downgrades claims based on diagnostic evidence rather than statistical significance alone. A 4-agent agentic loop (DataScout, ModelSmith, Estimator, Judge) iterates between estimation, issue detection, and auto-repair under LLM guidance, while an LLM-assisted pipeline extracts causal claims from the literature and proposes DAG edges---achieving 100\% estimate precision on matched edges in our Kazakhstan bank stress-testing case study while discovering 9 novel edges absent from the expert-built DAG. All governance decisions---including human-in-the-loop gates and automated patch policies that explicitly prohibit p-hacking---are recorded with cryptographic integrity. \oc{} ships with 19 estimation adapters spanning econometric and ML-based methods, a data-driven causal discovery agent (PC, GES, FCI, NOTEARS), an adaptive data discovery agent that uses LLM tool-use to find data sources for under-specified DAG nodes, a DoWhy refutation engine for post-estimation robustness, a natural-language query interface, and 204 passing tests across 49{,}743 lines of code.
+We introduce \oc{}, an open-source platform that resolves the automation--transparency tradeoff in applied causal inference. \oc{} combines DAG-based causal reasoning with agentic estimation pipelines, where every modeling decision---from identification strategy selection to effect propagation---is logged in a hash-chained audit trail. An always-on \emph{sentinel loop} runs continuously in the background, re-validating the DAG after every change, auto-fixing schema regressions, and surfacing interactive review panels---so analysts never have to hunt for results or wonder whether the specification is still valid. The platform enforces 38 issue-detection rules that catch overclaiming, control shopping, and specification drift; a 7-guardrail propagation engine that performs unit-aware dimensional analysis across multi-edge causal paths; and a 3-stage identifiability screen that downgrades claims based on diagnostic evidence rather than statistical significance alone. A 4-agent agentic loop (DataScout, ModelSmith, Estimator, Judge) iterates between estimation, issue detection, and auto-repair under LLM guidance, while an LLM-assisted pipeline extracts causal claims from the literature and proposes DAG edges---achieving 100\% estimate precision on matched edges in our Kazakhstan bank stress-testing case study while discovering 9 novel edges absent from the expert-built DAG. A principle-based \emph{DAG Critic} loop iteratively refines DAG structure using LLM-generated feedback against domain-agnostic graph rules, while a Model Context Protocol (MCP) query server exposes the full propagation engine to external AI assistants. All governance decisions---including human-in-the-loop gates and automated patch policies that explicitly prohibit p-hacking---are recorded with cryptographic integrity. \oc{} ships with 19 estimation adapters spanning econometric and ML-based methods, a data-driven causal discovery agent (PC, GES, FCI, NOTEARS), an adaptive data discovery agent that uses LLM tool-use to find data sources for under-specified DAG nodes, a DoWhy refutation engine for post-estimation robustness, a natural-language query interface, and 344 passing tests across 79{,}227 lines of code.
 \end{abstract}
 
 %% ============================================================
@@ -55,7 +55,7 @@ We introduce \oc{},\footnote{Code and data: \url{https://github.com/LEE-CHENYU/O
 \begin{enumerate}[leftmargin=*, itemsep=2pt]
     \item A \textbf{DAG-based causal inference platform} with 19 estimation adapters (econometric and ML-based), mode-aware effect propagation, unit-dimensional analysis across 8 named unit types, and 7 guardrails that gate edge usage based on identification strength, time-series diagnostics, and issue severity (Section~\ref{sec:propagation}).
 
-    \item A \textbf{30-rule issue detection engine} with a PatchPolicy whitelist that explicitly prohibits control shopping, sample trimming, lag searching, and outcome switching---preventing automated p-hacking while permitting safe auto-fixes (Section~\ref{sec:issues}).
+    \item A \textbf{38-rule issue detection engine} with a PatchPolicy whitelist that explicitly prohibits control shopping, sample trimming, lag searching, and outcome switching---preventing automated p-hacking while permitting safe auto-fixes (Section~\ref{sec:issues}).
 
     \item A \textbf{3-stage identifiability screen} (pre-design, post-design, post-estimation) backed by TSGuard, a 7-diagnostic time-series validator that caps claim levels based on evidence rather than significance, and a DoWhy refutation engine that stress-tests estimates via 4 robustness checks (Section~\ref{sec:identification}).
 
@@ -64,9 +64,13 @@ We introduce \oc{},\footnote{Code and data: \url{https://github.com/LEE-CHENYU/O
     \item A \textbf{hash-chained governance framework} with human-in-the-loop gates, structured checklists, and cryptographic audit integrity---all without database dependencies (Section~\ref{sec:governance}).
 
     \item An \textbf{always-on sentinel loop} that continuously validates the DAG, auto-heals schema regressions via PatchBot, and surfaces interactive panels (DAG visualization, HITL review board) without manual intervention; and a \textbf{4-agent agentic pipeline} (DataScout, ModelSmith, Estimator, Judge) with LLM-assisted DAG auto-repair (Section~\ref{sec:sentinel}).
+
+    \item A \textbf{principle-based DAG Critic} that iteratively refines DAG structure via LLM-generated revisions governed by domain-agnostic graph rules, a 6-component quality score, and confidence-gated validation---operating at a higher governance tier than PatchBot (Section~\ref{sec:critic}).
+
+    \item A \textbf{Model Context Protocol (MCP) query server} that exposes 13 tools---propagation, falsification, edge inspection, and health checks---to external AI assistants via stdio transport, with full guardrail enforcement and a read-only contract (Section~\ref{sec:mcp}).
 \end{enumerate}
 
-We evaluate \oc{} on a Kazakhstan bank stress-testing case study involving 32 nodes and 23 causal edges, comparing expert-built DAGs against both LLM-extracted and data-driven discovery DAGs, and verifying pipeline reproducibility across 204 tests (Section~\ref{sec:experiments}).
+We evaluate \oc{} on a Kazakhstan bank stress-testing case study involving 32 nodes and 21 causal edges, comparing expert-built DAGs against both LLM-extracted and data-driven discovery DAGs, and verifying pipeline reproducibility across 344 tests (Section~\ref{sec:experiments}).
 
 %% ============================================================
 %% 2  RELATED WORK
@@ -99,7 +103,7 @@ The replication crisis~\citep{ioannidis2005why} has motivated pre-registration~\
 
     \item \textbf{Estimation Layer}: Dispatches edges to one of 19 adapters via a unified \texttt{EstimationRequest} $\to$ \texttt{Adapter.estimate()} $\to$ \texttt{EstimationResult} interface. Adapters span econometric methods (local projections, panel FE, IV-2SLS, DiD, RDD, regression kink, synthetic control) and ML-based methods (DoWhy backdoor/IV/frontdoor, DoubleML PLR/IRM/PLIV, EconML CATE, CausalML uplift). A config-driven registry dynamically loads adapters from YAML.
 
-    \item \textbf{Inference Layer}: Runs 3-stage identifiability screening, TSGuard diagnostics, DoWhy refutation tests (4 robustness checks), 30-rule issue detection, and 7-guardrail effect propagation. Produces EdgeCards (YAML artifacts combining estimates, diagnostics, identification results, and literature references).
+    \item \textbf{Inference Layer}: Runs 3-stage identifiability screening, TSGuard diagnostics, DoWhy refutation tests (4 robustness checks), 38-rule issue detection, and 7-guardrail effect propagation. Produces EdgeCards (YAML artifacts combining estimates, diagnostics, identification results, and literature references).
 
     \item \textbf{Governance Layer}: Hash-chained audit log, HITL gate with structured checklists, PatchPolicy enforcement, and notification system. No database dependency---the entire audit trail lives in append-only JSONL files that can be committed to Git.
 
@@ -346,7 +350,7 @@ Refutation results are converted to \texttt{DiagnosticResult} objects and stored
 \section{Issue Detection Engine}
 \label{sec:issues}
 
-\oc{} ships with 30 issue-detection rules loaded from a YAML registry. Each rule specifies a severity (\texttt{CRITICAL}, \texttt{HIGH}, \texttt{MEDIUM}, \texttt{LOW}), a scope (edge, node, DAG, run, or cross-run), and whether the issue is auto-fixable or requires human review.
+\oc{} ships with 38 issue-detection rules loaded from a YAML registry. Each rule specifies a severity (\texttt{CRITICAL}, \texttt{HIGH}, \texttt{MEDIUM}, \texttt{LOW}), a scope (edge, node, DAG, run, or cross-run), and whether the issue is auto-fixable or requires human review.
 
 \subsection{Representative Rules}
 
@@ -361,7 +365,7 @@ Table~\ref{tab:rules} lists representative rules from the registry.
 \toprule
 \textbf{Rule ID} & \textbf{Severity} & \textbf{Scope} & \textbf{Description} \\
 \midrule
-\texttt{SIG\_NOT\_ID} & CRITICAL & edge & $p<0.05$ but claim $\neq$ \texttt{IDENTIFIED\_CAUSAL} \\
+\texttt{SIG\_NOT\_ID} & HIGH & edge & $p<0.05$ but claim $\neq$ \texttt{IDENTIFIED\_CAUSAL} \\
 \texttt{UNIT\_MISSING} & HIGH & edge & Missing units blocks propagation \\
 \texttt{REACTION\_FN} & CRITICAL & edge & Reaction edge used for shock propagation \\
 \texttt{LOO\_INSTABILITY} & HIGH & edge & Leave-one-out sign flip or $>$50\% $\Delta$magnitude \\
@@ -445,7 +449,85 @@ A conversion layer (\texttt{graph\_convert.py}) enables interoperability with ex
 \end{itemize}
 
 %% ============================================================
-%% 9  GOVERNANCE
+%% 9  DAG CRITIC LOOP
+%% ============================================================
+\section{Principle-Based DAG Critic}
+\label{sec:critic}
+
+Sections~\ref{sec:llm}--\ref{sec:discovery} construct an initial DAG from text or data. The \textbf{DAG Critic} iteratively refines this structure by generating LLM-based feedback against domain-agnostic graph principles, applying validated revisions, and converging when quality stabilizes.
+
+\subsection{Architecture}
+
+The Critic operates in a loop: \texttt{collect\_feedback()} inspects the DAG for structural gaps, \texttt{critique()} sends the DAG and gap report to an LLM backend, and \texttt{apply\_revisions()} validates and applies proposed changes. Three backends are supported: Claude Code CLI (default, no API key required), Codex CLI, and direct API via \texttt{LLMClient}.
+
+Each revision has one of 8 types from a closed set: \texttt{ADD\_MISSING\_NODE}, \texttt{ADD\_MISSING\_EDGE}, \texttt{REMOVE\_EDGE}, \texttt{CHANGE\_EDGE\_TYPE}, \texttt{CHANGE\_EDGE\_SIGN}, \texttt{UPDATE\_NODE\_METADATA}, \texttt{UPDATE\_EDGE\_METADATA}, and \texttt{ANNOTATE}. All revisions must pass \texttt{CriticRevisionValidator} before application, which enforces a confidence threshold (default 0.7) and structural consistency checks. Revisions below the confidence threshold are logged but not applied.
+
+\subsection{Quality Score}
+
+A 6-component weighted score tracks DAG quality across iterations:
+
+\begin{table}[t]
+\centering
+\caption{DAG Critic quality score components.}
+\label{tab:critic-quality}
+\small
+\begin{tabular}{@{}llp{5.5cm}@{}}
+\toprule
+\textbf{Component} & \textbf{Weight} & \textbf{Measurement} \\
+\midrule
+Literature grounding & 20\% & Fraction of edges with $\geq 1$ citation \\
+Completeness & 20\% & Fraction of edge card slots populated \\
+Identification coverage & 20\% & Fraction with claim $\geq$ \texttt{REDUCED\_FORM} \\
+Structural soundness & 15\% & DAGValidator pass rate $\times$ gap penalty \\
+Unit completeness & 15\% & Fraction with treatment + outcome units \\
+Formula correctness & 10\% & Fraction of identity edges with valid formulas \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The loop converges when the quality delta falls below 0.02 for 2 consecutive iterations, when zero revisions are proposed, or when the maximum iteration count is reached.
+
+\subsection{Structural Gap Detection}
+
+Four domain-agnostic graph rules detect structural incompleteness:
+
+\begin{enumerate}[leftmargin=*, itemsep=1pt]
+    \item \textbf{Undriven identity dependency}: An identity edge's input has no incoming causal driver, leaving part of the decomposition unexplained.
+    \item \textbf{Dead-end leaf}: A non-target leaf node with no outgoing edges---either missing downstream effects or a modeling error.
+    \item \textbf{Endogenous root}: A root node marked as endogenous, which should have incoming edges explaining its variation.
+    \item \textbf{Paper-mentioned variable}: A variable referenced in the literature but absent from the DAG, suggesting a structural gap.
+\end{enumerate}
+
+Each detected gap contributes a 5\% penalty to the structural soundness score (capped at 50\%), providing quantitative pressure to resolve gaps across iterations.
+
+\subsection{Governance Tier}
+
+The Critic operates at a \emph{higher governance tier} than PatchBot (Section~\ref{sec:patchpolicy}). Specifically, the Critic can change edge types---an action explicitly forbidden for PatchBot. The Sentinel (Section~\ref{sec:sentinel}) never expands DAG structure; only the Critic proposes \texttt{ADD\_MISSING\_NODE} and \texttt{ADD\_MISSING\_EDGE} revisions. This separation ensures that automated schema repair (PatchBot) and structural expansion (Critic) remain distinct governance acts with different audit signatures.
+
+%% ============================================================
+%% 10  MCP QUERY SERVER
+%% ============================================================
+\section{Model Context Protocol Server}
+\label{sec:mcp}
+
+To enable AI-assisted causal reasoning beyond the CLI, \oc{} includes an MCP (Model Context Protocol) query server that exposes the full propagation engine to external AI assistants such as Claude Code.
+
+\subsection{Architecture}
+
+The server runs as a long-lived stdio process exposing 13 tools organized into four categories: \emph{setup} (\texttt{load\_dag}), \emph{inspection} (\texttt{list\_nodes}, \texttt{list\_edges}, \texttt{inspect\_edge}, \texttt{get\_identification}), \emph{propagation} (\texttt{propagate\_shock}, \texttt{propagate\_policy}, \texttt{find\_paths}, \texttt{target\_contributors}), and \emph{diagnostics} (\texttt{switch\_mode}, \texttt{compare\_modes}, \texttt{run\_placebo}, \texttt{dag\_doctor}).
+
+The server maintains a single-DAG state model: each call to \texttt{load\_dag} fully replaces all state---the DAG, edge cards, TSGuard results, issue ledger, and propagation engine. There is no cross-DAG state sharing. Artifact directories mirror the CLI layout (\texttt{outputs/agentic/\{dag\_stem\}/}), ensuring both interfaces read from the same estimation results.
+
+\subsection{Guardrail Enforcement}
+
+All propagation tools delegate to the same \texttt{PropagationEngine} used by the CLI, with all 7 guardrails (Section~\ref{sec:propagation}) applied. \texttt{propagate\_shock} passes \texttt{scenario\_type="shock"} (shock CF gating); \texttt{propagate\_policy} passes \texttt{scenario\_type="policy"} (requires STRUCTURAL mode and \texttt{IDENTIFIED\_CAUSAL} claim level). The MCP server never bypasses or relaxes guardrails---an AI assistant querying through MCP receives identically gated results as a human using the CLI.
+
+\subsection{Read-Only Contract}
+
+The server is strictly read-only: it never writes edge cards, issues, or DAG files. The only mutable state is the in-memory DAG (replaced on \texttt{load\_dag}) and the active query mode (changed by \texttt{switch\_mode}). This ensures that AI-assisted exploration cannot alter the governed estimation artifacts.
+
+%% ============================================================
+%% 11  GOVERNANCE
 %% ============================================================
 \section{Governance Framework}
 \label{sec:governance}
@@ -576,7 +658,7 @@ All adapters achieve nominal or above-nominal coverage. IV-2SLS shows the lowest
 
 \subsection{NL-to-DAG Extraction: Kazakhstan Case Study}
 
-We compare an expert-built DAG (32~nodes, 23~edges, approximately 40~hours of construction time) against an LLM-extracted DAG from a single descriptive paragraph about Kazakhstan bank stress testing.
+We compare an expert-built DAG (32~nodes, 21~edges, approximately 40~hours of construction time) against an LLM-extracted DAG from a single descriptive paragraph about Kazakhstan bank stress testing.
 
 \begin{table}[t]
 \centering
@@ -588,8 +670,8 @@ We compare an expert-built DAG (32~nodes, 23~edges, approximately 40~hours of co
 \textbf{Metric} & \textbf{Expert DAG} & \textbf{NL-Extracted DAG} \\
 \midrule
 Nodes & 32 & 18 \\
-Edges & 23 & 12 \\
-Structural matches & --- & 3/23 (13\%) \\
+Edges & 21 & 12 \\
+Structural matches & --- & 3/21 (14\%) \\
 Estimate match (common edges) & --- & 3/3 (100\%) \\
 NL-only edges & --- & 9 \\
 \bottomrule
@@ -612,7 +694,7 @@ Figure~\ref{fig:nl2dag} illustrates the overlap between expert and NL-extracted 
     \node[font=\small\bfseries, red!70] at (2.8, 1.2) {NL-Extracted};
 
     % Expert only
-    \node[font=\footnotesize, text width=2cm, align=center] at (-2.5, 0) {20 edges\\{\scriptsize (oil shocks, policy\\rate, IV construct,\\balance sheet, ...)}};
+    \node[font=\footnotesize, text width=2cm, align=center] at (-2.5, 0) {18 edges\\{\scriptsize (oil shocks, policy\\rate, balance\\sheet, ...)}};
 
     % Overlap
     \node[font=\footnotesize, text width=1.8cm, align=center] at (0, 0) {\textbf{3 matched}\\{\scriptsize 100\% estimate\\precision}};
@@ -621,14 +703,14 @@ Figure~\ref{fig:nl2dag} illustrates the overlap between expert and NL-extracted 
     \node[font=\footnotesize, text width=2.2cm, align=center] at (2.6, 0) {9 novel\\{\scriptsize VIX$\to$funding,\\income$\to$CoR,\\PPOP$\to$capital}};
 
     % Counts
-    \node[font=\scriptsize, gray] at (-1.2, -2.2) {32 nodes, 23 edges};
+    \node[font=\scriptsize, gray] at (-1.2, -2.2) {32 nodes, 21 edges};
     \node[font=\scriptsize, gray] at (1.2, -2.2) {18 nodes, 12 edges};
     \end{tikzpicture}
-    \caption{Comparison of expert-built and NL-extracted DAGs for the Kazakhstan case study. The 3~matched edges achieve 100\% estimate precision. The NL pipeline discovers 9~novel edges, while missing 20~edges encoding upstream shock transmission and banking balance sheet mechanics.}
+    \caption{Comparison of expert-built and NL-extracted DAGs for the Kazakhstan case study. The 3~matched edges achieve 100\% estimate precision. The NL pipeline discovers 9~novel edges, while missing 18~edges encoding upstream shock transmission and banking balance sheet mechanics.}
     \label{fig:nl2dag}
 \end{figure}
 
-The NL pipeline achieves 13\% structural recall---unsurprising given that a single paragraph cannot encode upstream shock transmission (oil supply/demand shocks to exchange rate), monetary policy mechanics, or banking balance sheet identities. However, all 3~matched edges produce statistically equivalent estimates, and the pipeline discovers 9~novel edges. Three are particularly notable:
+The NL pipeline achieves 14\% structural recall---unsurprising given that a single paragraph cannot encode upstream shock transmission (oil supply/demand shocks to exchange rate), monetary policy mechanics, or banking balance sheet identities. However, all 3~matched edges produce statistically equivalent estimates, and the pipeline discovers 9~novel edges. Three are particularly notable:
 
 \begin{itemize}[leftmargin=*, itemsep=1pt]
     \item Global risk appetite (VIX) $\to$ bank funding costs (risk-taking channel)
@@ -638,11 +720,11 @@ The NL pipeline achieves 13\% structural recall---unsurprising given that a sing
 
 \subsection{End-to-End Reproducibility}
 
-We run the full agentic pipeline on the KSPI K2 DAG (23~edges) and compare against the expert manual baseline. The pipeline achieves 100\% estimate match (23/23~edges), confirming reproducibility across pipeline modes and adapter dispatch.
+We run the full agentic pipeline on the KSPI K2 DAG (21~edges) and compare against the expert manual baseline. The pipeline achieves 100\% estimate match (21/21~edges), confirming reproducibility across pipeline modes and adapter dispatch.
 
 \subsection{Issue Detection Effectiveness}
 
-Across 13 pipeline runs on the Kazakhstan case study, the 30-rule engine detects 1{,}479 issues in total, of which 1{,}333 (90.1\%) are \texttt{CRITICAL} severity. PatchBot auto-fixes 812 issues (54.9\%), primarily missing unit specifications (\texttt{UNIT\_MISSING\_IN\_EDGECARD}). Of the 667 remaining open issues, only 19 (1.3\% of total) require human review---demonstrating that the system effectively triages the review burden.
+Across 13 pipeline runs on the Kazakhstan case study, the 38-rule engine detects 1{,}479 issues in total, of which 1{,}333 (90.1\%) are \texttt{CRITICAL} severity. PatchBot auto-fixes 812 issues (54.9\%), primarily missing unit specifications (\texttt{UNIT\_MISSING\_IN\_EDGECARD}). Of the 667 remaining open issues, only 19 (1.3\% of total) require human review---demonstrating that the system effectively triages the review burden.
 
 The dominant open issue type is \texttt{SIGNIFICANT\_BUT\_NOT\_IDENTIFIED} (492 instances, 73.8\% of open issues), which fires when an edge achieves $p < 0.05$ but the identifiability screen assigns a claim level below \texttt{IDENTIFIED\_CAUSAL}. This rule alone catches the most common form of overclaiming in applied work. Other frequent detections include \texttt{LOO\_INSTABILITY} (87 instances: leave-one-out sign flips or $>$50\% magnitude changes) and \texttt{RATING\_DIAGNOSTICS\_CONFLICT} (59 instances: A-ratings despite failed diagnostics, auto-downgraded by PatchBot). Figure~\ref{fig:issues} summarizes the issue triage pipeline.
 
@@ -702,7 +784,7 @@ The delta-method SE formula (Equation~\ref{eq:delta}) assumes independence acros
 \section{Conclusion}
 \label{sec:conclusion}
 
-\oc{} demonstrates that automation and transparency in causal inference are not mutually exclusive. By treating every modeling decision as an auditable event---logged in a hash-chained ledger, gated by identifiability screens and refutation tests, and protected by anti-p-hacking policies---the platform enables researchers to move faster while maintaining the evidentiary standards that credible causal claims demand. The always-on sentinel loop ensures that this rigor is continuous rather than episodic: the DAG is re-validated after every change, schema regressions are auto-healed, and interactive review panels are surfaced the moment estimation completes. With 19 estimation adapters spanning econometric and ML-based methods, data-driven causal discovery (PC, GES, FCI, NOTEARS), adaptive data discovery via LLM tool-use, a 4-agent agentic pipeline, and LLM-assisted literature extraction, \oc{} bridges expert-specified and data-driven structure learning within a unified governance framework. We release \oc{} as open-source software to support reproducible causal inference research.
+\oc{} demonstrates that automation and transparency in causal inference are not mutually exclusive. By treating every modeling decision as an auditable event---logged in a hash-chained ledger, gated by identifiability screens and refutation tests, and protected by anti-p-hacking policies---the platform enables researchers to move faster while maintaining the evidentiary standards that credible causal claims demand. The always-on sentinel loop ensures that this rigor is continuous rather than episodic: the DAG is re-validated after every change, schema regressions are auto-healed, and interactive review panels are surfaced the moment estimation completes. With 19 estimation adapters spanning econometric and ML-based methods, data-driven causal discovery (PC, GES, FCI, NOTEARS), adaptive data discovery via LLM tool-use, a 4-agent agentic pipeline, LLM-assisted literature extraction, a principle-based DAG Critic for iterative structural refinement, and a Model Context Protocol server for AI-assisted querying, \oc{} bridges expert-specified and data-driven structure learning within a unified governance framework. We release \oc{} as open-source software to support reproducible causal inference research.
 
 %% ============================================================
 %% REFERENCES
@@ -721,11 +803,11 @@ The delta-method SE formula (Equation~\ref{eq:delta}) assumes independence acros
 \section{Full Issue Registry}
 \label{app:issues}
 
-The \oc{} issue registry contains 30 detection rules organized into six categories. Table~\ref{tab:issue-registry} presents all rules.
+The \oc{} issue registry contains 38 detection rules organized into seven categories. Table~\ref{tab:issue-registry} presents all rules.
 
 \begin{table}[htbp]
 \centering
-\caption{Full Issue Detection Registry (30 Rules). Trigger: \texttt{pre} = pre-run, \texttt{post} = post-run, \texttt{xrun} = cross-run.}
+\caption{Full Issue Detection Registry (38 Rules). Trigger: \texttt{pre} = pre-run, \texttt{post} = post-run, \texttt{xrun} = cross-run.}
 \label{tab:issue-registry}
 \scriptsize
 \begin{tabular}{@{}lllllp{4.2cm}@{}}
@@ -746,7 +828,7 @@ The \oc{} issue registry contains 30 detection rules organized into six categori
 \texttt{EXPOSURE\_NOT\_PREDET} & CRIT & id & pre & No & Exposure variable not pre-treatment \\
 \texttt{MECHANICAL\_EDGE\_EST} & HIGH & id & pre & Yes & Accounting identity estimated as regression \\
 \texttt{PATH\_DOUBLE\_COUNT} & HIGH & id & post & No & Direct + indirect chain both used \\
-\texttt{SIG\_NOT\_IDENTIFIED} & CRIT & id & post & No & $p<0.05$ but claim $\neq$ IDENTIFIED\_CAUSAL \\
+\texttt{SIG\_NOT\_IDENTIFIED} & HIGH & id & post & No & $p<0.05$ but claim $\neq$ IDENTIFIED\_CAUSAL \\
 \midrule
 \multicolumn{6}{l}{\textit{Statistical Inference}} \\
 \texttt{SMALL\_SAMPLE\_INF} & HIGH & stat & post & No & $N<30$ with HAC SEs \\
@@ -773,6 +855,16 @@ The \oc{} issue registry contains 30 detection rules organized into six categori
 \texttt{CROSS\_EVID\_CONFLICT} & HIGH & rpt & xrun & No & Same relationship has conflicting signs \\
 \texttt{ORPHAN\_NODE\_UNCON} & MED & rpt & pre & Yes & Node not connected to any edge \\
 \texttt{UNIT\_MISSING\_CARD} & CRIT & rpt & post & Yes & EdgeCard missing treatment/outcome unit \\
+\midrule
+\multicolumn{6}{l}{\textit{Structural \& Data Pipeline}} \\
+\texttt{TARGET\_UNREACHABLE} & CRIT & dag & pre & No & Target node not reachable from any source \\
+\texttt{IDENTITY\_DEPS\_INCOM} & HIGH & dag & pre & Yes & Identity edge missing input dependencies \\
+\texttt{SINK\_NODE\_NOT\_TARG} & MED & dag & pre & Yes & Non-target sink node (dead end) \\
+\texttt{EDGE\_ID\_SYNTAX\_INV} & HIGH & dag & pre & Yes & Edge ID does not match \texttt{from\_to\_to} pattern \\
+\texttt{ID\_FORMULA\_DBL\_XFM} & MED & dag & pre & No & Identity formula applies double log/diff \\
+\texttt{LOADER\_FAILED} & HIGH & data & pre & No & Data loader raised exception \\
+\texttt{DATA\_INSUFF\_EDGE} & HIGH & data & pre & No & Insufficient observations for estimation \\
+\texttt{ALIGNMENT\_FAILURE} & MED & data & pre & No & Frequency alignment produced empty series \\
 \bottomrule
 \end{tabular}
 \end{table}
