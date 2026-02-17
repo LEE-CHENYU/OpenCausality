@@ -649,6 +649,7 @@ def dag_run(
             max_iterations=max_iterations,
             output_dir=effective_output_dir,
             force_run=force,
+            dag_path=dag_path,
         )
 
         # Run loop

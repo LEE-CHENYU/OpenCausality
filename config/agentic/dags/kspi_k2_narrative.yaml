@@ -1315,7 +1315,7 @@ edges:
     lag: 1
     contemporaneous: false
     unit: quarter
-  unit_spec:
+  unit_specification:
     treatment_unit: 1 log
     outcome_unit: 1 log
   notes: When real income falls, households cut consumption expenditure

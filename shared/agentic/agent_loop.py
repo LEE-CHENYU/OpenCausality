@@ -106,6 +106,9 @@ class AgentLoopConfig:
     # Skip strict validation (for NL-generated DAGs)
     force_run: bool = False
 
+    # DAG file path (for panel auto-generation)
+    dag_path: Path | None = None
+
 
 @dataclass
 class DataCatalog:
@@ -388,6 +391,9 @@ class AgentLoop:
                 run_id=self.run_id,
             )
 
+        # Build interactive panels (always, not gated by HITL items)
+        self._build_panels()
+
         # Create system report
         self.system_report = self._create_system_report()
 
@@ -402,6 +408,42 @@ class AgentLoop:
         logger.info("=" * 60)
 
         return self.system_report
+
+    def _build_panels(self) -> None:
+        """Auto-generate DAG visualization and HITL panels."""
+        dag_path = self.config.dag_path
+        state_path = self.config.output_dir / "issues" / "state.json"
+        cards_dir = self.config.output_dir / "cards" / "edge_cards"
+
+        # DAG Visualization
+        if dag_path:
+            try:
+                from scripts.build_dag_viz import build as build_dag_viz
+                viz_path = build_dag_viz(
+                    dag_path=dag_path,
+                    cards_dir=cards_dir,
+                    state_path=state_path,
+                    output_path=self.config.output_dir / "dag_visualization.html",
+                )
+                logger.info(f"DAG visualization built: {viz_path}")
+            except Exception as e:
+                logger.warning(f"DAG visualization build failed (non-blocking): {e}")
+
+        # HITL Panel
+        if state_path.exists():
+            try:
+                from scripts.build_hitl_panel import build as build_hitl
+                hitl_path = build_hitl(
+                    state_path=state_path,
+                    cards_dir=cards_dir,
+                    actions_path=Path("config/agentic/hitl_actions.yaml"),
+                    registry_path=Path("config/agentic/issue_registry.yaml"),
+                    output_dir=self.config.output_dir,
+                    dag_path=dag_path,
+                )
+                logger.info(f"HITL panel built: {hitl_path}")
+            except Exception as e:
+                logger.warning(f"HITL panel build failed (non-blocking): {e}")
 
     def _run_iteration(self) -> IterationResult:
         """

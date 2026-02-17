@@ -941,15 +941,8 @@ const EDGES = [
     "cf_policy_allowed": false,
     "cf_reason_blocked": "REDUCED_FORM mode does not allow policy interventions",
     "n_obs": 306,
-    "issues": [
-      {
-        "issue_key": "SIGNIFICANT_BUT_NOT_IDENTIFIED:oil_supply_to_brent",
-        "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
-        "severity": "CRITICAL",
-        "message": "p=0.0000 but claim_level=REDUCED_FORM. Significance does not establish causation."
-      }
-    ],
-    "has_critical_issue": true,
+    "issues": [],
+    "has_critical_issue": false,
     "llm_annotation": "An oil supply shock is associated with movements in the Brent price, capturing how unexpected changes in global oil availability translate into market pricing of crude. A key risk is that the \u201cexogenous\u201d shock series may still embed demand news, inventory/precautionary demand, or contemporaneous policy/geopolitical information that also affects Brent, which would confound the reduced-form mapping and potentially distort the sign or magnitude. Another concern is timing/aggregation (e.g., monthly identification vs. higher-frequency price adjustment) and measurement error in the shock that can attenuate estimates. Next, check robustness to alternative oil shock measures (e.g., Kilian-type decompositions), verify the dynamic response via local projections/VAR impulse responses, and test for sensitivity to controlling for global activity, inventories, and financial conditions to ensure the shock is not proxying for broader macro news."
   },
   {
@@ -1007,14 +1000,7 @@ const EDGES = [
     "cf_policy_allowed": false,
     "cf_reason_blocked": "Counterfactual Use: BLOCKED\nReason: regime break risk\n\nEven if p<0.05, this does not establish a causal effect.",
     "n_obs": 187,
-    "issues": [
-      {
-        "issue_key": "RATING_DIAGNOSTICS_CONFLICT:oil_supply_to_fx",
-        "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
-        "severity": "HIGH",
-        "message": "A-rating despite failed diagnostics."
-      }
-    ],
+    "issues": [],
     "has_critical_issue": false,
     "llm_annotation": ""
   },
@@ -1073,14 +1059,7 @@ const EDGES = [
     "cf_policy_allowed": false,
     "cf_reason_blocked": "Counterfactual Use: BLOCKED\nReason: regime break risk\n\nEven if p<0.05, this does not establish a causal effect.",
     "n_obs": 187,
-    "issues": [
-      {
-        "issue_key": "RATING_DIAGNOSTICS_CONFLICT:oil_demand_to_fx",
-        "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
-        "severity": "HIGH",
-        "message": "A-rating despite failed diagnostics."
-      }
-    ],
+    "issues": [],
     "has_critical_issue": false,
     "llm_annotation": "This edge means that global oil demand shocks are associated with movements in the KZT/USD exchange rate, consistent with Kazakhstan behaving like a commodity currency whose terms of trade improve when oil demand strengthens. A key risk is that the \u201coil demand shock\u201d measure may still bundle global growth/financial risk shocks that simultaneously move capital flows and the dollar, creating omitted-variable bias or conflating demand with broader risk-on/risk-off dynamics; additionally, FX responses can reflect central bank intervention, capital controls, or anticipatory pricing that complicates timing. Next, a researcher should check identification of the oil-demand shock (e.g., alternative global demand instruments or sign/zero restrictions), test robustness to controlling for global dollar strength and risk sentiment (DXY, VIX, global rates), and verify the impulse timing (does KZT move after the shock rather than before) and stability across regimes (pre/post major policy changes or oil-price collapses)."
   },
@@ -1144,7 +1123,7 @@ const EDGES = [
         "issue_key": "RATING_DIAGNOSTICS_CONFLICT:vix_to_fx",
         "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
         "severity": "HIGH",
-        "message": "A-rating despite failed diagnostics."
+        "message": "A-rating despite failed diagnostics on vix_to_fx."
       }
     ],
     "has_critical_issue": false,
@@ -1299,7 +1278,14 @@ const EDGES = [
     "cf_policy_allowed": false,
     "cf_reason_blocked": "Claim level capped to BLOCKED_ID",
     "n_obs": 67,
-    "issues": [],
+    "issues": [
+      {
+        "issue_key": "RATING_DIAGNOSTICS_CONFLICT:cpi_to_nbk_rate",
+        "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
+        "severity": "HIGH",
+        "message": "A-rating despite failed diagnostics on cpi_to_nbk_rate."
+      }
+    ],
     "has_critical_issue": false,
     "llm_annotation": "This edge represents the NBK\u2019s reaction function: headline inflation may be related to subsequent policy-rate adjustments as the central bank leans against inflationary pressure. The main risk is that this relationship is blocked or confounded by omitted drivers (e.g., exchange rate movements, output gap, global commodity prices, fiscal shocks) or by reverse timing/measurement issues (policy affecting inflation with lags while inflation data reflect earlier conditions), which can wash out the apparent link\u2014consistent with the extremely imprecise estimate and near-zero statistical signal here. Next, verify timing and information sets (use real-time CPI releases and meeting dates), add key controls and lags typical of Taylor-type rules, and check robustness across regimes (e.g., pre/post policy framework changes) to see whether CPI predicts rate moves in subsamples or at specific horizons."
   },
@@ -1593,132 +1579,6 @@ const EDGES = [
     "llm_annotation": "A rise in **kzt_usd** (a KZT depreciation against the USD) **causes** a decline in **real_expenditure**, consistent with exchange-rate pass-through raising the domestic price of imported consumption/investment goods and tightening real purchasing power; the IRF(0) of -0.10 suggests an immediate contraction. The main threats are violations of the identification assumptions\u2014e.g., contemporaneous monetary/fiscal or commodity-price shocks moving both the exchange rate and spending, anticipatory behavior (expenditure falling before the depreciation), or measurement/deflation issues that mechanically induce a negative response. Next, check pre-trends/placebo leads and sensitivity to alternative identification (e.g., different shock ordering/instruments), and verify robustness across deflators (CPI vs. PCE) and subsamples (oil-price regimes, crisis periods) to ensure the effect isn\u2019t driven by correlated external shocks or inflation mismeasurement."
   },
   {
-    "id": "shock_to_npl_kspi",
-    "source": "imported_inflation_instrument",
-    "target": "npl_kspi",
-    "edge_type": "causal",
-    "expected_sign": "positive",
-    "interpretation": "Aggregate NPL response to imported inflation shock",
-    "notes": "Reduced-form NPL response. Cannot decompose channels without loan-level data.",
-    "provenance_source": "manual",
-    "provenance_detail": "",
-    "strategy_type": "iv",
-    "strategy_argument": "Imported inflation instrument (FX x pre-period import share) provides exogenous variation.",
-    "strategy_key_assumption": "Exclusion: imported inflation affects NPL only through household income channel.",
-    "point": 72.79719737828836,
-    "se": 10.297353981285937,
-    "pvalue": 1.5548712171304386e-12,
-    "design": "LOCAL_PROJECTIONS",
-    "rating": "B",
-    "score": 0.79,
-    "claim_level": "IDENTIFIED_CAUSAL",
-    "all_pass": true,
-    "diagnostics": [
-      {
-        "name": "hac_bandwidth",
-        "passed": true
-      },
-      {
-        "name": "effective_obs",
-        "passed": true
-      },
-      {
-        "name": "r_squared_h0",
-        "passed": true
-      },
-      {
-        "name": "residual_ac1",
-        "passed": true
-      },
-      {
-        "name": "sign_consistency",
-        "passed": true
-      }
-    ],
-    "failure_flags": [
-      "small_sample"
-    ],
-    "id_risks": {
-      "unmeasured_confounding": "medium",
-      "simultaneity": "low",
-      "weak_variation": "low",
-      "measurement_error": "low",
-      "selection": "low"
-    },
-    "cf_shock_allowed": true,
-    "cf_policy_allowed": false,
-    "cf_reason_blocked": "REDUCED_FORM mode does not allow policy interventions",
-    "n_obs": 26,
-    "issues": [],
-    "has_critical_issue": false,
-    "llm_annotation": "An increase in the imported-inflation instrument is associated with higher NPLs in KSPI, consistent with a macro price shock that may squeeze real incomes, raise input costs, or tighten financial conditions and thereby worsen repayment capacity. The main risk to interpreting this as a clean reduced-form shock transmission is that the instrument could be correlated with other contemporaneous forces affecting NPLs (e.g., exchange-rate movements, policy responses, sectoral demand shocks) or that bank-level exposure/composition shifts mechanically change measured NPLs. Given the note that channels can\u2019t be decomposed without loan-level data, the next checks should focus on validating the instrument\u2019s exogeneity (placebo tests on pre-trends and unaffected outcomes, robustness to adding exchange rate/monetary policy controls) and exploring heterogeneity using available aggregates (e.g., by sectoral loan shares, maturity structure, or borrower type) to see whether the response aligns with plausible pass-through mechanisms.",
-    "blocked_reason": "DataScout exhausted: no data found for node &#x27;imported_inflation_instrument&#x27; after 2 passes",
-    "remediation": "Place a CSV with columns [date, imported_inflation_instrument] in data/downloaded/imported_inflation_instrument.csv, or add a source entry in the DAG YAML under nodes.imported_inflation_instrument.source."
-  },
-  {
-    "id": "shock_to_cor_kspi",
-    "source": "imported_inflation_instrument",
-    "target": "cor_kspi",
-    "edge_type": "causal",
-    "expected_sign": "positive",
-    "interpretation": "Total provisioning response to imported inflation shock",
-    "notes": "Reduced-form CoR response. IFRS 9 overlay is latent.",
-    "provenance_source": "manual",
-    "provenance_detail": "",
-    "strategy_type": "iv",
-    "strategy_argument": "Imported inflation instrument (FX x pre-period import share) provides exogenous variation.",
-    "strategy_key_assumption": "Exclusion: imported inflation affects CoR only through household income/default channel.",
-    "point": 85.95725782265163,
-    "se": 7.40220359386492,
-    "pvalue": 3.565189467439174e-31,
-    "design": "LOCAL_PROJECTIONS",
-    "rating": "B",
-    "score": 0.79,
-    "claim_level": "IDENTIFIED_CAUSAL",
-    "all_pass": true,
-    "diagnostics": [
-      {
-        "name": "hac_bandwidth",
-        "passed": true
-      },
-      {
-        "name": "effective_obs",
-        "passed": true
-      },
-      {
-        "name": "r_squared_h0",
-        "passed": true
-      },
-      {
-        "name": "residual_ac1",
-        "passed": true
-      },
-      {
-        "name": "sign_consistency",
-        "passed": true
-      }
-    ],
-    "failure_flags": [
-      "small_sample"
-    ],
-    "id_risks": {
-      "unmeasured_confounding": "medium",
-      "simultaneity": "low",
-      "weak_variation": "low",
-      "measurement_error": "low",
-      "selection": "low"
-    },
-    "cf_shock_allowed": true,
-    "cf_policy_allowed": false,
-    "cf_reason_blocked": "REDUCED_FORM mode does not allow policy interventions",
-    "n_obs": 26,
-    "issues": [],
-    "has_critical_issue": false,
-    "llm_annotation": "",
-    "blocked_reason": "DataScout exhausted: no data found for node &#x27;imported_inflation_instrument&#x27; after 2 passes",
-    "remediation": "Place a CSV with columns [date, imported_inflation_instrument] in data/downloaded/imported_inflation_instrument.csv, or add a source entry in the DAG YAML under nodes.imported_inflation_instrument.source."
-  },
-  {
     "id": "expenditure_to_payments_revenue",
     "source": "real_expenditure",
     "target": "payments_revenue_kspi",
@@ -1779,11 +1639,11 @@ const EDGES = [
       {
         "issue_key": "SIGNIFICANT_BUT_NOT_IDENTIFIED:expenditure_to_payments_revenue",
         "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
-        "severity": "CRITICAL",
-        "message": "p=0.0000 but claim_level=REDUCED_FORM. Significance does not establish causation."
+        "severity": "HIGH",
+        "message": "p=0.0000 but claim_level=DESCRIPTIVE. Significance does not establish causation."
       }
     ],
-    "has_critical_issue": true,
+    "has_critical_issue": false,
     "llm_annotation": "Higher real_expenditure is associated with higher payments_revenue_kspi, consistent with a channel where customer spending increases GMV that flows through the KSPI connector into interchange and fee-based payments revenue. A key risk is that expenditure may be proxying for broader demand or seasonality that also directly raises payments revenue (e.g., promotions, macro conditions, merchant mix), and connector availability/measurement issues could induce selection or attenuation if KSPI coverage changes over time. Next, check whether the relationship is stable across periods with constant KSPI integration (and across cohorts/markets), and validate the GMV\u2192interchange\u2192revenue linkage by testing intermediate outcomes (GMV, connected share, take rate) and ruling out concurrent pricing or tracking changes."
   },
   {
@@ -2121,14 +1981,7 @@ const EDGES = [
     "cf_policy_allowed": false,
     "cf_reason_blocked": "REDUCED_FORM mode does not allow policy interventions",
     "n_obs": null,
-    "issues": [
-      {
-        "issue_key": "DATA_INSUFFICIENT_EDGE:nominal_expenditure_to_real",
-        "rule_id": "DATA_INSUFFICIENT_EDGE",
-        "severity": "HIGH",
-        "message": "Edge 'nominal_expenditure_to_real' has insufficient data for estimation (fewer than 5 observations after alignment)."
-      }
-    ],
+    "issues": [],
     "has_critical_issue": false
   },
   {
@@ -2172,14 +2025,7 @@ const EDGES = [
     "cf_policy_allowed": false,
     "cf_reason_blocked": "REDUCED_FORM mode does not allow policy interventions",
     "n_obs": null,
-    "issues": [
-      {
-        "issue_key": "DATA_INSUFFICIENT_EDGE:wage_to_nominal_income",
-        "rule_id": "DATA_INSUFFICIENT_EDGE",
-        "severity": "HIGH",
-        "message": "Edge 'wage_to_nominal_income' has insufficient data for estimation (fewer than 5 observations after alignment)."
-      }
-    ],
+    "issues": [],
     "has_critical_issue": false
   }
 ];
@@ -2998,7 +2844,7 @@ const ACTIONS_BY_RULE = {
     ]
   }
 };
-const GENERATED_AT = "2026-02-17 00:23:46 UTC";
+const GENERATED_AT = "2026-02-17 06:59:14 UTC";
 const ISSUE_GUIDANCE = {
   "SIGNIFICANT_BUT_NOT_IDENTIFIED:fx_to_cpi_tradable": "**Finding**: The edge **fx_to_cpi_tradable** has a statistically significant estimated effect (**\u03b2 = 0.113**, **SE = 0.028**, **p = 0.0001**, **N = 1200**) while being labeled **IDENTIFIED_CAUSAL** under **IMMUTABLE_EVIDENCE**.\n\n**Concern**: Even with **p = 0.0001**, statistical significance alone does not justify a causal claim, and with **no failed diagnostics reported** there is still an identification gap: the evidence presented supports a precisely estimated association but does not document the specific quasi-experimental/exogeneity conditions required for **IDENTIFIED_CAUSAL**.\n\n**Recommendation**: **Downgrade the claim level from IDENTIFIED_CAUSAL to ASSOCIATIONAL (or \u201cNOT_IDENTIFIED\u201d) unless you can explicitly document the identification argument** tied to \u201cIMMUTABLE_EVIDENCE\u201d (e.g., a clearly exogenous FX shock/assignment mechanism), keeping **\u03b2 = 0.113 (p = 0.0001)** as strong evidence of association but not, by itself, causation.",
   "RATING_DIAGNOSTICS_CONFLICT:cpi_to_nbk_rate": "**Finding**: The cpi_to_nbk_rate edge is rated **A** even though the estimated effect is essentially null (**coefficient = -0.5353**, **SE = 13.9656**, **p = 0.9694**, **N = 67**) and it **fails sign_consistency**.\n\n**Concern**: An **A-rating** is not credible here because **sign_consistency failed**, indicating the estimated direction is unstable across horizons/specifications in the local projections setup, and the extremely weak statistical signal (**p = 0.9694**) makes any causal directional claim at the **BLOCKED_ID** level highly unreliable.\n\n**Recommendation**: **Downgrade or block** this edge for causal interpretation (at minimum remove the **A** rating) unless you can resolve the **sign_consistency** failure (e.g., by tightening the LP specification/horizon set or addressing instability); with **p = 0.9694**, the practical default should be to treat this as **no evidence of an effect** rather than an A-rated causal link.",

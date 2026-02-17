@@ -2536,7 +2536,7 @@ const RULE_DESCRIPTIONS = {
     "guidance": "The system will auto-populate units from the DAG spec. Verify that the inferred units match the actual estimation specification.\n"
   }
 };
-const GENERATED_AT = "2026-02-17 00:00:24 UTC";
+const GENERATED_AT = "2026-02-17 06:59:15 UTC";
 const DAG_EDGES = {
   "kzt_usd_to_cpi_tradable": {
     "from": "kzt_usd",
@@ -2585,19 +2585,6 @@ const DAG_EDGES = {
     ],
     "notes": "Block A falsification: Near-zero pass-through to non-tradable CPI."
   },
-  "imported_inflation_instrument_to_real_income": {
-    "from": "imported_inflation_instrument",
-    "to": "real_income",
-    "edge_type": "causal",
-    "expected_sign": "any",
-    "magnitude_range": null,
-    "regime_split_date": null,
-    "interpretation": "",
-    "is_not": [],
-    "allowed_uses": [],
-    "forbidden_uses": [],
-    "notes": "NL-extracted: Imported inflation induced by exchange-rate depreciation-&gt;Households&#x27; purchasing power (negative)"
-  },
   "cpi_headline_to_real_income": {
     "from": "cpi_headline",
     "to": "real_income",
@@ -2610,19 +2597,6 @@ const DAG_EDGES = {
     "allowed_uses": [],
     "forbidden_uses": [],
     "notes": "NL-extracted: Imported inflation (price level increase) with sticky incomes-&gt;Real disposable income (negative)"
-  },
-  "imported_inflation_instrument_to_real_expenditure_negative": {
-    "from": "imported_inflation_instrument",
-    "to": "real_expenditure",
-    "edge_type": "causal",
-    "expected_sign": "any",
-    "magnitude_range": null,
-    "regime_split_date": null,
-    "interpretation": "",
-    "is_not": [],
-    "allowed_uses": [],
-    "forbidden_uses": [],
-    "notes": "NL-extracted: Imported inflation (price level increase) with sticky incomes-&gt;Real household spending (consumption) (negative)"
   },
   "transfer_income_to_nominal_income_buffering": {
     "from": "transfer_income",

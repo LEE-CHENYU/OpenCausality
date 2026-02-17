@@ -117,21 +117,50 @@ def load_edge_card(card_path: Path) -> dict | None:
     }
 
 
+def _normalize_issue_key(key: str, issue: dict) -> str:
+    """Normalize issue keys to canonical 'RULE_ID:edge_id' format.
+
+    Handles two formats:
+      - Canonical:  'RULE_ID:edge_id'
+      - Legacy:     'edge/edge_id/RULE_ID'  (or 'scope/target/RULE_ID')
+    """
+    if ":" in key:
+        return key
+    parts = key.split("/")
+    if len(parts) == 3:
+        return f"{parts[2]}:{parts[1]}"
+    rule_id = issue.get("rule_id", "")
+    edge_id = issue.get("edge_id", "")
+    if rule_id and edge_id:
+        return f"{rule_id}:{edge_id}"
+    return key
+
+
 def load_issues(state_path: Path) -> dict[str, list[dict]]:
-    """Load open issues grouped by edge_id."""
+    """Load open issues grouped by edge_id.
+
+    Handles both nested (CrossRunState) and flat state.json formats.
+    """
     if not state_path.exists():
         return {}
     with open(state_path) as f:
         state = json.load(f)
 
+    # Nested format: {"issues": {...}} or flat format
+    all_issues = state.get("issues", None)
+    if all_issues is None:
+        all_issues = {k: v for k, v in state.items()
+                      if isinstance(v, dict) and "rule_id" in v}
+
     by_edge: dict[str, list[dict]] = {}
-    for key, issue in state.get("issues", {}).items():
+    for key, issue in all_issues.items():
         if issue.get("status") != "OPEN":
             continue
-        parts = key.split(":", 1)
-        edge_id = parts[1] if len(parts) > 1 else key
+        canonical = _normalize_issue_key(key, issue)
+        parts = canonical.split(":", 1)
+        edge_id = parts[1] if len(parts) > 1 else canonical
         by_edge.setdefault(edge_id, []).append({
-            "issue_key": key,
+            "issue_key": canonical,
             "rule_id": issue.get("rule_id", ""),
             "severity": issue.get("severity", ""),
             "message": issue.get("message", ""),

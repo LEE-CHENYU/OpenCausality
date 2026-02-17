@@ -492,86 +492,115 @@
 <script>
 // ── INJECTED DATA (replaced at build time) ──────────────────────────────
 const ISSUES = {
-  "NULL_LINK_SIGNIFICANT:global": {
+  "RATING_DIAGNOSTICS_CONFLICT:cpi_to_nbk_rate": {
     "status": "OPEN",
-    "opened_run": "c8d49111",
     "severity": "HIGH",
-    "rule_id": "NULL_LINK_SIGNIFICANT",
-    "message": "Null link rwa_kspi->loan_portfolio_kspi: significant partial association (beta=2.0225, p=0.0000, N=27). DAG may need this edge."
-  },
-  "DATA_INSUFFICIENT_EDGE:wage_to_nominal_income": {
-    "status": "OPEN",
-    "opened_run": "c8d49111",
-    "severity": "HIGH",
-    "rule_id": "DATA_INSUFFICIENT_EDGE",
-    "message": "Edge 'wage_to_nominal_income' has insufficient data for estimation (fewer than 5 observations after alignment)."
+    "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
+    "edge_id": "cpi_to_nbk_rate",
+    "message": "A-rating despite failed diagnostics on cpi_to_nbk_rate."
   },
   "RATING_DIAGNOSTICS_CONFLICT:vix_to_fx": {
     "status": "OPEN",
-    "opened_run": "c8d49111",
     "severity": "HIGH",
     "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
-    "message": "A-rating despite failed diagnostics."
+    "edge_id": "vix_to_fx",
+    "message": "A-rating despite failed diagnostics on vix_to_fx."
   },
   "SIGNIFICANT_BUT_NOT_IDENTIFIED:portfolio_mix_to_rwa": {
     "status": "OPEN",
-    "opened_run": "c8d49111",
     "severity": "CRITICAL",
     "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+    "edge_id": "portfolio_mix_to_rwa",
     "message": "p=0.0000 but claim_level=BLOCKED_ID. Significance does not establish causation."
   },
   "SIGNIFICANT_BUT_NOT_IDENTIFIED:expenditure_to_payments_revenue": {
     "status": "OPEN",
-    "opened_run": "c8d49111",
-    "severity": "CRITICAL",
+    "severity": "HIGH",
     "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
-    "message": "p=0.0000 but claim_level=REDUCED_FORM. Significance does not establish causation."
+    "edge_id": "expenditure_to_payments_revenue",
+    "message": "p=0.0000 but claim_level=DESCRIPTIVE. Significance does not establish causation."
   },
   "SIGNIFICANT_BUT_NOT_IDENTIFIED:nbk_rate_to_cor": {
     "status": "OPEN",
-    "opened_run": "c8d49111",
     "severity": "CRITICAL",
     "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+    "edge_id": "nbk_rate_to_cor",
     "message": "p=0.0029 but claim_level=BLOCKED_ID. Significance does not establish causation."
-  },
-  "RATING_DIAGNOSTICS_CONFLICT:oil_supply_to_fx": {
-    "status": "OPEN",
-    "opened_run": "c8d49111",
-    "severity": "HIGH",
-    "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
-    "message": "A-rating despite failed diagnostics."
-  },
-  "SIGNIFICANT_BUT_NOT_IDENTIFIED:oil_supply_to_brent": {
-    "status": "OPEN",
-    "opened_run": "c8d49111",
-    "severity": "CRITICAL",
-    "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
-    "message": "p=0.0000 but claim_level=REDUCED_FORM. Significance does not establish causation."
-  },
-  "RATING_DIAGNOSTICS_CONFLICT:oil_demand_to_fx": {
-    "status": "OPEN",
-    "opened_run": "c8d49111",
-    "severity": "HIGH",
-    "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
-    "message": "A-rating despite failed diagnostics."
   },
   "SIGNIFICANT_BUT_NOT_IDENTIFIED:nbk_rate_to_deposit_cost": {
     "status": "OPEN",
-    "opened_run": "c8d49111",
     "severity": "CRITICAL",
     "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+    "edge_id": "nbk_rate_to_deposit_cost",
     "message": "p=0.0003 but claim_level=BLOCKED_ID. Significance does not establish causation."
-  },
-  "DATA_INSUFFICIENT_EDGE:nominal_expenditure_to_real": {
-    "status": "OPEN",
-    "opened_run": "c8d49111",
-    "severity": "HIGH",
-    "rule_id": "DATA_INSUFFICIENT_EDGE",
-    "message": "Edge 'nominal_expenditure_to_real' has insufficient data for estimation (fewer than 5 observations after alignment)."
   }
 };
 const CLOSED_ISSUES_COUNT = 0;
 const EDGES = {
+  "cpi_to_nbk_rate": {
+    "point": -0.5352595428653101,
+    "se": 13.96562608868574,
+    "pvalue": 0.9694270212706624,
+    "design": "LOCAL_PROJECTIONS",
+    "rating": "A",
+    "score": 0.8240000000000001,
+    "claim_level": "BLOCKED_ID",
+    "all_pass": false,
+    "n_obs": 67,
+    "diagnostics": [
+      {
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": true
+      },
+      {
+        "name": "r_squared_h0",
+        "passed": true
+      },
+      {
+        "name": "residual_ac1",
+        "passed": true
+      },
+      {
+        "name": "sign_consistency",
+        "passed": false
+      }
+    ],
+    "failure_flags": [],
+    "panel": null,
+    "estimand": "IRF of nbk_policy_rate to a unit shock in cpi_headline",
+    "is_not": "Structural causal effect under all interventions",
+    "allowed_uses": [],
+    "forbidden_uses": [
+      "policy_counterfactual"
+    ],
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Claim level capped to BLOCKED_ID",
+    "id_risks": {
+      "unmeasured_confounding": "medium",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "untestable_assumptions": [
+      "No omitted common cause of treatment and outcome"
+    ],
+    "testable_passed": [
+      "hac_bandwidth",
+      "effective_obs",
+      "r_squared_h0",
+      "residual_ac1"
+    ],
+    "testable_failed": [
+      "sign_consistency"
+    ],
+    "propagation_role": "diagnostic_only"
+  },
   "expenditure_to_payments_revenue": {
     "point": 333.40898842797117,
     "se": 70.95395662999425,
@@ -635,32 +664,6 @@ const EDGES = {
       "effective_obs"
     ],
     "propagation_role": "diagnostic_only"
-  },
-  "global": {
-    "point": null,
-    "se": null,
-    "pvalue": null,
-    "design": null,
-    "rating": null,
-    "score": null,
-    "claim_level": null,
-    "all_pass": false,
-    "n_obs": null,
-    "diagnostics": [],
-    "failure_flags": [],
-    "panel": null,
-    "estimand": "",
-    "is_not": [],
-    "allowed_uses": [],
-    "forbidden_uses": [],
-    "cf_shock_allowed": null,
-    "cf_policy_allowed": null,
-    "cf_reason_blocked": "",
-    "id_risks": {},
-    "untestable_assumptions": [],
-    "testable_passed": [],
-    "testable_failed": [],
-    "propagation_role": ""
   },
   "nbk_rate_to_cor": {
     "point": 0.3559558353990485,
@@ -790,228 +793,6 @@ const EDGES = {
     ],
     "propagation_role": "diagnostic_only"
   },
-  "nominal_expenditure_to_real": {
-    "point": 1.0,
-    "se": 0.0,
-    "pvalue": null,
-    "design": "IDENTITY",
-    "rating": "A",
-    "score": 0.94,
-    "claim_level": "IDENTIFIED_CAUSAL",
-    "all_pass": true,
-    "n_obs": null,
-    "diagnostics": [
-      {
-        "name": "identity_check",
-        "passed": true
-      }
-    ],
-    "failure_flags": [
-      "mechanical_identity_risk"
-    ],
-    "panel": null,
-    "estimand": "Sensitivity: d(log_real)/d(log_nominal) = 1.0 (deflation identity)",
-    "is_not": "Causal effect; this is a mechanical identity",
-    "allowed_uses": [],
-    "forbidden_uses": [],
-    "cf_shock_allowed": true,
-    "cf_policy_allowed": false,
-    "cf_reason_blocked": "REDUCED_FORM mode does not allow policy interventions",
-    "id_risks": {
-      "unmeasured_confounding": "low",
-      "simultaneity": "low",
-      "weak_variation": "low",
-      "measurement_error": "low",
-      "selection": "low"
-    },
-    "untestable_assumptions": [],
-    "testable_passed": [],
-    "testable_failed": [],
-    "propagation_role": "identity"
-  },
-  "oil_demand_to_fx": {
-    "point": -0.29825697639309134,
-    "se": 0.16108393436726334,
-    "pvalue": 0.06408866840834736,
-    "design": "LOCAL_PROJECTIONS",
-    "rating": "A",
-    "score": 0.97,
-    "claim_level": "REDUCED_FORM",
-    "all_pass": true,
-    "n_obs": 187,
-    "diagnostics": [
-      {
-        "name": "hac_bandwidth",
-        "passed": true
-      },
-      {
-        "name": "effective_obs",
-        "passed": true
-      },
-      {
-        "name": "r_squared_h0",
-        "passed": true
-      },
-      {
-        "name": "residual_ac1",
-        "passed": true
-      },
-      {
-        "name": "sign_consistency",
-        "passed": true
-      }
-    ],
-    "failure_flags": [],
-    "panel": null,
-    "estimand": "IRF of kzt_usd to a unit shock in oil_demand_shock",
-    "is_not": "Structural causal effect under all interventions",
-    "allowed_uses": [],
-    "forbidden_uses": [],
-    "cf_shock_allowed": false,
-    "cf_policy_allowed": false,
-    "cf_reason_blocked": "Counterfactual Use: BLOCKED\nReason: regime break risk\n\nEven if p<0.05, this does not establish a causal effect.",
-    "id_risks": {
-      "unmeasured_confounding": "medium",
-      "simultaneity": "low",
-      "weak_variation": "low",
-      "measurement_error": "low",
-      "selection": "low"
-    },
-    "untestable_assumptions": [
-      "No omitted common cause of treatment and outcome"
-    ],
-    "testable_passed": [
-      "hac_bandwidth",
-      "effective_obs",
-      "r_squared_h0",
-      "residual_ac1",
-      "sign_consistency"
-    ],
-    "testable_failed": [],
-    "propagation_role": "reduced_form"
-  },
-  "oil_supply_to_brent": {
-    "point": -0.05166562593634781,
-    "se": 0.005406555751311881,
-    "pvalue": 1.2226952161375292e-21,
-    "design": "LOCAL_PROJECTIONS",
-    "rating": "A",
-    "score": 0.97,
-    "claim_level": "IDENTIFIED_CAUSAL",
-    "all_pass": true,
-    "n_obs": 306,
-    "diagnostics": [
-      {
-        "name": "hac_bandwidth",
-        "passed": true
-      },
-      {
-        "name": "effective_obs",
-        "passed": true
-      },
-      {
-        "name": "r_squared_h0",
-        "passed": true
-      },
-      {
-        "name": "residual_ac1",
-        "passed": true
-      },
-      {
-        "name": "sign_consistency",
-        "passed": true
-      }
-    ],
-    "failure_flags": [],
-    "panel": null,
-    "estimand": "IRF of brent_price to a unit shock in oil_supply_shock",
-    "is_not": "Structural causal effect under all interventions",
-    "allowed_uses": [],
-    "forbidden_uses": [],
-    "cf_shock_allowed": true,
-    "cf_policy_allowed": false,
-    "cf_reason_blocked": "REDUCED_FORM mode does not allow policy interventions",
-    "id_risks": {
-      "unmeasured_confounding": "medium",
-      "simultaneity": "low",
-      "weak_variation": "low",
-      "measurement_error": "low",
-      "selection": "low"
-    },
-    "untestable_assumptions": [
-      "No omitted common cause of treatment and outcome"
-    ],
-    "testable_passed": [
-      "hac_bandwidth",
-      "effective_obs",
-      "r_squared_h0",
-      "residual_ac1",
-      "sign_consistency"
-    ],
-    "testable_failed": [],
-    "propagation_role": "structural"
-  },
-  "oil_supply_to_fx": {
-    "point": 0.00044787194670315805,
-    "se": 0.1276521731480084,
-    "pvalue": 0.9972006009022166,
-    "design": "LOCAL_PROJECTIONS",
-    "rating": "A",
-    "score": 0.97,
-    "claim_level": "REDUCED_FORM",
-    "all_pass": true,
-    "n_obs": 187,
-    "diagnostics": [
-      {
-        "name": "hac_bandwidth",
-        "passed": true
-      },
-      {
-        "name": "effective_obs",
-        "passed": true
-      },
-      {
-        "name": "r_squared_h0",
-        "passed": true
-      },
-      {
-        "name": "residual_ac1",
-        "passed": true
-      },
-      {
-        "name": "sign_consistency",
-        "passed": true
-      }
-    ],
-    "failure_flags": [],
-    "panel": null,
-    "estimand": "IRF of kzt_usd to a unit shock in oil_supply_shock",
-    "is_not": "Structural causal effect under all interventions",
-    "allowed_uses": [],
-    "forbidden_uses": [],
-    "cf_shock_allowed": false,
-    "cf_policy_allowed": false,
-    "cf_reason_blocked": "Counterfactual Use: BLOCKED\nReason: regime break risk\n\nEven if p<0.05, this does not establish a causal effect.",
-    "id_risks": {
-      "unmeasured_confounding": "medium",
-      "simultaneity": "low",
-      "weak_variation": "low",
-      "measurement_error": "low",
-      "selection": "low"
-    },
-    "untestable_assumptions": [
-      "No omitted common cause of treatment and outcome"
-    ],
-    "testable_passed": [
-      "hac_bandwidth",
-      "effective_obs",
-      "r_squared_h0",
-      "residual_ac1",
-      "sign_consistency"
-    ],
-    "testable_failed": [],
-    "propagation_role": "reduced_form"
-  },
   "portfolio_mix_to_rwa": {
     "point": 18195.962971994624,
     "se": 3952.75417946752,
@@ -1137,45 +918,6 @@ const EDGES = {
       "sign_consistency"
     ],
     "propagation_role": "structural"
-  },
-  "wage_to_nominal_income": {
-    "point": 0.6,
-    "se": 0.0,
-    "pvalue": null,
-    "design": "IDENTITY",
-    "rating": "A",
-    "score": 0.94,
-    "claim_level": "IDENTIFIED_CAUSAL",
-    "all_pass": true,
-    "n_obs": null,
-    "diagnostics": [
-      {
-        "name": "identity_check",
-        "passed": true
-      }
-    ],
-    "failure_flags": [
-      "mechanical_identity_risk"
-    ],
-    "panel": null,
-    "estimand": "Sensitivity: d(income)/d(wages) = wage_share = 0.60",
-    "is_not": "Causal effect; this is a mechanical identity",
-    "allowed_uses": [],
-    "forbidden_uses": [],
-    "cf_shock_allowed": true,
-    "cf_policy_allowed": false,
-    "cf_reason_blocked": "REDUCED_FORM mode does not allow policy interventions",
-    "id_risks": {
-      "unmeasured_confounding": "low",
-      "simultaneity": "low",
-      "weak_variation": "low",
-      "measurement_error": "low",
-      "selection": "low"
-    },
-    "untestable_assumptions": [],
-    "testable_passed": [],
-    "testable_failed": [],
-    "propagation_role": "identity"
   }
 };
 const ACTIONS_BY_RULE = {
@@ -1937,7 +1679,7 @@ const RULE_DESCRIPTIONS = {
     "guidance": "The system will auto-populate units from the DAG spec. Verify that the inferred units match the actual estimation specification.\n"
   }
 };
-const GENERATED_AT = "2026-02-17 00:23:47 UTC";
+const GENERATED_AT = "2026-02-17 06:59:14 UTC";
 const DAG_EDGES = {
   "oil_supply_to_brent": {
     "from": "oil_supply_shock",
@@ -2211,54 +1953,6 @@ const DAG_EDGES = {
       "policy_counterfactual"
     ],
     "notes": "Block F validated: IRF(0) = -0.10 for real expenditure."
-  },
-  "shock_to_npl_kspi": {
-    "from": "imported_inflation_instrument",
-    "to": "npl_kspi",
-    "edge_type": "causal",
-    "expected_sign": "positive",
-    "magnitude_range": [
-      0.0,
-      0.5
-    ],
-    "regime_split_date": "",
-    "interpretation": "Aggregate NPL response to imported inflation shock",
-    "is_not": [
-      "Micro income-default elasticity",
-      "IFRS 9 overlay component"
-    ],
-    "allowed_uses": [
-      "shock_counterfactual",
-      "scenario_only"
-    ],
-    "forbidden_uses": [
-      "policy_counterfactual"
-    ],
-    "notes": "Reduced-form NPL response. Cannot decompose channels without loan-level data."
-  },
-  "shock_to_cor_kspi": {
-    "from": "imported_inflation_instrument",
-    "to": "cor_kspi",
-    "edge_type": "causal",
-    "expected_sign": "positive",
-    "magnitude_range": [
-      0.0,
-      0.5
-    ],
-    "regime_split_date": "",
-    "interpretation": "Total provisioning response to imported inflation shock",
-    "is_not": [
-      "IFRS 9 macro overlay component",
-      "Realized credit loss component"
-    ],
-    "allowed_uses": [
-      "shock_counterfactual",
-      "scenario_only"
-    ],
-    "forbidden_uses": [
-      "policy_counterfactual"
-    ],
-    "notes": "Reduced-form CoR response. IFRS 9 overlay is latent."
   },
   "expenditure_to_payments_revenue": {
     "from": "real_expenditure",

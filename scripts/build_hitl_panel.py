@@ -37,17 +37,49 @@ DEFAULT_DAG = PROJECT_ROOT / "config" / "agentic" / "dags" / "kspi_k2_full.yaml"
 # ── Data extraction ─────────────────────────────────────────────────────────
 
 
+def _normalize_issue_key(key: str, issue: dict) -> str:
+    """Normalize issue keys to canonical 'RULE_ID:edge_id' format.
+
+    Handles two formats:
+      - Canonical:  'RULE_ID:edge_id'
+      - Legacy:     'edge/edge_id/RULE_ID'  (or 'scope/target/RULE_ID')
+    """
+    if ":" in key:
+        return key  # already canonical
+    parts = key.split("/")
+    if len(parts) == 3:
+        # scope/target/RULE_ID → RULE_ID:target
+        return f"{parts[2]}:{parts[1]}"
+    # Fallback: use rule_id from issue dict if available
+    rule_id = issue.get("rule_id", "")
+    edge_id = issue.get("edge_id", "")
+    if rule_id and edge_id:
+        return f"{rule_id}:{edge_id}"
+    return key
+
+
 def load_state(state_path: Path) -> tuple[dict, int]:
-    """Return (open_issues dict, closed_count)."""
+    """Return (open_issues dict, closed_count).
+
+    Handles both nested (CrossRunState) and flat state.json formats.
+    """
     with open(state_path) as f:
         state = json.load(f)
 
-    all_issues = state.get("issues", {})
+    # Nested format: {"issues": {...}, "last_updated": ...}
+    # Flat format: {"edge/x/RULE": {...}, ...}
+    all_issues = state.get("issues", None)
+    if all_issues is None:
+        # Flat format — the top-level dict IS the issues dict
+        all_issues = {k: v for k, v in state.items()
+                      if isinstance(v, dict) and "rule_id" in v}
+
     open_issues = {}
     closed_count = 0
     for key, issue in all_issues.items():
+        canonical = _normalize_issue_key(key, issue)
         if issue.get("status") == "OPEN":
-            open_issues[key] = issue
+            open_issues[canonical] = issue
         else:
             closed_count += 1
     return open_issues, closed_count
