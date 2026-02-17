@@ -1,6 +1,6 @@
 edge_id: oil_demand_to_fx
-dag_version_hash: 62ee85366d38a1bef004140293f32144ed41afc73d9927e89cebe471edc878b3
-created_at: '2026-02-15T23:55:21.029365'
+dag_version_hash: a0d5c383631c52aa262f288704c6f7868d48b73d5034761245939de8eeea1d72
+created_at: '2026-02-16T16:23:41.755224'
 data_provenance:
   treatment_source:
     connector: parquet_file
@@ -91,6 +91,18 @@ estimates:
   - 0.3301643281516395
   - 0.2967537201154383
   - 0.18050742359348818
+  treatment_unit: 1 SD Baumeister demand shock
+  outcome_unit: '% change in USD/KZT'
+  n_calendar_periods: 189
+  n_effective_obs_h0: 187
+  n_effective_obs_by_horizon:
+  - 187
+  - 186
+  - 185
+  - 184
+  - 183
+  - 182
+  - 181
 diagnostics:
   hac_bandwidth:
     name: hac_bandwidth
@@ -105,7 +117,21 @@ diagnostics:
     value: 187.0
     threshold: 20.0
     pvalue: null
-    message: ''
+    message: 187 observations
+  r_squared_h0:
+    name: r_squared_h0
+    passed: true
+    value: 0.9917230293833517
+    threshold: null
+    pvalue: null
+    message: 'R-squared at h=0: 0.9917'
+  residual_ac1:
+    name: residual_ac1
+    passed: true
+    value: 0.0035314687169491705
+    threshold: 0.5
+    pvalue: null
+    message: 'AR(1) residual autocorrelation: 0.004'
   sign_consistency:
     name: sign_consistency
     passed: true
@@ -113,64 +139,22 @@ diagnostics:
     threshold: null
     pvalue: null
     message: 'Sign consistent: expected -, got -0.2983'
-  ts_leads_test:
-    name: ts_leads_test
-    passed: true
-    value: null
-    threshold: null
-    pvalue: null
-    message: 'TSGuard: pass'
-  ts_residual_autocorr:
-    name: ts_residual_autocorr
-    passed: true
-    value: null
-    threshold: null
-    pvalue: null
-    message: 'TSGuard: pass'
-  ts_hac_sensitivity:
-    name: ts_hac_sensitivity
-    passed: true
-    value: null
-    threshold: null
-    pvalue: null
-    message: 'TSGuard: pass'
-  ts_lag_sensitivity:
-    name: ts_lag_sensitivity
-    passed: true
-    value: null
-    threshold: null
-    pvalue: null
-    message: 'TSGuard: pass'
-  ts_regime_stability:
-    name: ts_regime_stability
-    passed: false
-    value: null
-    threshold: null
-    pvalue: null
-    message: 'TSGuard: fail'
-  ts_shock_support:
-    name: ts_shock_support
-    passed: true
-    value: null
-    threshold: null
-    pvalue: null
-    message: 'TSGuard: pass'
-all_diagnostics_pass: false
+all_diagnostics_pass: true
 interpretation:
   estimand: IRF of kzt_usd to a unit shock in oil_demand_shock
   is_not: Structural causal effect under all interventions
   channels:
   - direct
-  - indirect
-  population: ''
-  conditions: ''
+  - indirect through unobserved channels
+  population: Kazakhstan aggregate time-series (Kaspi Bank)
+  conditions: Sample period, no regime changes
   allowed_uses: []
   forbidden_uses: []
 failure_flags:
   weak_identification: false
   potential_bad_control: false
   mechanical_identity_risk: false
-  regime_break_detected: true
+  regime_break_detected: false
   small_sample: false
   high_missing_rate: false
   entity_boundary_change: false
@@ -179,10 +163,11 @@ failure_flags:
 counterfactual:
   supports_shock_path: true
   supports_policy_intervention: false
-  intervention_note: Reduced-form LP estimate
+  intervention_note: Reduced-form LP estimate; valid for shock propagation, not policy
+    counterfactuals
   external_validity: ''
 credibility_rating: A
-credibility_score: 0.8655555555555556
+credibility_score: 0.97
 identification:
   claim_level: REDUCED_FORM
   risks:
@@ -196,17 +181,14 @@ identification:
   testable_threats_passed:
   - hac_bandwidth
   - effective_obs
+  - r_squared_h0
+  - residual_ac1
   - sign_consistency
-  - ts_leads_test
-  - ts_residual_autocorr
-  - ts_hac_sensitivity
-  - ts_lag_sensitivity
-  - ts_shock_support
-  testable_threats_failed:
-  - ts_regime_stability
-  strategy_type: ''
-  strategy_argument: ''
-  strategy_key_assumption: ''
+  testable_threats_failed: []
+  strategy_type: exogenous_shock
+  strategy_argument: Baumeister oil demand shocks are exogenous to Kazakhstan via
+    SVAR restrictions.
+  strategy_key_assumption: Kazakhstan is too small to drive global oil demand.
 counterfactual_block:
   shock_scenario_allowed: false
   policy_intervention_allowed: false
@@ -216,7 +198,12 @@ counterfactual_block:
 
 
     Even if p<0.05, this does not establish a causal effect.'
-  reason_policy_blocked: REDUCED_FORM mode does not allow policy interventions
+  reason_policy_blocked: 'Counterfactual Use: BLOCKED
+
+    Reason: regime break risk
+
+
+    Even if p<0.05, this does not establish a causal effect.'
   allowed: false
   reason_blocked: 'Counterfactual Use: BLOCKED
 
@@ -241,104 +228,13 @@ propagation_role:
     REDUCED_FORM: false
     DESCRIPTIVE: false
 literature:
-  supporting:
-  - doi: 10.47312/aefr.v6i2.334
-    title: Relationship Between Crude Oil Price Fluctuations, Economic Growth, Inflation,
-      and Exchange Rate in Indonesia 1967-2019
-    authors:
-    - Salwinar Aprin Nitami
-    - B. Hayati
-    year: 2021
-    excerpt: Economic fluctuations can be caused by demand shocks and supply shocks.
-      One of the supply shocks is caused by changes in world crude oil prices. As
-      a net importer of crude oil, any change in crude oil prices makes domestic economic
-      activity vulnerable to these shocks. The purpose of this study is to
-    relevance: supporting
-    edge_id: oil_demand_to_fx
-    paper_id: a0f1c50129ea71872b4d27a9f43877c89600b0a0
-    citation_count: 7
-    search_query: Oil demand shock KZT/USD exchange rate causal effect
-    source: semantic_scholar
-    pdf_url: ''
-  - doi: 10.32479/ijeep.14266
-    title: Wavelet Coherence and Continuous Wavelet Transform - Implementation and
-      Application to the Relationship between Exchange Rate and Oil Price for Importing
-      and Exporting Countries
-    authors:
-    - Jassim Aladwani
-    year: 2023
-    excerpt: 'The purpose of this study is to analyses the time–frequency relationship
-      between exchange rate and the oil price for exporting and importing countries
-      by using measures of continuous wavelet transform (CWT) and Wavelet coherence
-      (WCT). The findings of wavelet coherence (WCT) analysis indicates that '
-    relevance: supporting
-    edge_id: oil_demand_to_fx
-    paper_id: ''
-    citation_count: 5
-    search_query: Oil demand shock KZT/USD exchange rate causal effect
-    source: openalex
-    pdf_url: https://econjournals.com/index.php/ijeep/article/download/14266/7421
-  - doi: 10.32479/ijeep.16549
-    title: Asymmetric Effect of Oil Prices on Kazakhstan’s Stock Market Index and
-      Exchange Rate
-    authors:
-    - A. Syzdykova
-    - G. Azretbergenova
-    year: 2024
-    excerpt: In this study, the asymmetric effect of oil prices in Kazakhstan on the
-      exchange rate (USD/KZT) and Kazakhstan stock market index (KASE) returns was
-      analyzed using the non-linear ARDL cointegration (NARDL) method with monthly
-      data for the period January 2010-February 2024. As a result of the finding
-    relevance: supporting
-    edge_id: oil_demand_to_fx
-    paper_id: 8e2de21c6f5846b2b256f24392952489a7125b8d
-    citation_count: 3
-    search_query: Oil demand shock KZT/USD exchange rate causal effect
-    source: semantic_scholar
-    pdf_url: ''
-  - doi: 10.17059/ekon.reg.2022-1-15
-    title: 'The Impact of the Local Financial Market on Economic Growth: A Case Study
-      of Kazakhstan'
-    authors:
-    - Yuliya Nichkasova
-    - E. Nezhinsky
-    - Halina A. Shmarlouskaya
-    year: 2022
-    excerpt: Kazakhstan’s financial market has always been the focus of the government
-      attention as an important element of country development. Therefore, the main
-      goal is to build a well-developed, competitive and trustworthy financial market
-      that has a dominant influence on the economy and sustainable develop
-    relevance: supporting
-    edge_id: oil_demand_to_fx
-    paper_id: ''
-    citation_count: 2
-    search_query: Oil demand shock KZT/USD exchange rate causal effect
-    source: openalex
-    pdf_url: https://www.economyofregions.org/ojs/index.php/er/article/download/16/40/125
-  - doi: 10.71097/ijsat.v16.i3.8049
-    title: 'Exploring the Dynamic Interdependencies of Exchange Rates, Exports, and
-      Imports in Kazakhstan: Johansen Cointegration &amp; A Vector Autoregression
-      Analysis'
-    authors:
-    - Shyam Charan Barma
-    year: 2025
-    excerpt: This study examines the relationships among exchange rate, exports, and
-      imports in the Kazakhstan economy using monthly data from November 1993 to October
-      2022. All variables are non-stationary at levels but become stationary after
-      first differencing, indicating they are integrated of order one, I(1
-    relevance: supporting
-    edge_id: oil_demand_to_fx
-    paper_id: ''
-    citation_count: 1
-    search_query: Oil demand shock KZT/USD exchange rate causal effect
-    source: openalex
-    pdf_url: https://www.ijsat.org/papers/2025/3/8049.pdf
+  supporting: []
   challenging: []
   methodological: []
-  search_status: SEARCHED
-  search_timestamp: '2026-02-15T23:55:21.029430'
-  search_query: Oil demand shock KZT/USD exchange rate causal effect
-  total_results: 5
+  search_status: PENDING
+  search_timestamp: null
+  search_query: ''
+  total_results: 0
 companion_edge_id: null
 variant_of: null
 is_precisely_null: false

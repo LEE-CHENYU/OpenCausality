@@ -1,6 +1,6 @@
 edge_id: oil_supply_to_brent
-dag_version_hash: 62ee85366d38a1bef004140293f32144ed41afc73d9927e89cebe471edc878b3
-created_at: '2026-02-15T23:55:21.147841'
+dag_version_hash: a0d5c383631c52aa262f288704c6f7868d48b73d5034761245939de8eeea1d72
+created_at: '2026-02-16T16:23:41.649575'
 data_provenance:
   treatment_source:
     connector: parquet_file
@@ -91,6 +91,18 @@ estimates:
   - 0.01663572400828313
   - 0.0033799698960642627
   - 0.007817514359297156
+  treatment_unit: 1 SD Baumeister supply shock (mbd equivalent)
+  outcome_unit: '% change in Brent price'
+  n_calendar_periods: 308
+  n_effective_obs_h0: 306
+  n_effective_obs_by_horizon:
+  - 306
+  - 305
+  - 304
+  - 303
+  - 302
+  - 301
+  - 300
 diagnostics:
   hac_bandwidth:
     name: hac_bandwidth
@@ -105,7 +117,21 @@ diagnostics:
     value: 306.0
     threshold: 20.0
     pvalue: null
-    message: ''
+    message: 306 observations
+  r_squared_h0:
+    name: r_squared_h0
+    passed: true
+    value: 0.4698892608443679
+    threshold: null
+    pvalue: null
+    message: 'R-squared at h=0: 0.4699'
+  residual_ac1:
+    name: residual_ac1
+    passed: true
+    value: 0.004291822566685552
+    threshold: 0.5
+    pvalue: null
+    message: 'AR(1) residual autocorrelation: 0.004'
   sign_consistency:
     name: sign_consistency
     passed: true
@@ -113,57 +139,15 @@ diagnostics:
     threshold: null
     pvalue: null
     message: 'Sign consistent: expected -, got -0.0517'
-  ts_leads_test:
-    name: ts_leads_test
-    passed: true
-    value: null
-    threshold: null
-    pvalue: null
-    message: 'TSGuard: pass'
-  ts_residual_autocorr:
-    name: ts_residual_autocorr
-    passed: true
-    value: null
-    threshold: null
-    pvalue: null
-    message: 'TSGuard: pass'
-  ts_hac_sensitivity:
-    name: ts_hac_sensitivity
-    passed: true
-    value: null
-    threshold: null
-    pvalue: null
-    message: 'TSGuard: pass'
-  ts_lag_sensitivity:
-    name: ts_lag_sensitivity
-    passed: true
-    value: null
-    threshold: null
-    pvalue: null
-    message: 'TSGuard: pass'
-  ts_regime_stability:
-    name: ts_regime_stability
-    passed: true
-    value: null
-    threshold: null
-    pvalue: null
-    message: 'TSGuard: pass'
-  ts_shock_support:
-    name: ts_shock_support
-    passed: true
-    value: null
-    threshold: null
-    pvalue: null
-    message: 'TSGuard: pass'
 all_diagnostics_pass: true
 interpretation:
   estimand: IRF of brent_price to a unit shock in oil_supply_shock
   is_not: Structural causal effect under all interventions
   channels:
   - direct
-  - indirect
-  population: ''
-  conditions: ''
+  - indirect through unobserved channels
+  population: Kazakhstan aggregate time-series (Kaspi Bank)
+  conditions: Sample period, no regime changes
   allowed_uses: []
   forbidden_uses: []
 failure_flags:
@@ -179,12 +163,13 @@ failure_flags:
 counterfactual:
   supports_shock_path: true
   supports_policy_intervention: false
-  intervention_note: Reduced-form LP estimate
+  intervention_note: Reduced-form LP estimate; valid for shock propagation, not policy
+    counterfactuals
   external_validity: ''
 credibility_rating: A
 credibility_score: 0.97
 identification:
-  claim_level: REDUCED_FORM
+  claim_level: IDENTIFIED_CAUSAL
   risks:
     unmeasured_confounding: medium
     simultaneity: low
@@ -196,134 +181,46 @@ identification:
   testable_threats_passed:
   - hac_bandwidth
   - effective_obs
+  - r_squared_h0
+  - residual_ac1
   - sign_consistency
-  - ts_leads_test
-  - ts_residual_autocorr
-  - ts_hac_sensitivity
-  - ts_lag_sensitivity
-  - ts_regime_stability
-  - ts_shock_support
   testable_threats_failed: []
-  strategy_type: ''
-  strategy_argument: ''
-  strategy_key_assumption: ''
+  strategy_type: exogenous_shock
+  strategy_argument: Baumeister oil supply shocks are exogenous to KZ demand via SVAR
+    restrictions.
+  strategy_key_assumption: SVAR identifying restrictions correctly separate supply
+    from demand shocks.
 counterfactual_block:
-  shock_scenario_allowed: false
+  shock_scenario_allowed: true
   policy_intervention_allowed: false
-  reason_shock_blocked: Design LOCAL_PROJECTIONS provides REDUCED_FORM level only
+  reason_shock_blocked: null
   reason_policy_blocked: REDUCED_FORM mode does not allow policy interventions
-  allowed: false
-  reason_blocked: Design LOCAL_PROJECTIONS provides REDUCED_FORM level only
+  allowed: true
+  reason_blocked: REDUCED_FORM mode does not allow policy interventions
 propagation_role:
-  role: reduced_form
+  role: structural
   overlapping_paths: []
   selected_for_counterfactual: true
   mode_propagation_allowed:
-    STRUCTURAL: false
+    STRUCTURAL: true
     REDUCED_FORM: true
     DESCRIPTIVE: true
   mode_shock_cf_allowed:
-    STRUCTURAL: false
+    STRUCTURAL: true
     REDUCED_FORM: true
     DESCRIPTIVE: false
   mode_policy_cf_allowed:
-    STRUCTURAL: false
+    STRUCTURAL: true
     REDUCED_FORM: false
     DESCRIPTIVE: false
 literature:
-  supporting:
-  - doi: 10.1257/AER.99.3.1053
-    title: 'Not All Oil Price Shocks are Alike: Disentangling Demand and Supply Shocks
-      in the Crude Oil Market'
-    authors:
-    - L. Kilian
-    year: 2006
-    excerpt: ''
-    relevance: supporting
-    edge_id: oil_supply_to_brent
-    paper_id: cd2fa5dd72f0747b172109d4f53f6f39470312fb
-    citation_count: 4232
-    search_query: Oil supply shock Brent crude oil price causal effect
-    source: semantic_scholar
-    pdf_url: ''
-  - doi: 10.1093/qje/qjaa004
-    title: The Fall of the Labor Share and the Rise of Superstar Firms*
-    authors:
-    - David Autor
-    - David Dorn
-    - Lawrence F. Katz
-    - Christina Patterson
-    - John Van Reenen
-    year: 2020
-    excerpt: Abstract The fall of labor’s share of GDP in the United States and many
-      other countries in recent decades is well documented but its causes remain uncertain.
-      Existing empirical assessments typically rely on industry or macro data, obscuring
-      heterogeneity among firms. In this article, we analyze micr
-    relevance: supporting
-    edge_id: oil_supply_to_brent
-    paper_id: ''
-    citation_count: 1946
-    search_query: Oil supply shock Brent crude oil price causal effect
-    source: openalex
-    pdf_url: https://academic.oup.com/qje/article-pdf/135/2/645/32994954/qjaa004.pdf
-  - doi: 10.1257/jep.6.3.3
-    title: 'Medical Care Costs: How Much Welfare Loss?'
-    authors:
-    - Joseph P. Newhouse
-    year: 1992
-    excerpt: 'Hardly a week goes by without a front-page newspaper article on rising
-      health care costs and the uninsured. In this article, I focus mainly on costs,
-      arguing that the issue has been somewhat misconceived: while the level of medical
-      care spending in the U.S. is a cause for concern, the welfare losses'
-    relevance: supporting
-    edge_id: oil_supply_to_brent
-    paper_id: ''
-    citation_count: 1208
-    search_query: Oil supply shock Brent crude oil price causal effect
-    source: openalex
-    pdf_url: https://www.aeaweb.org/articles/pdf/doi/10.1257/jep.6.3.3
-  - doi: 10.1063/5.0042359
-    title: Does US-China trade war affect the Brent crude oil price? An ARIMAX forecasting
-      approach
-    authors:
-    - Ilma Amira Rahmayanti
-    - Christopher Andreas
-    - S. M. Ulyah
-    year: 2021
-    excerpt: 'Trade tension or trade war between the U.S. and China has had a significant
-      impact on many sectors in the world. The business sector is one of them. Trade
-      tension began on March 22nd 2018, after U.S. President imposed a $50 billion
-      import duty on Chinese goods entering the United States. In return, '
-    relevance: supporting
-    edge_id: oil_supply_to_brent
-    paper_id: 5b8e89e0abb571bbd7d92277bbc125b2fd88c641
-    citation_count: 7
-    search_query: Oil supply shock Brent crude oil price causal effect
-    source: semantic_scholar
-    pdf_url: ''
+  supporting: []
   challenging: []
-  methodological:
-  - doi: 10.1257/jep.15.4.101
-    title: Vector Autoregressions
-    authors:
-    - James H. Stock
-    - Mark W. Watson
-    year: 2001
-    excerpt: 'This paper critically reviews the use of vector autoregressions (VARs)
-      for four tasks: data description, forecasting, structural inference, and policy
-      analysis. The paper begins with a review of VAR analysis, highlighting the differences
-      between reduced-form VARs, recursive VARs and structural VARs.'
-    relevance: methodological
-    edge_id: oil_supply_to_brent
-    paper_id: ''
-    citation_count: 1089
-    search_query: Oil supply shock Brent crude oil price causal effect
-    source: openalex
-    pdf_url: https://www.aeaweb.org/articles/pdf/doi/10.1257/jep.15.4.101
-  search_status: SEARCHED
-  search_timestamp: '2026-02-15T23:55:21.147951'
-  search_query: Oil supply shock Brent crude oil price causal effect
-  total_results: 5
+  methodological: []
+  search_status: PENDING
+  search_timestamp: null
+  search_query: ''
+  total_results: 0
 companion_edge_id: null
 variant_of: null
 is_precisely_null: false

@@ -1,6 +1,6 @@
 edge_id: loan_portfolio_to_rwa
-dag_version_hash: 62ee85366d38a1bef004140293f32144ed41afc73d9927e89cebe471edc878b3
-created_at: '2026-02-15T23:55:17.175928'
+dag_version_hash: a0d5c383631c52aa262f288704c6f7868d48b73d5034761245939de8eeea1d72
+created_at: '2026-02-16T16:23:45.544256'
 data_provenance:
   treatment_source: null
   outcome_source: null
@@ -29,6 +29,10 @@ estimates:
   - 0.5714285714285714
   - 0.5714285714285714
   pvalue: null
+  treatment_unit: 1 bn KZT net loans increase
+  outcome_unit: bn KZT RWA increase (avg risk weight)
+  n_calendar_periods: 1
+  n_effective_obs_h0: 1
 diagnostics:
   identity_consistency:
     name: identity_consistency
@@ -36,15 +40,16 @@ diagnostics:
     value: 0.5714285714285714
     threshold: null
     pvalue: null
-    message: 'Deterministic: d(RWA)/d(loans) = avg_risk_weight = RWA / total_loans'
+    message: 'Accounting bridge: d(RWA)/d(loans) = avg_risk_weight = RWA / total_loans'
 all_diagnostics_pass: true
 interpretation:
-  estimand: Average risk weight = 0.571. A 1 bn KZT increase in loans adds ~0.57 bn
-    to RWA.
-  is_not: Causal effect; this is an accounting identity
-  channels: []
+  estimand: 'Accounting sensitivity: d(RWA)/d(loans) = avg_risk_weight = RWA / total_loans'
+  is_not: Causal effect; this is a near-mechanical accounting relationship
+  channels:
+  - accounting/mechanical
   population: ''
-  conditions: ''
+  conditions: 'Evaluated at: {''loans'': 2800.0, ''rwa'': 1600.0, ''avg_risk_weight'':
+    0.5714285714285714}'
   allowed_uses: []
   forbidden_uses: []
 failure_flags:
@@ -60,7 +65,8 @@ failure_flags:
 counterfactual:
   supports_shock_path: true
   supports_policy_intervention: true
-  intervention_note: Accounting bridge; deterministic at current values
+  intervention_note: Accounting bridge; holds by construction under current risk weights
+    / tax regime
   external_validity: ''
 credibility_rating: A
 credibility_score: 0.9299999999999999
@@ -73,12 +79,12 @@ identification:
     measurement_error: low
     selection: low
   untestable_assumptions: []
-  testable_threats_passed:
-  - identity_consistency
+  testable_threats_passed: []
   testable_threats_failed: []
-  strategy_type: ''
-  strategy_argument: ''
-  strategy_key_assumption: ''
+  strategy_type: accounting_identity
+  strategy_argument: RWA = Loan volume x average risk weight. Volume effect is mechanical.
+  strategy_key_assumption: Average risk weight is approximately constant over the
+    sample period.
 counterfactual_block:
   shock_scenario_allowed: true
   policy_intervention_allowed: false
@@ -103,100 +109,13 @@ propagation_role:
     REDUCED_FORM: false
     DESCRIPTIVE: false
 literature:
-  supporting:
-  - doi: 10.25501/soas.00029228
-    title: 'Emerging stock markets in the Pacific Basin : An empirical analysis with
-      particular reference to the Korean stock market.'
-    authors:
-    - Hyun-Jung Ryoo
-    year: 2001
-    excerpt: 'This thesis investigates emerging stock markets in the Pacific Basin
-      with particular reference to the Korean stock market, which is representative
-      of typical, fast-growing emerging markets. Using a broader range of econometric
-      models, the short-run and long-run behaviour of stock prices, the impact '
-    relevance: supporting
-    edge_id: loan_portfolio_to_rwa
-    paper_id: ''
-    citation_count: 1
-    search_query: KSPI net loan portfolio KSPI risk-weighted assets causal effect
-    source: openalex
-    pdf_url: https://eprints.soas.ac.uk/29228/1/10731323.pdf
-  - doi: 10.1016/j.jempfin.2015.03.003
-    title: 'Portfolio optimization for heavy-tailed assets: Extreme Risk Index vs.
-      Markowitz'
-    authors:
-    - Georg Mainik
-    - Georgi Mitov
-    - Ludger Rüschendorf
-    year: 2015
-    excerpt: Using daily returns of the S&P 500 stocks from 2001 to 2011, we perform
-      a backtesting study of the portfolio optimization strategy based on the extreme
-      risk index (ERI). This method uses multivariate extreme value theory to minimize
-      the probability of large portfolio losses. With more than 400 stock
-    relevance: supporting
-    edge_id: loan_portfolio_to_rwa
-    paper_id: 1505.04045v1
-    citation_count: 0
-    search_query: KSPI net loan portfolio KSPI risk-weighted assets causal effect
-    source: arxiv
-    pdf_url: https://arxiv.org/pdf/1505.04045v1
-  - doi: ''
-    title: 'Macroeconomic Impacts of Immigration in Malaysia: Trade, Remittances and
-      Unemployment'
-    authors:
-    - MARWAN, NUR,FAKHZAN
-    year: 2011
-    excerpt: The macroeconomic consequence of immigration is a disputable area among
-      many interested parties as evidenced by the empirical studies. Most studies,
-      however, employ Anglo-Saxon countries as their subjects, while there is an increasing
-      demand for studies on the economic consequences of immigration in
-    relevance: supporting
-    edge_id: loan_portfolio_to_rwa
-    paper_id: ''
-    citation_count: 0
-    search_query: KSPI net loan portfolio KSPI risk-weighted assets causal effect
-    source: core
-    pdf_url: https://core.ac.uk/download/108589.pdf
-  - doi: ''
-    title: Optimal Portfolio with Power Utility of Absolute and Relative Wealth
-    authors:
-    - Andrey Sarantsev
-    year: 2021
-    excerpt: Portfolio managers often evaluate performance relative to benchmark,
-      usually taken to be the Standard & Poor 500 stock index fund. This relative
-      portfolio wealth is defined as the absolute portfolio wealth divided by wealth
-      from investing in the benchmark (including reinvested dividends). The classi
-    relevance: supporting
-    edge_id: loan_portfolio_to_rwa
-    paper_id: 2105.08139v2
-    citation_count: 0
-    search_query: KSPI net loan portfolio KSPI risk-weighted assets causal effect
-    source: arxiv
-    pdf_url: https://arxiv.org/pdf/2105.08139v2
-  - doi: ''
-    title: Sparsity and Stability for Minimum-Variance Portfolios
-    authors:
-    - Sven Husmann
-    - Antoniya Shivarova
-    - Rick Steinert
-    year: 2019
-    excerpt: The popularity of modern portfolio theory has decreased among practitioners
-      because of its unfavorable out-of-sample performance. Estimation errors tend
-      to affect the optimal weight calculation noticeably, especially when a large
-      number of assets is considered. To overcome these issues, many methods
-    relevance: supporting
-    edge_id: loan_portfolio_to_rwa
-    paper_id: 1910.11840v1
-    citation_count: 0
-    search_query: KSPI net loan portfolio KSPI risk-weighted assets causal effect
-    source: arxiv
-    pdf_url: https://arxiv.org/pdf/1910.11840v1
+  supporting: []
   challenging: []
   methodological: []
-  search_status: SEARCHED
-  search_timestamp: '2026-02-15T23:55:17.176041'
-  search_query: KSPI net loan portfolio KSPI risk-weighted assets causal effect
-  total_results: 5
+  search_status: PENDING
+  search_timestamp: null
+  search_query: ''
+  total_results: 0
 companion_edge_id: null
 variant_of: null
 is_precisely_null: false

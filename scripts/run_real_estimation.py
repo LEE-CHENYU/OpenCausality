@@ -15,7 +15,7 @@ Groups:
     C-BRIDGE:Accounting bridges (2 edges: loans->RWA, CoR->capital)
     D:       Identity (2 edges) - unchanged
 
-Total edge cards: 20 original + 4 sector panel companions = 24
+Total edge cards: 23 original + 4 sector panel companions = 27
 
 Usage:
     python scripts/run_real_estimation.py
@@ -62,6 +62,7 @@ from shared.engine.ts_estimator import (
     estimate_lp_annual,
     get_immutable_result,
     compute_identity_sensitivity,
+    compute_additional_identity_sensitivities,
     compute_accounting_bridge,
     check_sign_consistency,
     IMMUTABLE_EVIDENCE,
@@ -158,9 +159,12 @@ BRIDGE_EDGES = [
 IDENTITY_EDGES = [
     "capital_to_k2",
     "rwa_to_k2",
+    "nominal_expenditure_to_real",
+    "wage_to_nominal_income",
+    "import_share_to_iv",
 ]
 
-# All original edges (20)
+# All original edges (23)
 ALL_ORIGINAL_EDGES = (
     MONTHLY_LP_EDGES + IMMUTABLE_EDGES + QUARTERLY_LP_EDGES +
     KSPI_ONLY_EDGES + BRIDGE_EDGES + IDENTITY_EDGES
@@ -283,6 +287,18 @@ EDGE_UNITS: dict[str, dict[str, str]] = {
     "rwa_to_k2": {
         "treatment_unit": "1 bn KZT RWA increase",
         "outcome_unit": "pp K2 ratio change",
+    },
+    "nominal_expenditure_to_real": {
+        "treatment_unit": "1% nominal expenditure increase (log)",
+        "outcome_unit": "% real expenditure increase (deflation identity)",
+    },
+    "wage_to_nominal_income": {
+        "treatment_unit": "1 unit wage income increase",
+        "outcome_unit": "unit nominal income increase (composition share)",
+    },
+    "import_share_to_iv": {
+        "treatment_unit": "1pp pre-period import share",
+        "outcome_unit": "unit imported inflation instrument",
     },
 }
 
@@ -1333,7 +1349,7 @@ def generate_report(
     lines.extend([
         "---",
         "",
-        "## Group D: Identity Sensitivities (2 edges)",
+        "## Group D: Identity Sensitivities",
         "",
         "Deterministic partial derivatives of K2 = 100 * Capital / RWA.",
         "",
@@ -2116,7 +2132,7 @@ def main(output_dir: Path | None = None, query_mode: str = "REDUCED_FORM"):
         logger.error(f"  Bridge setup FAILED: {e}")
 
     # ===================================================================
-    # Group D: Identity (2 edges)
+    # Group D: Identity (5 edges)
     # ===================================================================
     logger.info("=" * 60)
     logger.info("GROUP D: Identity Sensitivities")
@@ -2128,7 +2144,13 @@ def main(output_dir: Path | None = None, query_mode: str = "REDUCED_FORM"):
         capital = float(latest["total_capital"])
         rwa = float(latest["rwa"])
 
+        # K2 identity edges (capital_to_k2, rwa_to_k2)
         identity_sens = compute_identity_sensitivity(capital, rwa)
+
+        # Additional identity edges (nominal_expenditure_to_real,
+        # wage_to_nominal_income, import_share_to_iv)
+        additional_sens = compute_additional_identity_sensitivities()
+        identity_sens.update(additional_sens)
 
         for edge_id in IDENTITY_EDGES:
             ir = identity_sens[edge_id]

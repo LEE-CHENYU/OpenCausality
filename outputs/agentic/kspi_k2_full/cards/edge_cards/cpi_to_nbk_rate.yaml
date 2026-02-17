@@ -1,6 +1,6 @@
 edge_id: cpi_to_nbk_rate
-dag_version_hash: 62ee85366d38a1bef004140293f32144ed41afc73d9927e89cebe471edc878b3
-created_at: '2026-02-15T23:55:20.936626'
+dag_version_hash: a0d5c383631c52aa262f288704c6f7868d48b73d5034761245939de8eeea1d72
+created_at: '2026-02-16T16:23:41.861533'
 data_provenance:
   treatment_source:
     connector: parquet_file
@@ -91,6 +91,18 @@ estimates:
   - 135.30533727378602
   - 129.85270529863067
   - 134.77821273455623
+  treatment_unit: 1pp YoY tradable CPI inflation
+  outcome_unit: pp NBK base rate
+  n_calendar_periods: 69
+  n_effective_obs_h0: 67
+  n_effective_obs_by_horizon:
+  - 67
+  - 66
+  - 65
+  - 64
+  - 63
+  - 62
+  - 61
 diagnostics:
   hac_bandwidth:
     name: hac_bandwidth
@@ -105,7 +117,21 @@ diagnostics:
     value: 67.0
     threshold: 20.0
     pvalue: null
-    message: ''
+    message: 67 observations
+  r_squared_h0:
+    name: r_squared_h0
+    passed: true
+    value: 0.973600297637871
+    threshold: null
+    pvalue: null
+    message: 'R-squared at h=0: 0.9736'
+  residual_ac1:
+    name: residual_ac1
+    passed: true
+    value: -0.010169884988595902
+    threshold: 0.5
+    pvalue: null
+    message: 'AR(1) residual autocorrelation: -0.010'
   sign_consistency:
     name: sign_consistency
     passed: false
@@ -113,59 +139,18 @@ diagnostics:
     threshold: null
     pvalue: null
     message: 'Sign inconsistent: expected +, got -0.5353'
-  ts_leads_test:
-    name: ts_leads_test
-    passed: false
-    value: null
-    threshold: null
-    pvalue: null
-    message: 'TSGuard: fail'
-  ts_residual_autocorr:
-    name: ts_residual_autocorr
-    passed: true
-    value: null
-    threshold: null
-    pvalue: null
-    message: 'TSGuard: pass'
-  ts_hac_sensitivity:
-    name: ts_hac_sensitivity
-    passed: true
-    value: null
-    threshold: null
-    pvalue: null
-    message: 'TSGuard: pass'
-  ts_lag_sensitivity:
-    name: ts_lag_sensitivity
-    passed: false
-    value: null
-    threshold: null
-    pvalue: null
-    message: 'TSGuard: fail'
-  ts_regime_stability:
-    name: ts_regime_stability
-    passed: true
-    value: null
-    threshold: null
-    pvalue: null
-    message: 'TSGuard: pass'
-  ts_shock_support:
-    name: ts_shock_support
-    passed: true
-    value: null
-    threshold: null
-    pvalue: null
-    message: 'TSGuard: pass'
 all_diagnostics_pass: false
 interpretation:
   estimand: IRF of nbk_policy_rate to a unit shock in cpi_headline
   is_not: Structural causal effect under all interventions
   channels:
   - direct
-  - indirect
-  population: ''
-  conditions: ''
+  - indirect through unobserved channels
+  population: Kazakhstan aggregate time-series (Kaspi Bank)
+  conditions: Sample period, no regime changes
   allowed_uses: []
-  forbidden_uses: []
+  forbidden_uses:
+  - policy_counterfactual
 failure_flags:
   weak_identification: false
   potential_bad_control: false
@@ -179,10 +164,11 @@ failure_flags:
 counterfactual:
   supports_shock_path: true
   supports_policy_intervention: false
-  intervention_note: Reduced-form LP estimate
+  intervention_note: Reduced-form LP estimate; valid for shock propagation, not policy
+    counterfactuals
   external_validity: ''
-credibility_rating: B
-credibility_score: 0.7706666666666667
+credibility_rating: A
+credibility_score: 0.8240000000000001
 identification:
   claim_level: BLOCKED_ID
   risks:
@@ -196,24 +182,21 @@ identification:
   testable_threats_passed:
   - hac_bandwidth
   - effective_obs
-  - ts_residual_autocorr
-  - ts_hac_sensitivity
-  - ts_regime_stability
-  - ts_shock_support
+  - r_squared_h0
+  - residual_ac1
   testable_threats_failed:
   - sign_consistency
-  - ts_leads_test
-  - ts_lag_sensitivity
-  strategy_type: ''
-  strategy_argument: ''
-  strategy_key_assumption: ''
+  strategy_type: none
+  strategy_argument: Reaction function — endogenous policy response, no identification
+    strategy.
+  strategy_key_assumption: N/A — this edge documents correlation, not causal effect.
 counterfactual_block:
   shock_scenario_allowed: false
   policy_intervention_allowed: false
-  reason_shock_blocked: Shock CF requires REDUCED_FORM+, edge has BLOCKED_ID
-  reason_policy_blocked: REDUCED_FORM mode does not allow policy interventions
+  reason_shock_blocked: Claim level capped to BLOCKED_ID
+  reason_policy_blocked: Claim level capped to BLOCKED_ID
   allowed: false
-  reason_blocked: Shock CF requires REDUCED_FORM+, edge has BLOCKED_ID
+  reason_blocked: Claim level capped to BLOCKED_ID
 propagation_role:
   role: diagnostic_only
   overlapping_paths: []
@@ -231,104 +214,13 @@ propagation_role:
     REDUCED_FORM: false
     DESCRIPTIVE: false
 literature:
-  supporting:
-  - doi: 10.32508/stdjelm.v8i2.1364
-    title: 'Perceived inflation in the Vietnamese economy: New points in methodology
-      and applications'
-    authors:
-    - Thanh Xuân Thị Phạm
-    - Cành Thị Nguyễn
-    - Tín Hữu Hồ
-    year: 2024
-    excerpt: Researching and developing methods to measure perceived inflation is
-      an indispensable requirement for the monetary policy management of the State
-      Bank of Vietnam, especially in the context of interest rate amplitudes. remains
-      at the lowest level in history in Vietnam. This study was conducted in tha
-    relevance: supporting
-    edge_id: cpi_to_nbk_rate
-    paper_id: 2e1882c5e916427fdead89055d24a66ecf381985
-    citation_count: 0
-    search_query: Headline CPI NBK base rate causal effect
-    source: semantic_scholar
-    pdf_url: ''
-  - doi: 10.24377/ljmu.t.00006015
-    title: Determinants of foreign direct investment in commercial real estate and
-      hotel sectors for selected MENA countries
-    authors:
-    - Salem, M M
-    year: null
-    excerpt: 'Developed, maturing, and emerging market countries are making considerable
-      progress in the legal and institutional reforms necessary to allow and facilitate
-      real estate and tourism (specifically hotel) foreign direct investment (FDI).
-      From a political perspective, countries used to view real estate '
-    relevance: supporting
-    edge_id: cpi_to_nbk_rate
-    paper_id: ''
-    citation_count: 0
-    search_query: Headline CPI NBK base rate causal effect
-    source: core
-    pdf_url: https://core.ac.uk/download/80684153.pdf
-  - doi: 10.1515/jci-2021-0042
-    title: A Unifying Causal Framework for Analyzing Dataset Shift-stable Learning
-      Algorithms
-    authors:
-    - Adarsh Subbaswamy
-    - Bryant Chen
-    - Suchi Saria
-    year: 2019
-    excerpt: Recent interest in the external validity of prediction models (i.e.,
-      the problem of different train and test distributions, known as dataset shift)
-      has produced many methods for finding predictive distributions that are invariant
-      to dataset shifts and can be used for prediction in new, unseen enviro
-    relevance: supporting
-    edge_id: cpi_to_nbk_rate
-    paper_id: 1905.11374v5
-    citation_count: 0
-    search_query: Headline CPI NBK base rate causal effect
-    source: arxiv
-    pdf_url: https://arxiv.org/pdf/1905.11374v5
+  supporting: []
   challenging: []
-  methodological:
-  - doi: 10.9734/ajeba/2020/v19i330306
-    title: A VECM Analysis of the Relations the CPI, PPI, GDP Per Capita, Exchange
-      Rate in the Republic of Azerbaijan
-    authors:
-    - R. I. Davudova
-    year: 2020
-    excerpt: 'Aims: The study focuses on an empirical analysis of a macroeconomic
-      indicators system, that reflect the level and pace of a country''s socio-economic
-      development, such as CPI, PPI, GDP per capita, exchange rate, taking into account
-      the consequences of the COVID19 pandemic and oil prices on the exampl'
-    relevance: methodological
-    edge_id: cpi_to_nbk_rate
-    paper_id: 8513d8b46fada0c84b654394ee9e1bb83af65562
-    citation_count: 2
-    search_query: Headline CPI NBK base rate causal effect
-    source: semantic_scholar
-    pdf_url: ''
-  - doi: 10.1515/jci-2022-0060
-    title: 'Quantitative probing: Validating causal models using quantitative domain
-      knowledge'
-    authors:
-    - Daniel Grünbaum
-    - Maike L. Stern
-    - Elmar W. Lang
-    year: 2022
-    excerpt: We present quantitative probing as a model-agnostic framework for validating
-      causal models in the presence of quantitative domain knowledge. The method is
-      constructed as an analogue of the train/test split in correlation-based machine
-      learning and as an enhancement of current causal validation strat
-    relevance: methodological
-    edge_id: cpi_to_nbk_rate
-    paper_id: 2209.03013v1
-    citation_count: 0
-    search_query: Headline CPI NBK base rate causal effect
-    source: arxiv
-    pdf_url: https://arxiv.org/pdf/2209.03013v1
-  search_status: SEARCHED
-  search_timestamp: '2026-02-15T23:55:20.936701'
-  search_query: Headline CPI NBK base rate causal effect
-  total_results: 5
+  methodological: []
+  search_status: PENDING
+  search_timestamp: null
+  search_query: ''
+  total_results: 0
 companion_edge_id: null
 variant_of: null
 is_precisely_null: true

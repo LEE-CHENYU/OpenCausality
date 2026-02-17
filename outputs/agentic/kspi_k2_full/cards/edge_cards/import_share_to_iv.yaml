@@ -1,6 +1,6 @@
-edge_id: fx_to_real_expenditure
+edge_id: import_share_to_iv
 dag_version_hash: a0d5c383631c52aa262f288704c6f7868d48b73d5034761245939de8eeea1d72
-created_at: '2026-02-16T16:23:41.933105'
+created_at: '2026-02-16T16:23:45.655865'
 data_provenance:
   treatment_source: null
   outcome_source: null
@@ -12,56 +12,47 @@ data_provenance:
   panel_dimensions: null
   entity_boundary_note: null
   kpi_definitions: null
-spec_hash: 3cd8d61ed8c8fce944339d672111bfc406d15a3e7db2cecade9100f86d2c9383
+spec_hash: e582f930ce9896f4f11444ee5cacdafd5fe5affd270856c3a0d680d029846d79
 spec_details:
-  design: IMMUTABLE_EVIDENCE
+  design: IDENTITY
   controls: []
   instruments: []
   fixed_effects: []
-  se_method: from_source_block
+  se_method: deterministic
   sample_filter: null
   horizon: null
   bandwidth: null
 estimates:
-  point: -0.1
-  se: 0.04
+  point: 0.1
+  se: 0.0
   ci_95:
-  - -0.18
-  - -0.02
-  pvalue: 0.012
-  treatment_unit: 10% KZT depreciation
-  outcome_unit: '% real expenditure decline'
-  n_effective_obs_h0: 60
+  - 0.1
+  - 0.1
+  pvalue: null
+  n_calendar_periods: 1
+  n_effective_obs_h0: 1
 diagnostics:
-  validated_evidence:
-    name: validated_evidence
+  identity_check:
+    name: identity_check
     passed: true
-    value: 1.0
+    value: 0.1
     threshold: null
     pvalue: null
-    message: Validated from Block F
-  effective_obs:
-    name: effective_obs
-    passed: true
-    value: 60.0
-    threshold: 20.0
-    pvalue: null
-    message: ''
+    message: 'Deterministic: d(IV)/d(import_share) = avg_fx_change = 0.10'
 all_diagnostics_pass: true
 interpretation:
-  estimand: Effect of exchange rate depreciation on real household expenditure. 10%
-    depreciation reduces real spending by ~1%.
-  is_not: Re-estimated result; this is locked validated evidence
+  estimand: 'Sensitivity: d(IV)/d(import_share) = avg_fx_change = 0.10'
+  is_not: Causal effect; this is a mechanical identity
   channels:
-  - as identified in source block
+  - mechanical/accounting
   population: ''
-  conditions: 'Source: Block F'
+  conditions: 'Evaluated at: {''avg_fx_change'': 0.1}'
   allowed_uses: []
   forbidden_uses: []
 failure_flags:
   weak_identification: false
   potential_bad_control: false
-  mechanical_identity_risk: false
+  mechanical_identity_risk: true
   regime_break_detected: false
   small_sample: false
   high_missing_rate: false
@@ -70,11 +61,11 @@ failure_flags:
   data_insufficient: false
 counterfactual:
   supports_shock_path: true
-  supports_policy_intervention: false
-  intervention_note: Validated evidence from Block F
+  supports_policy_intervention: true
+  intervention_note: Mechanical identity; always holds by definition
   external_validity: ''
 credibility_rating: A
-credibility_score: 0.99
+credibility_score: 0.94
 identification:
   claim_level: IDENTIFIED_CAUSAL
   risks:
@@ -86,10 +77,9 @@ identification:
   untestable_assumptions: []
   testable_threats_passed: []
   testable_threats_failed: []
-  strategy_type: validated_prior
-  strategy_argument: Block F LP estimate using regional panel variation in FX exposure.
-  strategy_key_assumption: Regional FX exposure variation is exogenous to expenditure
-    trends.
+  strategy_type: accounting_identity
+  strategy_argument: IV = diff(log(kzt_usd)) * E_import_share is a deterministic construction.
+  strategy_key_assumption: Pre-period import shares are fixed exposure weights.
 counterfactual_block:
   shock_scenario_allowed: true
   policy_intervention_allowed: false
@@ -98,7 +88,7 @@ counterfactual_block:
   allowed: true
   reason_blocked: REDUCED_FORM mode does not allow policy interventions
 propagation_role:
-  role: structural
+  role: identity
   overlapping_paths: []
   selected_for_counterfactual: true
   mode_propagation_allowed:
