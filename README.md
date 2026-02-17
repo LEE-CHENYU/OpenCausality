@@ -1016,11 +1016,17 @@ regex fallback for common patterns. Results are rendered with Rich formatting.
 The PropagationEngine applies seven guardrails to every path, in strict order: mode
 gating (edge role allowed for the active query mode), counterfactual gating (shock/policy
 permissions), TSGuard gating (time-series diagnostic flags), IssueLedger gating (open
-CRITICAL issues block propagation), reaction-function blocking (unconditional),
-unit compatibility (outcome unit of edge _i_ must match treatment unit of edge _i+1_),
-and frequency alignment (mixed frequencies blocked without explicit bridge). Blocking a
-single edge blocks the entire path. Delta-method standard errors are computed for
-propagated effects with an independence assumption caveat.
+issues block propagation — CRITICAL blocks all propagation, HIGH blocks counterfactual
+scenarios only), reaction-function blocking (unconditional), unit compatibility (outcome
+unit of edge _i_ must match treatment unit of edge _i+1_), and frequency alignment
+(mixed frequencies blocked without explicit bridge). Two rules have dedicated handlers
+in the IssueLedger guardrail: `SIGNIFICANT_BUT_NOT_IDENTIFIED` (HIGH severity — blocks
+shock/policy counterfactuals but allows plain reduced-form propagation) and
+`LEADS_SIGNIFICANT_TIMING_FAIL` (CRITICAL — blocks all propagation when effects appear
+before the shock). These rule-specific handlers take priority over the generic severity
+check, ensuring consistent behavior regardless of stored severity in legacy ledger
+files. Blocking a single edge blocks the entire path. Delta-method standard errors are
+computed for propagated effects with an independence assumption caveat.
 
 ---
 
@@ -1109,9 +1115,51 @@ fallback for environments without Claude Code.
 
 ---
 
-## Recent Changes (v0.3.0)
+## Recent Changes
 
-### New Features
+### v0.3.1 — Propagation Consistency & Edge Card Round-Trip
+
+#### Bug Fixes
+
+- **DataProvenance round-trip deserialization** -- `_dict_to_edge_card()` now fully
+  parses the `data_provenance` block including nested `SourceProvenance` objects
+  (connector, dataset, series, row_count, file_checksum). Previously, reloading a
+  serialized EdgeCard silently dropped provenance metadata.
+- **Estimates field safety** -- EdgeCard deserialization uses `.get()` with defaults
+  instead of direct dict access, preventing `KeyError` on malformed or partial estimate
+  blocks (e.g., edge cards with `estimates: null`).
+- **SBNI rule-specific handler** -- `SIGNIFICANT_BUT_NOT_IDENTIFIED` issues now have a
+  dedicated handler in Guardrail 4 (IssueLedger) that blocks counterfactual scenarios
+  only, regardless of the stored severity in legacy JSONL files. Previously, stale
+  ledger entries with `severity: CRITICAL` could over-block reduced-form propagation.
+- **LEADS rule-specific handler** -- `LEADS_SIGNIFICANT_TIMING_FAIL` has a defense-in-depth
+  handler that blocks all propagation when effects appear before the shock, independent
+  of the generic severity check.
+- **find_paths scenario_type default** -- Changed from `"shock"` to `None`. Plain path
+  queries (`find_paths`, `find_all_paths`) no longer apply counterfactual gating by
+  default — only `propagate_shock` and `propagate_policy` trigger CF eligibility checks.
+- **BLOCKED_DECOMPOSITION edge type** -- `get_edge_type()` now maps `BLOCKED_DECOMPOSITION`
+  to `mechanical` (consistent with `is_estimable()=False`). Previously fell through to
+  the default `causal` type.
+- **HITL panel null estimates** -- Fixed `AttributeError` when building the HITL panel
+  for edge cards with `estimates: null`. Uses `card.get("estimates") or {}` instead of
+  `card.get("estimates", {})` to handle explicit YAML nulls.
+- **INVARIANTS.md §16 update** -- Distinguishes 6 CRITICAL + 1 HIGH architecturally
+  essential issue rules. `SIGNIFICANT_BUT_NOT_IDENTIFIED` is HIGH (blocks CF only),
+  not CRITICAL.
+
+#### Claude Code Plugin
+
+- Packaged OpenCausality query engine as a Claude Code plugin with 13 MCP tools,
+  hedged-language skill, and auto-discovered `.mcp.json` configuration.
+
+#### Test Coverage
+
+- Full test suite: 313 passing tests (up from 165 in v0.3.0).
+
+### v0.3.0
+
+#### New Features
 
 - **Principle-Based DAG Critic Loop** -- Iterative refinement of NL-extracted DAGs
   using a two-layer quality framework: code-verifiable structural rules (Layer 1) and
@@ -1145,7 +1193,7 @@ fallback for environments without Claude Code.
 - **Robust PDF parser** -- `PaperParser` now uses a 3-tier fallback (pymupdf -> pypdf ->
   plain text) instead of crashing on non-PDF or corrupted files.
 
-### Bug Fixes
+#### Bug Fixes
 
 - Fixed `_run_data_scout()` referencing non-existent `scout_report.download_paths`.
   Now correctly iterates `scout_report.results` to register loaders from downloads.
@@ -1154,7 +1202,7 @@ fallback for environments without Claude Code.
 - Fixed `WelfareSimulator` test signatures: tests now call `simulate_scenario()` with
   proper study types instead of the base class `simulate()` method.
 
-### Test Coverage
+#### Test Coverage
 
 - 34 new unit tests across 5 test files: agent loop (8), issue/PatchBot (7),
   LLM providers (9), Panel FE adapter (3), Regression Kink adapter (4),
