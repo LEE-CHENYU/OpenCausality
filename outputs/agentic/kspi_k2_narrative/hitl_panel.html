@@ -610,6 +610,27 @@ const ISSUES = {
     "severity": "HIGH",
     "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
     "message": "A-rating despite failed diagnostics."
+  },
+  "NULL_LINK_SIGNIFICANT:global": {
+    "status": "OPEN",
+    "opened_run": "1760dc54",
+    "severity": "HIGH",
+    "rule_id": "NULL_LINK_SIGNIFICANT",
+    "message": "Null link cpi_headline->cpi_nontradable | kzt_usd: significant partial association (beta=0.5442, p=0.0000, N=178). DAG may need this edge."
+  },
+  "DATA_INSUFFICIENT_EDGE:nominal_expenditure_to_real_expenditure": {
+    "status": "OPEN",
+    "opened_run": "1760dc54",
+    "severity": "HIGH",
+    "rule_id": "DATA_INSUFFICIENT_EDGE",
+    "message": "Edge 'nominal_expenditure_to_real_expenditure' has insufficient data for estimation (fewer than 5 observations after alignment)."
+  },
+  "DATA_INSUFFICIENT_EDGE:transfer_income_to_nominal_income_buffering": {
+    "status": "OPEN",
+    "opened_run": "1760dc54",
+    "severity": "HIGH",
+    "rule_id": "DATA_INSUFFICIENT_EDGE",
+    "message": "Edge 'transfer_income_to_nominal_income_buffering' has insufficient data for estimation (fewer than 5 observations after alignment)."
   }
 };
 const CLOSED_ISSUES_COUNT = 0;
@@ -946,6 +967,32 @@ const EDGES = {
     ],
     "propagation_role": "identity"
   },
+  "global": {
+    "point": null,
+    "se": null,
+    "pvalue": null,
+    "design": null,
+    "rating": null,
+    "score": null,
+    "claim_level": null,
+    "all_pass": false,
+    "n_obs": null,
+    "diagnostics": [],
+    "failure_flags": [],
+    "panel": null,
+    "estimand": "",
+    "is_not": [],
+    "allowed_uses": [],
+    "forbidden_uses": [],
+    "cf_shock_allowed": null,
+    "cf_policy_allowed": null,
+    "cf_reason_blocked": "",
+    "id_risks": {},
+    "untestable_assumptions": [],
+    "testable_passed": [],
+    "testable_failed": [],
+    "propagation_role": ""
+  },
   "imported_inflation_instrument_to_real_expenditure_negative": {
     "point": -0.003046047436360451,
     "se": 0.0008366316626613632,
@@ -1190,6 +1237,69 @@ const EDGES = {
       "ts_shock_support"
     ],
     "testable_failed": [],
+    "propagation_role": "identity"
+  },
+  "nominal_expenditure_to_real_expenditure": {
+    "point": null,
+    "se": null,
+    "pvalue": null,
+    "design": "DATA_INSUFFICIENT",
+    "rating": "D",
+    "score": 0.0,
+    "claim_level": "DESCRIPTIVE",
+    "all_pass": false,
+    "n_obs": 0,
+    "diagnostics": [
+      {
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": false
+      },
+      {
+        "name": "sign_consistency",
+        "passed": true
+      },
+      {
+        "name": "ts_hac_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_regime_stability",
+        "passed": true
+      }
+    ],
+    "failure_flags": [
+      "small_sample",
+      "data_insufficient"
+    ],
+    "panel": null,
+    "estimand": "IRF of real_expenditure to a unit shock in nominal_expenditure",
+    "is_not": "Structural causal effect under all interventions",
+    "allowed_uses": [],
+    "forbidden_uses": [],
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Shock CF requires REDUCED_FORM+, edge has DESCRIPTIVE",
+    "id_risks": {
+      "unmeasured_confounding": "medium",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "untestable_assumptions": [],
+    "testable_passed": [
+      "hac_bandwidth",
+      "sign_consistency",
+      "ts_hac_sensitivity",
+      "ts_regime_stability"
+    ],
+    "testable_failed": [
+      "effective_obs"
+    ],
     "propagation_role": "identity"
   },
   "nominal_income_to_real_income": {
@@ -1602,6 +1712,69 @@ const EDGES = {
       "ts_leads_test"
     ],
     "propagation_role": "identity"
+  },
+  "transfer_income_to_nominal_income_buffering": {
+    "point": null,
+    "se": null,
+    "pvalue": null,
+    "design": "DATA_INSUFFICIENT",
+    "rating": "D",
+    "score": 0.0,
+    "claim_level": "DESCRIPTIVE",
+    "all_pass": false,
+    "n_obs": 0,
+    "diagnostics": [
+      {
+        "name": "hac_bandwidth",
+        "passed": true
+      },
+      {
+        "name": "effective_obs",
+        "passed": false
+      },
+      {
+        "name": "sign_consistency",
+        "passed": true
+      },
+      {
+        "name": "ts_hac_sensitivity",
+        "passed": true
+      },
+      {
+        "name": "ts_regime_stability",
+        "passed": true
+      }
+    ],
+    "failure_flags": [
+      "small_sample",
+      "data_insufficient"
+    ],
+    "panel": null,
+    "estimand": "IRF of nominal_income to a unit shock in transfer_income",
+    "is_not": "Structural causal effect under all interventions",
+    "allowed_uses": [],
+    "forbidden_uses": [],
+    "cf_shock_allowed": false,
+    "cf_policy_allowed": false,
+    "cf_reason_blocked": "Shock CF requires REDUCED_FORM+, edge has DESCRIPTIVE",
+    "id_risks": {
+      "unmeasured_confounding": "medium",
+      "simultaneity": "low",
+      "weak_variation": "low",
+      "measurement_error": "low",
+      "selection": "low"
+    },
+    "untestable_assumptions": [],
+    "testable_passed": [
+      "hac_bandwidth",
+      "sign_consistency",
+      "ts_hac_sensitivity",
+      "ts_regime_stability"
+    ],
+    "testable_failed": [
+      "effective_obs"
+    ],
+    "propagation_role": "diagnostic_only"
   }
 };
 const ACTIONS_BY_RULE = {
@@ -2342,103 +2515,30 @@ const RULE_DESCRIPTIONS = {
     "explanation": "A derived node&#x27;s identity formula contains log(X) where X already has transforms: [log], meaning the data is already in log levels. Applying log() again would double-log the variable, producing incorrect results. This is usually a documentation convention issue rather than a runtime bug, but it creates ambiguity about whether the formula represents a mathematical operation or a label.\n",
     "guidance": "If the convention is that transforms: [log] means &quot;data stored in log form&quot;, then the formula should use the variable name directly (e.g., X - Y instead of log(X) - log(Y)). Update the formula to match.\n"
   },
+  "LOADER_FAILED": {
+    "description": "Primary and fallback data loaders both failed for a node",
+    "explanation": "The DynamicLoaderFactory could not build a loader for a DAG node from any of its declared source specs (preferred + fallback). This prevents estimation of all edges involving this node. The DataResolverAgent can attempt to discover and download data from external APIs.\n",
+    "guidance": "The system will dispatch to the DataResolverAgent, which uses LLM tool-use to search data catalogs (World Bank, FRED, IMF, DBnomics), fetch matching indicators, and register loaders. If automated resolution fails, drop a data file into data/raw/ and re-run.\n"
+  },
+  "DATA_INSUFFICIENT_EDGE": {
+    "description": "Edge estimation produced fewer than 5 observations after alignment",
+    "explanation": "After aligning treatment and outcome series in time, fewer than 5 usable observations remain. This is typically caused by frequency mismatch (annual vs monthly), non-overlapping date ranges, or excessive NaN values. The estimate is unreliable and marked with rating D.\n",
+    "guidance": "The DataResolverAgent can attempt to find a higher-frequency version of the data or a longer time series from an alternative provider. If this fails, the edge should be excluded from propagation.\n"
+  },
+  "ALIGNMENT_FAILURE": {
+    "description": "Treatment and outcome series have no overlapping date range",
+    "explanation": "The two series for an edge have completely disjoint date ranges, making estimation impossible. This often happens when one series is annual (e.g., from World Bank) and the other is monthly, or when one series ends before the other begins.\n",
+    "guidance": "The system will attempt frequency resampling (forward-fill annual to monthly) or search for an alternative series with better coverage. If alignment is impossible, the edge is excluded from estimation.\n"
+  },
   "UNIT_MISSING_IN_EDGECARD": {
     "description": "EdgeCard missing treatment_unit/outcome_unit",
     "explanation": "Without explicit units (e.g., &quot;pp&quot;, &quot;%&quot;, &quot;log points&quot;), the coefficient is uninterpretable. A coefficient of 0.5 could mean 0.5 percentage points, 50%, or 0.5 log points \u2014 a potential 100x difference in the implied effect. Units are required for any meaningful propagation or reporting.\n",
     "guidance": "The system will auto-populate units from the DAG spec. Verify that the inferred units match the actual estimation specification.\n"
   }
 };
-const GENERATED_AT = "2026-02-11 20:10:04 UTC";
+const GENERATED_AT = "2026-02-17 00:00:24 UTC";
 const DAG_EDGES = {
-  "oil_supply_to_brent": {
-    "from": "oil_supply_shock",
-    "to": "brent_price",
-    "edge_type": "causal",
-    "expected_sign": "negative",
-    "magnitude_range": [
-      -0.5,
-      0.0
-    ],
-    "regime_split_date": "",
-    "interpretation": "Oil price response to supply shock",
-    "is_not": [
-      "Demand-driven price movements"
-    ],
-    "allowed_uses": [
-      "shock_counterfactual"
-    ],
-    "forbidden_uses": [
-      "policy_counterfactual"
-    ],
-    "notes": "Exogenous supply shock identification from Baumeister."
-  },
-  "oil_supply_to_fx": {
-    "from": "oil_supply_shock",
-    "to": "kzt_usd",
-    "edge_type": "causal",
-    "expected_sign": "positive",
-    "magnitude_range": [
-      0.0,
-      0.5
-    ],
-    "regime_split_date": "",
-    "interpretation": "KZT response to oil supply shock",
-    "is_not": [
-      "Response to domestic factors"
-    ],
-    "allowed_uses": [
-      "shock_counterfactual"
-    ],
-    "forbidden_uses": [
-      "policy_counterfactual"
-    ],
-    "notes": "Oil exporter commodity currency dynamics."
-  },
-  "oil_demand_to_fx": {
-    "from": "oil_demand_shock",
-    "to": "kzt_usd",
-    "edge_type": "causal",
-    "expected_sign": "negative",
-    "magnitude_range": [
-      -0.5,
-      0.0
-    ],
-    "regime_split_date": "",
-    "interpretation": "KZT response to oil demand shock",
-    "is_not": [
-      "Response to domestic factors"
-    ],
-    "allowed_uses": [
-      "shock_counterfactual"
-    ],
-    "forbidden_uses": [
-      "policy_counterfactual"
-    ],
-    "notes": "Commodity currency responds to global demand."
-  },
-  "vix_to_fx": {
-    "from": "vix_shock",
-    "to": "kzt_usd",
-    "edge_type": "causal",
-    "expected_sign": "positive",
-    "magnitude_range": [
-      0.0,
-      0.3
-    ],
-    "regime_split_date": "",
-    "interpretation": "KZT response to global risk aversion",
-    "is_not": [
-      "Response to Kazakhstan-specific risk"
-    ],
-    "allowed_uses": [
-      "shock_counterfactual"
-    ],
-    "forbidden_uses": [
-      "policy_counterfactual"
-    ],
-    "notes": "EM risk-off channel."
-  },
-  "fx_to_cpi_tradable": {
+  "kzt_usd_to_cpi_tradable": {
     "from": "kzt_usd",
     "to": "cpi_tradable",
     "edge_type": "immutable",
@@ -2462,7 +2562,7 @@ const DAG_EDGES = {
     ],
     "notes": "Block A validated result: 11.3% FX pass-through to tradable CPI."
   },
-  "fx_to_cpi_nontradable": {
+  "kzt_usd_to_cpi_nontradable": {
     "from": "kzt_usd",
     "to": "cpi_nontradable",
     "edge_type": "immutable",
@@ -2471,7 +2571,7 @@ const DAG_EDGES = {
       -0.05,
       0.1
     ],
-    "regime_split_date": "",
+    "regime_split_date": null,
     "interpretation": "Falsification test for FX pass-through",
     "is_not": [
       "Primary transmission channel"
@@ -2485,217 +2585,243 @@ const DAG_EDGES = {
     ],
     "notes": "Block A falsification: Near-zero pass-through to non-tradable CPI."
   },
-  "cpi_to_nbk_rate": {
+  "imported_inflation_instrument_to_real_income": {
+    "from": "imported_inflation_instrument",
+    "to": "real_income",
+    "edge_type": "causal",
+    "expected_sign": "any",
+    "magnitude_range": null,
+    "regime_split_date": null,
+    "interpretation": "",
+    "is_not": [],
+    "allowed_uses": [],
+    "forbidden_uses": [],
+    "notes": "NL-extracted: Imported inflation induced by exchange-rate depreciation-&gt;Households&#x27; purchasing power (negative)"
+  },
+  "cpi_headline_to_real_income": {
     "from": "cpi_headline",
-    "to": "nbk_policy_rate",
-    "edge_type": "reaction_function",
-    "expected_sign": "positive",
-    "magnitude_range": [
-      0.0,
-      2.0
-    ],
-    "regime_split_date": "",
-    "interpretation": "NBK reaction function to inflation",
-    "is_not": [
-      "Causal effect of policy on inflation",
-      "Taylor rule structural parameter"
-    ],
-    "allowed_uses": [
-      "scenario_only"
-    ],
-    "forbidden_uses": [
-      "policy_counterfactual"
-    ],
-    "notes": "NBK responds to inflation. Requires nbk_policy_rate connector."
+    "to": "real_income",
+    "edge_type": "causal",
+    "expected_sign": "any",
+    "magnitude_range": null,
+    "regime_split_date": null,
+    "interpretation": "",
+    "is_not": [],
+    "allowed_uses": [],
+    "forbidden_uses": [],
+    "notes": "NL-extracted: Imported inflation (price level increase) with sticky incomes-&gt;Real disposable income (negative)"
   },
-  "fx_to_nbk_rate": {
-    "from": "kzt_usd",
-    "to": "nbk_policy_rate",
-    "edge_type": "reaction_function",
-    "expected_sign": "positive",
-    "magnitude_range": [
-      0.0,
-      5.0
-    ],
-    "regime_split_date": "",
-    "interpretation": "NBK reaction function to FX depreciation",
-    "is_not": [
-      "Causal effect of policy on FX"
-    ],
-    "allowed_uses": [
-      "scenario_only"
-    ],
-    "forbidden_uses": [
-      "policy_counterfactual"
-    ],
-    "notes": "NBK responds to FX conditions. Requires nbk_policy_rate connector."
+  "imported_inflation_instrument_to_real_expenditure_negative": {
+    "from": "imported_inflation_instrument",
+    "to": "real_expenditure",
+    "edge_type": "causal",
+    "expected_sign": "any",
+    "magnitude_range": null,
+    "regime_split_date": null,
+    "interpretation": "",
+    "is_not": [],
+    "allowed_uses": [],
+    "forbidden_uses": [],
+    "notes": "NL-extracted: Imported inflation (price level increase) with sticky incomes-&gt;Real household spending (consumption) (negative)"
   },
-  "nbk_rate_to_deposit_cost": {
-    "from": "nbk_policy_rate",
+  "transfer_income_to_nominal_income_buffering": {
+    "from": "transfer_income",
+    "to": "nominal_income",
+    "edge_type": "causal",
+    "expected_sign": "any",
+    "magnitude_range": null,
+    "regime_split_date": null,
+    "interpretation": "",
+    "is_not": [],
+    "allowed_uses": [],
+    "forbidden_uses": [],
+    "notes": "NL-extracted: Transfers and regulated prices (buffers) during exchange-rate/price shock-&gt;Headline nominal income stability (positive)"
+  },
+  "real_income_to_cor_kspi": {
+    "from": "real_income",
+    "to": "cor_kspi",
+    "edge_type": "causal",
+    "expected_sign": "any",
+    "magnitude_range": null,
+    "regime_split_date": null,
+    "interpretation": "",
+    "is_not": [],
+    "allowed_uses": [],
+    "forbidden_uses": [],
+    "notes": "NL-extracted: Household purchasing-power squeeze (real income/spending softening)-&gt;Kaspi balance-sheet pressure (positive); Household squeeze / reduced purchasing power-&gt;Repayment stress (delinquencies and provisions) (positive); Deterioration in macro conditions / household squeeze (stress)-&gt;Increase in &#x27;macro provisioning&#x27; ahead of realized defaults (positive)"
+  },
+  "vix_shock_to_deposit_cost_kspi": {
+    "from": "vix_shock",
     "to": "deposit_cost_kspi",
     "edge_type": "causal",
-    "expected_sign": "positive",
-    "magnitude_range": [
-      0.0,
-      1.5
-    ],
-    "regime_split_date": "",
-    "interpretation": "Association between policy rate and KSPI funding cost",
-    "is_not": [
-      "Causal monetary policy effect",
-      "Structural transmission coefficient"
-    ],
-    "allowed_uses": [
-      "scenario_only"
-    ],
-    "forbidden_uses": [
-      "policy_counterfactual"
-    ],
-    "notes": "Funding cost channel. Requires both connectors."
+    "expected_sign": "any",
+    "magnitude_range": null,
+    "regime_split_date": null,
+    "interpretation": "",
+    "is_not": [],
+    "allowed_uses": [],
+    "forbidden_uses": [],
+    "notes": "NL-extracted: Tighter financial conditions-&gt;Kaspi funding costs (positive)"
   },
-  "nbk_rate_to_cor": {
-    "from": "nbk_policy_rate",
-    "to": "cor_kspi",
+  "vix_shock_to_ppop_kspi": {
+    "from": "vix_shock",
+    "to": "ppop_kspi",
     "edge_type": "causal",
-    "expected_sign": "positive",
-    "magnitude_range": [
-      0.0,
-      0.5
-    ],
-    "regime_split_date": "",
-    "interpretation": "Association between policy rate and KSPI credit losses",
+    "expected_sign": "any",
+    "magnitude_range": null,
+    "regime_split_date": null,
+    "interpretation": "",
+    "is_not": [],
+    "allowed_uses": [],
+    "forbidden_uses": [],
+    "notes": "NL-extracted: Tighter financial conditions-&gt;Kaspi interest margins (profit margins) (negative)"
+  },
+  "ppop_kspi_to_total_capital_kspi": {
+    "from": "ppop_kspi",
+    "to": "total_capital_kspi",
+    "edge_type": "mechanical",
+    "expected_sign": "any",
+    "magnitude_range": null,
+    "regime_split_date": null,
+    "interpretation": "",
+    "is_not": [],
+    "allowed_uses": [],
+    "forbidden_uses": [],
+    "notes": "NL-extracted: Profits and provisions dynamics-&gt;Kaspi capital headroom (capital numerator) (ambiguous)"
+  },
+  "rwa_kspi_to_k2_ratio_kspi": {
+    "from": "rwa_kspi",
+    "to": "k2_ratio_kspi",
+    "edge_type": "identity",
+    "expected_sign": "any",
+    "magnitude_range": null,
+    "regime_split_date": null,
+    "interpretation": "K2 identity: Capital / RWA",
     "is_not": [
-      "Causal monetary policy effect",
-      "Counterfactual policy simulation"
+      "Causal relationship"
     ],
     "allowed_uses": [
       "scenario_only"
     ],
-    "forbidden_uses": [
-      "policy_counterfactual"
-    ],
-    "notes": "Borrower stress channel. Lagged 2Q for credit deterioration."
+    "forbidden_uses": [],
+    "notes": "K2 = Total Capital / RWA. Mechanical identity."
   },
-  "cpi_to_nominal_income": {
-    "from": "cpi_headline",
-    "to": "nominal_income",
-    "edge_type": "immutable",
-    "expected_sign": "positive",
-    "magnitude_range": [
-      0.0,
-      1.5
-    ],
-    "regime_split_date": "2015-08",
-    "interpretation": "Nominal income response to external inflation (IV)",
-    "is_not": [
-      "Response to demand-driven inflation",
-      "Real wage elasticity"
-    ],
-    "allowed_uses": [
-      "shock_counterfactual"
-    ],
-    "forbidden_uses": [
-      "policy_counterfactual"
-    ],
-    "notes": "Block B validated: LP-IV estimate using imported inflation IV."
-  },
-  "fx_to_real_expenditure": {
-    "from": "kzt_usd",
-    "to": "real_expenditure",
-    "edge_type": "immutable",
-    "expected_sign": "negative",
-    "magnitude_range": [
-      -0.3,
-      0.0
-    ],
-    "regime_split_date": "2015-08",
-    "interpretation": "MPC-like ratio to FX shocks",
-    "is_not": [
-      "Universal MPC (channels conflated)",
-      "Demand-side consumption function"
-    ],
-    "allowed_uses": [
-      "shock_counterfactual",
-      "scenario_only"
-    ],
-    "forbidden_uses": [
-      "policy_counterfactual"
-    ],
-    "notes": "Block F validated: IRF(0) = -0.10 for real expenditure."
-  },
-  "shock_to_npl_kspi": {
-    "from": "imported_inflation_instrument",
-    "to": "npl_kspi",
-    "edge_type": "causal",
-    "expected_sign": "positive",
-    "magnitude_range": [
-      0.0,
-      0.5
-    ],
-    "regime_split_date": "",
-    "interpretation": "Aggregate NPL response to imported inflation shock",
-    "is_not": [
-      "Micro income-default elasticity",
-      "IFRS 9 overlay component"
-    ],
-    "allowed_uses": [
-      "shock_counterfactual",
-      "scenario_only"
-    ],
-    "forbidden_uses": [
-      "policy_counterfactual"
-    ],
-    "notes": "Reduced-form NPL response. Cannot decompose channels without loan-level data."
-  },
-  "shock_to_cor_kspi": {
-    "from": "imported_inflation_instrument",
-    "to": "cor_kspi",
-    "edge_type": "causal",
-    "expected_sign": "positive",
-    "magnitude_range": [
-      0.0,
-      0.5
-    ],
-    "regime_split_date": "",
-    "interpretation": "Total provisioning response to imported inflation shock",
-    "is_not": [
-      "IFRS 9 macro overlay component",
-      "Realized credit loss component"
-    ],
-    "allowed_uses": [
-      "shock_counterfactual",
-      "scenario_only"
-    ],
-    "forbidden_uses": [
-      "policy_counterfactual"
-    ],
-    "notes": "Reduced-form CoR response. IFRS 9 overlay is latent."
-  },
-  "expenditure_to_payments_revenue": {
+  "real_expenditure_to_ppop_kspi": {
     "from": "real_expenditure",
-    "to": "payments_revenue_kspi",
+    "to": "ppop_kspi",
     "edge_type": "causal",
-    "expected_sign": "positive",
-    "magnitude_range": [
-      0.0,
-      2.0
-    ],
+    "expected_sign": "any",
+    "magnitude_range": null,
+    "regime_split_date": null,
+    "interpretation": "",
+    "is_not": [],
+    "allowed_uses": [],
+    "forbidden_uses": [],
+    "notes": "NL-extracted: Consumer spending holding up during stress-&gt;Non-bank revenues and dividends (holding company support capacity) (positive)"
+  },
+  "kzt_usd_to_imported_inflation_instrument": {
+    "from": "kzt_usd",
+    "to": "imported_inflation_instrument",
+    "edge_type": "identity",
+    "expected_sign": "",
+    "magnitude_range": null,
     "regime_split_date": "",
-    "interpretation": "Association between spending and KSPI payments revenue",
+    "interpretation": "Identity component: imported_inflation_iv",
     "is_not": [
-      "Causal effect without confounding",
-      "KSPI market share dynamics"
+      "Causal relationship"
     ],
     "allowed_uses": [
       "scenario_only"
     ],
-    "forbidden_uses": [
-      "shock_counterfactual",
-      "policy_counterfactual"
-    ],
-    "notes": "Spending -&gt; GMV -&gt; Interchange -&gt; Revenue. Requires KSPI connector."
+    "forbidden_uses": [],
+    "notes": "Auto-created identity edge from imported_inflation_iv"
   },
-  "cor_to_capital": {
+  "e_import_share_to_imported_inflation_instrument": {
+    "from": "E_import_share",
+    "to": "imported_inflation_instrument",
+    "edge_type": "identity",
+    "expected_sign": "",
+    "magnitude_range": null,
+    "regime_split_date": "",
+    "interpretation": "Identity component of imported inflation IV construction",
+    "is_not": [
+      "Causal relationship"
+    ],
+    "allowed_uses": [
+      "scenario_only"
+    ],
+    "forbidden_uses": [],
+    "notes": "Static exposure weight in IV construction. Formula component."
+  },
+  "total_capital_kspi_to_k2_ratio_kspi": {
+    "from": "total_capital_kspi",
+    "to": "k2_ratio_kspi",
+    "edge_type": "identity",
+    "expected_sign": "",
+    "magnitude_range": null,
+    "regime_split_date": "",
+    "interpretation": "K2 identity: Capital / RWA",
+    "is_not": [
+      "Causal relationship"
+    ],
+    "allowed_uses": [
+      "scenario_only"
+    ],
+    "forbidden_uses": [],
+    "notes": "K2 = Total Capital / RWA. Mechanical identity."
+  },
+  "nominal_expenditure_to_real_expenditure": {
+    "from": "nominal_expenditure",
+    "to": "real_expenditure",
+    "edge_type": "identity",
+    "expected_sign": "",
+    "magnitude_range": null,
+    "regime_split_date": "",
+    "interpretation": "Identity component of real expenditure deflation",
+    "is_not": [
+      "Causal relationship"
+    ],
+    "allowed_uses": [
+      "scenario_only"
+    ],
+    "forbidden_uses": [],
+    "notes": "Nominal-to-real deflation identity. Formula component."
+  },
+  "cpi_headline_to_real_expenditure": {
+    "from": "cpi_headline",
+    "to": "real_expenditure",
+    "edge_type": "identity",
+    "expected_sign": "",
+    "magnitude_range": null,
+    "regime_split_date": "",
+    "interpretation": "Identity component: real_expenditure_identity",
+    "is_not": [
+      "Causal relationship"
+    ],
+    "allowed_uses": [
+      "scenario_only"
+    ],
+    "forbidden_uses": [],
+    "notes": "Auto-created identity edge from real_expenditure_identity"
+  },
+  "nominal_income_to_real_income": {
+    "from": "nominal_income",
+    "to": "real_income",
+    "edge_type": "identity",
+    "expected_sign": "",
+    "magnitude_range": null,
+    "regime_split_date": "",
+    "interpretation": "Identity component: real_income_identity",
+    "is_not": [
+      "Causal relationship"
+    ],
+    "allowed_uses": [
+      "scenario_only"
+    ],
+    "forbidden_uses": [],
+    "notes": "Auto-created identity edge from real_income_identity"
+  },
+  "cor_kspi_to_total_capital_kspi": {
     "from": "cor_kspi",
     "to": "total_capital_kspi",
     "edge_type": "mechanical",
@@ -2718,55 +2844,14 @@ const DAG_EDGES = {
     ],
     "notes": "Provisioning reduces capital. Control for PPOP."
   },
-  "loan_portfolio_to_rwa": {
-    "from": "loan_portfolio_kspi",
-    "to": "rwa_kspi",
-    "edge_type": "mechanical",
-    "expected_sign": "positive",
-    "magnitude_range": [
-      0.5,
-      1.5
-    ],
-    "regime_split_date": "",
-    "interpretation": "Mechanical volume effect on RWA",
-    "is_not": [
-      "Risk-weight changes"
-    ],
-    "allowed_uses": [
-      "scenario_only"
-    ],
-    "forbidden_uses": [],
-    "notes": "Volume \u00d7 avg RW. Mechanical relationship."
-  },
-  "portfolio_mix_to_rwa": {
-    "from": "portfolio_mix_kspi",
-    "to": "rwa_kspi",
-    "edge_type": "causal",
-    "expected_sign": "any",
-    "magnitude_range": [
-      -0.5,
-      0.5
-    ],
-    "regime_split_date": "",
-    "interpretation": "RWA composition effect from product mix shifts",
-    "is_not": [
-      "Volume effect",
-      "Regulatory changes"
-    ],
-    "allowed_uses": [
-      "scenario_only"
-    ],
-    "forbidden_uses": [],
-    "notes": "Product mix shifts risk weights. NBK uses 150%+ for unsecured."
-  },
-  "capital_to_k2": {
-    "from": "total_capital_kspi",
-    "to": "k2_ratio_kspi",
+  "cpi_nontradable_to_cpi_headline": {
+    "from": "cpi_nontradable",
+    "to": "cpi_headline",
     "edge_type": "identity",
     "expected_sign": "",
     "magnitude_range": null,
     "regime_split_date": "",
-    "interpretation": "K2 identity: Capital / RWA",
+    "interpretation": "Aggregation/measurement bridge: cpi_nontradable feeds cpi_headline",
     "is_not": [
       "Causal relationship"
     ],
@@ -2774,16 +2859,16 @@ const DAG_EDGES = {
       "scenario_only"
     ],
     "forbidden_uses": [],
-    "notes": "K2 = Total Capital / RWA. Mechanical identity."
+    "notes": "Auto-bridged: cpi_nontradable was unreachable from target. Connected to cpi_headline by tag similarity (shared: [&#x27;inflation&#x27;, &#x27;prices&#x27;])."
   },
-  "rwa_to_k2": {
-    "from": "rwa_kspi",
-    "to": "k2_ratio_kspi",
+  "cpi_tradable_to_cpi_headline": {
+    "from": "cpi_tradable",
+    "to": "cpi_headline",
     "edge_type": "identity",
     "expected_sign": "",
     "magnitude_range": null,
     "regime_split_date": "",
-    "interpretation": "K2 identity: Capital / RWA",
+    "interpretation": "Aggregation/measurement bridge: cpi_tradable feeds cpi_headline",
     "is_not": [
       "Causal relationship"
     ],
@@ -2791,221 +2876,112 @@ const DAG_EDGES = {
       "scenario_only"
     ],
     "forbidden_uses": [],
-    "notes": "K2 = Total Capital / RWA. Mechanical identity."
+    "notes": "Auto-bridged: cpi_tradable was unreachable from target. Connected to cpi_headline by tag similarity (shared: [&#x27;inflation&#x27;, &#x27;prices&#x27;])."
   },
-  "import_share_to_iv": {
-    "from": "E_import_share",
-    "to": "imported_inflation_instrument",
-    "edge_type": "identity",
-    "expected_sign": "",
-    "magnitude_range": null,
-    "regime_split_date": "",
-    "interpretation": "Identity component of imported inflation IV construction",
-    "is_not": [
-      "Causal relationship"
-    ],
-    "allowed_uses": [
-      "scenario_only"
-    ],
-    "forbidden_uses": [],
-    "notes": "Static exposure weight in IV construction. Formula component."
-  },
-  "nominal_expenditure_to_real": {
-    "from": "nominal_expenditure",
+  "real_income_to_real_expenditure": {
+    "from": "real_income",
     "to": "real_expenditure",
-    "edge_type": "identity",
+    "edge_type": "causal",
     "expected_sign": "",
     "magnitude_range": null,
     "regime_split_date": "",
-    "interpretation": "Identity component of real expenditure deflation",
-    "is_not": [
-      "Causal relationship"
-    ],
-    "allowed_uses": [
-      "scenario_only"
-    ],
+    "interpretation": "",
+    "is_not": [],
+    "allowed_uses": [],
     "forbidden_uses": [],
-    "notes": "Nominal-to-real deflation identity. Formula component."
-  },
-  "wage_to_nominal_income": {
-    "from": "wage_income",
-    "to": "nominal_income",
-    "edge_type": "mechanical",
-    "expected_sign": "",
-    "magnitude_range": null,
-    "regime_split_date": "",
-    "interpretation": "Wage component of total nominal income",
-    "is_not": [
-      "Causal effect",
-      "Independent income source"
-    ],
-    "allowed_uses": [
-      "scenario_only"
-    ],
-    "forbidden_uses": [],
-    "notes": "Income channel decomposition. Wages are ~60% of nominal monetary income."
+    "notes": "When real income falls, households cut consumption expenditure"
   }
 };
 const DAG_NODES = {
-  "oil_supply_shock": {
-    "name": "Oil supply shock",
-    "unit": "sd",
-    "description": "Baumeister oil supply shock (exogenous to Kazakhstan)."
-  },
-  "oil_demand_shock": {
-    "name": "Oil demand shock",
-    "unit": "sd",
-    "description": "Baumeister oil demand shock (global demand-driven)."
-  },
-  "global_activity_shock": {
-    "name": "Global activity innovation",
-    "unit": "innovation",
-    "description": "Innovation in global activity index (IGREA)."
-  },
-  "vix_shock": {
-    "name": "VIX shock",
-    "unit": "innovation",
-    "description": "Innovation in VIX (risk aversion shock)."
-  },
-  "kzt_usd": {
-    "name": "KZT/USD exchange rate",
-    "unit": "log",
-    "description": "Kazakh tenge per US dollar, log level."
-  },
-  "brent_price": {
-    "name": "Brent crude oil price",
-    "unit": "log",
-    "description": "Brent spot price, USD per barrel, log level."
-  },
-  "nbk_policy_rate": {
-    "name": "NBK base rate",
-    "unit": "pct",
-    "description": "National Bank of Kazakhstan policy rate."
-  },
-  "cpi_headline": {
-    "name": "Headline CPI",
-    "unit": "log",
-    "description": "Kazakhstan headline CPI index, log level."
-  },
-  "cpi_tradable": {
-    "name": "Tradable CPI",
-    "unit": "log",
-    "description": "CPI for tradable goods (import-weighted). Block A validated."
-  },
-  "cpi_nontradable": {
-    "name": "Non-tradable CPI",
-    "unit": "log",
-    "description": "CPI for non-tradable goods (services). Block A falsification."
-  },
-  "imported_inflation_instrument": {
-    "name": "Imported inflation IV",
-    "unit": "pct",
-    "description": "Constructed instrument for imported inflation (FX change \u00d7 pre-period import share)."
-  },
   "E_import_share": {
     "name": "Pre-period import share",
     "unit": "share",
     "description": "Pre-period regional import intensity (static exposure)."
-  },
-  "nominal_income": {
-    "name": "Nominal monetary income",
-    "unit": "log",
-    "description": "Regional household nominal monetary income. Block B validated."
-  },
-  "real_income": {
-    "name": "Real monetary income",
-    "unit": "log",
-    "description": "Nominal income deflated by CPI. Identity node."
-  },
-  "wage_income": {
-    "name": "Wage income",
-    "unit": "log",
-    "description": "Household income from wages and salaries."
-  },
-  "transfer_income": {
-    "name": "Transfer income",
-    "unit": "log",
-    "description": "Household income from government transfers."
-  },
-  "nominal_expenditure": {
-    "name": "Nominal consumption expenditure",
-    "unit": "log",
-    "description": "Household nominal consumption expenditure. Block F validated."
-  },
-  "real_expenditure": {
-    "name": "Real consumption expenditure",
-    "unit": "log",
-    "description": "Nominal expenditure deflated by CPI. Block F validated."
-  },
-  "npl_aggregate": {
-    "name": "Aggregate NPL ratio",
-    "unit": "pct",
-    "description": "Banking sector NPL ratio from NBK."
-  },
-  "npl_kspi": {
-    "name": "KSPI NPL ratio",
-    "unit": "pct",
-    "description": "Kaspi.kz non-performing loan ratio."
   },
   "cor_kspi": {
     "name": "KSPI cost of risk",
     "unit": "pct",
     "description": "Kaspi.kz cost of risk (annualized provisions / avg loans)."
   },
-  "loan_portfolio_kspi": {
-    "name": "KSPI net loan portfolio",
+  "cpi_headline": {
+    "name": "Headline CPI",
     "unit": "log",
-    "description": "Kaspi.kz net loan portfolio level (bn KZT)."
+    "description": "Kazakhstan headline CPI index, log level."
   },
-  "portfolio_mix_kspi": {
-    "name": "KSPI portfolio mix",
-    "unit": "share",
-    "description": "Shares by product type (BNPL, car loans, merchant)."
-  },
-  "deposits_kspi": {
-    "name": "KSPI deposits",
+  "cpi_nontradable": {
+    "name": "Non-tradable CPI",
     "unit": "log",
-    "description": "Kaspi.kz total deposits (bn KZT)."
+    "description": "CPI for non-tradable goods (services). Block A falsification."
+  },
+  "cpi_tradable": {
+    "name": "Tradable CPI",
+    "unit": "log",
+    "description": "CPI for tradable goods (import-weighted). Block A validated."
   },
   "deposit_cost_kspi": {
     "name": "KSPI deposit cost",
     "unit": "pct",
     "description": "Kaspi.kz average deposit rate."
   },
-  "rwa_kspi": {
-    "name": "KSPI risk-weighted assets",
-    "unit": "log",
-    "description": "Kaspi.kz risk-weighted assets for regulatory capital."
-  },
-  "ppop_kspi": {
-    "name": "KSPI pre-provision operating profit",
-    "unit": "log",
-    "description": "Kaspi.kz PPOP (revenue - opex, before provisions)."
-  },
-  "total_capital_kspi": {
-    "name": "KSPI total capital",
-    "unit": "log",
-    "description": "Kaspi.kz total regulatory capital (Tier 1 + Tier 2)."
+  "imported_inflation_instrument": {
+    "name": "Imported inflation IV",
+    "unit": "pct",
+    "description": "Constructed instrument for imported inflation (FX change \u00d7 pre-period import share)."
   },
   "k2_ratio_kspi": {
     "name": "KSPI K2 capital ratio",
     "unit": "pct",
     "description": "Kaspi.kz K2 capital adequacy ratio (Total Capital / RWA)."
   },
-  "payments_revenue_kspi": {
-    "name": "KSPI Payments revenue",
+  "kzt_usd": {
+    "name": "KZT/USD exchange rate",
     "unit": "log",
-    "description": "Kaspi.kz payments segment revenue."
+    "description": "Kazakh tenge per US dollar, log level."
   },
-  "marketplace_revenue_kspi": {
-    "name": "KSPI Marketplace revenue",
+  "nominal_expenditure": {
+    "name": "Nominal consumption expenditure",
     "unit": "log",
-    "description": "Kaspi.kz marketplace segment revenue."
+    "description": "Household nominal consumption expenditure. Block F validated."
   },
-  "fintech_revenue_kspi": {
-    "name": "KSPI Fintech revenue",
+  "nominal_income": {
+    "name": "Nominal monetary income",
     "unit": "log",
-    "description": "Kaspi.kz fintech (lending) segment revenue."
+    "description": "Regional household nominal monetary income. Block B validated."
+  },
+  "ppop_kspi": {
+    "name": "KSPI pre-provision operating profit",
+    "unit": "log",
+    "description": "Kaspi.kz PPOP (revenue - opex, before provisions)."
+  },
+  "real_expenditure": {
+    "name": "Real consumption expenditure",
+    "unit": "log",
+    "description": "Nominal expenditure deflated by CPI. Block F validated."
+  },
+  "real_income": {
+    "name": "Real monetary income",
+    "unit": "log",
+    "description": "Nominal income deflated by CPI. Identity node."
+  },
+  "rwa_kspi": {
+    "name": "KSPI risk-weighted assets",
+    "unit": "log",
+    "description": "Kaspi.kz risk-weighted assets for regulatory capital."
+  },
+  "total_capital_kspi": {
+    "name": "KSPI total capital",
+    "unit": "log",
+    "description": "Kaspi.kz total regulatory capital (Tier 1 + Tier 2)."
+  },
+  "transfer_income": {
+    "name": "Transfer income",
+    "unit": "log",
+    "description": "Household income from government transfers."
+  },
+  "vix_shock": {
+    "name": "VIX shock",
+    "unit": "innovation",
+    "description": "Innovation in VIX (risk aversion shock)."
   }
 };
 const LLM_GUIDANCE = {

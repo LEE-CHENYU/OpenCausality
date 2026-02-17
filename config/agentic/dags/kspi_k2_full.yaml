@@ -899,7 +899,7 @@ nodes:
   derived: true
   identity:
     name: k2_identity
-    formula: total_capital_kspi / rwa_kspi
+    formula: exp(total_capital_kspi - rwa_kspi)
     depends_on:
     - total_capital_kspi
     - rwa_kspi

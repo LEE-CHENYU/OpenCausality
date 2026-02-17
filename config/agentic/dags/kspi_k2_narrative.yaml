@@ -1344,7 +1344,7 @@ edges:
   edge_status: IDENTITY
   timing:
     lag: 0
-    lag_unit: monthly
+    lag_unit: month
     contemporaneous: true
     max_anticipation: 0
   allowed_designs: []
@@ -1366,7 +1366,7 @@ edges:
   edge_status: IDENTITY
   timing:
     lag: 0
-    lag_unit: monthly
+    lag_unit: month
     contemporaneous: true
     max_anticipation: 0
   allowed_designs: []
