@@ -222,8 +222,17 @@ def _find_orphan_nodes(dag: dict) -> list[dict]:
 
 def _generate_orphan_explanations(
     dag: dict,
+    only_nodes: set[str] | None = None,
 ) -> dict[str, str]:
     """Generate LLM explanations for why orphan nodes are unwired.
+
+    Parameters
+    ----------
+    dag : dict
+        Parsed DAG YAML.
+    only_nodes : set[str] | None
+        If provided, only generate explanations for these node IDs.
+        Used by ``sync_cache`` to avoid regenerating existing entries.
 
     Returns ``{node_id: explanation_text}``.
     """
@@ -231,6 +240,8 @@ def _generate_orphan_explanations(
     from shared.llm.prompts import ORPHAN_NODE_SYSTEM, ORPHAN_NODE_USER
 
     orphans = _find_orphan_nodes(dag)
+    if only_nodes is not None:
+        orphans = [o for o in orphans if o.get("id", "") in only_nodes]
     if not orphans:
         return {}
 
@@ -503,4 +514,169 @@ def load_cache(cache_dir: Path | None = None) -> dict[str, dict[str, str]] | Non
         "edge_annotations": edge_annotations,
         "orphan_explanations": orphan_explanations,
         "causal_assessments": causal_assessments,
+    }
+
+
+def _load_open_issues(state_path: Path) -> dict[str, dict]:
+    """Load open issues from state file, normalizing key formats."""
+    if not state_path.exists():
+        return {}
+    with open(state_path) as f:
+        state = json.load(f)
+    all_issues = state.get("issues", None)
+    if all_issues is None:
+        all_issues = {k: v for k, v in state.items()
+                      if isinstance(v, dict) and "rule_id" in v}
+    open_issues: dict[str, dict] = {}
+    for key, issue in all_issues.items():
+        if issue.get("status") == "OPEN":
+            if ":" not in key and "/" in key:
+                parts = key.split("/")
+                if len(parts) == 3:
+                    key = f"{parts[2]}:{parts[1]}"
+            open_issues[key] = issue
+    return open_issues
+
+
+def sync_cache(
+    dag_path: Path,
+    state_path: Path,
+    cards_dir: Path,
+    cache_dir: Path,
+) -> dict[str, dict[str, str]]:
+    """Load cache, prune stale entries, generate missing annotations.
+
+    Compares cached edge IDs against current DAG YAML.  Removes entries
+    for deleted edges and generates LLM annotations only for new edges.
+    Returns the synced cache dict with keys ``edge_annotations``,
+    ``causal_assessments``, ``issue_guidance``, ``orphan_explanations``.
+    """
+    cache_dir.mkdir(parents=True, exist_ok=True)
+
+    # 1. Load DAG
+    with open(dag_path) as f:
+        dag = yaml.safe_load(f) or {}
+    current_edge_ids = {e["id"] for e in dag.get("edges", []) if e.get("id")}
+
+    # 2. Load existing cache (or empty dicts)
+    existing = load_cache(cache_dir)
+    annotations = existing["edge_annotations"] if existing else {}
+    assessments = existing["causal_assessments"] if existing else {}
+    guidance = existing["issue_guidance"] if existing else {}
+    orphans = existing["orphan_explanations"] if existing else {}
+
+    cached_edge_ids = set(annotations.keys())
+
+    # 3. Prune stale edge entries
+    stale = cached_edge_ids - current_edge_ids
+    if stale:
+        annotations = {k: v for k, v in annotations.items() if k in current_edge_ids}
+        assessments = {k: v for k, v in assessments.items() if k in current_edge_ids}
+        # Prune issue guidance whose edge is gone
+        guidance = {
+            k: v for k, v in guidance.items()
+            if (k.split(":", 1)[1] if ":" in k else k) in current_edge_ids
+        }
+
+    # 4. Detect missing edges
+    missing = current_edge_ids - set(annotations.keys())
+
+    # 5. Also detect new issue keys not in guidance cache
+    open_issues = _load_open_issues(state_path)
+    missing_issue_keys = set(open_issues.keys()) - set(guidance.keys())
+
+    # 6. Detect new orphan nodes
+    current_orphan_ids = {n["id"] for n in _find_orphan_nodes(dag)}
+    # Prune orphans for nodes no longer orphaned
+    orphans = {k: v for k, v in orphans.items() if k in current_orphan_ids}
+    missing_orphans = current_orphan_ids - set(orphans.keys())
+
+    n_stale = len(stale)
+    n_missing = len(missing)
+    n_missing_issues = len(missing_issue_keys)
+    n_missing_orphans = len(missing_orphans)
+
+    if n_missing == 0 and n_missing_issues == 0 and n_missing_orphans == 0:
+        if n_stale > 0:
+            print(f"  Synced cache: pruned {n_stale} stale entries, no new edges")
+        else:
+            print(f"  Cache up-to-date ({len(annotations)} edges)")
+    else:
+        print(
+            f"  Syncing cache: {n_stale} stale pruned, "
+            f"{n_missing} new edges, {n_missing_issues} new issues, "
+            f"{n_missing_orphans} new orphans"
+        )
+
+        # Build edge card data for missing edges
+        missing_edge_data: dict[str, dict] = {}
+        for eid in sorted(missing):
+            card = _load_edge_card(cards_dir / f"{eid}.yaml")
+            if card:
+                missing_edge_data[eid] = card
+
+        if missing:
+            # Mini-DAG with only missing edges
+            mini_dag = {
+                "edges": [e for e in dag.get("edges", []) if e.get("id") in missing],
+                "nodes": dag.get("nodes", []),
+            }
+
+            print(f"  Generating annotations for {n_missing} new edges...")
+            new_annotations = _generate_edge_annotations(mini_dag, missing_edge_data)
+            annotations.update(new_annotations)
+
+            print(f"  Generating causal assessments for {n_missing} new edges...")
+            new_assessments = _generate_causal_assessments(mini_dag, missing_edge_data)
+            assessments.update(new_assessments)
+
+        if missing_issue_keys:
+            # Filter issues to only new keys; load edge data for their edges
+            filtered_issues = {k: open_issues[k] for k in missing_issue_keys}
+            issue_edge_ids = set()
+            for key in missing_issue_keys:
+                parts = key.split(":", 1)
+                issue_edge_ids.add(parts[1] if len(parts) > 1 else key)
+            issue_edge_data: dict[str, dict] = {}
+            for eid in issue_edge_ids:
+                if eid in missing_edge_data:
+                    issue_edge_data[eid] = missing_edge_data[eid]
+                else:
+                    card = _load_edge_card(cards_dir / f"{eid}.yaml")
+                    if card:
+                        issue_edge_data[eid] = card
+
+            print(f"  Generating guidance for {n_missing_issues} new issues...")
+            new_guidance = _generate_issue_guidance(filtered_issues, issue_edge_data)
+            guidance.update(new_guidance)
+
+        if missing_orphans:
+            print(f"  Generating explanations for {n_missing_orphans} new orphans...")
+            new_orphans = _generate_orphan_explanations(dag, only_nodes=missing_orphans)
+            orphans.update(new_orphans)
+
+    # 7. Save updated cache
+    with open(cache_dir / "edge_annotations.json", "w") as f:
+        json.dump(annotations, f, indent=2)
+    with open(cache_dir / "causal_assessments.json", "w") as f:
+        json.dump(assessments, f, indent=2)
+    with open(cache_dir / "issue_guidance.json", "w") as f:
+        json.dump(guidance, f, indent=2)
+    with open(cache_dir / "orphan_explanations.json", "w") as f:
+        json.dump(orphans, f, indent=2)
+
+    metadata = {
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "dag_path": str(dag_path),
+        "state_hash": _state_hash(state_path),
+        "synced": True,
+    }
+    with open(cache_dir / "metadata.json", "w") as f:
+        json.dump(metadata, f, indent=2)
+
+    return {
+        "edge_annotations": annotations,
+        "causal_assessments": assessments,
+        "issue_guidance": guidance,
+        "orphan_explanations": orphans,
     }

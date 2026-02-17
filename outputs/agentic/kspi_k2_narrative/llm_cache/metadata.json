@@ -1,5 +1,6 @@
 {
-  "generated_at": "2026-02-11T19:33:42.154691+00:00",
+  "generated_at": "2026-02-17T07:35:16.995691+00:00",
   "dag_path": "config/agentic/dags/kspi_k2_narrative.yaml",
-  "state_hash": "c71acf70ad2e"
+  "state_hash": "no_state",
+  "synced": true
 }
