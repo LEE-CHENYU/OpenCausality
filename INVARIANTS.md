@@ -1259,6 +1259,93 @@ patterns as *expansion opportunities* and proposes `add_missing_node` /
 
 ---
 
+## §36 — MCP Query Server
+
+The MCP (Model Context Protocol) query server (`shared/mcp/query_server.py`) exposes
+DAG propagation, falsification, edge inspection, and health-check tools to Claude Code
+via stdio transport.
+
+### 36.1 Single-DAG State Model
+
+The server maintains a single module-level `_state` dict holding: `dag`, `edge_cards`,
+`tsguard_results`, `issue_ledger`, `engine`, `mode`, `dag_path`. Each call to `load_dag`
+**fully replaces all state** — the previous DAG, cards, issues, and engine are discarded
+entirely. There is no cross-DAG state sharing, no partial load, and no merge.
+
+### 36.2 Tool Inventory (Closed Set)
+
+The server exposes exactly 13 tools. Adding or removing a tool is a deliberate change:
+
+| Tool | Category | Requires DAG | Description |
+|------|----------|:---:|-------------|
+| `load_dag` | Setup | No | Load DAG YAML + artifacts, initialize engine |
+| `list_nodes` | Inspection | Yes | Node id, name, frequency, type |
+| `list_edges` | Inspection | Yes | Edge roles, claims, mode permissions |
+| `switch_mode` | Mode | Yes | Change active query mode |
+| `propagate_shock` | Propagation | Yes | Shock counterfactual with guardrails |
+| `propagate_policy` | Propagation | Yes | Policy counterfactual (STRUCTURAL only) |
+| `find_paths` | Propagation | Yes | All paths with allowed/blocked status |
+| `target_contributors` | Propagation | Yes | Sources ranked by absolute effect |
+| `inspect_edge` | Inspection | Yes | Full edge card details |
+| `get_identification` | Inspection | Yes | Claim levels + CF eligibility summary |
+| `compare_modes` | Mode | Yes | Edge permissions across all 3 modes |
+| `run_placebo` | Falsification | Yes | Markov property placebo tests |
+| `dag_doctor` | Health | Yes | Node/edge counts, coverage, issues |
+
+All tools except `load_dag` return an error if no DAG is loaded (`_require_dag` guard).
+
+### 36.3 Guardrail Enforcement
+
+Propagation tools (`propagate_shock`, `propagate_policy`, `find_paths`,
+`target_contributors`) delegate to the same `PropagationEngine` used by the CLI.
+All seven guardrails (§5) are applied — mode gating, claim level, counterfactual
+eligibility, TSGuard flags, issue severity, unit compatibility, and SE propagation.
+The MCP server never bypasses or relaxes guardrails.
+
+- `propagate_shock` passes `scenario_type="shock"` — applies shock CF gating.
+- `propagate_policy` passes `scenario_type="policy"` — requires STRUCTURAL mode +
+  IDENTIFIED_CAUSAL claim level.
+- `find_paths` passes `scenario_type=None` — no CF gating, shows all path status.
+
+### 36.4 Mode Management
+
+Three valid modes: `STRUCTURAL`, `REDUCED_FORM`, `DESCRIPTIVE`. Default is
+`REDUCED_FORM`. Mode state is server-wide (not per-request). `switch_mode` changes
+the default; individual tool calls can override with a `mode` parameter.
+
+Mode semantics are identical to §4 — the server delegates to the same engine logic.
+
+### 36.5 Artifact Directory Resolution
+
+`_get_dag_output_dir()` derives the per-DAG output directory from the DAG file stem:
+`{project_root}/outputs/agentic/{dag_stem}/`. This mirrors the CLI's
+`get_dag_output_dir()` so both tools read from the same artifact directories.
+
+Artifacts loaded on `load_dag`:
+- Edge cards: `{dag_out}/cards/edge_cards/*.yaml`
+- TSGuard results: `{dag_out}/tsguard/*.yaml`
+- Issue ledger: `{dag_out}/issues/*.jsonl` (most recent file)
+
+### 36.6 Process Model and Caching
+
+The server is a long-lived stdio process. Python module imports are cached across
+tool calls — **code changes to core modules require server restart** to take effect.
+The server itself is stateless between `load_dag` calls (no request history, no
+session state beyond `_state`).
+
+JSON serialization uses `_safe_float()` to convert NaN/Inf to strings, preventing
+JSON encoding errors.
+
+### 36.7 Read-Only Contract
+
+The MCP server is strictly read-only with respect to files and DAG state. It never
+writes edge cards, issues, TSGuard results, or DAG YAML files. The only mutable
+state is the in-memory `_state` dict (replaced on `load_dag`) and the `mode` field
+(changed by `switch_mode`). `run_placebo` performs computation but does not persist
+results.
+
+---
+
 ## Summary: The Invariant Checklist
 
 Before merging any change, verify:
@@ -1337,3 +1424,11 @@ Before merging any change, verify:
 - [ ] Structural gap rules are domain-agnostic (graph-theoretic only)
 - [ ] Sentinel never expands DAG structure — only Critic does (§35.7)
 - [ ] Quality score avoids significance/p-values (§35.6)
+
+**MCP Query Server (§36)**
+- [ ] `load_dag` fully replaces all state — no cross-DAG sharing (§36.1)
+- [ ] Tool inventory is the closed set of 13 (§36.2)
+- [ ] All propagation tools delegate to PropagationEngine with full guardrails (§36.3)
+- [ ] Mode semantics identical to §4 — no relaxation or bypass (§36.4)
+- [ ] Artifact directory resolution mirrors CLI layout (§36.5)
+- [ ] Server is read-only — never writes files or persists state (§36.7)
