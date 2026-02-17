@@ -533,6 +533,61 @@ def compute_identity_sensitivity(
     }
 
 
+def compute_additional_identity_sensitivities(
+    wage_share: float = 0.60,
+    avg_fx_change: float = 0.10,
+) -> dict[str, IdentityResult]:
+    """
+    Compute identity sensitivities for deflation and composition edges.
+
+    Edges:
+    - nominal_expenditure_to_real: Real = Nominal / CPI.
+      In log terms: log(real) = log(nominal) - log(CPI).
+      Sensitivity: d(log_real)/d(log_nominal) = 1.0 (elasticity).
+
+    - wage_to_nominal_income: Income = Wages + Transfers + Other.
+      Wages are ~60% of total income.
+      Sensitivity: d(income)/d(wages) = wage_share.
+
+    - import_share_to_iv: IV = diff(log(kzt_usd)) * E_import_share.
+      Deterministic construction using pre-period weights.
+      Sensitivity: d(IV)/d(import_share) = avg_fx_change.
+
+    Args:
+        wage_share: Share of wages in nominal income (default 0.60).
+        avg_fx_change: Average FX log-change used in IV construction.
+
+    Returns:
+        Dict with results for the three additional identity edges.
+    """
+    return {
+        "nominal_expenditure_to_real": IdentityResult(
+            edge_id="nominal_expenditure_to_real",
+            sensitivity=1.0,
+            formula="d(log_real)/d(log_nominal) = 1.0 (deflation identity)",
+            at_values={"elasticity": 1.0},
+            numerator_label="Nominal expenditure (log)",
+            denominator_label="Real expenditure (log)",
+        ),
+        "wage_to_nominal_income": IdentityResult(
+            edge_id="wage_to_nominal_income",
+            sensitivity=wage_share,
+            formula=f"d(income)/d(wages) = wage_share = {wage_share:.2f}",
+            at_values={"wage_share": wage_share},
+            numerator_label="Wage income",
+            denominator_label="Nominal income",
+        ),
+        "import_share_to_iv": IdentityResult(
+            edge_id="import_share_to_iv",
+            sensitivity=avg_fx_change,
+            formula=f"d(IV)/d(import_share) = avg_fx_change = {avg_fx_change:.2f}",
+            at_values={"avg_fx_change": avg_fx_change},
+            numerator_label="Pre-period import share",
+            denominator_label="Imported inflation instrument",
+        ),
+    }
+
+
 # ---------------------------------------------------------------------------
 # Expected signs for sanity checking
 # ---------------------------------------------------------------------------

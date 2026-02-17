@@ -1,269 +1,117 @@
 edge_id: wage_to_nominal_income
-dag_version_hash: 62ee85366d38a1bef004140293f32144ed41afc73d9927e89cebe471edc878b3
-created_at: '2026-02-15T23:55:21.167931'
+dag_version_hash: a0d5c383631c52aa262f288704c6f7868d48b73d5034761245939de8eeea1d72
+created_at: '2026-02-16T16:23:45.641430'
 data_provenance:
-  treatment_source:
-    connector: parquet_file
-    dataset: wage_income
-    series: null
-    retrieval_time: null
-    file_path: null
-    file_checksum: null
-    row_count: 0
-    column_count: null
-    date_range: null
-    cache_key: null
-  outcome_source:
-    connector: parquet_file
-    dataset: nominal_income
-    series: null
-    retrieval_time: null
-    file_path: null
-    file_checksum: null
-    row_count: 0
-    column_count: null
-    date_range: null
-    cache_key: null
+  treatment_source: null
+  outcome_source: null
   control_sources: {}
   instrument_sources: {}
-  combined_row_count: 0
+  combined_row_count: null
   combined_date_range: null
   missing_rate: null
   panel_dimensions: null
   entity_boundary_note: null
   kpi_definitions: null
-spec_hash: 01680b18cda1f01dfbd3f06a49c2803c68c79f6d179eeb330e7d4ff373b23b43
+spec_hash: e582f930ce9896f4f11444ee5cacdafd5fe5affd270856c3a0d680d029846d79
 spec_details:
-  design: DATA_INSUFFICIENT
-  controls:
-  - y_lag1
-  - y_lag2
-  - x_lag1
-  - x_lag2
+  design: IDENTITY
+  controls: []
   instruments: []
   fixed_effects: []
-  se_method: HAC_newey_west
+  se_method: deterministic
   sample_filter: null
-  horizon:
-  - 0
-  - 1
-  - 2
-  - 3
-  - 4
-  - 5
-  - 6
+  horizon: null
   bandwidth: null
-estimates: null
+estimates:
+  point: 0.6
+  se: 0.0
+  ci_95:
+  - 0.6
+  - 0.6
+  pvalue: null
+  n_calendar_periods: 1
+  n_effective_obs_h0: 1
 diagnostics:
-  hac_bandwidth:
-    name: hac_bandwidth
+  identity_check:
+    name: identity_check
     passed: true
-    value: 0.0
+    value: 0.6
     threshold: null
     pvalue: null
-    message: 'Newey-West bandwidth: 0'
-  effective_obs:
-    name: effective_obs
-    passed: false
-    value: 0.0
-    threshold: 20.0
-    pvalue: null
-    message: ''
-  sign_consistency:
-    name: sign_consistency
-    passed: true
-    value: null
-    threshold: null
-    pvalue: null
-    message: No expected sign specified
-  ts_hac_sensitivity:
-    name: ts_hac_sensitivity
-    passed: true
-    value: null
-    threshold: null
-    pvalue: null
-    message: 'TSGuard: pass'
-  ts_regime_stability:
-    name: ts_regime_stability
-    passed: true
-    value: null
-    threshold: null
-    pvalue: null
-    message: 'TSGuard: pass'
-all_diagnostics_pass: false
+    message: 'Deterministic: d(income)/d(wages) = wage_share = 0.60'
+all_diagnostics_pass: true
 interpretation:
-  estimand: IRF of nominal_income to a unit shock in wage_income
-  is_not: Structural causal effect under all interventions
+  estimand: 'Sensitivity: d(income)/d(wages) = wage_share = 0.60'
+  is_not: Causal effect; this is a mechanical identity
   channels:
-  - direct
-  - indirect
+  - mechanical/accounting
   population: ''
-  conditions: ''
+  conditions: 'Evaluated at: {''wage_share'': 0.6}'
   allowed_uses: []
   forbidden_uses: []
 failure_flags:
   weak_identification: false
   potential_bad_control: false
-  mechanical_identity_risk: false
+  mechanical_identity_risk: true
   regime_break_detected: false
-  small_sample: true
+  small_sample: false
   high_missing_rate: false
   entity_boundary_change: false
   definition_inconsistency: false
-  data_insufficient: true
+  data_insufficient: false
 counterfactual:
   supports_shock_path: true
-  supports_policy_intervention: false
-  intervention_note: Reduced-form LP estimate
+  supports_policy_intervention: true
+  intervention_note: Mechanical identity; always holds by definition
   external_validity: ''
-credibility_rating: D
-credibility_score: 0.0
+credibility_rating: A
+credibility_score: 0.94
 identification:
-  claim_level: DESCRIPTIVE
+  claim_level: IDENTIFIED_CAUSAL
   risks:
-    unmeasured_confounding: medium
+    unmeasured_confounding: low
     simultaneity: low
     weak_variation: low
     measurement_error: low
     selection: low
   untestable_assumptions: []
-  testable_threats_passed:
-  - hac_bandwidth
-  - sign_consistency
-  - ts_hac_sensitivity
-  - ts_regime_stability
-  testable_threats_failed:
-  - effective_obs
-  strategy_type: ''
-  strategy_argument: ''
-  strategy_key_assumption: ''
+  testable_threats_passed: []
+  testable_threats_failed: []
+  strategy_type: accounting_identity
+  strategy_argument: Nominal income = wages + transfers + self-employment + other.
+    Wages are the dominant component (~60%).
+  strategy_key_assumption: Income decomposition is exhaustive.
 counterfactual_block:
-  shock_scenario_allowed: false
+  shock_scenario_allowed: true
   policy_intervention_allowed: false
-  reason_shock_blocked: Shock CF requires REDUCED_FORM+, edge has DESCRIPTIVE
+  reason_shock_blocked: null
   reason_policy_blocked: REDUCED_FORM mode does not allow policy interventions
-  allowed: false
-  reason_blocked: Shock CF requires REDUCED_FORM+, edge has DESCRIPTIVE
+  allowed: true
+  reason_blocked: REDUCED_FORM mode does not allow policy interventions
 propagation_role:
-  role: bridge
+  role: identity
   overlapping_paths: []
-  selected_for_counterfactual: false
+  selected_for_counterfactual: true
   mode_propagation_allowed:
     STRUCTURAL: true
     REDUCED_FORM: true
     DESCRIPTIVE: true
   mode_shock_cf_allowed:
-    STRUCTURAL: false
-    REDUCED_FORM: false
+    STRUCTURAL: true
+    REDUCED_FORM: true
     DESCRIPTIVE: false
   mode_policy_cf_allowed:
-    STRUCTURAL: false
+    STRUCTURAL: true
     REDUCED_FORM: false
     DESCRIPTIVE: false
 literature:
-  supporting:
-  - doi: 10.1111/j.1468-0335.2009.00843.x
-    title: Individual and Corporate Social Responsibility
-    authors:
-    - Roland Bénabou
-    - Jean Tirole
-    year: 2009
-    excerpt: 'Society''s demands for individual and corporate social responsibility
-      as alternative responses to market and distributive failures are becoming increasingly
-      prominent. We draw on recent developments in the psychology and economics of
-      prosocial behaviour to shed light on this trend and the underlying '
-    relevance: supporting
-    edge_id: wage_to_nominal_income
-    paper_id: ''
-    citation_count: 2141
-    search_query: Wage income Nominal monetary income causal effect
-    source: openalex
-    pdf_url: https://onlinelibrary.wiley.com/doi/pdfdirect/10.1111/j.1468-0335.2009.00843.x
-  - doi: 10.1093/qje/qjaa004
-    title: The Fall of the Labor Share and the Rise of Superstar Firms*
-    authors:
-    - David Autor
-    - David Dorn
-    - Lawrence F. Katz
-    - Christina Patterson
-    - John Van Reenen
-    year: 2020
-    excerpt: Abstract The fall of labor’s share of GDP in the United States and many
-      other countries in recent decades is well documented but its causes remain uncertain.
-      Existing empirical assessments typically rely on industry or macro data, obscuring
-      heterogeneity among firms. In this article, we analyze micr
-    relevance: supporting
-    edge_id: wage_to_nominal_income
-    paper_id: ''
-    citation_count: 1946
-    search_query: Wage income Nominal monetary income causal effect
-    source: openalex
-    pdf_url: https://academic.oup.com/qje/article-pdf/135/2/645/32994954/qjaa004.pdf
-  - doi: 10.1086/654340
-    title: An Optimization-Based Econometric Framework for the Evaluation of Monetary
-      Policy
-    authors:
-    - Julio J. Rotemberg
-    - Michael Woodford
-    year: 1997
-    excerpt: This paper considers a simple quantitative model of output, interest
-      rate and inflation determination in the United States, and uses it to evaluate
-      alternative rules by which the Fed may set interest rates. The model is derived
-      from optimizing behavior under rational expectations, both on the part o
-    relevance: supporting
-    edge_id: wage_to_nominal_income
-    paper_id: ''
-    citation_count: 1898
-    search_query: Wage income Nominal monetary income causal effect
-    source: openalex
-    pdf_url: https://www.journals.uchicago.edu/doi/epdf/10.1086/654340
+  supporting: []
   challenging: []
-  methodological:
-  - doi: 10.1073/pnas.2316423121
-    title: 'The causal effect of mental health on labor market outcomes: The case
-      of stress-related mental disorders following a human-made disaster'
-    authors:
-    - Signe Hald Andersen
-    - Leah S. Richmond-Rakerd
-    - T. Moffitt
-    - A. Caspi
-    year: 2024
-    excerpt: Significance We leveraged a natural experiment—a fireworks factory disaster
-      which occurred in 2004—in an instrumental variables model to test whether developing
-      a stress-related mental disorder negatively impacts labor-market outcomes among
-      working-aged individuals (N = 86,726). Our results showed t
-    relevance: methodological
-    edge_id: wage_to_nominal_income
-    paper_id: b341bd84fdb6c8cd9d808ef893e71e9db853513b
-    citation_count: 3
-    search_query: Wage income Nominal monetary income causal effect
-    source: semantic_scholar
-    pdf_url: ''
-  - doi: 10.1080/01621459.2025.2596297
-    title: 'The impact of job stability on monetary poverty in Italy: causal small
-      area estimation'
-    authors:
-    - Katarzyna Reluga
-    - Dehan Kong
-    - Setareh Ranjbar
-    - Nicola Salvati
-    - Mark van der Laan
-    year: 2025
-    excerpt: Job stability - encompassing secure contracts, adequate wages, social
-      benefits, and career opportunities - is a critical determinant in reducing monetary
-      poverty, as it provides households with reliable income and enhances economic
-      well-being. This study leverages EU-SILC survey and census data to e
-    relevance: methodological
-    edge_id: wage_to_nominal_income
-    paper_id: d566768db235aa427cc184ab0bcb1f9352311650
-    citation_count: 0
-    search_query: Wage income Nominal monetary income causal effect
-    source: semantic_scholar
-    pdf_url: ''
-  search_status: SEARCHED
-  search_timestamp: '2026-02-15T23:55:21.167986'
-  search_query: Wage income Nominal monetary income causal effect
-  total_results: 5
+  methodological: []
+  search_status: PENDING
+  search_timestamp: null
+  search_query: ''
+  total_results: 0
 companion_edge_id: null
 variant_of: null
 is_precisely_null: false
