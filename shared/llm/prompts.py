@@ -424,6 +424,16 @@ add_missing_edge revisions. Only propose additions you are confident about
 clear role in the causal story. For add_missing_edge, both endpoints must exist
 (propose the node first if needed).
 
+## Causal Logic Probes (code-computed, informational)
+
+The following probes detect chain-level issues that per-edge checks miss:
+{causal_logic_probes_questions}
+
+Probe findings are informational — they highlight potential issues for you to
+assess. Address probe findings using existing revision types (e.g.,
+add_structural_metadata to fix sign declarations, add_unit_specification to
+fix scale issues). Do NOT ignore probe warnings without reasoning.
+
 ## Output Format
 
 Return a JSON array of revision objects. Each object has:
@@ -485,6 +495,13 @@ DAG_CRITIC_USER = """\
 ## Structural Gaps (expansion opportunities)
 
 {structural_gaps}
+
+## Causal Logic Probes
+
+{causal_logic_probes}
+
+If any probe findings are present, consider whether they warrant revisions
+using existing revision types (add_structural_metadata, add_unit_specification, etc.).
 
 ## Placebo Falsification Results
 

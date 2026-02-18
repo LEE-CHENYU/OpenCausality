@@ -1275,6 +1275,30 @@ DAG — doing so would violate §20.3. The Critic's gap detection flags the same
 patterns as *expansion opportunities* and proposes `add_missing_node` /
 `add_missing_edge` revisions at a higher governance tier.
 
+### 35.8 Causal Logic Probes
+
+Chain-level probes detect issues that per-edge diagnostics miss. Four probes:
+
+| Probe | What it checks | Severity |
+|-------|---------------|----------|
+| `sign_coherence` | Parallel paths to same node with conflicting expected_sign | warning |
+| `scale_consistency` | Unit-kind mismatches between consecutive edges | warning |
+| `magnitude_plausibility` | \|coefficient\| > 10 or < 0.001 with p < 0.05 | warning/info |
+| `sign_vs_estimate` | Estimated coefficient sign contradicts declared expected_sign | warning |
+
+Invariants:
+
+1. **Warning-only**: Probes produce informational findings, never block propagation
+   or modify the quality score. They are context for the LLM critic, not gates.
+2. **Domain-agnostic**: All four probes are graph-theoretic or numerical checks.
+   No domain-specific thresholds or variable names.
+3. **Backward-compatible**: `CriticFeedback.causal_logic_probes` defaults to `[]`.
+   Existing code that constructs `CriticFeedback` without the field is unaffected.
+4. **No new revision types**: Probe findings are addressed using existing revision
+   types (`add_structural_metadata`, `add_unit_specification`, etc.).
+5. **No quality score changes**: Probes do not add a scoring component. They inform
+   the LLM's revision proposals but do not penalize the DAG score directly.
+
 ---
 
 ## §36 — MCP Query Server

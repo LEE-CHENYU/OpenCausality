@@ -424,6 +424,9 @@ class DAGCritic:
         # Structural gaps
         structural_gaps = self._detect_structural_gaps()
 
+        # Causal logic probes
+        causal_logic_probes = self._compute_causal_logic_probes()
+
         return CriticFeedback(
             quality_score=quality,
             edge_diagnostics=edge_diagnostics,
@@ -432,6 +435,7 @@ class DAGCritic:
             edges_missing_units=edges_missing_units,
             formula_violations=formula_violations,
             structural_gaps=structural_gaps,
+            causal_logic_probes=causal_logic_probes,
         )
 
     def _load_open_issues(self) -> list[dict[str, Any]]:
@@ -449,6 +453,188 @@ class DAGCritic:
             ]
         except (json.JSONDecodeError, KeyError):
             return []
+
+    def _load_edge_card_estimates(self) -> dict[str, dict[str, Any]]:
+        """Load point estimates from edge card YAML files.
+
+        Returns:
+            {edge_id: {point, se, pvalue, treatment_unit, outcome_unit}}
+        """
+        cards_dir = self.output_dir / "cards" / "edge_cards"
+        if not cards_dir.exists():
+            return {}
+
+        estimates: dict[str, dict[str, Any]] = {}
+        for card_path in sorted(cards_dir.glob("*.yaml")):
+            try:
+                with open(card_path) as f:
+                    card_data = yaml.safe_load(f)
+                edge_id = card_data.get("edge_id", card_path.stem)
+                est = card_data.get("estimates", {})
+                if not est:
+                    continue
+                estimates[edge_id] = {
+                    "point": est.get("point"),
+                    "se": est.get("se"),
+                    "pvalue": est.get("pvalue"),
+                    "treatment_unit": est.get("treatment_unit", ""),
+                    "outcome_unit": est.get("outcome_unit", ""),
+                }
+            except (yaml.YAMLError, OSError):
+                continue
+        return estimates
+
+    def _compute_causal_logic_probes(self) -> list[dict[str, Any]]:
+        """Run chain-level causal logic probes against current DAG state.
+
+        Returns list of probe findings:
+            [{probe, finding, edges_involved, severity}]
+        """
+        from shared.agentic.propagation import UnitSpec
+
+        findings: list[dict[str, Any]] = []
+        estimates = self._load_edge_card_estimates()
+
+        # ── Probe 1: sign_coherence ──
+        # For each node with 2+ incoming edges having expected_sign,
+        # flag if signs conflict (positive vs negative to same node).
+        incoming: dict[str, list[tuple[str, str]]] = {}  # node -> [(edge_id, sign)]
+        for eid, edge in self.edges.items():
+            to_node = edge.get("to", "")
+            sign = (
+                edge.get("acceptance_criteria", {})
+                .get("plausibility", {})
+                .get("expected_sign", "")
+            )
+            if sign and to_node:
+                incoming.setdefault(to_node, []).append((eid, sign))
+
+        for node_id, edge_signs in incoming.items():
+            if len(edge_signs) < 2:
+                continue
+            signs_set = {s for _, s in edge_signs if s in ("positive", "negative")}
+            if len(signs_set) > 1:
+                involved = [eid for eid, _ in edge_signs]
+                findings.append({
+                    "probe": "sign_coherence",
+                    "finding": (
+                        f"Node '{node_id}' has conflicting incoming signs: "
+                        + ", ".join(f"{eid}={s}" for eid, s in edge_signs)
+                    ),
+                    "edges_involved": involved,
+                    "severity": "warning",
+                })
+
+        # ── Probe 2: scale_consistency ──
+        # Flag non-unity scales and unit-kind mismatches on consecutive edges.
+        for eid, edge in self.edges.items():
+            unit_spec = edge.get("unit_specification", {})
+            tu = unit_spec.get("treatment_unit", "")
+            ou = unit_spec.get("outcome_unit", "")
+            for label, text in [("treatment_unit", tu), ("outcome_unit", ou)]:
+                if not text:
+                    continue
+                parsed = UnitSpec.parse(text)
+                if parsed.scale != 1.0:
+                    findings.append({
+                        "probe": "scale_note",
+                        "finding": (
+                            f"Edge '{eid}' {label}='{text}' has "
+                            f"non-unity scale={parsed.scale}"
+                        ),
+                        "edges_involved": [eid],
+                        "severity": "info",
+                    })
+
+        # Check unit-kind mismatch on consecutive edges (A->B, B->C)
+        outgoing: dict[str, list[str]] = {}  # node -> [edge_id]
+        for eid, edge in self.edges.items():
+            fn = edge.get("from", "")
+            if fn:
+                outgoing.setdefault(fn, []).append(eid)
+
+        for eid_up, edge_up in self.edges.items():
+            mid_node = edge_up.get("to", "")
+            ou_text = edge_up.get("unit_specification", {}).get("outcome_unit", "")
+            if not mid_node or not ou_text:
+                continue
+            ou_kind = UnitSpec.parse(ou_text).kind
+            for eid_down in outgoing.get(mid_node, []):
+                tu_text = self.edges[eid_down].get("unit_specification", {}).get(
+                    "treatment_unit", ""
+                )
+                if not tu_text:
+                    continue
+                tu_kind = UnitSpec.parse(tu_text).kind
+                if ou_kind != "unknown" and tu_kind != "unknown" and ou_kind != tu_kind:
+                    findings.append({
+                        "probe": "scale_consistency",
+                        "finding": (
+                            f"Unit-kind mismatch: {eid_up} outcome_unit "
+                            f"kind='{ou_kind}' vs {eid_down} treatment_unit "
+                            f"kind='{tu_kind}'"
+                        ),
+                        "edges_involved": [eid_up, eid_down],
+                        "severity": "warning",
+                    })
+
+        # ── Probe 3: magnitude_plausibility ──
+        for eid, est in estimates.items():
+            point = est.get("point")
+            pvalue = est.get("pvalue")
+            if point is None:
+                continue
+            abs_point = abs(point)
+            if abs_point > 10:
+                findings.append({
+                    "probe": "magnitude_flag",
+                    "finding": (
+                        f"Edge '{eid}' has |coefficient|={abs_point:.3f} "
+                        f"(> 10, possibly mis-scaled)"
+                    ),
+                    "edges_involved": [eid],
+                    "severity": "warning",
+                })
+            elif abs_point < 0.001 and pvalue is not None and pvalue < 0.05:
+                findings.append({
+                    "probe": "magnitude_flag",
+                    "finding": (
+                        f"Edge '{eid}' has |coefficient|={abs_point:.6f} "
+                        f"with p={pvalue:.4f} (negligible but significant)"
+                    ),
+                    "edges_involved": [eid],
+                    "severity": "info",
+                })
+
+        # ── Probe 4: sign_vs_estimate ──
+        for eid, edge in self.edges.items():
+            expected = (
+                edge.get("acceptance_criteria", {})
+                .get("plausibility", {})
+                .get("expected_sign", "")
+            )
+            if not expected or expected == "any":
+                continue
+            est = estimates.get(eid)
+            if not est or est.get("point") is None:
+                continue
+            point = est["point"]
+            actual_sign = "positive" if point > 0 else "negative" if point < 0 else "zero"
+            if (
+                (expected == "positive" and point < 0)
+                or (expected == "negative" and point > 0)
+            ):
+                findings.append({
+                    "probe": "sign_vs_estimate",
+                    "finding": (
+                        f"Edge '{eid}' expected_sign='{expected}' but "
+                        f"estimated coefficient={point:.4f} ({actual_sign})"
+                    ),
+                    "edges_involved": [eid],
+                    "severity": "warning",
+                })
+
+        return findings
 
     # ──────────────────────────────────────────────────────────────
     # Critique (LLM call)
@@ -491,10 +677,16 @@ class DAGCritic:
         gap_rules = self.principles.get("structural_gap_rules", [])
         gap_rules_text = _format_gap_rules(gap_rules)
 
+        probes = self.principles.get("causal_logic_probes", {})
+        probes_text = "\n".join(
+            f"- **{key}**: {val}" for key, val in probes.items()
+        ) if probes else "No causal logic probes configured."
+
         return DAG_CRITIC_SYSTEM.format(
             structural_rules=rules_text,
             domain_questions=questions_text,
             structural_gap_rules=gap_rules_text,
+            causal_logic_probes_questions=probes_text,
             confidence_threshold=self.confidence_threshold,
         )
 
@@ -557,6 +749,14 @@ class DAGCritic:
         ]
         structural_gaps_str = "\n".join(gap_lines) or "None"
 
+        # Causal logic probes
+        probe_lines = [
+            f"- [{p['severity'].upper()}] **{p['probe']}**: {p['finding']} "
+            f"(edges: {', '.join(p['edges_involved'])})"
+            for p in feedback.causal_logic_probes
+        ]
+        causal_logic_probes_str = "\n".join(probe_lines) or "None"
+
         return DAG_CRITIC_USER.format(
             iteration=iteration,
             edge_type_diversity=qs.edge_type_diversity,
@@ -572,6 +772,7 @@ class DAGCritic:
             edges_missing_units=missing_units_str,
             formula_violations=formula_str,
             structural_gaps=structural_gaps_str,
+            causal_logic_probes=causal_logic_probes_str,
             placebo_results="None",  # populated when placebo data available
             node_summary=node_summary_str,
             literature_summary=literature_str,

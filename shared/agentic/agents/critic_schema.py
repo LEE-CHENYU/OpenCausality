@@ -153,6 +153,7 @@ class CriticFeedback:
     edges_missing_units: list[str] = field(default_factory=list)
     formula_violations: list[dict[str, Any]] = field(default_factory=list)
     structural_gaps: list[dict[str, Any]] = field(default_factory=list)
+    causal_logic_probes: list[dict[str, Any]] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -164,6 +165,7 @@ class CriticFeedback:
             "edges_missing_units": self.edges_missing_units,
             "formula_violations": self.formula_violations,
             "structural_gaps": self.structural_gaps,
+            "causal_logic_probes": self.causal_logic_probes,
         }
 
 

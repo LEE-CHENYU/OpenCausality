@@ -157,6 +157,30 @@ domain_extraction_questions:
     Flag any misclassified citations.
 
 # ──────────────────────────────────────────────────────────────────
+# Causal Logic Probes (chain-level, code-computed)
+# These produce findings the LLM cannot derive on its own.
+# Results are injected into the critic prompt as informational context.
+# ──────────────────────────────────────────────────────────────────
+
+causal_logic_probes:
+  sign_coherence: >
+    Do parallel paths converging on the same node yield consistent
+    cumulative signs? Flag nodes where one incoming edge has
+    expected_sign=positive and another has expected_sign=negative.
+  scale_consistency: >
+    Are non-unity scales documented and consistent across
+    consecutive edges in a chain? Flag unit-kind mismatches
+    between an upstream outcome_unit and downstream treatment_unit.
+  magnitude_plausibility: >
+    Are estimated coefficients in reasonable ranges? Flag
+    |coefficient| > 10 (possibly mis-scaled) or |coefficient| < 0.001
+    with p < 0.05 (negligible but statistically significant).
+  sign_vs_estimate: >
+    Does the estimated coefficient sign match the declared
+    expected_sign in the DAG YAML? Flag contradictions where
+    a positive coefficient is declared negative, or vice versa.
+
+# ──────────────────────────────────────────────────────────────────
 # Quality Weights (sum to 1.0)
 # ──────────────────────────────────────────────────────────────────
 
