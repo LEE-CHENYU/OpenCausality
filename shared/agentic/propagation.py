@@ -671,6 +671,27 @@ class PropagationEngine:
                     f"treatment ({next_treatment.kind})"
                 )
 
+            # Scale mismatch between consecutive edges (warning only)
+            if (curr_outcome.scale != 1.0 and next_treatment.scale != 1.0
+                    and curr_outcome.scale != next_treatment.scale):
+                path.warnings.append(
+                    f"scale_mismatch: {edges_in_path[i].edge_id} outcome "
+                    f"scale={curr_outcome.scale} vs "
+                    f"{edges_in_path[i+1].edge_id} treatment "
+                    f"scale={next_treatment.scale} "
+                    f"— chain multiplication may need rescaling"
+                )
+
+        # Non-unity treatment scale warnings (informational)
+        for e in edges_in_path:
+            if e.treatment_unit.scale != 1.0:
+                path.warnings.append(
+                    f"scale_note: {e.edge_id} treatment scale="
+                    f"{e.treatment_unit.scale} "
+                    f"(coefficient is per {e.treatment_unit.scale} change, "
+                    f"not per 1)"
+                )
+
         # ── Guardrail 7: Frequency alignment ──
         if len(edges_in_path) > 1:
             frequencies = {e.frequency for e in edges_in_path}

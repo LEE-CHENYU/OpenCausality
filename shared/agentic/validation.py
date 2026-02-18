@@ -23,6 +23,7 @@ import yaml
 
 from shared.agentic.output.edge_card import EdgeCard, rating_from_score
 from shared.agentic.identification.screen import IdentifiabilityScreen, IdentifiabilityResult
+from shared.agentic.propagation import UnitSpec
 
 
 # ---------------------------------------------------------------------------
@@ -1220,5 +1221,21 @@ def validate_chain_units(
                         ),
                         edge_id=f"{upstream_eid}->{downstream_eid}",
                     ))
+
+    # Non-unity treatment scale notes
+    for edge_id, card in edge_cards.items():
+        if not card.estimates or not card.estimates.treatment_unit:
+            continue
+        parsed = UnitSpec.parse(card.estimates.treatment_unit)
+        if parsed.scale != 1.0:
+            result.add_issue(ValidationIssue(
+                check_id="non_unity_treatment_scale",
+                severity=ValidationSeverity.WARNING,
+                message=(
+                    f"Edge {edge_id}: treatment scale={parsed.scale} "
+                    f"(coefficient per {card.estimates.treatment_unit})"
+                ),
+                edge_id=edge_id,
+            ))
 
     return result

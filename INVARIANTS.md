@@ -1115,6 +1115,24 @@ block propagation in `STRUCTURAL` and `REDUCED_FORM` modes; they emit warnings i
 - Unknown or unparseable units fall back to `"unknown"` and block propagation in
   `STRUCTURAL` and `REDUCED_FORM` modes (conservative default).
 
+### 33.4 Scale Warnings
+
+Guardrail 6 emits **warnings** (never blockers) for non-unity treatment scales:
+- **Non-unity scale note**: When `treatment_unit.scale != 1.0`, a `scale_note` warning
+  surfaces the scale factor (e.g., "coefficient is per 0.1 change, not per 1").
+- **Scale mismatch**: When consecutive edges have differing non-default scales, a
+  `scale_mismatch` warning flags potential rescaling needs in chain multiplication.
+
+`validate_chain_units()` also emits a `non_unity_treatment_scale` WARNING for any
+edge card whose parsed treatment unit has `scale != 1.0`.
+
+### 33.5 Companion Card Audit
+
+`load_dag` and `dag_doctor` report `cards_not_on_dag` — edge cards present in the
+artifact store that do not correspond to any registered DAG edge. These are typically
+companion/scenario cards (e.g., `shock_to_cor_kspi`) and should not be confused with
+DAG-edge cards when counting coverage.
+
 ---
 
 ## 34. Cross-Cutting Principles
