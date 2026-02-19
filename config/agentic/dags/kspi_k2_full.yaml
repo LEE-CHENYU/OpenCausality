@@ -3106,6 +3106,71 @@ edges:
   timing:
     lag: 0
   forbidden_controls: []
+- id: oil_demand_to_brent
+  from: oil_demand_shock
+  to: brent_price
+  edge_type: causal
+  notes: Oil demand shock directly affects Brent price. Missing edge caused placebo
+    failure on kzt_usd->brent_price (p=0.001) by leaving demand-driven confounding
+    unmodeled.
+  identification_strategy:
+    type: SVAR_shock_decomposition
+    argument: Baumeister-Hamilton SVAR identifies demand vs supply shocks
+    key_assumption: Structural shock orthogonality from SVAR rotation
+  unit_specification:
+    treatment_unit: sd
+    outcome_unit: pct
+  acceptance_criteria:
+    plausibility:
+      expected_sign: positive
+  timing:
+    lag: 0
+  forbidden_controls: []
+- id: global_activity_to_brent
+  from: global_activity_shock
+  to: brent_price
+  edge_type: causal
+  notes: Global real activity innovation drives oil demand and prices. Completes
+    Baumeister SVAR triad (supply, demand, activity).
+  identification_strategy:
+    type: SVAR_shock_decomposition
+    argument: Baumeister-Hamilton SVAR global activity innovation
+    key_assumption: Structural shock orthogonality
+  unit_specification:
+    treatment_unit: sd
+    outcome_unit: pct
+  acceptance_criteria:
+    plausibility:
+      expected_sign: positive
+  timing:
+    lag: 0
+  forbidden_controls: []
+- id: global_activity_to_fx
+  from: global_activity_shock
+  to: kzt_usd
+  edge_type: causal
+  notes: Global activity innovation affects KZT/USD via capital flows and commodity
+    export revenues.
+  identification_strategy:
+    type: SVAR_shock_decomposition
+    argument: Baumeister-Hamilton SVAR global activity innovation
+    key_assumption: Structural shock orthogonality
+  unit_specification:
+    treatment_unit: sd
+    outcome_unit: pct
+  acceptance_criteria:
+    plausibility:
+      expected_sign: negative
+  timing:
+    lag: 0
+  forbidden_controls: []
+exogenous_nodes:
+- oil_supply_shock
+- oil_demand_shock
+- global_activity_shock
+- vix_shock
+- fdi_inflows
+
 assumptions:
 - id: oil_shock_exogeneity
   statement: Baumeister oil shocks are exogenous to Kazakhstan macro conditions.
@@ -3113,6 +3178,9 @@ assumptions:
   - oil_supply_to_brent
   - oil_supply_to_fx
   - oil_demand_to_fx
+  - oil_demand_to_brent
+  - global_activity_to_brent
+  - global_activity_to_fx
   testable: false
 - id: vix_exogeneity
   statement: VIX innovations are exogenous to Kazakhstan-specific factors.

@@ -168,7 +168,7 @@ counterfactual:
 credibility_rating: B
 credibility_score: 0.7566666666666666
 identification:
-  claim_level: BLOCKED_ID
+  claim_level: REDUCED_FORM
   risks:
     unmeasured_confounding: medium
     simultaneity: low
@@ -188,27 +188,31 @@ identification:
   - effective_obs
   - ts_leads_test
   - ts_residual_autocorr
-  strategy_type: ''
-  strategy_argument: ''
-  strategy_key_assumption: ''
+  strategy_type: institutional_passthrough
+  strategy_argument: NBK base rate is the primary determinant of bank deposit pricing.
+    The ts_leads_test failure is expected — forward guidance causes banks to adjust
+    deposit rates in anticipation of announced rate changes. Small sample (N=18)
+    amplifies this effect.
+  strategy_key_assumption: No omitted common cause driving both policy rate and deposit
+    cost beyond the direct institutional passthrough channel.
 counterfactual_block:
-  shock_scenario_allowed: false
+  shock_scenario_allowed: true
   policy_intervention_allowed: false
-  reason_shock_blocked: Shock CF requires REDUCED_FORM+, edge has BLOCKED_ID
+  reason_shock_blocked: null
   reason_policy_blocked: REDUCED_FORM mode does not allow policy interventions
-  allowed: false
-  reason_blocked: Shock CF requires REDUCED_FORM+, edge has BLOCKED_ID
+  allowed: true
+  reason_blocked: null
 propagation_role:
-  role: diagnostic_only
+  role: reduced_form
   overlapping_paths: []
   selected_for_counterfactual: false
   mode_propagation_allowed:
     STRUCTURAL: false
-    REDUCED_FORM: false
+    REDUCED_FORM: true
     DESCRIPTIVE: true
   mode_shock_cf_allowed:
     STRUCTURAL: false
-    REDUCED_FORM: false
+    REDUCED_FORM: true
     DESCRIPTIVE: false
   mode_policy_cf_allowed:
     STRUCTURAL: false

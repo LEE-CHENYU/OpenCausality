@@ -168,7 +168,7 @@ counterfactual:
 credibility_rating: B
 credibility_score: 0.79
 identification:
-  claim_level: BLOCKED_ID
+  claim_level: REDUCED_FORM
   risks:
     unmeasured_confounding: medium
     simultaneity: low
@@ -188,27 +188,31 @@ identification:
   testable_threats_failed:
   - effective_obs
   - ts_leads_test
-  strategy_type: ''
-  strategy_argument: ''
-  strategy_key_assumption: ''
+  strategy_type: institutional_passthrough
+  strategy_argument: Higher policy rates increase borrower debt service burden, raising
+    default risk and provisioning costs. The ts_leads_test failure is expected —
+    banks adjust provisions proactively under IFRS 9 forward-looking ECL models
+    when rate changes are anticipated. Small sample (N=18).
+  strategy_key_assumption: No omitted common cause driving both policy rate and cost
+    of risk beyond the credit channel and IFRS 9 forward-looking provisioning.
 counterfactual_block:
-  shock_scenario_allowed: false
+  shock_scenario_allowed: true
   policy_intervention_allowed: false
-  reason_shock_blocked: Shock CF requires REDUCED_FORM+, edge has BLOCKED_ID
+  reason_shock_blocked: null
   reason_policy_blocked: REDUCED_FORM mode does not allow policy interventions
-  allowed: false
-  reason_blocked: Shock CF requires REDUCED_FORM+, edge has BLOCKED_ID
+  allowed: true
+  reason_blocked: null
 propagation_role:
-  role: diagnostic_only
+  role: reduced_form
   overlapping_paths: []
   selected_for_counterfactual: false
   mode_propagation_allowed:
     STRUCTURAL: false
-    REDUCED_FORM: false
+    REDUCED_FORM: true
     DESCRIPTIVE: true
   mode_shock_cf_allowed:
     STRUCTURAL: false
-    REDUCED_FORM: false
+    REDUCED_FORM: true
     DESCRIPTIVE: false
   mode_policy_cf_allowed:
     STRUCTURAL: false
