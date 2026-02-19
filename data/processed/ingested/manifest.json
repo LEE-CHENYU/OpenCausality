@@ -1,6 +1,6 @@
 {
   "manifest_version": "1.0",
-  "updated_at": "2026-02-16T16:06:41.223595+00:00",
+  "updated_at": "2026-02-19T01:50:08.757179+00:00",
   "datasets": [
     {
       "file_id": "api_downloads__world_bank__e_import_share",
@@ -49,10 +49,10 @@
           "dtype": "numeric",
           "non_null_count": 5,
           "null_count": 0,
-          "mean": 444.83066666666656,
-          "std": 24.084252573287262,
-          "min_val": 412.953333333333,
-          "max_val": 468.9625
+          "mean": 26.308894737219042,
+          "std": 1.0398817136406435,
+          "min_val": 25.0237464537583,
+          "max_val": 27.6837063179642
         }
       ],
       "date_column": null,
@@ -66,10 +66,10 @@
       ],
       "primary_value_column": "value",
       "output_path": "data/processed/ingested/api_downloads__world_bank__imported_inflation_instrument.parquet",
-      "ingested_at": "2026-02-16T16:06:41.223585+00:00",
-      "file_hash": "bf82d2b7d343d46472fce32ccd3c284e5a4ed310c5819b2c5808903c7f58e9a1",
-      "file_size": 2117,
-      "mtime": 1771228605.5455534,
+      "ingested_at": "2026-02-19T01:50:08.757150+00:00",
+      "file_hash": "25465c73f80738462d76f29edfadaa7877fa98a9e040f25049da4564afc7bdbd",
+      "file_size": 2120,
+      "mtime": 1771463766.8043406,
       "n_unique_dates": 5,
       "n_duplicate_dates": 0,
       "sidecar": null
