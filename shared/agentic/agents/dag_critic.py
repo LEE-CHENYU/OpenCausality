@@ -579,7 +579,10 @@ class DAGCritic:
                     })
 
         # ── Probe 3: magnitude_plausibility ──
+        # Only check edges that exist in the current DAG (skip orphan cards)
         for eid, est in estimates.items():
+            if eid not in self.edges:
+                continue
             point = est.get("point")
             pvalue = est.get("pvalue")
             if point is None:
