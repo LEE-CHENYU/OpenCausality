@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "timestamp": "2026-02-19T03:00:00.216519+00:00",
-  "run_id": "21cc2c8d",
-  "event": "run_complete",
-  "edges_estimated": 39,
-  "edges_blocked": 1,
-  "mean_credibility": 0.76,
-  "message": "Run complete: 39 edges estimated, 1 blocked, mean credibility 0.76"
+  "timestamp": "2026-02-19T04:13:13.485180+00:00",
+  "run_id": "40ef275e",
+  "event": "hitl_required",
+  "pending_count": 26,
+  "critical_count": 0,
+  "message": "26 issues require human review",
+  "panel_path": null
 }

@@ -1,6 +1,6 @@
 edge_id: ppop_to_capital
 dag_version_hash: 09cbbdd15d1e238525a93232938ee5d1c91a0d7fc98f8f8b4023356c450bd56a
-created_at: '2026-02-18T18:53:54.958256'
+created_at: '2026-02-18T20:11:20.199635'
 data_provenance:
   treatment_source:
     connector: parquet_file
@@ -91,6 +91,8 @@ estimates:
   - 0.23325960059403955
   - -0.02730071434261197
   - 0.13880413613443604
+  treatment_unit: log
+  outcome_unit: log
 diagnostics:
   hac_bandwidth:
     name: hac_bandwidth
@@ -252,56 +254,24 @@ literature:
     source: arxiv
     pdf_url: https://arxiv.org/pdf/1905.11374v5
   - doi: ''
-    title: 'Welfare in transition: the political economy of social protection reform
-      in Indonesia'
+    title: 'Text as Causal Mediators: Research Design for Causal Estimates of Differential
+      Treatment of Social Groups via Language Aspects'
     authors:
-    - van Diermen, Maryke
-    year: 2018
-    excerpt: There has been significant reform in social protection systems in developing
-      countries in recent years. The extent, nature, and timing of such reform has
-      varied significantly both between countries and within countries between sectors.
-      Most scholars have explained these developments in terms of tech
+    - Katherine A. Keith
+    - Douglas Rice
+    - Brendan O'Connor
+    year: 2021
+    excerpt: Using observed language to understand interpersonal interactions is important
+      in high-stakes decision making. We propose a causal research design for observational
+      (non-experimental) data to estimate the natural direct and indirect effects
+      of social group signals (e.g. race or gender) on speakers' r
     relevance: supporting
     edge_id: ppop_to_capital
-    paper_id: ''
+    paper_id: 2109.07542v1
     citation_count: 0
     search_query: KSPI pre-provision operating profit KSPI total capital causal effect
-    source: core
-    pdf_url: https://core.ac.uk/download/482254650.pdf
-  - doi: ''
-    title: 'Knowledge and HRM practice transfer in emerging economies: the case of
-      Japanese joint ventures in Indonesia'
-    authors:
-    - Soehardjojo, J.
-    year: null
-    excerpt: This thesis investigates the mechanisms used to transfer the management
-      practices of multinational corporations (MNCs) to an emerging market economy
-      (EME) context. Examining an MNC’s ownership and control of its subsidiaries
-      in a setting of institutional resistance, this research focuses on the obje
-    relevance: supporting
-    edge_id: ppop_to_capital
-    paper_id: ''
-    citation_count: 0
-    search_query: KSPI pre-provision operating profit KSPI total capital causal effect
-    source: core
-    pdf_url: https://core.ac.uk/download/237395927.pdf
-  - doi: ''
-    title: 'Process-oriented explanation of institutional changes : comparative cases
-      of national health and pension system reforms in Indonesia'
-    authors:
-    - YUDA, Tauchid Komara
-    year: 2024
-    excerpt: 'This dissertation compares the causal mechanisms by which healthcare
-      and pension systems in Indonesia have been developed. Despite their shared historical
-      trajectories, the health reform emerged successful, while the pension reform
-      faltered. The study employs process tracing to dissect the specific '
-    relevance: supporting
-    edge_id: ppop_to_capital
-    paper_id: ''
-    citation_count: 0
-    search_query: KSPI pre-provision operating profit KSPI total capital causal effect
-    source: core
-    pdf_url: https://commons.ln.edu.hk/cgi/viewcontent.cgi?article=1238&context=otd
+    source: arxiv
+    pdf_url: https://arxiv.org/pdf/2109.07542v1
   challenging: []
   methodological:
   - doi: 10.1515/jci-2022-0060
@@ -324,9 +294,9 @@ literature:
     source: arxiv
     pdf_url: https://arxiv.org/pdf/2209.03013v1
   search_status: SEARCHED
-  search_timestamp: '2026-02-18T18:53:54.958468'
+  search_timestamp: '2026-02-18T20:11:20.199695'
   search_query: KSPI pre-provision operating profit KSPI total capital causal effect
-  total_results: 5
+  total_results: 3
 companion_edge_id: null
 variant_of: null
 is_precisely_null: false

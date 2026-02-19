@@ -1,0 +1,43 @@
+{
+  "iterations": [
+    {
+      "iteration": 0,
+      "quality": 0.6573387096774193,
+      "n_probes": 25,
+      "n_gaps": 21,
+      "proposed": 15,
+      "applied": 14,
+      "rejected": 1
+    },
+    {
+      "iteration": 1,
+      "quality": 0.6671256684491979,
+      "n_probes": 25,
+      "n_gaps": 22,
+      "proposed": 20,
+      "applied": 20,
+      "rejected": 0
+    },
+    {
+      "iteration": 2,
+      "quality": 0.7738888888888887,
+      "n_probes": 31,
+      "n_gaps": 20,
+      "proposed": 8,
+      "applied": 8,
+      "rejected": 0
+    }
+  ],
+  "final_quality": 0.7761261261261262,
+  "final_quality_components": {
+    "edge_type_diversity": 0.6756756756756757,
+    "identification_coverage": 0.9166666666666666,
+    "metadata_completeness": 0.8108108108108109,
+    "structural_soundness": 0.25,
+    "unit_completeness": 0.972972972972973,
+    "formula_correctness": 1.0,
+    "total": 0.7761261261261262
+  },
+  "remaining_probes": 34,
+  "remaining_gaps": 21
+}

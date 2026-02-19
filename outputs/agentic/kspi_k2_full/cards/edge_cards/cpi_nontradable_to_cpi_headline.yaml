@@ -1,6 +1,6 @@
 edge_id: cpi_nontradable_to_cpi_headline
 dag_version_hash: 09cbbdd15d1e238525a93232938ee5d1c91a0d7fc98f8f8b4023356c450bd56a
-created_at: '2026-02-18T18:53:54.510624'
+created_at: '2026-02-18T20:11:19.643708'
 data_provenance:
   treatment_source:
     connector: parquet_file
@@ -91,6 +91,8 @@ estimates:
   - 0.14253884559218094
   - 0.14509887246422734
   - 0.09670388636438974
+  treatment_unit: log
+  outcome_unit: log
 diagnostics:
   hac_bandwidth:
     name: hac_bandwidth
@@ -321,7 +323,7 @@ literature:
     source: semantic_scholar
     pdf_url: ''
   search_status: SEARCHED
-  search_timestamp: '2026-02-18T18:53:54.510696'
+  search_timestamp: '2026-02-18T20:11:19.643782'
   search_query: Non-tradable CPI Headline CPI causal effect
   total_results: 5
 companion_edge_id: null

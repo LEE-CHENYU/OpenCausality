@@ -1164,6 +1164,16 @@ class AgentLoop:
             logger.error(f"Task {task.edge_id} failed: {e}")
             self.queue.mark_failed(task.edge_id, str(e))
 
+    def _get_edge_units(self, edge_id: str) -> tuple[str, str]:
+        """Extract treatment_unit/outcome_unit from DAG EdgeSpec unit_specification."""
+        edge = self.dag.get_edge(edge_id)
+        if edge and edge.unit_specification:
+            return (
+                edge.unit_specification.get("treatment_unit", ""),
+                edge.unit_specification.get("outcome_unit", ""),
+            )
+        return ("", "")
+
     def _create_immutable_card(self, task: LinkageTask) -> EdgeCard:
         """Create EdgeCard from validated evidence (immutable blocks)."""
         from shared.engine.ts_estimator import get_immutable_result
@@ -1174,12 +1184,15 @@ class AgentLoop:
         from shared.agentic.output.provenance import SpecDetails
 
         ir = get_immutable_result(task.edge_id)
+        tu, ou = self._get_edge_units(task.edge_id)
 
         estimates = Estimates(
             point=ir.point_estimate,
             se=ir.se,
             ci_95=(ir.ci_lower, ir.ci_upper),
             pvalue=ir.pvalue,
+            treatment_unit=tu,
+            outcome_unit=ou,
         )
         diagnostics = {
             "validated_evidence": DiagnosticResult(
@@ -1312,12 +1325,15 @@ class AgentLoop:
         sensitivity = float(((perturbed - baseline) / delta).mean())
 
         formula_str = f"d({to_node.id})/d({from_node_id}) via {formula}"
+        tu, ou = self._get_edge_units(task.edge_id)
 
         estimates = Estimates(
             point=sensitivity,
             se=0.0,
             ci_95=(sensitivity, sensitivity),
             pvalue=None,
+            treatment_unit=tu,
+            outcome_unit=ou,
         )
         diagnostics = {
             "identity_check": DiagnosticResult(
@@ -1373,12 +1389,15 @@ class AgentLoop:
 
         id_results = compute_identity_sensitivity(capital, rwa)
         ir = id_results[task.edge_id]
+        tu, ou = self._get_edge_units(task.edge_id)
 
         estimates = Estimates(
             point=ir.sensitivity,
             se=0.0,
             ci_95=(ir.sensitivity, ir.sensitivity),
             pvalue=None,
+            treatment_unit=tu,
+            outcome_unit=ou,
         )
         diagnostics = {
             "identity_check": DiagnosticResult(
@@ -1438,12 +1457,15 @@ class AgentLoop:
             edge_id=task.edge_id,
             loans=loans, rwa=rwa, cor=cor, capital=capital,
         )
+        tu, ou = self._get_edge_units(task.edge_id)
 
         estimates = Estimates(
             point=bridge.sensitivity,
             se=0.0,
             ci_95=(bridge.sensitivity, bridge.sensitivity),
             pvalue=None,
+            treatment_unit=tu,
+            outcome_unit=ou,
         )
         diagnostics = {
             "identity_consistency": DiagnosticResult(
@@ -1501,6 +1523,7 @@ class AgentLoop:
         # not hardcoded edge-ID sets.
         edge_for_units = self.dag.get_edge(task.edge_id)
         unit_spec = edge_for_units.unit_specification if edge_for_units else None
+        tu, ou = self._get_edge_units(task.edge_id)
         data = assemble_edge_data(task.edge_id, unit_spec=unit_spec)
         max_h = 2 if is_quarterly else 6
         n_lags = 1 if is_quarterly else 2
@@ -1558,6 +1581,8 @@ class AgentLoop:
                 irf=lp.coefficients,
                 irf_ci_lower=lp.ci_lower,
                 irf_ci_upper=lp.ci_upper,
+                treatment_unit=tu,
+                outcome_unit=ou,
             )
 
         diagnostics: dict[str, DiagnosticResult] = {}

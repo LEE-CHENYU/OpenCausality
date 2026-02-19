@@ -1,6 +1,6 @@
 edge_id: capital_to_k2
 dag_version_hash: 09cbbdd15d1e238525a93232938ee5d1c91a0d7fc98f8f8b4023356c450bd56a
-created_at: '2026-02-18T18:53:54.972539'
+created_at: '2026-02-18T20:11:20.212361'
 data_provenance:
   treatment_source: null
   outcome_source: null
@@ -29,6 +29,8 @@ estimates:
   - 0.0625
   - 0.0625
   pvalue: null
+  treatment_unit: log
+  outcome_unit: pct
 diagnostics:
   identity_check:
     name: identity_check
@@ -104,71 +106,6 @@ propagation_role:
 literature:
   supporting:
   - doi: ''
-    title: Levels of pharmaceuticals and endocrine disruptors in commercially available
-      seafood before and after cooking
-    authors:
-    - Barcelo, D.
-    - Caceres, N.
-    - Fernandez-Tejedor, M.
-    - Granby, Kit
-    - M. Marques, A.
-    - Maulvault, A.
-    - Munoz, D. A.
-    - Robbens, Johan
-    - Rodríguez-Mozaz, S
-    - Serra, A.
-    - Sioen, Isabelle
-    - Tediosi, A.
-    - Verbeke, K.
-    - Williamson, J.
-    year: 2016
-    excerpt: ''
-    relevance: supporting
-    edge_id: capital_to_k2
-    paper_id: ''
-    citation_count: 0
-    search_query: KSPI total capital KSPI K2 capital ratio causal effect
-    source: core
-    pdf_url: https://core.ac.uk/download/84002501.pdf
-  - doi: ''
-    title: 'Exposure to Chemicals in Consumer Products: The Role of the Near-Field
-      Environment'
-    authors:
-    - Ernstoff, Alexi
-    - Fantke, Peter
-    - Huang, L.
-    - Jolliet, O.
-    year: 2016
-    excerpt: ''
-    relevance: supporting
-    edge_id: capital_to_k2
-    paper_id: ''
-    citation_count: 0
-    search_query: KSPI total capital KSPI K2 capital ratio causal effect
-    source: core
-    pdf_url: https://core.ac.uk/download/84002493.pdf
-  - doi: ''
-    title: Algal toxicity of platinum nanoparticles - Implications of NP aggregation,
-      dissolution and shading
-    authors:
-    - Baun, Anders
-    - Engelbrekt, Christian
-    - Giron Delgado, Cristina
-    - Jiménez-Lamana, Javier
-    - Lützhøft, Hans-Christian Holten
-    - Noori, Jafar Safaa
-    - Slaveykova, V
-    - Sørensen, Sara Nørgaard
-    year: 2016
-    excerpt: ''
-    relevance: supporting
-    edge_id: capital_to_k2
-    paper_id: ''
-    citation_count: 0
-    search_query: KSPI total capital KSPI K2 capital ratio causal effect
-    source: core
-    pdf_url: https://core.ac.uk/download/84002495.pdf
-  - doi: ''
     title: The Theory of Crowd Capital
     authors:
     - John Prpic
@@ -203,12 +140,30 @@ literature:
     search_query: KSPI total capital KSPI K2 capital ratio causal effect
     source: arxiv
     pdf_url: https://arxiv.org/pdf/1511.02429v1
+  - doi: ''
+    title: A Mathematical Model of Foreign Capital Inflow
+    authors:
+    - Gopal K. Basak
+    - Pranab Kumar Das
+    - Allena Rohit
+    year: 2016
+    excerpt: The paper models foreign capital inflow from the developed to the developing
+      countries in a stochastic dynamic programming (SDP) framework. Under some regularity
+      conditions, the existence of the solutions to the SDP problem is proved and
+      they are then obtained by numerical technique because of the n
+    relevance: supporting
+    edge_id: capital_to_k2
+    paper_id: 1603.02438v2
+    citation_count: 0
+    search_query: KSPI total capital KSPI K2 capital ratio causal effect
+    source: arxiv
+    pdf_url: https://arxiv.org/pdf/1603.02438v2
   challenging: []
   methodological: []
   search_status: SEARCHED
-  search_timestamp: '2026-02-18T18:53:54.972605'
+  search_timestamp: '2026-02-18T20:11:20.212414'
   search_query: KSPI total capital KSPI K2 capital ratio causal effect
-  total_results: 5
+  total_results: 3
 companion_edge_id: null
 variant_of: null
 is_precisely_null: false

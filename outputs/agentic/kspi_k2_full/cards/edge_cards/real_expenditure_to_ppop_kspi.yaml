@@ -1,6 +1,6 @@
 edge_id: real_expenditure_to_ppop_kspi
 dag_version_hash: 09cbbdd15d1e238525a93232938ee5d1c91a0d7fc98f8f8b4023356c450bd56a
-created_at: '2026-02-18T18:53:54.356189'
+created_at: '2026-02-18T20:11:19.480615'
 data_provenance:
   treatment_source:
     connector: parquet_file
@@ -91,6 +91,8 @@ estimates:
   - .nan
   - .nan
   - .nan
+  treatment_unit: growth
+  outcome_unit: log
 diagnostics:
   hac_bandwidth:
     name: hac_bandwidth
@@ -235,70 +237,6 @@ propagation_role:
 literature:
   supporting:
   - doi: ''
-    title: 'Welfare in transition: the political economy of social protection reform
-      in Indonesia'
-    authors:
-    - van Diermen, Maryke
-    year: 2018
-    excerpt: There has been significant reform in social protection systems in developing
-      countries in recent years. The extent, nature, and timing of such reform has
-      varied significantly both between countries and within countries between sectors.
-      Most scholars have explained these developments in terms of tech
-    relevance: supporting
-    edge_id: real_expenditure_to_ppop_kspi
-    paper_id: ''
-    citation_count: 0
-    search_query: Real consumption expenditure KSPI pre-provision operating profit
-      causal effect
-    source: core
-    pdf_url: https://core.ac.uk/download/482254650.pdf
-  - doi: ''
-    title: Levels of pharmaceuticals and endocrine disruptors in commercially available
-      seafood before and after cooking
-    authors:
-    - Barcelo, D.
-    - Caceres, N.
-    - Fernandez-Tejedor, M.
-    - Granby, Kit
-    - M. Marques, A.
-    - Maulvault, A.
-    - Munoz, D. A.
-    - Robbens, Johan
-    - Rodríguez-Mozaz, S
-    - Serra, A.
-    - Sioen, Isabelle
-    - Tediosi, A.
-    - Verbeke, K.
-    - Williamson, J.
-    year: 2016
-    excerpt: ''
-    relevance: supporting
-    edge_id: real_expenditure_to_ppop_kspi
-    paper_id: ''
-    citation_count: 0
-    search_query: Real consumption expenditure KSPI pre-provision operating profit
-      causal effect
-    source: core
-    pdf_url: https://core.ac.uk/download/84002501.pdf
-  - doi: ''
-    title: 'Exposure to Chemicals in Consumer Products: The Role of the Near-Field
-      Environment'
-    authors:
-    - Ernstoff, Alexi
-    - Fantke, Peter
-    - Huang, L.
-    - Jolliet, O.
-    year: 2016
-    excerpt: ''
-    relevance: supporting
-    edge_id: real_expenditure_to_ppop_kspi
-    paper_id: ''
-    citation_count: 0
-    search_query: Real consumption expenditure KSPI pre-provision operating profit
-      causal effect
-    source: core
-    pdf_url: https://core.ac.uk/download/84002493.pdf
-  - doi: ''
     title: A statistical physics analysis of expenditure in the UK
     authors:
     - Elvis Oltean
@@ -316,6 +254,28 @@ literature:
       causal effect
     source: arxiv
     pdf_url: https://arxiv.org/pdf/1410.3865v2
+  - doi: ''
+    title: Mid-Long Term Daily Electricity Consumption Forecasting Based on Piecewise
+      Linear Regression and Dilated Causal CNN
+    authors:
+    - Zhou Lan
+    - Ben Liu
+    - Yi Feng
+    - Danhuang Dong
+    - Peng Zhang
+    year: 2023
+    excerpt: 'Daily electricity consumption forecasting is a classical problem. Existing
+      forecasting algorithms tend to have decreased accuracy on special dates like
+      holidays. This study decomposes the daily electricity consumption series into
+      three components: trend, seasonal, and residual, and constructs a two-'
+    relevance: supporting
+    edge_id: real_expenditure_to_ppop_kspi
+    paper_id: 2310.15204v1
+    citation_count: 0
+    search_query: Real consumption expenditure KSPI pre-provision operating profit
+      causal effect
+    source: arxiv
+    pdf_url: https://arxiv.org/pdf/2310.15204v1
   challenging: []
   methodological:
   - doi: 10.1515/jci-2022-0060
@@ -339,10 +299,10 @@ literature:
     source: arxiv
     pdf_url: https://arxiv.org/pdf/2209.03013v1
   search_status: SEARCHED
-  search_timestamp: '2026-02-18T18:53:54.356260'
+  search_timestamp: '2026-02-18T20:11:19.480675'
   search_query: Real consumption expenditure KSPI pre-provision operating profit causal
     effect
-  total_results: 5
+  total_results: 3
 companion_edge_id: null
 variant_of: null
 is_precisely_null: false

@@ -1,6 +1,6 @@
 edge_id: portfolio_mix_to_rwa
 dag_version_hash: 09cbbdd15d1e238525a93232938ee5d1c91a0d7fc98f8f8b4023356c450bd56a
-created_at: '2026-02-18T18:53:53.740804'
+created_at: '2026-02-18T20:11:18.859004'
 data_provenance:
   treatment_source:
     connector: parquet_file
@@ -73,6 +73,8 @@ estimates:
   - 16.733034316364588
   - -0.15590720413857895
   - 2.816899569730716
+  treatment_unit: share
+  outcome_unit: log
 diagnostics:
   hac_bandwidth:
     name: hac_bandwidth
@@ -234,67 +236,6 @@ literature:
     source: arxiv
     pdf_url: https://arxiv.org/pdf/1505.04045v1
   - doi: ''
-    title: 'Macroeconomic Impacts of Immigration in Malaysia: Trade, Remittances and
-      Unemployment'
-    authors:
-    - MARWAN, NUR,FAKHZAN
-    year: 2011
-    excerpt: The macroeconomic consequence of immigration is a disputable area among
-      many interested parties as evidenced by the empirical studies. Most studies,
-      however, employ Anglo-Saxon countries as their subjects, while there is an increasing
-      demand for studies on the economic consequences of immigration in
-    relevance: supporting
-    edge_id: portfolio_mix_to_rwa
-    paper_id: ''
-    citation_count: 0
-    search_query: KSPI portfolio mix KSPI risk-weighted assets causal effect
-    source: core
-    pdf_url: https://core.ac.uk/download/108589.pdf
-  - doi: ''
-    title: Levels of pharmaceuticals and endocrine disruptors in commercially available
-      seafood before and after cooking
-    authors:
-    - Barcelo, D.
-    - Caceres, N.
-    - Fernandez-Tejedor, M.
-    - Granby, Kit
-    - M. Marques, A.
-    - Maulvault, A.
-    - Munoz, D. A.
-    - Robbens, Johan
-    - Rodríguez-Mozaz, S
-    - Serra, A.
-    - Sioen, Isabelle
-    - Tediosi, A.
-    - Verbeke, K.
-    - Williamson, J.
-    year: 2016
-    excerpt: ''
-    relevance: supporting
-    edge_id: portfolio_mix_to_rwa
-    paper_id: ''
-    citation_count: 0
-    search_query: KSPI portfolio mix KSPI risk-weighted assets causal effect
-    source: core
-    pdf_url: https://core.ac.uk/download/84002501.pdf
-  - doi: ''
-    title: 'Exposure to Chemicals in Consumer Products: The Role of the Near-Field
-      Environment'
-    authors:
-    - Ernstoff, Alexi
-    - Fantke, Peter
-    - Huang, L.
-    - Jolliet, O.
-    year: 2016
-    excerpt: ''
-    relevance: supporting
-    edge_id: portfolio_mix_to_rwa
-    paper_id: ''
-    citation_count: 0
-    search_query: KSPI portfolio mix KSPI risk-weighted assets causal effect
-    source: core
-    pdf_url: https://core.ac.uk/download/84002493.pdf
-  - doi: ''
     title: Optimal Portfolio with Power Utility of Absolute and Relative Wealth
     authors:
     - Andrey Sarantsev
@@ -310,12 +251,30 @@ literature:
     search_query: KSPI portfolio mix KSPI risk-weighted assets causal effect
     source: arxiv
     pdf_url: https://arxiv.org/pdf/2105.08139v2
+  - doi: ''
+    title: Sparsity and Stability for Minimum-Variance Portfolios
+    authors:
+    - Sven Husmann
+    - Antoniya Shivarova
+    - Rick Steinert
+    year: 2019
+    excerpt: The popularity of modern portfolio theory has decreased among practitioners
+      because of its unfavorable out-of-sample performance. Estimation errors tend
+      to affect the optimal weight calculation noticeably, especially when a large
+      number of assets is considered. To overcome these issues, many methods
+    relevance: supporting
+    edge_id: portfolio_mix_to_rwa
+    paper_id: 1910.11840v1
+    citation_count: 0
+    search_query: KSPI portfolio mix KSPI risk-weighted assets causal effect
+    source: arxiv
+    pdf_url: https://arxiv.org/pdf/1910.11840v1
   challenging: []
   methodological: []
   search_status: SEARCHED
-  search_timestamp: '2026-02-18T18:53:53.741114'
+  search_timestamp: '2026-02-18T20:11:18.859227'
   search_query: KSPI portfolio mix KSPI risk-weighted assets causal effect
-  total_results: 5
+  total_results: 3
 companion_edge_id: null
 variant_of: null
 is_precisely_null: false

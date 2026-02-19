@@ -351,7 +351,7 @@ nodes:
   derived: true
   identity:
     name: imported_inflation_iv
-    formula: diff(kzt_usd) * E_import_share
+    formula: 100 * E_import_share * (kzt_usd_monthly - lag(kzt_usd_monthly, 1))
     depends_on:
     - kzt_usd
     - E_import_share
@@ -553,7 +553,7 @@ nodes:
   derived: true
   identity:
     name: real_expenditure_identity
-    formula: nominal_expenditure - cpi_headline
+    formula: nominal_expenditure - cpi_headline_quarterly
     depends_on:
     - nominal_expenditure
     - cpi_headline
@@ -1005,6 +1005,49 @@ nodes:
   provenance:
     source: manual
     added_at: '2026-02-02'
+- id: kzt_usd_monthly
+  name: KZT/USD exchange rate (monthly, log)
+  unit: log
+  description: Monthly-frequency (e.g., end-of-month or monthly average) log exchange
+    rate used for macro identities and instruments to align frequency with CPI/income/expenditure.
+  type: continuous
+  observed: true
+  frequency: M
+  tags:
+  - critic_generated
+- id: cpi_headline_quarterly
+  name: Headline CPI (quarterly, log)
+  unit: log
+  description: Quarterly-frequency log CPI (constructed by averaging monthly logs
+    within quarter or using end-of-quarter), used to deflate quarterly nominal expenditure
+    consistently.
+  type: continuous
+  observed: true
+  frequency: M
+  tags:
+  - critic_generated
+- id: fdi_inflows
+  name: FDI inflows
+  unit: pct_gdp
+  description: Net foreign direct investment inflows (e.g., % of GDP). Can affect
+    exchange rate pressures, domestic demand, and thereby inflation and the policy
+    reaction function.
+  type: continuous
+  observed: true
+  frequency: M
+  tags:
+  - critic_generated
+- id: real_income_level
+  name: Real disposable income level
+  unit: log
+  description: Level of real disposable income (or a close proxy). Drives nominal
+    consumption expenditure via permanent-income / Keynesian consumption channels.
+    Distinct from 'real_income' which is currently modeled as a growth rate.
+  type: continuous
+  observed: true
+  frequency: M
+  tags:
+  - critic_generated
 edges:
 - id: oil_supply_to_brent
   from: oil_supply_shock
@@ -1427,7 +1470,12 @@ edges:
   design_priority:
   - LOCAL_PROJECTIONS
   required_adjustments: []
-  forbidden_controls: []
+  forbidden_controls:
+  - deposit_cost_kspi
+  - cor_kspi
+  - ppop_kspi
+  - total_capital_kspi
+  - k2_ratio_kspi
   diagnostics_required:
   - stability
   acceptance_criteria:
@@ -1455,9 +1503,15 @@ edges:
     forbidden_uses:
     - policy_counterfactual
   identification_strategy:
-    type: none
-    argument: Reaction function — endogenous policy response, no identification strategy.
-    key_assumption: N/A — this edge documents correlation, not causal effect.
+    type: Monetary policy shock identification (high-frequency / Taylor residual)
+    argument: Estimate an NBK reaction function with lagged inflation/output/FX and
+      take policy shocks as residual innovations; or use high-frequency market-based
+      surprises around policy announcements as exogenous variation in nbk_policy_rate.
+      Then assess the marginal response of the policy rate to CPI innovations using
+      only predetermined information sets.
+    key_assumption: The identified policy shock (or high-frequency surprise) is orthogonal
+      to contemporaneous macro shocks affecting CPI; the information set is correctly
+      specified so residuals represent unexpected policy moves.
   edge_status: NEEDS_CONNECTOR
   notes: NBK responds to inflation. Requires nbk_policy_rate connector.
   provenance:
@@ -1471,7 +1525,7 @@ edges:
     treatment_unit: log
     outcome_unit: pct
   timing:
-    lag: 1
+    lag: 0
     lag_unit: month
     contemporaneous: false
     max_anticipation: 0
@@ -1488,7 +1542,12 @@ edges:
   design_priority:
   - LOCAL_PROJECTIONS
   required_adjustments: []
-  forbidden_controls: []
+  forbidden_controls:
+  - deposit_cost_kspi
+  - cor_kspi
+  - ppop_kspi
+  - total_capital_kspi
+  - k2_ratio_kspi
   diagnostics_required:
   - stability
   acceptance_criteria:
@@ -1654,7 +1713,7 @@ edges:
   edge_type: immutable
   unit_specification:
     treatment_unit: log
-    outcome_unit: log
+    outcome_unit: growth
   timing:
     lag: 1
     lag_unit: quarter
@@ -1732,7 +1791,7 @@ edges:
   edge_type: immutable
   unit_specification:
     treatment_unit: log
-    outcome_unit: log
+    outcome_unit: growth
   timing:
     lag: 1
     lag_unit: quarter
@@ -1853,10 +1912,16 @@ edges:
     - shock_counterfactual
     - policy_counterfactual
   identification_strategy:
-    type: none
-    argument: No identification strategy — confounded by KSPI market share growth
-      and platform dynamics.
-    key_assumption: N/A — association only.
+    type: IV (external shocks) + local projections
+    argument: Instrument real_expenditure with predetermined external shocks (oil_supply_shock,
+      oil_demand_shock, vix_shock) in a two-stage setup, estimating impulse responses
+      of payments_revenue_kspi via local projections. These shocks plausibly shift
+      Kazakhstan demand/consumption through income/financial conditions while being
+      exogenous to KSPI-specific payments revenue innovations conditional on time
+      fixed effects and lags.
+    key_assumption: 'Exclusion: global shocks affect KSPI payments revenue only through
+      aggregate spending channels (and other included macro state variables via lags),
+      not via direct bank-specific payments business shocks.'
   edge_status: NEEDS_CONNECTOR
   notes: Spending -> GMV -> Interchange -> Revenue. Requires KSPI connector.
   provenance:
@@ -2021,10 +2086,15 @@ edges:
     - scenario_only
     forbidden_uses: []
   identification_strategy:
-    type: none
-    argument: No identification strategy — portfolio mix changes are endogenous to
-      KSPI business decisions.
-    key_assumption: N/A — association only.
+    type: IV (shift-share / regulatory exposure)
+    argument: Use lagged sectoral shares interacted with sector-level risk-weight
+      changes or regulatory risk-weight updates as instruments for portfolio_mix_kspi.
+      This leverages plausibly exogenous variation in effective risk weights faced
+      by the bank given predetermined exposures, isolating the causal effect of mix
+      on rwa_kspi.
+    key_assumption: Predetermined exposures (lagged shares) are not correlated with
+      contemporaneous unobserved shocks to RWA other than through their effect on
+      the portfolio reallocation induced by sector-level risk-weight changes.
   edge_status: NEEDS_CONNECTOR
   notes: Product mix shifts risk weights. NBK uses 150%+ for unsecured.
   provenance:
@@ -2064,6 +2134,10 @@ edges:
   provenance:
     source: manual
     added_at: '2026-02-02'
+  acceptance_criteria:
+    plausibility:
+      expected_sign: positive
+  forbidden_controls: []
 - id: rwa_to_k2
   from: rwa_kspi
   to: k2_ratio_kspi
@@ -2098,6 +2172,10 @@ edges:
   provenance:
     source: manual
     added_at: '2026-02-02'
+  acceptance_criteria:
+    plausibility:
+      expected_sign: negative
+  forbidden_controls: []
 - id: import_share_to_iv
   from: E_import_share
   to: imported_inflation_instrument
@@ -2132,13 +2210,17 @@ edges:
   provenance:
     source: manual
     added_at: '2026-02-09'
+  acceptance_criteria:
+    plausibility:
+      expected_sign: positive
+  forbidden_controls: []
 - id: nominal_expenditure_to_real
   from: nominal_expenditure
   to: real_expenditure
   edge_type: identity
   unit_specification:
     treatment_unit: log
-    outcome_unit: log
+    outcome_unit: growth
   timing:
     lag: 0
     lag_unit: quarter
@@ -2167,13 +2249,17 @@ edges:
   provenance:
     source: manual
     added_at: '2026-02-09'
+  acceptance_criteria:
+    plausibility:
+      expected_sign: positive
+  forbidden_controls: []
 - id: wage_to_nominal_income
   from: wage_income
   to: nominal_income
   edge_type: mechanical
   unit_specification:
     treatment_unit: log
-    outcome_unit: log
+    outcome_unit: growth
   timing:
     lag: 0
     lag_unit: quarter
@@ -2195,14 +2281,18 @@ edges:
     forbidden_uses: []
   identification_strategy:
     type: accounting_identity
-    argument: Nominal income = wages + transfers + self-employment + other. Wages are
-      the dominant component (~60%).
+    argument: Nominal income = wages + transfers + self-employment + other. Wages
+      are the dominant component (~60%).
     key_assumption: Income decomposition is exhaustive.
   edge_status: IDENTITY
   notes: Income channel decomposition. Wages are ~60% of nominal monetary income.
   provenance:
     source: manual
     added_at: '2026-02-09'
+  acceptance_criteria:
+    plausibility:
+      expected_sign: positive
+  forbidden_controls: []
 - id: cpi_tradable_to_cpi_headline
   from: cpi_tradable
   to: cpi_headline
@@ -2227,6 +2317,10 @@ edges:
   provenance:
     source: manual
     added_at: '2026-02-18'
+  acceptance_criteria:
+    plausibility:
+      expected_sign: positive
+  forbidden_controls: []
 - id: cpi_nontradable_to_cpi_headline
   from: cpi_nontradable
   to: cpi_headline
@@ -2251,6 +2345,10 @@ edges:
   provenance:
     source: manual
     added_at: '2026-02-18'
+  acceptance_criteria:
+    plausibility:
+      expected_sign: positive
+  forbidden_controls: []
 - id: cpi_headline_to_real_income
   from: cpi_headline
   to: real_income
@@ -2269,12 +2367,17 @@ edges:
     allowed_uses:
     - scenario_only
   unit_specification:
-    treatment_unit: pct
+    treatment_unit: log
     outcome_unit: growth
-  notes: Deflation identity. real_income is pre-computed as real_income_growth from spending_series.
+  notes: Deflation identity. real_income is pre-computed as real_income_growth from
+    spending_series.
   provenance:
     source: manual
     added_at: '2026-02-18'
+  acceptance_criteria:
+    plausibility:
+      expected_sign: negative
+  forbidden_controls: []
 - id: real_income_to_cor_kspi
   from: real_income
   to: cor_kspi
@@ -2316,11 +2419,22 @@ edges:
   unit_specification:
     treatment_unit: growth
     outcome_unit: pct
-  notes: Income squeeze channel. Falling real income raises credit risk (delinquencies, provisions).
-    Treatment is already a growth rate (nominal_income_growth - inflation_mom).
+  notes: Income squeeze channel. Falling real income raises credit risk (delinquencies,
+    provisions). Treatment is already a growth rate (nominal_income_growth - inflation_mom).
   provenance:
     source: manual
     added_at: '2026-02-18'
+  identification_strategy:
+    type: IV (external shocks) / local projections with controls restricted to pre-treatment
+      lags
+    argument: Instrument real_income using oil_supply_shock, oil_demand_shock, and
+      vix_shock (and/or their identified innovations), then estimate the effect on
+      cor_kspi in local projections including only lagged macro and bank variables
+      to avoid bad controls. This aligns with macro-finance practice for causal macro
+      shocks.
+    key_assumption: 'Exclusion: these global shocks influence KSPI cost of risk primarily
+      through borrower income/macroeconomic conditions, not through direct contemporaneous
+      bank-specific underwriting shocks.'
 - id: real_expenditure_to_ppop_kspi
   from: real_expenditure
   to: ppop_kspi
@@ -2361,11 +2475,20 @@ edges:
   unit_specification:
     treatment_unit: growth
     outcome_unit: log
-  notes: Consumer spending drives fintech transaction revenue and thus PPOP.
-    Treatment is already a growth rate (real_expenditure_growth from processed data).
+  notes: Consumer spending drives fintech transaction revenue and thus PPOP. Treatment
+    is already a growth rate (real_expenditure_growth from processed data).
   provenance:
     source: manual
     added_at: '2026-02-18'
+  identification_strategy:
+    type: IV (external shocks) + local projections
+    argument: Instrument real_expenditure with external shocks (oil_supply_shock,
+      oil_demand_shock, vix_shock) and estimate its effect on ppop_kspi via local
+      projections including bank fixed effects (if panel) or time fixed effects and
+      lags (if single bank time series).
+    key_assumption: External shocks move KSPI operating profits only through macro
+      demand/transactions and funding conditions, not through idiosyncratic profit
+      shocks contemporaneous with consumption.
 - id: ppop_to_capital
   from: ppop_kspi
   to: total_capital_kspi
@@ -2411,7 +2534,8 @@ edges:
   identification_strategy:
     type: accounting_identity
     argument: PPOP is the pre-provision income that builds capital after provisions.
-    key_assumption: IFRS accounting mechanically links PPOP to capital via retained earnings.
+    key_assumption: IFRS accounting mechanically links PPOP to capital via retained
+      earnings.
   unit_specification:
     treatment_unit: log
     outcome_unit: log
@@ -2422,9 +2546,9 @@ edges:
 - id: vix_to_deposit_cost_kspi
   from: vix_shock
   to: deposit_cost_kspi
-  edge_type: reduced_form
+  edge_type: causal
   timing:
-    lag: 1
+    lag: 0
     lag_unit: quarter
     contemporaneous: false
     max_anticipation: 0
@@ -2463,6 +2587,9 @@ edges:
   provenance:
     source: manual
     added_at: '2026-02-18'
+  forbidden_controls:
+  - nbk_policy_rate
+  - kzt_usd
 - id: nominal_income_to_real_income
   from: nominal_income
   to: real_income
@@ -2483,10 +2610,15 @@ edges:
   unit_specification:
     treatment_unit: growth
     outcome_unit: growth
-  notes: Deflation identity. real_income is pre-computed as real_income_growth from spending_series.
+  notes: Deflation identity. real_income is pre-computed as real_income_growth from
+    spending_series.
   provenance:
     source: manual
     added_at: '2026-02-18'
+  acceptance_criteria:
+    plausibility:
+      expected_sign: positive
+  forbidden_controls: []
 - id: deposit_cost_to_ppop
   from: deposit_cost_kspi
   to: ppop_kspi
@@ -2531,7 +2663,8 @@ edges:
     - scenario_only
   identification_strategy:
     type: accounting_identity
-    argument: PPOP = interest income - interest expense - opex. Deposit cost drives interest expense.
+    argument: PPOP = interest income - interest expense - opex. Deposit cost drives
+      interest expense.
     key_assumption: Interest expense structure is stable.
   unit_specification:
     treatment_unit: pct
@@ -2592,6 +2725,133 @@ edges:
   provenance:
     source: manual
     added_at: '2026-02-18'
+- id: kzt_usd_to_kzt_usd_monthly
+  from: kzt_usd
+  to: kzt_usd_monthly
+  edge_type: mechanical
+  notes: 'Critic-added: Time aggregation/resampling (e.g., monthly average or end-of-period)
+    of daily exchange rate to monthly series.'
+  unit_specification:
+    treatment_unit: log_level (daily ln KZT/USD)
+    outcome_unit: log_level (monthly ln KZT/USD, e.g., monthly average of daily logs)
+  acceptance_criteria:
+    plausibility:
+      expected_sign: positive
+  timing:
+    lag: 0
+  forbidden_controls: []
+- id: cpi_headline_to_cpi_headline_quarterly
+  from: cpi_headline
+  to: cpi_headline_quarterly
+  edge_type: mechanical
+  notes: 'Critic-added: Time aggregation from monthly CPI to quarterly CPI (e.g.,
+    average of monthly log CPI within quarter).'
+  unit_specification:
+    treatment_unit: log_level (monthly ln CPI index)
+    outcome_unit: log_level (quarterly ln CPI index, e.g., quarterly average of monthly
+      logs)
+  acceptance_criteria:
+    plausibility:
+      expected_sign: positive
+  timing:
+    lag: 0
+  forbidden_controls: []
+- id: brent_price_to_kzt_usd
+  from: brent_price
+  to: kzt_usd
+  edge_type: causal
+  notes: 'Critic-added: Terms-of-trade and export revenue channel: higher Brent improves
+    FX inflows and appreciates the domestic currency (lower USD/KZT), affecting the
+    exchange rate.'
+  identification_strategy:
+    type: IV (external shocks / shift-share in oil price innovations)
+    argument: Use oil_supply_shock (and optionally oil_demand_shock decomposed to
+      isolate non-domestic components) as instruments for brent_price to isolate exogenous
+      oil price movements; include vix_shock/global activity controls to soak up common
+      global factors that co-move with both Brent and KZT/USD.
+    key_assumption: Oil supply shocks affect KZT/USD only through Brent (and related
+      terms-of-trade), not via other direct channels once global risk (VIX) and global
+      activity are conditioned on.
+  unit_specification:
+    treatment_unit: log_level (ln Brent price, USD/barrel)
+    outcome_unit: log_level (ln KZT/USD)
+  acceptance_criteria:
+    plausibility:
+      expected_sign: negative
+  timing:
+    lag: 1
+  forbidden_controls:
+  - oil_supply_shock
+  - oil_demand_shock
+- id: kzt_usd_monthly_to_imported_inflation_instrument
+  from: kzt_usd_monthly
+  to: imported_inflation_instrument
+  edge_type: identity
+  notes: 'Critic-added: Imported inflation IV is constructed as interaction of pre-period
+    import share with monthly exchange rate depreciation.'
+  acceptance_criteria:
+    plausibility:
+      expected_sign: positive
+  timing:
+    lag: 0
+  forbidden_controls: []
+  unit_specification:
+    treatment_unit: log_point (monthly average log KZT/USD)
+    outcome_unit: pct (percentage points of imported inflation instrument)
+- id: cpi_headline_quarterly_to_real_expenditure
+  from: cpi_headline_quarterly
+  to: real_expenditure
+  edge_type: identity
+  notes: 'Critic-added: Real expenditure is nominal expenditure deflated by the quarterly
+    CPI (log-difference deflation).'
+  acceptance_criteria:
+    plausibility:
+      expected_sign: negative
+  timing:
+    lag: 0
+  forbidden_controls: []
+  unit_specification:
+    treatment_unit: log_point (quarterly log CPI index)
+    outcome_unit: log_point (quarterly log real expenditure)
+- id: fdi_inflows_to_kzt_usd
+  from: fdi_inflows
+  to: kzt_usd
+  edge_type: causal
+  notes: 'Critic-added: Balance-of-payments channel: higher FDI inflows increase FX
+    supply and tend to appreciate the domestic currency (lower USD/KZT), affecting
+    the exchange rate.'
+  identification_strategy:
+    type: shift_share_iv
+    argument: Instrument Kazakhstan's FDI inflows using (i) a pre-period sectoral
+      composition of FDI exposure (or sectoral weights in the economy) interacted
+      with (ii) global sector-level FDI supply shocks (e.g., OECD/UNCTAD outward FDI
+      by sector, global financial conditions for source countries). This isolates
+      plausibly exogenous variation in FDI driven by foreign supply rather than Kazakhstan-specific
+      FX conditions.
+    key_assumption: Conditional on included controls for global shocks (oil supply/demand,
+      VIX) and domestic macro policy reactions, global sector-level FDI supply shocks
+      affect KZT/USD only through their impact on FDI inflows (exclusion restriction).
+  acceptance_criteria:
+    plausibility:
+      expected_sign: negative
+  timing:
+    lag: 1
+  forbidden_controls:
+  - kzt_usd_monthly
+  - brent_price
+  - oil_supply_shock
+  - oil_demand_shock
+  - vix_shock
+  unit_specification:
+    treatment_unit: pct_gdp (percentage points of GDP)
+    outcome_unit: log_point (log KZT per USD)
+- id: real_income_level_to_nominal_expenditure
+  from: real_income_level
+  to: nominal_expenditure
+  edge_type: causal
+  notes: 'Critic-added: Higher real disposable income increases nominal consumption
+    expenditure (via higher consumption demand); in logs this is an elasticity-type
+    relationship.'
 assumptions:
 - id: oil_shock_exogeneity
   statement: Baumeister oil shocks are exogenous to Kazakhstan macro conditions.
