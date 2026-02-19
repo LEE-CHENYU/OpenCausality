@@ -43,6 +43,7 @@ nodes:
   provenance:
     source: manual
     added_at: '2026-02-02'
+  exogenous: true
 - id: oil_demand_shock
   name: Oil demand shock
   description: Baumeister oil demand shock (global demand-driven).
@@ -74,6 +75,7 @@ nodes:
   provenance:
     source: manual
     added_at: '2026-02-02'
+  exogenous: true
 - id: global_activity_shock
   name: Global activity innovation
   description: Innovation in global activity index (IGREA).
@@ -142,6 +144,7 @@ nodes:
     added_at: '2026-02-09'
     connector: fred
     dataset: financial
+  exogenous: true
 - id: kzt_usd
   name: KZT/USD exchange rate
   description: Kazakh tenge per US dollar, log level.
@@ -351,7 +354,7 @@ nodes:
   derived: true
   identity:
     name: imported_inflation_iv
-    formula: 100 * E_import_share * (kzt_usd_monthly - lag(kzt_usd_monthly, 1))
+    formula: 100 * E_import_share * (kzt_usd_monthly - L1(kzt_usd_monthly))
     depends_on:
     - kzt_usd
     - E_import_share
@@ -388,6 +391,7 @@ nodes:
   provenance:
     source: manual
     added_at: '2026-02-02'
+  exogenous: true
 - id: nominal_income
   name: Nominal monetary income
   description: Regional household nominal monetary income. Block B validated.
@@ -475,6 +479,7 @@ nodes:
   provenance:
     source: manual
     added_at: '2026-02-02'
+  exogenous: true
 - id: transfer_income
   name: Transfer income
   description: Household income from government transfers.
@@ -694,6 +699,7 @@ nodes:
   provenance:
     source: manual
     added_at: '2026-02-02'
+  exogenous: true
 - id: portfolio_mix_kspi
   name: KSPI portfolio mix
   description: Shares by product type (BNPL, car loans, merchant).
@@ -725,6 +731,7 @@ nodes:
   provenance:
     source: manual
     added_at: '2026-02-02'
+  exogenous: true
 - id: deposits_kspi
   name: KSPI deposits
   description: Kaspi.kz total deposits (bn KZT).
@@ -1037,12 +1044,25 @@ nodes:
   frequency: M
   tags:
   - critic_generated
+  exogenous: true
 - id: real_income_level
   name: Real disposable income level
   unit: log
   description: Level of real disposable income (or a close proxy). Drives nominal
     consumption expenditure via permanent-income / Keynesian consumption channels.
     Distinct from 'real_income' which is currently modeled as a growth rate.
+  type: continuous
+  observed: true
+  frequency: M
+  tags:
+  - critic_generated
+  exogenous: true
+- id: trade_openness_structure
+  name: Trade openness / sectoral import dependence (structural)
+  unit: index
+  description: Slow-moving structural determinants of import dependence (e.g., sector
+    composition, trade policy regime). Treated as predetermined over the sample window
+    and used to justify variation in pre-period import share exposure.
   type: continuous
   observed: true
   frequency: M
@@ -1471,11 +1491,7 @@ edges:
   - LOCAL_PROJECTIONS
   required_adjustments: []
   forbidden_controls:
-  - deposit_cost_kspi
-  - cor_kspi
-  - ppop_kspi
-  - total_capital_kspi
-  - k2_ratio_kspi
+  - nbk_policy_rate
   diagnostics_required:
   - stability
   acceptance_criteria:
@@ -1486,7 +1502,7 @@ edges:
       min_obs: 50
       min_pre_periods: 6
     plausibility:
-      expected_sign: positive
+      expected_sign: any
       magnitude_range:
       - 0.0
       - 2.0
@@ -1525,7 +1541,7 @@ edges:
     treatment_unit: log
     outcome_unit: pct
   timing:
-    lag: 0
+    lag: 1
     lag_unit: month
     contemporaneous: false
     max_anticipation: 0
@@ -1543,11 +1559,11 @@ edges:
   - LOCAL_PROJECTIONS
   required_adjustments: []
   forbidden_controls:
-  - deposit_cost_kspi
-  - cor_kspi
-  - ppop_kspi
-  - total_capital_kspi
-  - k2_ratio_kspi
+  - cpi_headline
+  - cpi_tradable
+  - cpi_nontradable
+  - kzt_usd_monthly
+  - cpi_headline_quarterly
   diagnostics_required:
   - stability
   acceptance_criteria:
@@ -1574,9 +1590,14 @@ edges:
     forbidden_uses:
     - policy_counterfactual
   identification_strategy:
-    type: none
-    argument: Reaction function — endogenous policy response, no identification strategy.
-    key_assumption: N/A — this edge documents correlation, not causal effect.
+    type: external_instrument
+    argument: Instrument kzt_usd with predetermined global shocks (vix_shock, oil_supply_shock,
+      oil_demand_shock) that move Kazakhstan’s FX but are plausibly orthogonal to
+      contemporaneous NBK policy shocks, then estimate the policy reaction to exogenous
+      FX moves.
+    key_assumption: Global shocks affect NBK policy rate only through their effect
+      on domestic macro conditions captured by FX (and/or oil price), and do not directly
+      shift the NBK policy shock within the policy-setting window.
   edge_status: NEEDS_CONNECTOR
   notes: NBK responds to FX conditions. Requires nbk_policy_rate connector.
   provenance:
@@ -2590,6 +2611,15 @@ edges:
   forbidden_controls:
   - nbk_policy_rate
   - kzt_usd
+  identification_strategy:
+    type: event_study
+    argument: Use high-frequency changes in VIX around externally dated global risk
+      events (e.g., U.S. macro/financial news windows) as quasi-exogenous shocks and
+      estimate pass-through to KSPI deposit costs with tight time windows and bank/time
+      fixed effects.
+    key_assumption: Within the event window, Kazakhstan-specific fundamentals and
+      NBK actions do not respond contemporaneously enough to confound the VIX shock’s
+      effect on deposit pricing.
 - id: nominal_income_to_real_income
   from: nominal_income
   to: real_income
@@ -2852,6 +2882,115 @@ edges:
   notes: 'Critic-added: Higher real disposable income increases nominal consumption
     expenditure (via higher consumption demand); in logs this is an elasticity-type
     relationship.'
+  unit_specification:
+    treatment_unit: log_point (log real disposable income level)
+    outcome_unit: log_point (log nominal consumption expenditure)
+  acceptance_criteria:
+    plausibility:
+      expected_sign: positive
+  timing:
+    lag: 1
+  forbidden_controls:
+  - real_expenditure
+  - nominal_expenditure
+  - cpi_headline
+  - cpi_headline_quarterly
+  - kzt_usd
+  identification_strategy:
+    type: instrumental_variables
+    argument: Instrument real_income_level using predetermined components such as
+      transfer_income (policy-driven) and/or external commodity/oil shocks interacting
+      with exposure (if available), and estimate the causal effect on nominal consumption
+      expenditure.
+    key_assumption: The instrument shifts household disposable income without directly
+      affecting consumption preferences except through income (exclusion), and is
+      not driven by contemporaneous consumption shocks.
+- id: imported_inflation_instrument_to_cpi_tradable
+  from: imported_inflation_instrument
+  to: cpi_tradable
+  edge_type: causal
+  notes: 'Critic-added: Bartik-style imported inflation shock: higher exchange-rate
+    depreciation interacted with pre-period import exposure raises prices of tradable/imported
+    goods.'
+  identification_strategy:
+    type: IV (shift-share / Bartik) with 2SLS
+    argument: Use imported_inflation_instrument (E_import_share × kzt_usd_monthly)
+      as an exogenous cost-push shifter for tradables, exploiting cross-sectional
+      or sectoral variation in pre-determined import shares; estimate pass-through
+      to cpi_tradable using 2SLS with the instrumented import-price component.
+    key_assumption: Conditional on fixed effects and common shocks, pre-period import
+      shares are predetermined and affect cpi_tradable only through exposure to exchange-rate-driven
+      import cost changes (exclusion restriction).
+  unit_specification:
+    treatment_unit: pp (percentage points of imported inflation exposure; E_import_share
+      in ratio × monthly log-point FX change scaled to pp if desired)
+    outcome_unit: log_point (monthly or quarterly change in log tradable CPI, consistent
+      with node definition)
+  acceptance_criteria:
+    plausibility:
+      expected_sign: positive
+  timing:
+    lag: 1
+  forbidden_controls:
+  - kzt_usd
+  - kzt_usd_monthly
+  - cpi_tradable
+  - cpi_headline
+  - cpi_headline_quarterly
+- id: trade_openness_structure_to_e_import_share
+  from: trade_openness_structure
+  to: E_import_share
+  edge_type: causal
+  notes: 'Critic-added: Long-run trade structure (openness/sectoral composition) determines
+    the pre-period import share used as exposure in the Bartik instrument.'
+  identification_strategy:
+    type: Design-based (predetermined / pre-period measurement) + controls via fixed
+      effects
+    argument: Construct E_import_share from a pre-treatment/base period using trade_openness_structure
+      measured before the shock period; estimate the mapping using only pre-period
+      data (or treat as calibration), optionally with sector fixed effects if panelized.
+    key_assumption: No reverse causality from later outcomes/shocks to pre-period
+      import shares; measurement is locked in before the analysis window.
+  unit_specification:
+    treatment_unit: index (dimensionless trade openness / import-dependence index)
+    outcome_unit: share (ratio from 0 to 1)
+  acceptance_criteria:
+    plausibility:
+      expected_sign: positive
+  timing:
+    lag: 0
+  forbidden_controls:
+  - E_import_share
+- id: kzt_usd_to_trade_openness_structure
+  from: kzt_usd
+  to: trade_openness_structure
+  edge_type: causal
+  notes: 'Critic-added: Sustained depreciation/appreciation changes relative prices
+    and can shift the effective import dependence/trade openness index over time via
+    substitution, sourcing, and sectoral composition.'
+  identification_strategy:
+    type: instrumental_variables
+    argument: Instrument kzt_usd with oil_supply_shock, oil_demand_shock, and vix_shock
+      (and/or brent_price shocks) as external drivers of KZT/USD. Estimate the effect
+      on trade_openness_structure using 2SLS, controlling for global conditions.
+    key_assumption: 'Exclusion: oil/VIX shocks affect Kazakhstan’s trade openness/sectoral
+      import dependence only through their impact on the exchange rate over the horizon
+      studied (no direct channel once global activity/commodity-cycle controls are
+      included).'
+  acceptance_criteria:
+    plausibility:
+      expected_sign: any
+  timing:
+    lag: 4
+  forbidden_controls:
+  - kzt_usd_monthly
+  - imported_inflation_instrument
+  - cpi_tradable
+  - cpi_headline
+  - nbk_policy_rate
+  unit_specification:
+    treatment_unit: log_point (log KZT per USD, e.g., monthly avg)
+    outcome_unit: index (trade openness / sectoral import dependence index level)
 assumptions:
 - id: oil_shock_exogeneity
   statement: Baumeister oil shocks are exogenous to Kazakhstan macro conditions.
