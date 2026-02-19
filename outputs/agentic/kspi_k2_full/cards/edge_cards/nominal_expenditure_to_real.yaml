@@ -1,6 +1,6 @@
 edge_id: nominal_expenditure_to_real
 dag_version_hash: 09cbbdd15d1e238525a93232938ee5d1c91a0d7fc98f8f8b4023356c450bd56a
-created_at: '2026-02-18T18:53:53.837227'
+created_at: '2026-02-18T20:11:18.954221'
 data_provenance:
   treatment_source:
     connector: parquet_file
@@ -261,7 +261,7 @@ literature:
   challenging: []
   methodological: []
   search_status: SEARCHED
-  search_timestamp: '2026-02-18T18:53:53.837314'
+  search_timestamp: '2026-02-18T20:11:18.954332'
   search_query: Nominal consumption expenditure Real consumption expenditure causal
     effect
   total_results: 5

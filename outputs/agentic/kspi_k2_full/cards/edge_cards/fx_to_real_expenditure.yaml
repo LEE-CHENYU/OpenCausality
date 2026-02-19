@@ -1,6 +1,6 @@
 edge_id: fx_to_real_expenditure
 dag_version_hash: 09cbbdd15d1e238525a93232938ee5d1c91a0d7fc98f8f8b4023356c450bd56a
-created_at: '2026-02-18T18:53:54.299358'
+created_at: '2026-02-18T20:11:19.432433'
 data_provenance:
   treatment_source: null
   outcome_source: null
@@ -29,6 +29,8 @@ estimates:
   - -0.18
   - -0.02
   pvalue: 0.012
+  treatment_unit: log
+  outcome_unit: growth
 diagnostics:
   validated_evidence:
     name: validated_evidence
@@ -196,7 +198,7 @@ literature:
     pdf_url: ''
   methodological: []
   search_status: SEARCHED
-  search_timestamp: '2026-02-18T18:53:54.299423'
+  search_timestamp: '2026-02-18T20:11:19.432485'
   search_query: KZT/USD exchange rate Real consumption expenditure causal effect
   total_results: 5
 companion_edge_id: null

@@ -1,6 +1,6 @@
 edge_id: vix_to_deposit_cost_kspi
 dag_version_hash: 09cbbdd15d1e238525a93232938ee5d1c91a0d7fc98f8f8b4023356c450bd56a
-created_at: '2026-02-18T18:53:53.905513'
+created_at: '2026-02-18T20:11:19.019389'
 data_provenance:
   treatment_source:
     connector: parquet_file
@@ -91,6 +91,8 @@ estimates:
   - 0.3191048622253197
   - 0.25962135134711184
   - 0.2620361823409278
+  treatment_unit: innovation
+  outcome_unit: pct
 diagnostics:
   hac_bandwidth:
     name: hac_bandwidth
@@ -331,7 +333,7 @@ literature:
     source: arxiv
     pdf_url: https://arxiv.org/pdf/2209.03013v1
   search_status: SEARCHED
-  search_timestamp: '2026-02-18T18:53:53.905597'
+  search_timestamp: '2026-02-18T20:11:19.019456'
   search_query: VIX shock KSPI deposit cost causal effect
   total_results: 5
 companion_edge_id: null

@@ -1,6 +1,6 @@
 edge_id: vix_to_fx
 dag_version_hash: 09cbbdd15d1e238525a93232938ee5d1c91a0d7fc98f8f8b4023356c450bd56a
-created_at: '2026-02-18T18:53:54.118972'
+created_at: '2026-02-18T20:11:19.228848'
 data_provenance:
   treatment_source:
     connector: parquet_file
@@ -91,6 +91,8 @@ estimates:
   - 0.0004045636928883241
   - 0.0010236955801505134
   - 0.0007207991524702562
+  treatment_unit: innovation
+  outcome_unit: log
 diagnostics:
   hac_bandwidth:
     name: hac_bandwidth
@@ -275,6 +277,21 @@ literature:
     search_query: VIX shock KZT/USD exchange rate causal effect
     source: semantic_scholar
     pdf_url: ''
+  - doi: 10.22459/ccmthe.2021
+    title: China's Challenges in Moving towards a High-income Economy
+    authors: []
+    year: 2021
+    excerpt: With its per capita income surpassing US$10,000, China has now drawn
+      up ambitious plans to further lift its income to the level of developed countries.
+      Yet various constraints need to be overcome if China is to build on the achievements
+      of the last 40 years and further boost its growth potential. Be
+    relevance: supporting
+    edge_id: vix_to_fx
+    paper_id: ''
+    citation_count: 0
+    search_query: VIX shock KZT/USD exchange rate causal effect
+    source: core
+    pdf_url: https://core.ac.uk/download/479005373.pdf
   - doi: 10.1515/jci-2021-0042
     title: A Unifying Causal Framework for Analyzing Dataset Shift-stable Learning
       Algorithms
@@ -294,23 +311,6 @@ literature:
     search_query: VIX shock KZT/USD exchange rate causal effect
     source: arxiv
     pdf_url: https://arxiv.org/pdf/1905.11374v5
-  - doi: ''
-    title: Effect of foreign equity flows on stock market volatility in Kenya Empirical
-      evidence at Nairobi securities exchange
-    authors:
-    - Isaac L. Ochiengâ
-    - T. Olweny
-    - O. Oluoch
-    - Gordon O. Ochere
-    year: 2019
-    excerpt: ''
-    relevance: supporting
-    edge_id: vix_to_fx
-    paper_id: 431874f869885ddd7597634551b9bf44386e10a2
-    citation_count: 0
-    search_query: VIX shock KZT/USD exchange rate causal effect
-    source: semantic_scholar
-    pdf_url: ''
   challenging: []
   methodological:
   - doi: 10.1515/jci-2022-0060
@@ -333,7 +333,7 @@ literature:
     source: arxiv
     pdf_url: https://arxiv.org/pdf/2209.03013v1
   search_status: SEARCHED
-  search_timestamp: '2026-02-18T18:53:54.119058'
+  search_timestamp: '2026-02-18T20:11:19.228917'
   search_query: VIX shock KZT/USD exchange rate causal effect
   total_results: 5
 companion_edge_id: null

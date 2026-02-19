@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-02-19T02:55:07.004141+00:00",
+  "last_updated": "2026-02-19T04:11:21.196402+00:00",
   "baseline_run_id": "",
   "baseline_mode": "",
   "baseline_dag_hash": "",
@@ -220,6 +220,13 @@
       "severity": "HIGH",
       "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
       "message": "p=0.0000 but claim_level=REDUCED_FORM. Significance does not establish causation."
+    },
+    "DATA_INSUFFICIENT_EDGE:import_share_to_iv": {
+      "status": "OPEN",
+      "opened_run": "40ef275e",
+      "severity": "HIGH",
+      "rule_id": "DATA_INSUFFICIENT_EDGE",
+      "message": "Edge 'import_share_to_iv' has insufficient data for estimation (fewer than 5 observations after alignment)."
     }
   }
 }

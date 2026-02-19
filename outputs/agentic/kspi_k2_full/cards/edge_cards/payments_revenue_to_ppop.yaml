@@ -1,6 +1,6 @@
 edge_id: payments_revenue_to_ppop
 dag_version_hash: 09cbbdd15d1e238525a93232938ee5d1c91a0d7fc98f8f8b4023356c450bd56a
-created_at: '2026-02-18T18:53:54.562003'
+created_at: '2026-02-18T20:11:19.701881'
 data_provenance:
   treatment_source:
     connector: parquet_file
@@ -91,6 +91,8 @@ estimates:
   - 0.7477334673055842
   - -0.02216304883574166
   - 0.24028143254315293
+  treatment_unit: log
+  outcome_unit: log
 diagnostics:
   hac_bandwidth:
     name: hac_bandwidth
@@ -339,7 +341,7 @@ literature:
     source: arxiv
     pdf_url: https://arxiv.org/pdf/2209.03013v1
   search_status: SEARCHED
-  search_timestamp: '2026-02-18T18:53:54.562087'
+  search_timestamp: '2026-02-18T20:11:19.701969'
   search_query: KSPI Payments revenue KSPI pre-provision operating profit causal effect
   total_results: 5
 companion_edge_id: null

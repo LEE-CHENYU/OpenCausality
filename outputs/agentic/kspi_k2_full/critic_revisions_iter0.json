@@ -1,0 +1,276 @@
+{
+  "quality_score": {
+    "edge_type_diversity": 0.6774193548387097,
+    "identification_coverage": 0.6,
+    "metadata_completeness": 0.5161290322580645,
+    "structural_soundness": 0.35,
+    "unit_completeness": 1.0,
+    "formula_correctness": 1.0,
+    "total": 0.6573387096774193
+  },
+  "n_probes": 25,
+  "n_gaps": 21,
+  "revisions": [
+    {
+      "revision_type": "add_identification_strategy",
+      "target_edge_id": "expenditure_to_payments_revenue",
+      "confidence": 0.78,
+      "reasoning": "This causal edge is currently flagged NO_ID. Payments revenue is plausibly jointly determined with aggregate spending by omitted factors (business cycle, policy, payment adoption), so a time-series local-projection/IV design using clearly exogenous macro shocks already in the DAG can improve identification without changing the structural story.",
+      "details": {
+        "identification_strategy": {
+          "type": "IV (shift-share / external shocks as instruments) + local projections",
+          "argument": "Instrument real_expenditure with external shocks that move Kazakhstan domestic demand but are plausibly exogenous to KSPI-specific payments revenue innovations: (i) oil_supply_shock and oil_demand_shock, (ii) vix_shock. Estimate pass-through using Jord\u00e0 local projections with bank fixed effects (if panel) or controls for NBK rate and FX to isolate spending-driven volume effects.",
+          "key_assumption": "Oil/VIX shocks affect KSPI payments revenue only through aggregate spending/transaction volumes (and not through direct bank-specific pricing/fee changes conditional on FX and policy rate)."
+        }
+      },
+      "validated": true,
+      "rejection_reason": ""
+    },
+    {
+      "revision_type": "add_identification_strategy",
+      "target_edge_id": "portfolio_mix_to_rwa",
+      "confidence": 0.74,
+      "reasoning": "NO_ID and magnitude_flag suggest confounding and/or scaling. Portfolio mix and RWA are jointly set with risk appetite, regulation, and growth opportunities. A policy-rule or quasi-exogenous reallocation shock is needed to defend causality.",
+      "details": {
+        "identification_strategy": {
+          "type": "Instrumental variables (regulatory/eligibility shift) or diff-in-diff around risk-weight changes",
+          "argument": "Use a regulatory mapping/weights change (e.g., Basel/IRB parameters, risk-weight floors, SME/retail preferential weights) as an exogenous shifter of the RWA impact of a given portfolio mix. Implement diff-in-diff comparing exposures more vs less affected by the risk-weight change, or IV where the instrument is predicted RWA from lagged mix interacted with post-regulation indicator.",
+          "key_assumption": "Regulatory risk-weight change is exogenous to contemporaneous KSPI credit-risk shocks and affects RWA mechanically through weights rather than through simultaneous changes in underlying asset risk."
+        }
+      },
+      "validated": true,
+      "rejection_reason": ""
+    },
+    {
+      "revision_type": "add_identification_strategy",
+      "target_edge_id": "real_income_to_cor_kspi",
+      "confidence": 0.77,
+      "reasoning": "NO_ID and very large coefficient flag likely reflect endogeneity (income falls when credit risk rises) and scaling. External macro shocks already in the DAG can be leveraged to isolate exogenous variation in household income affecting defaults/cost of risk.",
+      "details": {
+        "identification_strategy": {
+          "type": "IV using external shocks + distributed lag/local projections",
+          "argument": "Instrument real_income with oil_supply_shock/oil_demand_shock and vix_shock (and/or FX shock component) and estimate the effect on cor_kspi with lags to capture default realization. Include NBK policy rate and FX as controls or mediators depending on estimand; prefer local projections with horizon h to map dynamics.",
+          "key_assumption": "Conditional on FX and policy-rate channels (if controlled), external shocks move COR primarily via real income (ability-to-pay) rather than via direct bank balance-sheet shocks."
+        }
+      },
+      "validated": true,
+      "rejection_reason": ""
+    },
+    {
+      "revision_type": "add_identification_strategy",
+      "target_edge_id": "real_expenditure_to_ppop_kspi",
+      "confidence": 0.76,
+      "reasoning": "NO_ID: bank operating profit is procyclical and simultaneously affected by interest rates, FX, and risk. Using exogenous macro shocks for spending addresses reverse causality and omitted-cycle bias.",
+      "details": {
+        "identification_strategy": {
+          "type": "IV (external shocks) with controls for monetary/FX conditions",
+          "argument": "Instrument real_expenditure using oil_supply_shock, oil_demand_shock, and vix_shock. Estimate impact on ppop_kspi controlling for nbk_policy_rate and kzt_usd to separate pure demand/volume effects from margin/valuation effects.",
+          "key_assumption": "External shocks affect KSPI PPOP only through macro demand (and controlled monetary/FX channels), not through unobserved bank-specific operational shocks."
+        }
+      },
+      "validated": true,
+      "rejection_reason": ""
+    },
+    {
+      "revision_type": "fix_formula",
+      "target_edge_id": "import_share_to_iv",
+      "confidence": 0.85,
+      "reasoning": "Probe reports a derived_frequency_mismatch: imported_inflation_instrument combines kzt_usd (daily) with E_import_share (static). The derived node should be defined at the frequency of the econometric analysis (typically monthly/quarterly) by aggregating FX first, then interacting with the static share.",
+      "details": {
+        "node_id": "imported_inflation_instrument",
+        "new_formula": "imported_inflation_instrument = E_import_share * \u0394log(kzt_usd_monthly_avg)"
+      },
+      "validated": true,
+      "rejection_reason": ""
+    },
+    {
+      "revision_type": "fix_formula",
+      "target_edge_id": "nominal_expenditure_to_real",
+      "confidence": 0.88,
+      "reasoning": "Probe reports derived_frequency_mismatch: real_expenditure uses nominal_expenditure (quarterly) with cpi_headline (monthly). Real expenditure should use a quarterly price deflator (quarterly average CPI or end-of-quarter CPI) consistent with nominal expenditure frequency.",
+      "details": {
+        "node_id": "real_expenditure",
+        "new_formula": "real_expenditure = nominal_expenditure - log(CPI_headline_quarterly_avg)"
+      },
+      "validated": true,
+      "rejection_reason": ""
+    },
+    {
+      "revision_type": "add_missing_node",
+      "target_edge_id": "N/A",
+      "confidence": 0.82,
+      "reasoning": "To resolve the frequency mismatch cleanly (and avoid ad-hoc implicit aggregation), add an explicit quarterly CPI aggregator node used by the real_expenditure identity. This improves structural soundness and auditability of derived variables.",
+      "details": {
+        "node_definition": {
+          "id": "cpi_headline_quarterly_avg",
+          "name": "Headline CPI (quarterly average)",
+          "unit": "log",
+          "description": "Quarterly-frequency CPI consistent with nominal_expenditure; constructed as the quarterly average of monthly CPI index in logs (or log of average level), to be used as the deflator in real_expenditure identity."
+        }
+      },
+      "validated": true,
+      "rejection_reason": ""
+    },
+    {
+      "revision_type": "add_missing_edge",
+      "target_edge_id": "N/A",
+      "confidence": 0.82,
+      "reasoning": "Identity dependencies must be connected. Adding the CPI->quarterly CPI aggregation as an identity/mechanical link makes the derivation explicit and resolves the formula frequency mismatch pathway.",
+      "details": {
+        "from_node": "cpi_headline",
+        "to_node": "cpi_headline_quarterly_avg",
+        "edge_type": "mechanical",
+        "mechanism": "Temporal aggregation (monthly CPI transformed to quarterly average CPI) to align frequencies for deflation."
+      },
+      "validated": false,
+      "rejection_reason": "to_node 'cpi_headline_quarterly_avg' not found in DAG"
+    },
+    {
+      "revision_type": "add_missing_edge",
+      "target_edge_id": "N/A",
+      "confidence": 0.8,
+      "reasoning": "The revised real_expenditure formula depends on cpi_headline_quarterly_avg, so the identity dependency must be represented by an edge into real_expenditure to satisfy identity_deps_complete.",
+      "details": {
+        "from_node": "cpi_headline_quarterly_avg",
+        "to_node": "real_expenditure",
+        "edge_type": "identity",
+        "mechanism": "Deflation identity: real expenditure equals nominal expenditure minus log price index at the same (quarterly) frequency."
+      },
+      "validated": false,
+      "rejection_reason": "from_node 'cpi_headline_quarterly_avg' not found in DAG"
+    },
+    {
+      "revision_type": "add_missing_edge",
+      "target_edge_id": "N/A",
+      "confidence": 0.83,
+      "reasoning": "Structural gap: brent_price is a dead-end leaf. A standard channel is oil price impacting Kazakhstan FX via trade balance and fiscal/terms-of-trade effects. This also helps interpret oil shocks and reduces orphan sinks.",
+      "details": {
+        "from_node": "brent_price",
+        "to_node": "kzt_usd",
+        "edge_type": "causal",
+        "mechanism": "Terms-of-trade and fiscal revenue channel: higher Brent improves export receipts and FX inflows, tending to appreciate KZT (lower KZT/USD), and vice versa."
+      },
+      "validated": true,
+      "rejection_reason": ""
+    },
+    {
+      "revision_type": "add_structural_metadata",
+      "target_edge_id": "cpi_to_nbk_rate",
+      "confidence": 0.8,
+      "reasoning": "Metadata completeness is low; reaction-function edges should include timing/forbidden controls. Also sign_vs_estimate flags contradiction: typical Taylor-rule logic implies positive response, but estimate is negative\u2014so set expected_sign to 'any' unless the estimand is clarified (e.g., endogeneity/anticipation).",
+      "details": {
+        "metadata": {
+          "expected_sign": "any",
+          "timing": {
+            "lag": 1
+          },
+          "forbidden_controls": [
+            "nbk_policy_rate",
+            "cpi_headline"
+          ]
+        }
+      },
+      "validated": true,
+      "rejection_reason": ""
+    },
+    {
+      "revision_type": "add_structural_metadata",
+      "target_edge_id": "fx_to_nbk_rate",
+      "confidence": 0.8,
+      "reasoning": "Reaction-function edge missing ID metadata. NBK may respond to exchange-rate depreciation pressures with tightening; include lag and forbidden controls to avoid post-treatment bias (do not control for the policy rate itself; avoid controlling for downstream inflation if estimating total response).",
+      "details": {
+        "metadata": {
+          "expected_sign": "positive",
+          "timing": {
+            "lag": 1
+          },
+          "forbidden_controls": [
+            "nbk_policy_rate"
+          ]
+        }
+      },
+      "validated": true,
+      "rejection_reason": ""
+    },
+    {
+      "revision_type": "add_structural_metadata",
+      "target_edge_id": "portfolio_mix_to_rwa",
+      "confidence": 0.78,
+      "reasoning": "Causal edge missing key metadata (expected sign, timing, forbidden controls). Also magnitude_flag suggests scale/modeling risk; adding explicit expectations and forbidden controls improves interpretability and guards against conditioning on mediators like loan_portfolio_kspi when estimating the mix effect.",
+      "details": {
+        "metadata": {
+          "expected_sign": "any",
+          "timing": {
+            "lag": 1
+          },
+          "forbidden_controls": [
+            "rwa_kspi",
+            "k2_ratio_kspi"
+          ]
+        }
+      },
+      "validated": true,
+      "rejection_reason": ""
+    },
+    {
+      "revision_type": "add_structural_metadata",
+      "target_edge_id": "expenditure_to_payments_revenue",
+      "confidence": 0.77,
+      "reasoning": "Causal edge has sign_vs_estimate conflict; payments revenue could rise with spending, but fee compression or mix shifts could make sign ambiguous at the margin. Set expected_sign to 'any' and add lag/forbidden controls to reduce post-treatment bias.",
+      "details": {
+        "metadata": {
+          "expected_sign": "any",
+          "timing": {
+            "lag": 1
+          },
+          "forbidden_controls": [
+            "payments_revenue_kspi"
+          ]
+        }
+      },
+      "validated": true,
+      "rejection_reason": ""
+    },
+    {
+      "revision_type": "add_structural_metadata",
+      "target_edge_id": "real_income_to_cor_kspi",
+      "confidence": 0.79,
+      "reasoning": "Completes missing metadata for a key macro-to-risk causal link; also makes the dynamic nature of defaults explicit (income changes affect delinquencies with delay).",
+      "details": {
+        "metadata": {
+          "expected_sign": "negative",
+          "timing": {
+            "lag": 2
+          },
+          "forbidden_controls": [
+            "cor_kspi",
+            "npl_kspi"
+          ]
+        }
+      },
+      "validated": true,
+      "rejection_reason": ""
+    },
+    {
+      "revision_type": "add_structural_metadata",
+      "target_edge_id": "real_expenditure_to_ppop_kspi",
+      "confidence": 0.77,
+      "reasoning": "Completes missing metadata; bank operating profit reacts with short lags via volumes/fees. Forbidden controls help avoid conditioning on components of profit if later added.",
+      "details": {
+        "metadata": {
+          "expected_sign": "positive",
+          "timing": {
+            "lag": 1
+          },
+          "forbidden_controls": [
+            "ppop_kspi"
+          ]
+        }
+      },
+      "validated": true,
+      "rejection_reason": ""
+    }
+  ],
+  "accepted": 14,
+  "rejected": 2
+}

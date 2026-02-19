@@ -1,6 +1,6 @@
 edge_id: nominal_income_to_real_income
 dag_version_hash: 09cbbdd15d1e238525a93232938ee5d1c91a0d7fc98f8f8b4023356c450bd56a
-created_at: '2026-02-18T18:53:54.812278'
+created_at: '2026-02-18T20:11:20.019230'
 data_provenance:
   treatment_source:
     connector: parquet_file
@@ -91,6 +91,8 @@ estimates:
   - 1.128458961488219
   - -0.034177990653417645
   - 1.3385831687254768
+  treatment_unit: growth
+  outcome_unit: growth
 diagnostics:
   hac_bandwidth:
     name: hac_bandwidth
@@ -325,7 +327,7 @@ literature:
   challenging: []
   methodological: []
   search_status: SEARCHED
-  search_timestamp: '2026-02-18T18:53:54.812367'
+  search_timestamp: '2026-02-18T20:11:20.019747'
   search_query: Nominal monetary income Real monetary income causal effect
   total_results: 5
 companion_edge_id: null

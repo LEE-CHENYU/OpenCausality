@@ -1,6 +1,6 @@
 edge_id: real_income_to_cor_kspi
 dag_version_hash: 09cbbdd15d1e238525a93232938ee5d1c91a0d7fc98f8f8b4023356c450bd56a
-created_at: '2026-02-18T18:53:54.902603'
+created_at: '2026-02-18T20:11:20.132401'
 data_provenance:
   treatment_source:
     connector: parquet_file
@@ -91,6 +91,8 @@ estimates:
   - .nan
   - .nan
   - .nan
+  treatment_unit: growth
+  outcome_unit: pct
 diagnostics:
   hac_bandwidth:
     name: hac_bandwidth
@@ -257,20 +259,6 @@ literature:
     search_query: Real monetary income KSPI cost of risk causal effect
     source: openalex
     pdf_url: http://hdl.handle.net/10852/36942
-  - doi: 10.17170/kobra-202005181267
-    title: the Indonesian Oil Palm Plantation and Automobile Sectors
-    authors:
-    - Sinaga, Hariati
-    year: 2020
-    excerpt: Zugleich Dissertation, Universität Kassel, 2017. Die gedruckte Ausg.
-      ist im Rainer Hampp Verlag, Augsburg, München (www.Hampp-Verlag.de) erschienen
-    relevance: supporting
-    edge_id: real_income_to_cor_kspi
-    paper_id: ''
-    citation_count: 0
-    search_query: Real monetary income KSPI cost of risk causal effect
-    source: core
-    pdf_url: https://core.ac.uk/download/638846868.pdf
   - doi: 10.21314/JOP.2019.229
     title: On the Selection of Loss Severity Distributions to Model Operational Risk
     authors:
@@ -289,37 +277,44 @@ literature:
     search_query: Real monetary income KSPI cost of risk causal effect
     source: arxiv
     pdf_url: https://arxiv.org/pdf/2107.03979v1
+  challenging: []
+  methodological:
   - doi: ''
-    title: Levels of pharmaceuticals and endocrine disruptors in commercially available
-      seafood before and after cooking
+    title: Sequential Design and Spatial Modeling for Portfolio Tail Risk Measurement
     authors:
-    - Barcelo, D.
-    - Caceres, N.
-    - Fernandez-Tejedor, M.
-    - Granby, Kit
-    - M. Marques, A.
-    - Maulvault, A.
-    - Munoz, D. A.
-    - Robbens, Johan
-    - Rodríguez-Mozaz, S
-    - Serra, A.
-    - Sioen, Isabelle
-    - Tediosi, A.
-    - Verbeke, K.
-    - Williamson, J.
-    year: 2016
-    excerpt: ''
-    relevance: supporting
+    - Michael Ludkovski
+    - James Risk
+    year: 2017
+    excerpt: We consider calculation of capital requirements when the underlying economic
+      scenarios are determined by simulatable risk factors. In the respective nested
+      simulation framework, the goal is to estimate portfolio tail risk, quantified
+      via VaR or TVaR of a given collection of future economic scenarios
+    relevance: methodological
     edge_id: real_income_to_cor_kspi
-    paper_id: ''
+    paper_id: 1710.05204v2
     citation_count: 0
     search_query: Real monetary income KSPI cost of risk causal effect
-    source: core
-    pdf_url: https://core.ac.uk/download/84002501.pdf
-  challenging: []
-  methodological: []
+    source: arxiv
+    pdf_url: https://arxiv.org/pdf/1710.05204v2
+  - doi: ''
+    title: Statistical Emulators for Pricing and Hedging Longevity Risk Products
+    authors:
+    - James Risk
+    - Michael Ludkovski
+    year: 2015
+    excerpt: 'We propose the use of statistical emulators for the purpose of valuing
+      mortality-linked contracts in stochastic mortality models. Such models typically
+      require (nested) evaluation of expected values of nonlinear functionals of multi-dimensional
+      stochastic processes. Except in the simplest cases, no '
+    relevance: methodological
+    edge_id: real_income_to_cor_kspi
+    paper_id: 1508.00310v2
+    citation_count: 0
+    search_query: Real monetary income KSPI cost of risk causal effect
+    source: arxiv
+    pdf_url: https://arxiv.org/pdf/1508.00310v2
   search_status: SEARCHED
-  search_timestamp: '2026-02-18T18:53:54.902678'
+  search_timestamp: '2026-02-18T20:11:20.132479'
   search_query: Real monetary income KSPI cost of risk causal effect
   total_results: 5
 companion_edge_id: null

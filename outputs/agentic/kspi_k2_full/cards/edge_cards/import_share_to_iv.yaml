@@ -1,116 +1,271 @@
 edge_id: import_share_to_iv
-dag_version_hash: a0d5c383631c52aa262f288704c6f7868d48b73d5034761245939de8eeea1d72
-created_at: '2026-02-16T16:23:45.655865'
+dag_version_hash: 09cbbdd15d1e238525a93232938ee5d1c91a0d7fc98f8f8b4023356c450bd56a
+created_at: '2026-02-18T20:11:19.357318'
 data_provenance:
-  treatment_source: null
-  outcome_source: null
+  treatment_source:
+    connector: parquet_file
+    dataset: E_import_share
+    series: null
+    retrieval_time: null
+    file_path: null
+    file_checksum: null
+    row_count: 4
+    column_count: null
+    date_range:
+    - '2021-01-01'
+    - '2024-01-01'
+    cache_key: null
+  outcome_source:
+    connector: parquet_file
+    dataset: imported_inflation_instrument
+    series: null
+    retrieval_time: null
+    file_path: null
+    file_checksum: null
+    row_count: 4
+    column_count: null
+    date_range:
+    - '2021-01-01'
+    - '2024-01-01'
+    cache_key: null
   control_sources: {}
   instrument_sources: {}
-  combined_row_count: null
-  combined_date_range: null
+  combined_row_count: 4
+  combined_date_range:
+  - '2021-01-01'
+  - '2024-01-01'
   missing_rate: null
   panel_dimensions: null
   entity_boundary_note: null
   kpi_definitions: null
-spec_hash: e582f930ce9896f4f11444ee5cacdafd5fe5affd270856c3a0d680d029846d79
+spec_hash: 01680b18cda1f01dfbd3f06a49c2803c68c79f6d179eeb330e7d4ff373b23b43
 spec_details:
-  design: IDENTITY
-  controls: []
+  design: DATA_INSUFFICIENT
+  controls:
+  - y_lag1
+  - y_lag2
+  - x_lag1
+  - x_lag2
   instruments: []
   fixed_effects: []
-  se_method: deterministic
+  se_method: HAC_newey_west
   sample_filter: null
-  horizon: null
+  horizon:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
   bandwidth: null
-estimates:
-  point: 0.1
-  se: 0.0
-  ci_95:
-  - 0.1
-  - 0.1
-  pvalue: null
-  n_calendar_periods: 1
-  n_effective_obs_h0: 1
+estimates: null
 diagnostics:
-  identity_check:
-    name: identity_check
+  hac_bandwidth:
+    name: hac_bandwidth
     passed: true
-    value: 0.1
+    value: 0.0
     threshold: null
     pvalue: null
-    message: 'Deterministic: d(IV)/d(import_share) = avg_fx_change = 0.10'
-all_diagnostics_pass: true
+    message: 'Newey-West bandwidth: 0'
+  effective_obs:
+    name: effective_obs
+    passed: false
+    value: 2.0
+    threshold: 20.0
+    pvalue: null
+    message: ''
+  sign_consistency:
+    name: sign_consistency
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: No expected sign specified
+  ts_hac_sensitivity:
+    name: ts_hac_sensitivity
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_regime_stability:
+    name: ts_regime_stability
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_shock_support:
+    name: ts_shock_support
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+all_diagnostics_pass: false
 interpretation:
-  estimand: 'Sensitivity: d(IV)/d(import_share) = avg_fx_change = 0.10'
-  is_not: Causal effect; this is a mechanical identity
+  estimand: IRF of imported_inflation_instrument to a unit shock in E_import_share
+  is_not: Structural causal effect under all interventions
   channels:
-  - mechanical/accounting
+  - direct
+  - indirect
   population: ''
-  conditions: 'Evaluated at: {''avg_fx_change'': 0.1}'
+  conditions: ''
   allowed_uses: []
   forbidden_uses: []
 failure_flags:
   weak_identification: false
   potential_bad_control: false
-  mechanical_identity_risk: true
+  mechanical_identity_risk: false
   regime_break_detected: false
-  small_sample: false
+  small_sample: true
   high_missing_rate: false
   entity_boundary_change: false
   definition_inconsistency: false
-  data_insufficient: false
+  data_insufficient: true
 counterfactual:
   supports_shock_path: true
-  supports_policy_intervention: true
-  intervention_note: Mechanical identity; always holds by definition
+  supports_policy_intervention: false
+  intervention_note: Reduced-form LP estimate
   external_validity: ''
-credibility_rating: A
-credibility_score: 0.94
+credibility_rating: D
+credibility_score: 0.0
 identification:
-  claim_level: IDENTIFIED_CAUSAL
+  claim_level: DESCRIPTIVE
   risks:
-    unmeasured_confounding: low
+    unmeasured_confounding: medium
     simultaneity: low
     weak_variation: low
     measurement_error: low
     selection: low
   untestable_assumptions: []
-  testable_threats_passed: []
-  testable_threats_failed: []
-  strategy_type: accounting_identity
-  strategy_argument: IV = diff(log(kzt_usd)) * E_import_share is a deterministic construction.
-  strategy_key_assumption: Pre-period import shares are fixed exposure weights.
+  testable_threats_passed:
+  - hac_bandwidth
+  - sign_consistency
+  - ts_hac_sensitivity
+  - ts_regime_stability
+  - ts_shock_support
+  testable_threats_failed:
+  - effective_obs
+  strategy_type: ''
+  strategy_argument: ''
+  strategy_key_assumption: ''
 counterfactual_block:
-  shock_scenario_allowed: true
+  shock_scenario_allowed: false
   policy_intervention_allowed: false
-  reason_shock_blocked: null
+  reason_shock_blocked: Shock CF requires REDUCED_FORM+, edge has DESCRIPTIVE
   reason_policy_blocked: REDUCED_FORM mode does not allow policy interventions
-  allowed: true
-  reason_blocked: REDUCED_FORM mode does not allow policy interventions
+  allowed: false
+  reason_blocked: Shock CF requires REDUCED_FORM+, edge has DESCRIPTIVE
 propagation_role:
   role: identity
   overlapping_paths: []
-  selected_for_counterfactual: true
+  selected_for_counterfactual: false
   mode_propagation_allowed:
     STRUCTURAL: true
     REDUCED_FORM: true
     DESCRIPTIVE: true
   mode_shock_cf_allowed:
-    STRUCTURAL: true
-    REDUCED_FORM: true
+    STRUCTURAL: false
+    REDUCED_FORM: false
     DESCRIPTIVE: false
   mode_policy_cf_allowed:
-    STRUCTURAL: true
+    STRUCTURAL: false
     REDUCED_FORM: false
     DESCRIPTIVE: false
 literature:
-  supporting: []
-  challenging: []
-  methodological: []
-  search_status: PENDING
-  search_timestamp: null
-  search_query: ''
-  total_results: 0
+  supporting:
+  - doi: 10.1111/1540-6261.00422
+    title: Government Ownership of Banks
+    authors:
+    - Rafael La Porta
+    - Florencio López‐de‐Silanes
+    - Andrei Shleifer
+    year: 2002
+    excerpt: ABSTRACT We assemble data on government ownership of banks around the
+      world. The data show that such ownership is large and pervasive, and higher
+      in countries with low levels of per capita income, backward financial systems,
+      interventionist and inefficient governments, and poor protection of propert
+    relevance: supporting
+    edge_id: import_share_to_iv
+    paper_id: ''
+    citation_count: 2501
+    search_query: Pre-period import share Imported inflation IV causal effect
+    source: openalex
+    pdf_url: https://onlinelibrary.wiley.com/doi/pdfdirect/10.1111/1540-6261.00422
+  - doi: 10.3386/w7081
+    title: 'Trade Policy and Economic Growth: A Skeptic''s Guide to Cross-National
+      Evidence'
+    authors:
+    - Francisco Rodríguez
+    - Dani Rodrik
+    year: 1999
+    excerpt: ''
+    relevance: supporting
+    edge_id: import_share_to_iv
+    paper_id: ''
+    citation_count: 876
+    search_query: Pre-period import share Imported inflation IV causal effect
+    source: openalex
+    pdf_url: https://doi.org/10.3386/w7081
+  - doi: 10.1007/s00181-022-02221-9
+    title: Does inflation targeting matter for international trade? A synthetic control
+      analysis
+    authors:
+    - N. McCloud
+    - Ajornie Taylor
+    year: 2022
+    excerpt: ''
+    relevance: supporting
+    edge_id: import_share_to_iv
+    paper_id: 84984f9374a1d3d727a9706a49e8248e1cc89536
+    citation_count: 5
+    search_query: Pre-period import share Imported inflation IV causal effect
+    source: semantic_scholar
+    pdf_url: ''
+  challenging:
+  - doi: 10.1093/qje/qjz014
+    title: The Effect of Minimum Wages on Low-Wage Jobs*
+    authors:
+    - Doruk Cengiz
+    - Arindrajit Dubé
+    - Attila Lindner
+    - Ben Zipperer
+    year: 2019
+    excerpt: Abstract We estimate the effect of minimum wages on low-wage jobs using
+      138 prominent state-level minimum wage changes between 1979 and 2016 in the
+      United States using a difference-in-differences approach. We first estimate
+      the effect of the minimum wage increase on employment changes by wage bins t
+    relevance: challenging
+    edge_id: import_share_to_iv
+    paper_id: ''
+    citation_count: 2129
+    search_query: Pre-period import share Imported inflation IV causal effect
+    source: openalex
+    pdf_url: https://academic.oup.com/qje/article-pdf/134/3/1405/29173920/qjz014.pdf
+  methodological:
+  - doi: 10.2139/ssrn.4716511
+    title: Synthetic instruments in DiD designs with unmeasured confounding
+    authors:
+    - jaume vives-i-bastida
+    - Ahmet Gulek
+    year: 2024
+    excerpt: Unmeasured confounding and selection into treatment are key threats to
+      reliable causal inference in Difference-in-Differences (DiD) designs. In practice,
+      researchers often use instrumental variables to address endogeneity concerns,
+      for example through shift-share instruments. However, in many settin
+    relevance: methodological
+    edge_id: import_share_to_iv
+    paper_id: 700619c7b26f1e3ec47c6e535d0007d5058a2ab3
+    citation_count: 0
+    search_query: Pre-period import share Imported inflation IV causal effect
+    source: semantic_scholar
+    pdf_url: ''
+  search_status: SEARCHED
+  search_timestamp: '2026-02-18T20:11:19.357383'
+  search_query: Pre-period import share Imported inflation IV causal effect
+  total_results: 5
 companion_edge_id: null
 variant_of: null
 is_precisely_null: false

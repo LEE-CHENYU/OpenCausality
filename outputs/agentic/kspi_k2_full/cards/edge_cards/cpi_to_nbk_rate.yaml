@@ -1,6 +1,6 @@
 edge_id: cpi_to_nbk_rate
 dag_version_hash: 09cbbdd15d1e238525a93232938ee5d1c91a0d7fc98f8f8b4023356c450bd56a
-created_at: '2026-02-18T18:53:54.620347'
+created_at: '2026-02-18T20:11:19.782920'
 data_provenance:
   treatment_source:
     connector: parquet_file
@@ -91,6 +91,8 @@ estimates:
   - 0.4365420911049186
   - 0.36529223662819665
   - 0.22719629552758286
+  treatment_unit: log
+  outcome_unit: pct
 diagnostics:
   hac_bandwidth:
     name: hac_bandwidth
@@ -261,6 +263,23 @@ literature:
     search_query: Headline CPI NBK base rate causal effect
     source: semantic_scholar
     pdf_url: ''
+  - doi: 10.24377/ljmu.t.00006015
+    title: Determinants of foreign direct investment in commercial real estate and
+      hotel sectors for selected MENA countries
+    authors:
+    - Salem, M M
+    year: null
+    excerpt: 'Developed, maturing, and emerging market countries are making considerable
+      progress in the legal and institutional reforms necessary to allow and facilitate
+      real estate and tourism (specifically hotel) foreign direct investment (FDI).
+      From a political perspective, countries used to view real estate '
+    relevance: supporting
+    edge_id: cpi_to_nbk_rate
+    paper_id: ''
+    citation_count: 0
+    search_query: Headline CPI NBK base rate causal effect
+    source: core
+    pdf_url: https://core.ac.uk/download/80684153.pdf
   - doi: 10.1515/jci-2021-0042
     title: A Unifying Causal Framework for Analyzing Dataset Shift-stable Learning
       Algorithms
@@ -280,19 +299,6 @@ literature:
     search_query: Headline CPI NBK base rate causal effect
     source: arxiv
     pdf_url: https://arxiv.org/pdf/1905.11374v5
-  - doi: ''
-    title: Determinants of Inflation rate in Nigeria
-    authors:
-    - Kayode David Toluhi
-    year: 2023
-    excerpt: ''
-    relevance: supporting
-    edge_id: cpi_to_nbk_rate
-    paper_id: d4bfeda8616714cd2270cfe6219f292b53db2c55
-    citation_count: 0
-    search_query: Headline CPI NBK base rate causal effect
-    source: semantic_scholar
-    pdf_url: ''
   challenging: []
   methodological:
   - doi: 10.9734/ajeba/2020/v19i330306
@@ -332,7 +338,7 @@ literature:
     source: arxiv
     pdf_url: https://arxiv.org/pdf/2209.03013v1
   search_status: SEARCHED
-  search_timestamp: '2026-02-18T18:53:54.620418'
+  search_timestamp: '2026-02-18T20:11:19.782999'
   search_query: Headline CPI NBK base rate causal effect
   total_results: 5
 companion_edge_id: null

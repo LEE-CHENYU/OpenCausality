@@ -1,6 +1,6 @@
 edge_id: deposit_cost_to_ppop
 dag_version_hash: 09cbbdd15d1e238525a93232938ee5d1c91a0d7fc98f8f8b4023356c450bd56a
-created_at: '2026-02-18T18:53:54.864748'
+created_at: '2026-02-18T20:11:20.084180'
 data_provenance:
   treatment_source:
     connector: parquet_file
@@ -91,6 +91,8 @@ estimates:
   - -0.04148775573923562
   - 0.11643145530068058
   - -0.02404153599887978
+  treatment_unit: pct
+  outcome_unit: log
 diagnostics:
   hac_bandwidth:
     name: hac_bandwidth
@@ -252,65 +254,24 @@ literature:
     source: arxiv
     pdf_url: https://arxiv.org/pdf/1905.11374v5
   - doi: ''
-    title: Levels of pharmaceuticals and endocrine disruptors in commercially available
-      seafood before and after cooking
+    title: 'Text as Causal Mediators: Research Design for Causal Estimates of Differential
+      Treatment of Social Groups via Language Aspects'
     authors:
-    - Barcelo, D.
-    - Caceres, N.
-    - Fernandez-Tejedor, M.
-    - Granby, Kit
-    - M. Marques, A.
-    - Maulvault, A.
-    - Munoz, D. A.
-    - Robbens, Johan
-    - Rodríguez-Mozaz, S
-    - Serra, A.
-    - Sioen, Isabelle
-    - Tediosi, A.
-    - Verbeke, K.
-    - Williamson, J.
-    year: 2016
-    excerpt: ''
+    - Katherine A. Keith
+    - Douglas Rice
+    - Brendan O'Connor
+    year: 2021
+    excerpt: Using observed language to understand interpersonal interactions is important
+      in high-stakes decision making. We propose a causal research design for observational
+      (non-experimental) data to estimate the natural direct and indirect effects
+      of social group signals (e.g. race or gender) on speakers' r
     relevance: supporting
     edge_id: deposit_cost_to_ppop
-    paper_id: ''
+    paper_id: 2109.07542v1
     citation_count: 0
     search_query: KSPI deposit cost KSPI pre-provision operating profit causal effect
-    source: core
-    pdf_url: https://core.ac.uk/download/84002501.pdf
-  - doi: ''
-    title: 'Exposure to Chemicals in Consumer Products: The Role of the Near-Field
-      Environment'
-    authors:
-    - Ernstoff, Alexi
-    - Fantke, Peter
-    - Huang, L.
-    - Jolliet, O.
-    year: 2016
-    excerpt: ''
-    relevance: supporting
-    edge_id: deposit_cost_to_ppop
-    paper_id: ''
-    citation_count: 0
-    search_query: KSPI deposit cost KSPI pre-provision operating profit causal effect
-    source: core
-    pdf_url: https://core.ac.uk/download/84002493.pdf
-  - doi: ''
-    title: The development of an operational LCIA-methodology with impact categories
-      based on the control variables in the Planetary Boundaries framework
-    authors:
-    - Hauschild, Michael Zwicky
-    - Owsianiak, Mikolaj
-    - Ryberg, Morten
-    year: 2016
-    excerpt: ''
-    relevance: supporting
-    edge_id: deposit_cost_to_ppop
-    paper_id: ''
-    citation_count: 0
-    search_query: KSPI deposit cost KSPI pre-provision operating profit causal effect
-    source: core
-    pdf_url: https://core.ac.uk/download/84003389.pdf
+    source: arxiv
+    pdf_url: https://arxiv.org/pdf/2109.07542v1
   challenging: []
   methodological:
   - doi: 10.1515/jci-2022-0060
@@ -333,9 +294,9 @@ literature:
     source: arxiv
     pdf_url: https://arxiv.org/pdf/2209.03013v1
   search_status: SEARCHED
-  search_timestamp: '2026-02-18T18:53:54.864835'
+  search_timestamp: '2026-02-18T20:11:20.084259'
   search_query: KSPI deposit cost KSPI pre-provision operating profit causal effect
-  total_results: 5
+  total_results: 3
 companion_edge_id: null
 variant_of: null
 is_precisely_null: false

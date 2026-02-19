@@ -13,7 +13,7 @@
         "relevance": "supporting",
         "edge_id": "oil_supply_to_brent",
         "paper_id": "cd2fa5dd72f0747b172109d4f53f6f39470312fb",
-        "citation_count": 4217,
+        "citation_count": 4214,
         "search_query": "Oil supply shock Brent crude oil price causal effect",
         "source": "semantic_scholar",
         "pdf_url": ""
@@ -308,6 +308,20 @@
         "pdf_url": ""
       },
       {
+        "doi": "10.22459/ccmthe.2021",
+        "title": "China's Challenges in Moving towards a High-income Economy",
+        "authors": [],
+        "year": 2021,
+        "excerpt": "With its per capita income surpassing US$10,000, China has now drawn up ambitious plans to further lift its income to the level of developed countries. Yet various constraints need to be overcome if China is to build on the achievements of the last 40 years and further boost its growth potential. Be",
+        "relevance": "supporting",
+        "edge_id": "vix_to_fx",
+        "paper_id": "",
+        "citation_count": 0,
+        "search_query": "VIX shock KZT/USD exchange rate causal effect",
+        "source": "core",
+        "pdf_url": "https://core.ac.uk/download/479005373.pdf"
+      },
+      {
         "doi": "10.1515/jci-2022-0060",
         "title": "Quantitative probing: Validating causal models using quantitative domain knowledge",
         "authors": [
@@ -342,25 +356,6 @@
         "search_query": "VIX shock KZT/USD exchange rate causal effect",
         "source": "arxiv",
         "pdf_url": "https://arxiv.org/pdf/1905.11374v5"
-      },
-      {
-        "doi": "",
-        "title": "Effect of foreign equity flows on stock market volatility in Kenya Empirical evidence at Nairobi securities exchange",
-        "authors": [
-          "Isaac L. Ochieng\u00e2",
-          "T. Olweny",
-          "O. Oluoch",
-          "Gordon O. Ochere"
-        ],
-        "year": 2019,
-        "excerpt": "",
-        "relevance": "supporting",
-        "edge_id": "vix_to_fx",
-        "paper_id": "431874f869885ddd7597634551b9bf44386e10a2",
-        "citation_count": 0,
-        "search_query": "VIX shock KZT/USD exchange rate causal effect",
-        "source": "semantic_scholar",
-        "pdf_url": ""
       }
     ]
   },
@@ -583,6 +578,22 @@
         "pdf_url": ""
       },
       {
+        "doi": "10.24377/ljmu.t.00006015",
+        "title": "Determinants of foreign direct investment in commercial real estate and hotel sectors for selected MENA countries",
+        "authors": [
+          "Salem, M M"
+        ],
+        "year": null,
+        "excerpt": "Developed, maturing, and emerging market countries are making considerable progress in the legal and institutional reforms necessary to allow and facilitate real estate and tourism (specifically hotel) foreign direct investment (FDI). From a political perspective, countries used to view real estate ",
+        "relevance": "supporting",
+        "edge_id": "cpi_to_nbk_rate",
+        "paper_id": "",
+        "citation_count": 0,
+        "search_query": "Headline CPI NBK base rate causal effect",
+        "source": "core",
+        "pdf_url": "https://core.ac.uk/download/80684153.pdf"
+      },
+      {
         "doi": "10.1515/jci-2022-0060",
         "title": "Quantitative probing: Validating causal models using quantitative domain knowledge",
         "authors": [
@@ -617,22 +628,6 @@
         "search_query": "Headline CPI NBK base rate causal effect",
         "source": "arxiv",
         "pdf_url": "https://arxiv.org/pdf/1905.11374v5"
-      },
-      {
-        "doi": "",
-        "title": "Determinants of Inflation rate in Nigeria",
-        "authors": [
-          "Kayode David Toluhi"
-        ],
-        "year": 2023,
-        "excerpt": "",
-        "relevance": "supporting",
-        "edge_id": "cpi_to_nbk_rate",
-        "paper_id": "d4bfeda8616714cd2270cfe6219f292b53db2c55",
-        "citation_count": 0,
-        "search_query": "Headline CPI NBK base rate causal effect",
-        "source": "semantic_scholar",
-        "pdf_url": ""
       }
     ]
   },
@@ -839,6 +834,24 @@
         "search_query": "NBK base rate KSPI cost of risk causal effect",
         "source": "arxiv",
         "pdf_url": "https://arxiv.org/pdf/2107.03979v1"
+      },
+      {
+        "doi": "",
+        "title": "IMPACTOF CORONA VIRUS ON HEALTH,ECONOMY AND EDUCATION",
+        "authors": [
+          "fathun, fatimah azahrah",
+          "Rohana, Rohana",
+          "taufiqurakman, Muh"
+        ],
+        "year": 2020,
+        "excerpt": "Corona Virus has given bad affect to some areas such as Health, Economic and Education that very important for human life, Corona Virus it change human life is different, all activity at home and by online, some countries has decided to lock down and Indonesia has PSBB large scale social Restriction",
+        "relevance": "supporting",
+        "edge_id": "nbk_rate_to_cor",
+        "paper_id": "",
+        "citation_count": 0,
+        "search_query": "NBK base rate KSPI cost of risk causal effect",
+        "source": "core",
+        "pdf_url": "https://core.ac.uk/download/392335507.pdf"
       },
       {
         "doi": "",
@@ -1343,70 +1356,6 @@
       },
       {
         "doi": "",
-        "title": "Macroeconomic Impacts of Immigration in Malaysia: Trade, Remittances and Unemployment",
-        "authors": [
-          "MARWAN, NUR,FAKHZAN"
-        ],
-        "year": 2011,
-        "excerpt": "The macroeconomic consequence of immigration is a disputable area among many interested parties as evidenced by the empirical studies. Most studies, however, employ Anglo-Saxon countries as their subjects, while there is an increasing demand for studies on the economic consequences of immigration in",
-        "relevance": "supporting",
-        "edge_id": "portfolio_mix_to_rwa",
-        "paper_id": "",
-        "citation_count": 0,
-        "search_query": "KSPI portfolio mix KSPI risk-weighted assets causal effect",
-        "source": "core",
-        "pdf_url": "https://core.ac.uk/download/108589.pdf"
-      },
-      {
-        "doi": "",
-        "title": "Levels of pharmaceuticals and endocrine disruptors in commercially available seafood before and after cooking",
-        "authors": [
-          "Barcelo, D.",
-          "Caceres, N.",
-          "Fernandez-Tejedor, M.",
-          "Granby, Kit",
-          "M. Marques, A.",
-          "Maulvault, A.",
-          "Munoz, D. A.",
-          "Robbens, Johan",
-          "Rodr\u00edguez-Mozaz, S",
-          "Serra, A.",
-          "Sioen, Isabelle",
-          "Tediosi, A.",
-          "Verbeke, K.",
-          "Williamson, J."
-        ],
-        "year": 2016,
-        "excerpt": "",
-        "relevance": "supporting",
-        "edge_id": "portfolio_mix_to_rwa",
-        "paper_id": "",
-        "citation_count": 0,
-        "search_query": "KSPI portfolio mix KSPI risk-weighted assets causal effect",
-        "source": "core",
-        "pdf_url": "https://core.ac.uk/download/84002501.pdf"
-      },
-      {
-        "doi": "",
-        "title": "Exposure to Chemicals in Consumer Products: The Role of the Near-Field Environment",
-        "authors": [
-          "Ernstoff, Alexi",
-          "Fantke, Peter",
-          "Huang, L.",
-          "Jolliet, O."
-        ],
-        "year": 2016,
-        "excerpt": "",
-        "relevance": "supporting",
-        "edge_id": "portfolio_mix_to_rwa",
-        "paper_id": "",
-        "citation_count": 0,
-        "search_query": "KSPI portfolio mix KSPI risk-weighted assets causal effect",
-        "source": "core",
-        "pdf_url": "https://core.ac.uk/download/84002493.pdf"
-      },
-      {
-        "doi": "",
         "title": "Optimal Portfolio with Power Utility of Absolute and Relative Wealth",
         "authors": [
           "Andrey Sarantsev"
@@ -1420,83 +1369,30 @@
         "search_query": "KSPI portfolio mix KSPI risk-weighted assets causal effect",
         "source": "arxiv",
         "pdf_url": "https://arxiv.org/pdf/2105.08139v2"
+      },
+      {
+        "doi": "",
+        "title": "Sparsity and Stability for Minimum-Variance Portfolios",
+        "authors": [
+          "Sven Husmann",
+          "Antoniya Shivarova",
+          "Rick Steinert"
+        ],
+        "year": 2019,
+        "excerpt": "The popularity of modern portfolio theory has decreased among practitioners because of its unfavorable out-of-sample performance. Estimation errors tend to affect the optimal weight calculation noticeably, especially when a large number of assets is considered. To overcome these issues, many methods",
+        "relevance": "supporting",
+        "edge_id": "portfolio_mix_to_rwa",
+        "paper_id": "1910.11840v1",
+        "citation_count": 0,
+        "search_query": "KSPI portfolio mix KSPI risk-weighted assets causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/1910.11840v1"
       }
     ]
   },
   {
     "edge_id": "capital_to_k2",
     "citations": [
-      {
-        "doi": "",
-        "title": "Levels of pharmaceuticals and endocrine disruptors in commercially available seafood before and after cooking",
-        "authors": [
-          "Barcelo, D.",
-          "Caceres, N.",
-          "Fernandez-Tejedor, M.",
-          "Granby, Kit",
-          "M. Marques, A.",
-          "Maulvault, A.",
-          "Munoz, D. A.",
-          "Robbens, Johan",
-          "Rodr\u00edguez-Mozaz, S",
-          "Serra, A.",
-          "Sioen, Isabelle",
-          "Tediosi, A.",
-          "Verbeke, K.",
-          "Williamson, J."
-        ],
-        "year": 2016,
-        "excerpt": "",
-        "relevance": "supporting",
-        "edge_id": "capital_to_k2",
-        "paper_id": "",
-        "citation_count": 0,
-        "search_query": "KSPI total capital KSPI K2 capital ratio causal effect",
-        "source": "core",
-        "pdf_url": "https://core.ac.uk/download/84002501.pdf"
-      },
-      {
-        "doi": "",
-        "title": "Exposure to Chemicals in Consumer Products: The Role of the Near-Field Environment",
-        "authors": [
-          "Ernstoff, Alexi",
-          "Fantke, Peter",
-          "Huang, L.",
-          "Jolliet, O."
-        ],
-        "year": 2016,
-        "excerpt": "",
-        "relevance": "supporting",
-        "edge_id": "capital_to_k2",
-        "paper_id": "",
-        "citation_count": 0,
-        "search_query": "KSPI total capital KSPI K2 capital ratio causal effect",
-        "source": "core",
-        "pdf_url": "https://core.ac.uk/download/84002493.pdf"
-      },
-      {
-        "doi": "",
-        "title": "Algal toxicity of platinum nanoparticles - Implications of NP aggregation, dissolution and shading",
-        "authors": [
-          "Baun, Anders",
-          "Engelbrekt, Christian",
-          "Giron Delgado, Cristina",
-          "Jim\u00e9nez-Lamana, Javier",
-          "L\u00fctzh\u00f8ft, Hans-Christian Holten",
-          "Noori, Jafar Safaa",
-          "Slaveykova, V",
-          "S\u00f8rensen, Sara N\u00f8rgaard"
-        ],
-        "year": 2016,
-        "excerpt": "",
-        "relevance": "supporting",
-        "edge_id": "capital_to_k2",
-        "paper_id": "",
-        "citation_count": 0,
-        "search_query": "KSPI total capital KSPI K2 capital ratio causal effect",
-        "source": "core",
-        "pdf_url": "https://core.ac.uk/download/84002495.pdf"
-      },
       {
         "doi": "",
         "title": "The Theory of Crowd Capital",
@@ -1531,6 +1427,24 @@
         "search_query": "KSPI total capital KSPI K2 capital ratio causal effect",
         "source": "arxiv",
         "pdf_url": "https://arxiv.org/pdf/1511.02429v1"
+      },
+      {
+        "doi": "",
+        "title": "A Mathematical Model of Foreign Capital Inflow",
+        "authors": [
+          "Gopal K. Basak",
+          "Pranab Kumar Das",
+          "Allena Rohit"
+        ],
+        "year": 2016,
+        "excerpt": "The paper models foreign capital inflow from the developed to the developing countries in a stochastic dynamic programming (SDP) framework. Under some regularity conditions, the existence of the solutions to the SDP problem is proved and they are then obtained by numerical technique because of the n",
+        "relevance": "supporting",
+        "edge_id": "capital_to_k2",
+        "paper_id": "1603.02438v2",
+        "citation_count": 0,
+        "search_query": "KSPI total capital KSPI K2 capital ratio causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/1603.02438v2"
       }
     ]
   },
@@ -2239,22 +2153,6 @@
         "pdf_url": "http://hdl.handle.net/10852/36942"
       },
       {
-        "doi": "10.17170/kobra-202005181267",
-        "title": "the Indonesian Oil Palm Plantation and Automobile Sectors",
-        "authors": [
-          "Sinaga, Hariati"
-        ],
-        "year": 2020,
-        "excerpt": "Zugleich Dissertation, Universit\u00e4t Kassel, 2017. Die gedruckte Ausg. ist im Rainer Hampp Verlag, Augsburg, M\u00fcnchen (www.Hampp-Verlag.de) erschienen",
-        "relevance": "supporting",
-        "edge_id": "real_income_to_cor_kspi",
-        "paper_id": "",
-        "citation_count": 0,
-        "search_query": "Real monetary income KSPI cost of risk causal effect",
-        "source": "core",
-        "pdf_url": "https://core.ac.uk/download/638846868.pdf"
-      },
-      {
         "doi": "10.21314/JOP.2019.229",
         "title": "On the Selection of Loss Severity Distributions to Model Operational Risk",
         "authors": [
@@ -2274,32 +2172,37 @@
       },
       {
         "doi": "",
-        "title": "Levels of pharmaceuticals and endocrine disruptors in commercially available seafood before and after cooking",
+        "title": "Sequential Design and Spatial Modeling for Portfolio Tail Risk Measurement",
         "authors": [
-          "Barcelo, D.",
-          "Caceres, N.",
-          "Fernandez-Tejedor, M.",
-          "Granby, Kit",
-          "M. Marques, A.",
-          "Maulvault, A.",
-          "Munoz, D. A.",
-          "Robbens, Johan",
-          "Rodr\u00edguez-Mozaz, S",
-          "Serra, A.",
-          "Sioen, Isabelle",
-          "Tediosi, A.",
-          "Verbeke, K.",
-          "Williamson, J."
+          "Michael Ludkovski",
+          "James Risk"
         ],
-        "year": 2016,
-        "excerpt": "",
-        "relevance": "supporting",
+        "year": 2017,
+        "excerpt": "We consider calculation of capital requirements when the underlying economic scenarios are determined by simulatable risk factors. In the respective nested simulation framework, the goal is to estimate portfolio tail risk, quantified via VaR or TVaR of a given collection of future economic scenarios",
+        "relevance": "methodological",
         "edge_id": "real_income_to_cor_kspi",
-        "paper_id": "",
+        "paper_id": "1710.05204v2",
         "citation_count": 0,
         "search_query": "Real monetary income KSPI cost of risk causal effect",
-        "source": "core",
-        "pdf_url": "https://core.ac.uk/download/84002501.pdf"
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/1710.05204v2"
+      },
+      {
+        "doi": "",
+        "title": "Statistical Emulators for Pricing and Hedging Longevity Risk Products",
+        "authors": [
+          "James Risk",
+          "Michael Ludkovski"
+        ],
+        "year": 2015,
+        "excerpt": "We propose the use of statistical emulators for the purpose of valuing mortality-linked contracts in stochastic mortality models. Such models typically require (nested) evaluation of expected values of nonlinear functionals of multi-dimensional stochastic processes. Except in the simplest cases, no ",
+        "relevance": "methodological",
+        "edge_id": "real_income_to_cor_kspi",
+        "paper_id": "1508.00310v2",
+        "citation_count": 0,
+        "search_query": "Real monetary income KSPI cost of risk causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/1508.00310v2"
       }
     ]
   },
@@ -2326,70 +2229,6 @@
       },
       {
         "doi": "",
-        "title": "Welfare in transition: the political economy of social protection reform in Indonesia",
-        "authors": [
-          "van Diermen, Maryke"
-        ],
-        "year": 2018,
-        "excerpt": "There has been significant reform in social protection systems in developing countries in recent years. The extent, nature, and timing of such reform has varied significantly both between countries and within countries between sectors. Most scholars have explained these developments in terms of tech",
-        "relevance": "supporting",
-        "edge_id": "real_expenditure_to_ppop_kspi",
-        "paper_id": "",
-        "citation_count": 0,
-        "search_query": "Real consumption expenditure KSPI pre-provision operating profit causal effect",
-        "source": "core",
-        "pdf_url": "https://core.ac.uk/download/482254650.pdf"
-      },
-      {
-        "doi": "",
-        "title": "Levels of pharmaceuticals and endocrine disruptors in commercially available seafood before and after cooking",
-        "authors": [
-          "Barcelo, D.",
-          "Caceres, N.",
-          "Fernandez-Tejedor, M.",
-          "Granby, Kit",
-          "M. Marques, A.",
-          "Maulvault, A.",
-          "Munoz, D. A.",
-          "Robbens, Johan",
-          "Rodr\u00edguez-Mozaz, S",
-          "Serra, A.",
-          "Sioen, Isabelle",
-          "Tediosi, A.",
-          "Verbeke, K.",
-          "Williamson, J."
-        ],
-        "year": 2016,
-        "excerpt": "",
-        "relevance": "supporting",
-        "edge_id": "real_expenditure_to_ppop_kspi",
-        "paper_id": "",
-        "citation_count": 0,
-        "search_query": "Real consumption expenditure KSPI pre-provision operating profit causal effect",
-        "source": "core",
-        "pdf_url": "https://core.ac.uk/download/84002501.pdf"
-      },
-      {
-        "doi": "",
-        "title": "Exposure to Chemicals in Consumer Products: The Role of the Near-Field Environment",
-        "authors": [
-          "Ernstoff, Alexi",
-          "Fantke, Peter",
-          "Huang, L.",
-          "Jolliet, O."
-        ],
-        "year": 2016,
-        "excerpt": "",
-        "relevance": "supporting",
-        "edge_id": "real_expenditure_to_ppop_kspi",
-        "paper_id": "",
-        "citation_count": 0,
-        "search_query": "Real consumption expenditure KSPI pre-provision operating profit causal effect",
-        "source": "core",
-        "pdf_url": "https://core.ac.uk/download/84002493.pdf"
-      },
-      {
-        "doi": "",
         "title": "A statistical physics analysis of expenditure in the UK",
         "authors": [
           "Elvis Oltean",
@@ -2404,6 +2243,26 @@
         "search_query": "Real consumption expenditure KSPI pre-provision operating profit causal effect",
         "source": "arxiv",
         "pdf_url": "https://arxiv.org/pdf/1410.3865v2"
+      },
+      {
+        "doi": "",
+        "title": "Mid-Long Term Daily Electricity Consumption Forecasting Based on Piecewise Linear Regression and Dilated Causal CNN",
+        "authors": [
+          "Zhou Lan",
+          "Ben Liu",
+          "Yi Feng",
+          "Danhuang Dong",
+          "Peng Zhang"
+        ],
+        "year": 2023,
+        "excerpt": "Daily electricity consumption forecasting is a classical problem. Existing forecasting algorithms tend to have decreased accuracy on special dates like holidays. This study decomposes the daily electricity consumption series into three components: trend, seasonal, and residual, and constructs a two-",
+        "relevance": "supporting",
+        "edge_id": "real_expenditure_to_ppop_kspi",
+        "paper_id": "2310.15204v1",
+        "citation_count": 0,
+        "search_query": "Real consumption expenditure KSPI pre-provision operating profit causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/2310.15204v1"
       }
     ]
   },
@@ -2448,51 +2307,21 @@
       },
       {
         "doi": "",
-        "title": "Welfare in transition: the political economy of social protection reform in Indonesia",
+        "title": "Text as Causal Mediators: Research Design for Causal Estimates of Differential Treatment of Social Groups via Language Aspects",
         "authors": [
-          "van Diermen, Maryke"
+          "Katherine A. Keith",
+          "Douglas Rice",
+          "Brendan O'Connor"
         ],
-        "year": 2018,
-        "excerpt": "There has been significant reform in social protection systems in developing countries in recent years. The extent, nature, and timing of such reform has varied significantly both between countries and within countries between sectors. Most scholars have explained these developments in terms of tech",
+        "year": 2021,
+        "excerpt": "Using observed language to understand interpersonal interactions is important in high-stakes decision making. We propose a causal research design for observational (non-experimental) data to estimate the natural direct and indirect effects of social group signals (e.g. race or gender) on speakers' r",
         "relevance": "supporting",
         "edge_id": "ppop_to_capital",
-        "paper_id": "",
+        "paper_id": "2109.07542v1",
         "citation_count": 0,
         "search_query": "KSPI pre-provision operating profit KSPI total capital causal effect",
-        "source": "core",
-        "pdf_url": "https://core.ac.uk/download/482254650.pdf"
-      },
-      {
-        "doi": "",
-        "title": "Knowledge and HRM practice transfer in emerging economies: the case of Japanese joint ventures in Indonesia",
-        "authors": [
-          "Soehardjojo, J."
-        ],
-        "year": null,
-        "excerpt": "This thesis investigates the mechanisms used to transfer the management practices of multinational corporations (MNCs) to an emerging market economy (EME) context. Examining an MNC\u2019s ownership and control of its subsidiaries in a setting of institutional resistance, this research focuses on the obje",
-        "relevance": "supporting",
-        "edge_id": "ppop_to_capital",
-        "paper_id": "",
-        "citation_count": 0,
-        "search_query": "KSPI pre-provision operating profit KSPI total capital causal effect",
-        "source": "core",
-        "pdf_url": "https://core.ac.uk/download/237395927.pdf"
-      },
-      {
-        "doi": "",
-        "title": "Process-oriented explanation of institutional changes : comparative cases of national health and pension system reforms in Indonesia",
-        "authors": [
-          "YUDA, Tauchid Komara"
-        ],
-        "year": 2024,
-        "excerpt": "This dissertation compares the causal mechanisms by which healthcare and pension systems in Indonesia have been developed. Despite their shared historical trajectories, the health reform emerged successful, while the pension reform faltered. The study employs process tracing to dissect the specific ",
-        "relevance": "supporting",
-        "edge_id": "ppop_to_capital",
-        "paper_id": "",
-        "citation_count": 0,
-        "search_query": "KSPI pre-provision operating profit KSPI total capital causal effect",
-        "source": "core",
-        "pdf_url": "https://commons.ln.edu.hk/cgi/viewcontent.cgi?article=1238&context=otd"
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/2109.07542v1"
       }
     ]
   },
@@ -2721,69 +2550,21 @@
       },
       {
         "doi": "",
-        "title": "Levels of pharmaceuticals and endocrine disruptors in commercially available seafood before and after cooking",
+        "title": "Text as Causal Mediators: Research Design for Causal Estimates of Differential Treatment of Social Groups via Language Aspects",
         "authors": [
-          "Barcelo, D.",
-          "Caceres, N.",
-          "Fernandez-Tejedor, M.",
-          "Granby, Kit",
-          "M. Marques, A.",
-          "Maulvault, A.",
-          "Munoz, D. A.",
-          "Robbens, Johan",
-          "Rodr\u00edguez-Mozaz, S",
-          "Serra, A.",
-          "Sioen, Isabelle",
-          "Tediosi, A.",
-          "Verbeke, K.",
-          "Williamson, J."
+          "Katherine A. Keith",
+          "Douglas Rice",
+          "Brendan O'Connor"
         ],
-        "year": 2016,
-        "excerpt": "",
+        "year": 2021,
+        "excerpt": "Using observed language to understand interpersonal interactions is important in high-stakes decision making. We propose a causal research design for observational (non-experimental) data to estimate the natural direct and indirect effects of social group signals (e.g. race or gender) on speakers' r",
         "relevance": "supporting",
         "edge_id": "deposit_cost_to_ppop",
-        "paper_id": "",
+        "paper_id": "2109.07542v1",
         "citation_count": 0,
         "search_query": "KSPI deposit cost KSPI pre-provision operating profit causal effect",
-        "source": "core",
-        "pdf_url": "https://core.ac.uk/download/84002501.pdf"
-      },
-      {
-        "doi": "",
-        "title": "Exposure to Chemicals in Consumer Products: The Role of the Near-Field Environment",
-        "authors": [
-          "Ernstoff, Alexi",
-          "Fantke, Peter",
-          "Huang, L.",
-          "Jolliet, O."
-        ],
-        "year": 2016,
-        "excerpt": "",
-        "relevance": "supporting",
-        "edge_id": "deposit_cost_to_ppop",
-        "paper_id": "",
-        "citation_count": 0,
-        "search_query": "KSPI deposit cost KSPI pre-provision operating profit causal effect",
-        "source": "core",
-        "pdf_url": "https://core.ac.uk/download/84002493.pdf"
-      },
-      {
-        "doi": "",
-        "title": "The development of an operational LCIA-methodology with impact categories based on the control variables in the Planetary Boundaries framework",
-        "authors": [
-          "Hauschild, Michael Zwicky",
-          "Owsianiak, Mikolaj",
-          "Ryberg, Morten"
-        ],
-        "year": 2016,
-        "excerpt": "",
-        "relevance": "supporting",
-        "edge_id": "deposit_cost_to_ppop",
-        "paper_id": "",
-        "citation_count": 0,
-        "search_query": "KSPI deposit cost KSPI pre-provision operating profit causal effect",
-        "source": "core",
-        "pdf_url": "https://core.ac.uk/download/84003389.pdf"
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/2109.07542v1"
       }
     ]
   },

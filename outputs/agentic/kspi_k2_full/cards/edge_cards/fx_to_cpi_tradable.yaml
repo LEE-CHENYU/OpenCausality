@@ -1,6 +1,6 @@
 edge_id: fx_to_cpi_tradable
 dag_version_hash: 09cbbdd15d1e238525a93232938ee5d1c91a0d7fc98f8f8b4023356c450bd56a
-created_at: '2026-02-18T18:53:54.308517'
+created_at: '2026-02-18T20:11:19.441141'
 data_provenance:
   treatment_source: null
   outcome_source: null
@@ -29,6 +29,8 @@ estimates:
   - 0.058
   - 0.168
   pvalue: 0.0001
+  treatment_unit: log
+  outcome_unit: log
 diagnostics:
   validated_evidence:
     name: validated_evidence
@@ -194,7 +196,7 @@ literature:
     source: arxiv
     pdf_url: https://arxiv.org/pdf/2209.03013v1
   search_status: SEARCHED
-  search_timestamp: '2026-02-18T18:53:54.308570'
+  search_timestamp: '2026-02-18T20:11:19.441199'
   search_query: KZT/USD exchange rate Tradable CPI causal effect
   total_results: 5
 companion_edge_id: null
