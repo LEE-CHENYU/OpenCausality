@@ -293,23 +293,24 @@ build one from scratch.
 
 ### Comparison
 
-| Metric                         | Expert DAG | NL-Extracted | Critic-Refined (2 iters) |
+| Metric                         | Expert DAG | NL-Extracted | Critic-Refined (4 iters) |
 |--------------------------------|------------|--------------|--------------------------|
-| Nodes                          | 32         | 18           | 18                       |
+| Nodes                          | 32         | 18           | 20                       |
 | Edges                          | 23         | 22\*         | 22                       |
-| Edge types used                | 5          | 3            | 3                        |
+| Edge types used                | 5          | 3            | 4                        |
 | Identification coverage        | 91%        | 0%           | 100%                     |
 | Expected signs specified       | 100%       | 0%           | 100%                     |
 | Forbidden controls specified   | 100%       | 0%           | 100%                     |
-| Quality score                  | --         | 0.461        | 0.916                    |
+| Open propagation paths (FX→K2) | --         | 0/9          | 9/9                      |
+| Quality score (7-weight)       | --         | 0.349        | 0.668                    |
 
 \*22 = 12 NL-extracted + 10 auto-bridged identity/repair edges.
 
 The NL pipeline extracts causal claims from a single paragraph; recall improves
 with longer or multi-document input. All 3 overlapping edges produce identical
-estimates to the expert manual pipeline. The critic loop closes the metadata
-and identification gap without adding nodes or edges -- it enriches what the
-NL pipeline already extracted.
+estimates to the expert manual pipeline. The critic loop closes the metadata,
+identification, and propagation gap -- enriching what the NL pipeline extracted
+and unblocking all causal channels from exchange rate shocks to bank capital.
 
 ### What NL Found That Experts Missed
 
@@ -346,13 +347,20 @@ opencausality dag critic-feedback config/agentic/dags/kspi_k2_narrative.yaml \
     outputs/agentic/kspi_k2_narrative/
 ```
 
-The critic operates in three layers:
+The critic operates in four layers:
 
-1. **Layer 1 (code-verifiable):** Mathematical/structural rules that are always correct
+1. **Layer 0 (deterministic auto-fix):** Before any LLM call, a converging loop
+   applies all deterministic corrections: identity claim upgrades (definitional edges
+   forced to `IDENTIFIED_CAUSAL`) and unit chain mismatch repairs (definitional edges
+   adapt their treatment/outcome units to match neighbors). The loop runs until no
+   further auto-fixes are produced (max 5 inner iterations). These fixes never require
+   LLM reasoning or human judgment.
+
+2. **Layer 1 (code-verifiable):** Mathematical/structural rules that are always correct
    and domain-agnostic -- identity edges from formulas, no double-log transforms,
    acyclicity, unit compatibility, metadata completeness. Violations are auto-detected.
 
-2. **Layer 1.5 (causal logic probes):** Four chain-level diagnostics that catch issues
+3. **Layer 1.5 (causal logic probes):** Four chain-level diagnostics that catch issues
    per-edge checks miss. These are computed from edge card estimates and DAG structure,
    then surfaced as informational context to the LLM critic:
    - **Sign coherence:** Flags nodes where incoming edges have contradictory expected signs
@@ -364,35 +372,42 @@ The critic operates in three layers:
    - **Sign vs. estimate:** Compares the DAG-declared expected sign against the
      estimated coefficient sign. Flags contradictions.
 
-3. **Layer 2 (LLM + papers):** PaperScout literature + LLM reasoning proposes
+4. **Layer 2 (LLM + papers):** PaperScout literature + LLM reasoning proposes
    identification strategies, expected signs, forbidden controls, and edge type
    refinements. Each proposal carries a confidence score and is code-validated
    before application.
 
-Each iteration runs: AgentLoop estimation, structured feedback collection (including
-causal logic probes), LLM critique, code validation, revision application, structural
-repair, and quality scoring. Convergence is declared when the quality delta falls below
-0.02 for 2 consecutive iterations.
+**Propagation-aware feedback.** The critic computes a propagation health score each
+iteration: the fraction of open causal paths from exogenous shocks to the target node
+in `REDUCED_FORM` mode. Blocked paths are decomposed into specific guardrail failures
+(missing edge cards, insufficient claim levels, unit mismatches) and surfaced to the
+LLM as actionable repair targets. This closes the loop between structural quality and
+functional propagation: a DAG is not "healthy" until shocks can actually flow through it.
+
+Each iteration runs: deterministic auto-fixes, AgentLoop estimation, structured feedback
+collection (including causal logic probes and propagation health), LLM critique, code
+validation, revision application, structural repair, and quality scoring. Convergence is
+declared when the quality delta falls below 0.02 for 2 consecutive iterations.
 
 **End-to-end test results** on the Kazakhstan narrative DAG:
 
-| Metric | Pre-Critic | Post-Critic (2 iters) | Delta |
+| Metric | Pre-Critic | Post-Critic (4 iters) | Delta |
 |--------|------------|----------------------|-------|
-| Quality score | 0.461 | 0.916 | +0.455 |
+| Quality score (7-weight) | 0.349 | 0.668 | +0.319 |
 | Identification coverage | 0% | 100% | +100pp |
-| Metadata completeness | 4.5% | ~95% | +90pp |
-| Edge type diversity | 59.1% | improved | -- |
-| Unit completeness | 95.5% | 95.5% | 0 |
-| Formula correctness | 100% | 100% | 0 |
+| Unit completeness | 0% | 100% | +100pp |
+| Open paths (kzt_usd→k2) | 0/9 | 9/9 | +9 |
+| Open paths (vix→k2) | 0/2 | 2/2 | +2 |
+| Edge types used | 3 | 4 | +1 |
 
-34 revisions applied across 2 iterations (9 identification strategies,
-18 structural metadata additions, 2 edge type upgrades, 4 refinements, 1 unit
-specification), 0 rejected. The critic's confidence threshold (0.7) and code
-validation gate ensure only well-grounded revisions are applied.
+41 revisions applied across 4 iterations (identification strategies, structural
+metadata, edge type upgrades, unit specifications, edge cards, claim level updates),
+4 rejected. The critic's confidence threshold (0.7) and code validation gate ensure
+only well-grounded revisions are applied.
 
-Quality score components (weights): identification coverage (25%), metadata
-completeness (20%), edge type diversity (15%), structural soundness (15%),
-unit completeness (15%), formula correctness (10%).
+Quality score components (weights): identification coverage (20%), propagation
+health (20%), metadata completeness (15%), structural soundness (15%), edge type
+diversity (10%), unit completeness (10%), formula correctness (10%).
 
 ### Generated Panels
 

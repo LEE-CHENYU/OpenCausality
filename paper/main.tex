@@ -458,13 +458,13 @@ Sections~\ref{sec:llm}--\ref{sec:discovery} construct an initial DAG from text o
 
 \subsection{Architecture}
 
-The Critic operates in a loop: \texttt{collect\_feedback()} inspects the DAG for structural gaps, \texttt{critique()} sends the DAG and gap report to an LLM backend, and \texttt{apply\_revisions()} validates and applies proposed changes. Three backends are supported: Claude Code CLI (default, no API key required), Codex CLI, and direct API via \texttt{LLMClient}.
+The Critic operates in a two-phase loop. First, a \textbf{deterministic auto-fix pass} (\texttt{apply\_auto\_fixes()}) runs identity claim upgrades and unit chain mismatch repairs in a converging inner loop (max 5 iterations) until no further auto-fixes are produced. These corrections require no LLM reasoning: definitional edges (identity, mechanical, bridge, immutable) are forced to \texttt{IDENTIFIED\_CAUSAL}, and their unit specifications are adapted to match neighboring edges' units. Second, \texttt{collect\_feedback()} inspects the DAG for structural gaps and propagation health, \texttt{critique()} sends the DAG, gap report, and propagation diagnostics to an LLM backend, and \texttt{apply\_revisions()} validates and applies proposed changes. Three backends are supported: Claude Code CLI (default, no API key required), Codex CLI, and direct API via \texttt{LLMClient}.
 
-Each revision has one of 8 types from a closed set: \texttt{ADD\_MISSING\_NODE}, \texttt{ADD\_MISSING\_EDGE}, \texttt{REMOVE\_EDGE}, \texttt{CHANGE\_EDGE\_TYPE}, \texttt{CHANGE\_EDGE\_SIGN}, \texttt{UPDATE\_NODE\_METADATA}, \texttt{UPDATE\_EDGE\_METADATA}, and \texttt{ANNOTATE}. All revisions must pass \texttt{CriticRevisionValidator} before application, which enforces a confidence threshold (default 0.7) and structural consistency checks. Revisions below the confidence threshold are logged but not applied.
+Each revision has one of 10 types from a closed set: \texttt{UPGRADE\_EDGE\_TYPE}, \texttt{ADD\_IDENTIFICATION\_STRATEGY}, \texttt{FIX\_FORMULA}, \texttt{ADD\_MISSING\_NODE}, \texttt{ADD\_MISSING\_EDGE}, \texttt{ADD\_STRUCTURAL\_METADATA}, \texttt{ADD\_UNIT\_SPECIFICATION}, \texttt{INVERT\_EDGE\_DIRECTION}, \texttt{CREATE\_EDGE\_CARD}, and \texttt{UPDATE\_CLAIM\_LEVEL}. All revisions must pass \texttt{CriticRevisionValidator} before application, which enforces a confidence threshold (default 0.7) and structural consistency checks. Revisions below the confidence threshold are logged but not applied.
 
 \subsection{Quality Score}
 
-A 6-component weighted score tracks DAG quality across iterations:
+A 7-component weighted score tracks DAG quality across iterations:
 
 \begin{table}[t]
 \centering
@@ -475,11 +475,12 @@ A 6-component weighted score tracks DAG quality across iterations:
 \toprule
 \textbf{Component} & \textbf{Weight} & \textbf{Measurement} \\
 \midrule
-Literature grounding & 20\% & Fraction of edges with $\geq 1$ citation \\
-Completeness & 20\% & Fraction of edge card slots populated \\
 Identification coverage & 20\% & Fraction with claim $\geq$ \texttt{REDUCED\_FORM} \\
+Propagation health & 20\% & Fraction of open paths from exogenous shocks to target in \texttt{REDUCED\_FORM} mode \\
+Metadata completeness & 15\% & Fraction of edge card slots populated \\
 Structural soundness & 15\% & DAGValidator pass rate $\times$ gap penalty \\
-Unit completeness & 15\% & Fraction with treatment + outcome units \\
+Edge type diversity & 10\% & Entropy of edge type distribution \\
+Unit completeness & 10\% & Fraction with treatment + outcome units \\
 Formula correctness & 10\% & Fraction of identity edges with valid formulas \\
 \bottomrule
 \end{tabular}
@@ -520,6 +521,13 @@ Probe findings are \emph{informational only}: they do not alter the quality scor
 \subsection{Governance Tier}
 
 The Critic operates at a \emph{higher governance tier} than PatchBot (Section~\ref{sec:patchpolicy}). Specifically, the Critic can change edge types---an action explicitly forbidden for PatchBot. The Sentinel (Section~\ref{sec:sentinel}) never expands DAG structure; only the Critic proposes \texttt{ADD\_MISSING\_NODE} and \texttt{ADD\_MISSING\_EDGE} revisions. This separation ensures that automated schema repair (PatchBot) and structural expansion (Critic) remain distinct governance acts with different audit signatures.
+
+\subsection{Propagation-Aware Feedback}
+\label{sec:critic-propagation}
+
+A DAG with perfect metadata but no open causal paths is functionally useless. The Critic addresses this by computing \textbf{propagation health}---the fraction of directed paths from exogenous shock nodes to the target node that are open in \texttt{REDUCED\_FORM} mode---as part of each \texttt{collect\_feedback()} call. Blocked paths are decomposed into specific guardrail failures (missing edge cards, insufficient claim levels, unit mismatches, diagnostic-only roles) and surfaced to the LLM as actionable repair targets. Two dedicated revision types support this: \texttt{CREATE\_EDGE\_CARD} materializes placeholder cards for unestimated edges, and \texttt{UPDATE\_CLAIM\_LEVEL} upgrades edge claims when identification evidence supports it.
+
+On the Kazakhstan narrative DAG, propagation-aware iteration unblocked all 9 paths from exchange rate shocks (\texttt{kzt\_usd}) to bank capital adequacy (\texttt{k2\_ratio\_kspi}) and both paths from global risk (\texttt{vix\_shock}) to the same target, across 4 iterations with 41 applied revisions. Three distinct FX transmission channels emerged: tradable CPI, nontradable CPI, and an imported inflation shift-share IV---each flowing through real income/expenditure to bank profitability and capital.
 
 %% ============================================================
 %% 10  MCP QUERY SERVER
