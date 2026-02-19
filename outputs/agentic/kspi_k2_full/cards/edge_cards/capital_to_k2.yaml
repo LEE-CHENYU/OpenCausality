@@ -1,6 +1,6 @@
 edge_id: capital_to_k2
-dag_version_hash: a0d5c383631c52aa262f288704c6f7868d48b73d5034761245939de8eeea1d72
-created_at: '2026-02-16T16:23:45.580496'
+dag_version_hash: a26a41545ca6450142f55ab723c7eb60cac211ece2deb42ccbb70552bdd790a8
+created_at: '2026-02-18T17:53:57.838836'
 data_provenance:
   treatment_source: null
   outcome_source: null
@@ -29,10 +29,6 @@ estimates:
   - 0.0625
   - 0.0625
   pvalue: null
-  treatment_unit: 1 bn KZT capital increase
-  outcome_unit: pp K2 ratio change
-  n_calendar_periods: 1
-  n_effective_obs_h0: 1
 diagnostics:
   identity_check:
     name: identity_check
@@ -45,10 +41,9 @@ all_diagnostics_pass: true
 interpretation:
   estimand: 'Sensitivity: dK2/dCapital = 100 / RWA'
   is_not: Causal effect; this is a mechanical identity
-  channels:
-  - mechanical/accounting
+  channels: []
   population: ''
-  conditions: 'Evaluated at: {''capital'': 259.2, ''rwa'': 1600.0}'
+  conditions: ''
   allowed_uses: []
   forbidden_uses: []
 failure_flags:
@@ -77,11 +72,12 @@ identification:
     measurement_error: low
     selection: low
   untestable_assumptions: []
-  testable_threats_passed: []
+  testable_threats_passed:
+  - identity_check
   testable_threats_failed: []
-  strategy_type: accounting_identity
-  strategy_argument: K2 = Total Capital / RWA is a regulatory definition.
-  strategy_key_assumption: Regulatory definition is stable over the sample period.
+  strategy_type: ''
+  strategy_argument: ''
+  strategy_key_assumption: ''
 counterfactual_block:
   shock_scenario_allowed: true
   policy_intervention_allowed: false
@@ -106,13 +102,113 @@ propagation_role:
     REDUCED_FORM: false
     DESCRIPTIVE: false
 literature:
-  supporting: []
+  supporting:
+  - doi: ''
+    title: Levels of pharmaceuticals and endocrine disruptors in commercially available
+      seafood before and after cooking
+    authors:
+    - Barcelo, D.
+    - Caceres, N.
+    - Fernandez-Tejedor, M.
+    - Granby, Kit
+    - M. Marques, A.
+    - Maulvault, A.
+    - Munoz, D. A.
+    - Robbens, Johan
+    - Rodríguez-Mozaz, S
+    - Serra, A.
+    - Sioen, Isabelle
+    - Tediosi, A.
+    - Verbeke, K.
+    - Williamson, J.
+    year: 2016
+    excerpt: ''
+    relevance: supporting
+    edge_id: capital_to_k2
+    paper_id: ''
+    citation_count: 0
+    search_query: KSPI total capital KSPI K2 capital ratio causal effect
+    source: core
+    pdf_url: https://core.ac.uk/download/84002501.pdf
+  - doi: ''
+    title: 'Exposure to Chemicals in Consumer Products: The Role of the Near-Field
+      Environment'
+    authors:
+    - Ernstoff, Alexi
+    - Fantke, Peter
+    - Huang, L.
+    - Jolliet, O.
+    year: 2016
+    excerpt: ''
+    relevance: supporting
+    edge_id: capital_to_k2
+    paper_id: ''
+    citation_count: 0
+    search_query: KSPI total capital KSPI K2 capital ratio causal effect
+    source: core
+    pdf_url: https://core.ac.uk/download/84002493.pdf
+  - doi: ''
+    title: Algal toxicity of platinum nanoparticles - Implications of NP aggregation,
+      dissolution and shading
+    authors:
+    - Baun, Anders
+    - Engelbrekt, Christian
+    - Giron Delgado, Cristina
+    - Jiménez-Lamana, Javier
+    - Lützhøft, Hans-Christian Holten
+    - Noori, Jafar Safaa
+    - Slaveykova, V
+    - Sørensen, Sara Nørgaard
+    year: 2016
+    excerpt: ''
+    relevance: supporting
+    edge_id: capital_to_k2
+    paper_id: ''
+    citation_count: 0
+    search_query: KSPI total capital KSPI K2 capital ratio causal effect
+    source: core
+    pdf_url: https://core.ac.uk/download/84002495.pdf
+  - doi: ''
+    title: The Theory of Crowd Capital
+    authors:
+    - John Prpic
+    - Prashant Shukla
+    year: 2012
+    excerpt: We are seeing more and more organizations undertaking activities to engage
+      dispersed populations through IS. Using the knowledge-based view of the organization,
+      this work conceptualizes a theory of Crowd Capital to explain this phenomenon.
+      Crowd Capital is a heterogeneous knowledge resource generate
+    relevance: supporting
+    edge_id: capital_to_k2
+    paper_id: 1210.2013v1
+    citation_count: 0
+    search_query: KSPI total capital KSPI K2 capital ratio causal effect
+    source: arxiv
+    pdf_url: https://arxiv.org/pdf/1210.2013v1
+  - doi: ''
+    title: A Micro-foundation of Social Capital in Evolving Social Networks
+    authors:
+    - Ahmed M. Alaa
+    - Kartik Ahuja
+    - Mihaela van der Schaar
+    year: 2015
+    excerpt: A social network confers benefits and advantages on individuals (and
+      on groups), the literature refers to these advantages as social capital. This
+      paper presents a micro-founded mathematical model of the evolution of a social
+      network and of the social capital of individuals within the network. The e
+    relevance: supporting
+    edge_id: capital_to_k2
+    paper_id: 1511.02429v1
+    citation_count: 0
+    search_query: KSPI total capital KSPI K2 capital ratio causal effect
+    source: arxiv
+    pdf_url: https://arxiv.org/pdf/1511.02429v1
   challenging: []
   methodological: []
-  search_status: PENDING
-  search_timestamp: null
-  search_query: ''
-  total_results: 0
+  search_status: SEARCHED
+  search_timestamp: '2026-02-18T17:53:57.838885'
+  search_query: KSPI total capital KSPI K2 capital ratio causal effect
+  total_results: 5
 companion_edge_id: null
 variant_of: null
 is_precisely_null: false

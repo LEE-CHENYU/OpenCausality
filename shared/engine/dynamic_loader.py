@@ -149,6 +149,13 @@ _TRANSFORM_FNS: dict[str, Callable[[pd.Series], pd.Series]] = {
     "aggregate_mean_to_month": _transform_aggregate_mean_to_month,
 }
 
+# Stationarity transforms handled at the edge level by assemble_edge_data()
+# via unit_specification.  DynamicLoader must NOT apply these at the node level,
+# otherwise assemble_edge_data() double-applies them (e.g. log(log(x)).diff()).
+# Node-level transforms that remain: aggregation (frequency alignment), innovation
+# (pre-whitening for shock variables).
+_EDGE_LEVEL_TRANSFORMS: set[str] = {"log", "diff", "log_return"}
+
 
 # ---------------------------------------------------------------------------
 # File-loading helpers
@@ -430,7 +437,10 @@ class DynamicLoaderFactory:
             all_sources.extend(node.source.fallback)
 
         node_id = node.id
-        transforms = list(node.transforms)
+        # Filter out edge-level stationarity transforms (log, diff, log_return).
+        # These are applied by assemble_edge_data() at the edge level via
+        # unit_specification.  Applying them here would cause double-transformation.
+        transforms = [t for t in node.transforms if t not in _EDGE_LEVEL_TRANSFORMS]
 
         # Check at least one source has a known connector strategy
         has_any_strategy = any(
@@ -503,10 +513,14 @@ class DynamicLoaderFactory:
         transforms: list[str],
     ) -> Callable[[], pd.Series]:
         """Build a loader that delegates to _load_kspi_quarterly()."""
+        # Edge-level transforms already filtered in try_build_loader();
+        # this is defense-in-depth.
+        safe_transforms = [t for t in transforms if t not in _EDGE_LEVEL_TRANSFORMS]
+
         def _loader(
             _series=series,
             _node_id=node_id,
-            _transforms=transforms,
+            _transforms=safe_transforms,
         ) -> pd.Series:
             from shared.engine.data_assembler import _load_kspi_quarterly
             df = _load_kspi_quarterly()

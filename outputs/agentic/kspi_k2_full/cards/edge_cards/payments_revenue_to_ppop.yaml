@@ -1,49 +1,51 @@
-edge_id: portfolio_mix_to_rwa
+edge_id: payments_revenue_to_ppop
 dag_version_hash: a26a41545ca6450142f55ab723c7eb60cac211ece2deb42ccbb70552bdd790a8
-created_at: '2026-02-18T17:53:56.782829'
+created_at: '2026-02-18T17:53:57.447509'
 data_provenance:
   treatment_source:
     connector: parquet_file
-    dataset: portfolio_mix_kspi
+    dataset: payments_revenue_kspi
     series: null
     retrieval_time: null
     file_path: null
     file_checksum: null
-    row_count: 17
+    row_count: 16
     column_count: null
     date_range:
-    - '2020-07-01'
+    - '2020-10-01'
     - '2024-07-01'
     cache_key: null
   outcome_source:
     connector: parquet_file
-    dataset: rwa_kspi
+    dataset: ppop_kspi
     series: null
     retrieval_time: null
     file_path: null
     file_checksum: null
-    row_count: 17
+    row_count: 16
     column_count: null
     date_range:
-    - '2020-07-01'
+    - '2020-10-01'
     - '2024-07-01'
     cache_key: null
   control_sources: {}
   instrument_sources: {}
-  combined_row_count: 17
+  combined_row_count: 16
   combined_date_range:
-  - '2020-07-01'
+  - '2020-10-01'
   - '2024-07-01'
   missing_rate: null
   panel_dimensions: null
   entity_boundary_note: null
   kpi_definitions: null
-spec_hash: 2d952de6a9f225a46b956987d0a55069a9bb3d2c55a9600c2c18f16a7473ef2b
+spec_hash: b327b4b58bb76c861cb9ea83d801f78185de731f39d0cf1487f8bfe48ffdf5b0
 spec_details:
   design: LOCAL_PROJECTIONS
   controls:
   - y_lag1
+  - y_lag2
   - x_lag1
+  - x_lag2
   instruments: []
   fixed_effects: []
   se_method: HAC_newey_west
@@ -52,27 +54,43 @@ spec_details:
   - 0
   - 1
   - 2
+  - 3
+  - 4
+  - 5
+  - 6
   bandwidth: null
 estimates:
-  point: 10.276315300126472
-  se: 3.2943049296659996
+  point: 1.2141138858790972
+  se: 0.2530130693624162
   ci_95:
-  - 3.8194776379811124
-  - 16.73315296227183
-  pvalue: 0.0018120846584064887
+  - 0.7182082699287615
+  - 1.7100195018294329
+  pvalue: 1.597615974506649e-06
   horizons: *id001
   irf:
-  - 10.276315300126472
-  - -5.36326674599256
-  - -4.972120390662227
+  - 1.2141138858790972
+  - -0.6970263753771595
+  - 0.12387413042986029
+  - -0.6583845276190132
+  - 0.6226044304271835
+  - -0.26558446118043155
+  - 0.19817278083649675
   irf_ci_lower:
-  - 3.819596283888356
-  - -10.57062628784654
-  - -12.761140351055172
+  - 0.7182173823108269
+  - -1.5613506016408203
+  - -0.16154366641950718
+  - -1.2722413017576877
+  - 0.49747539354878273
+  - -0.5090058735251215
+  - 0.15606412912984058
   irf_ci_upper:
-  - 16.733034316364588
-  - -0.15590720413857895
-  - 2.816899569730716
+  - 1.7100103894473675
+  - 0.1672978508865014
+  - 0.40929192727922775
+  - -0.04452775348033877
+  - 0.7477334673055842
+  - -0.02216304883574166
+  - 0.24028143254315293
 diagnostics:
   hac_bandwidth:
     name: hac_bandwidth
@@ -84,7 +102,7 @@ diagnostics:
   effective_obs:
     name: effective_obs
     passed: false
-    value: 16.0
+    value: 14.0
     threshold: 20.0
     pvalue: null
     message: ''
@@ -139,7 +157,7 @@ diagnostics:
     message: 'TSGuard: pass'
 all_diagnostics_pass: false
 interpretation:
-  estimand: IRF of rwa_kspi to a unit shock in portfolio_mix_kspi
+  estimand: IRF of ppop_kspi to a unit shock in payments_revenue_kspi
   is_not: Structural causal effect under all interventions
   channels:
   - direct
@@ -164,7 +182,7 @@ counterfactual:
   intervention_note: Reduced-form LP estimate
   external_validity: ''
 credibility_rating: B
-credibility_score: 0.79
+credibility_score: 0.6935555555555556
 identification:
   claim_level: REDUCED_FORM
   risks:
@@ -197,11 +215,11 @@ counterfactual_block:
   allowed: false
   reason_blocked: Design LOCAL_PROJECTIONS provides REDUCED_FORM level only
 propagation_role:
-  role: reduced_form
+  role: bridge
   overlapping_paths: []
   selected_for_counterfactual: true
   mode_propagation_allowed:
-    STRUCTURAL: false
+    STRUCTURAL: true
     REDUCED_FORM: true
     DESCRIPTIVE: true
   mode_shock_cf_allowed:
@@ -214,42 +232,62 @@ propagation_role:
     DESCRIPTIVE: false
 literature:
   supporting:
-  - doi: 10.1016/j.jempfin.2015.03.003
-    title: 'Portfolio optimization for heavy-tailed assets: Extreme Risk Index vs.
-      Markowitz'
+  - doi: 10.1515/jci-2021-0042
+    title: A Unifying Causal Framework for Analyzing Dataset Shift-stable Learning
+      Algorithms
     authors:
-    - Georg Mainik
-    - Georgi Mitov
-    - Ludger Rüschendorf
-    year: 2015
-    excerpt: Using daily returns of the S&P 500 stocks from 2001 to 2011, we perform
-      a backtesting study of the portfolio optimization strategy based on the extreme
-      risk index (ERI). This method uses multivariate extreme value theory to minimize
-      the probability of large portfolio losses. With more than 400 stock
+    - Adarsh Subbaswamy
+    - Bryant Chen
+    - Suchi Saria
+    year: 2019
+    excerpt: Recent interest in the external validity of prediction models (i.e.,
+      the problem of different train and test distributions, known as dataset shift)
+      has produced many methods for finding predictive distributions that are invariant
+      to dataset shifts and can be used for prediction in new, unseen enviro
     relevance: supporting
-    edge_id: portfolio_mix_to_rwa
-    paper_id: 1505.04045v1
+    edge_id: payments_revenue_to_ppop
+    paper_id: 1905.11374v5
     citation_count: 0
-    search_query: KSPI portfolio mix KSPI risk-weighted assets causal effect
+    search_query: KSPI Payments revenue KSPI pre-provision operating profit causal
+      effect
     source: arxiv
-    pdf_url: https://arxiv.org/pdf/1505.04045v1
+    pdf_url: https://arxiv.org/pdf/1905.11374v5
   - doi: ''
-    title: 'Macroeconomic Impacts of Immigration in Malaysia: Trade, Remittances and
-      Unemployment'
+    title: 'Welfare in transition: the political economy of social protection reform
+      in Indonesia'
     authors:
-    - MARWAN, NUR,FAKHZAN
-    year: 2011
-    excerpt: The macroeconomic consequence of immigration is a disputable area among
-      many interested parties as evidenced by the empirical studies. Most studies,
-      however, employ Anglo-Saxon countries as their subjects, while there is an increasing
-      demand for studies on the economic consequences of immigration in
+    - van Diermen, Maryke
+    year: 2018
+    excerpt: There has been significant reform in social protection systems in developing
+      countries in recent years. The extent, nature, and timing of such reform has
+      varied significantly both between countries and within countries between sectors.
+      Most scholars have explained these developments in terms of tech
     relevance: supporting
-    edge_id: portfolio_mix_to_rwa
+    edge_id: payments_revenue_to_ppop
     paper_id: ''
     citation_count: 0
-    search_query: KSPI portfolio mix KSPI risk-weighted assets causal effect
+    search_query: KSPI Payments revenue KSPI pre-provision operating profit causal
+      effect
     source: core
-    pdf_url: https://core.ac.uk/download/108589.pdf
+    pdf_url: https://core.ac.uk/download/482254650.pdf
+  - doi: ''
+    title: 'Process-oriented explanation of institutional changes : comparative cases
+      of national health and pension system reforms in Indonesia'
+    authors:
+    - YUDA, Tauchid Komara
+    year: 2024
+    excerpt: 'This dissertation compares the causal mechanisms by which healthcare
+      and pension systems in Indonesia have been developed. Despite their shared historical
+      trajectories, the health reform emerged successful, while the pension reform
+      faltered. The study employs process tracing to dissect the specific '
+    relevance: supporting
+    edge_id: payments_revenue_to_ppop
+    paper_id: ''
+    citation_count: 0
+    search_query: KSPI Payments revenue KSPI pre-provision operating profit causal
+      effect
+    source: core
+    pdf_url: https://commons.ln.edu.hk/cgi/viewcontent.cgi?article=1238&context=otd
   - doi: ''
     title: Levels of pharmaceuticals and endocrine disruptors in commercially available
       seafood before and after cooking
@@ -271,50 +309,38 @@ literature:
     year: 2016
     excerpt: ''
     relevance: supporting
-    edge_id: portfolio_mix_to_rwa
+    edge_id: payments_revenue_to_ppop
     paper_id: ''
     citation_count: 0
-    search_query: KSPI portfolio mix KSPI risk-weighted assets causal effect
+    search_query: KSPI Payments revenue KSPI pre-provision operating profit causal
+      effect
     source: core
     pdf_url: https://core.ac.uk/download/84002501.pdf
-  - doi: ''
-    title: 'Exposure to Chemicals in Consumer Products: The Role of the Near-Field
-      Environment'
-    authors:
-    - Ernstoff, Alexi
-    - Fantke, Peter
-    - Huang, L.
-    - Jolliet, O.
-    year: 2016
-    excerpt: ''
-    relevance: supporting
-    edge_id: portfolio_mix_to_rwa
-    paper_id: ''
-    citation_count: 0
-    search_query: KSPI portfolio mix KSPI risk-weighted assets causal effect
-    source: core
-    pdf_url: https://core.ac.uk/download/84002493.pdf
-  - doi: ''
-    title: Optimal Portfolio with Power Utility of Absolute and Relative Wealth
-    authors:
-    - Andrey Sarantsev
-    year: 2021
-    excerpt: Portfolio managers often evaluate performance relative to benchmark,
-      usually taken to be the Standard & Poor 500 stock index fund. This relative
-      portfolio wealth is defined as the absolute portfolio wealth divided by wealth
-      from investing in the benchmark (including reinvested dividends). The classi
-    relevance: supporting
-    edge_id: portfolio_mix_to_rwa
-    paper_id: 2105.08139v2
-    citation_count: 0
-    search_query: KSPI portfolio mix KSPI risk-weighted assets causal effect
-    source: arxiv
-    pdf_url: https://arxiv.org/pdf/2105.08139v2
   challenging: []
-  methodological: []
+  methodological:
+  - doi: 10.1515/jci-2022-0060
+    title: 'Quantitative probing: Validating causal models using quantitative domain
+      knowledge'
+    authors:
+    - Daniel Grünbaum
+    - Maike L. Stern
+    - Elmar W. Lang
+    year: 2022
+    excerpt: We present quantitative probing as a model-agnostic framework for validating
+      causal models in the presence of quantitative domain knowledge. The method is
+      constructed as an analogue of the train/test split in correlation-based machine
+      learning and as an enhancement of current causal validation strat
+    relevance: methodological
+    edge_id: payments_revenue_to_ppop
+    paper_id: 2209.03013v1
+    citation_count: 0
+    search_query: KSPI Payments revenue KSPI pre-provision operating profit causal
+      effect
+    source: arxiv
+    pdf_url: https://arxiv.org/pdf/2209.03013v1
   search_status: SEARCHED
-  search_timestamp: '2026-02-18T17:53:56.782977'
-  search_query: KSPI portfolio mix KSPI risk-weighted assets causal effect
+  search_timestamp: '2026-02-18T17:53:57.447567'
+  search_query: KSPI Payments revenue KSPI pre-provision operating profit causal effect
   total_results: 5
 companion_edge_id: null
 variant_of: null

@@ -1,6 +1,6 @@
 edge_id: cpi_to_nominal_income
-dag_version_hash: a0d5c383631c52aa262f288704c6f7868d48b73d5034761245939de8eeea1d72
-created_at: '2026-02-16T16:23:41.930401'
+dag_version_hash: a26a41545ca6450142f55ab723c7eb60cac211ece2deb42ccbb70552bdd790a8
+created_at: '2026-02-18T17:53:57.458071'
 data_provenance:
   treatment_source: null
   outcome_source: null
@@ -29,9 +29,6 @@ estimates:
   - 0.3
   - 1.0
   pvalue: 0.0003
-  treatment_unit: 1pp CPI inflation
-  outcome_unit: pp nominal income growth
-  n_effective_obs_h0: 80
 diagnostics:
   validated_evidence:
     name: validated_evidence
@@ -40,22 +37,14 @@ diagnostics:
     threshold: null
     pvalue: null
     message: Validated from Block B LP-IV
-  effective_obs:
-    name: effective_obs
-    passed: true
-    value: 80.0
-    threshold: 20.0
-    pvalue: null
-    message: ''
 all_diagnostics_pass: true
 interpretation:
   estimand: Effect of CPI inflation on nominal income growth from LP-IV using imported
     inflation as instrument. Partial pass-through.
-  is_not: Re-estimated result; this is locked validated evidence
-  channels:
-  - as identified in source block
+  is_not: Re-estimated result; locked validated evidence
+  channels: []
   population: ''
-  conditions: 'Source: Block B LP-IV'
+  conditions: ''
   allowed_uses: []
   forbidden_uses: []
 failure_flags:
@@ -84,13 +73,12 @@ identification:
     measurement_error: low
     selection: low
   untestable_assumptions: []
-  testable_threats_passed: []
+  testable_threats_passed:
+  - validated_evidence
   testable_threats_failed: []
-  strategy_type: validated_prior
-  strategy_argument: Block B LP-IV using imported inflation instrument (FX x pre-period
-    import share).
-  strategy_key_assumption: 'Exclusion restriction: imported inflation IV affects income
-    only through prices.'
+  strategy_type: ''
+  strategy_argument: ''
+  strategy_key_assumption: ''
 counterfactual_block:
   shock_scenario_allowed: true
   policy_intervention_allowed: false
@@ -115,13 +103,87 @@ propagation_role:
     REDUCED_FORM: false
     DESCRIPTIVE: false
 literature:
-  supporting: []
+  supporting:
+  - doi: 10.3386/w23687
+    title: The Rise of Market Power and the Macroeconomic Implications
+    authors:
+    - Jan De Loecker
+    - Jan Eeckhout
+    year: 2017
+    excerpt: wages; market power; mark-ups; technology; market dynamism; market structure
+    relevance: supporting
+    edge_id: cpi_to_nominal_income
+    paper_id: ''
+    citation_count: 783
+    search_query: Headline CPI Nominal monetary income causal effect
+    source: openalex
+    pdf_url: https://doi.org/10.3386/w23687
+  - doi: 10.3386/w15836
+    title: 'The Natural Resource Curse: A Survey'
+    authors:
+    - Jeffrey A. Frankel
+    year: 2010
+    excerpt: It is striking how often countries with oil or other natural resource
+      wealth have failed to grow more rapidly than those without. This is the phenomenon
+      known as the Natural Resource Curse. The principle is not confined to individual
+      anecdotes or case studies, but has been borne out in econometric t
+    relevance: supporting
+    edge_id: cpi_to_nominal_income
+    paper_id: ''
+    citation_count: 582
+    search_query: Headline CPI Nominal monetary income causal effect
+    source: openalex
+    pdf_url: https://doi.org/10.3386/w15836
+  - doi: 10.2139/ssrn.3520654
+    title: Eight Centuries of Global Real Interest Rates, R-G, and the ‘Suprasecular’
+      Decline, 1311–2018
+    authors:
+    - Paul Schmelzing
+    year: 2020
+    excerpt: ''
+    relevance: supporting
+    edge_id: cpi_to_nominal_income
+    paper_id: ''
+    citation_count: 114
+    search_query: Headline CPI Nominal monetary income causal effect
+    source: openalex
+    pdf_url: https://papers.ssrn.com/sol3/Delivery.cfm?abstractid=3520654
+  - doi: 10.1017/S1365100516001097
+    title: OIL PRICE SHOCKS, INFLATION, AND CHINESE MONETARY POLICY
+    authors:
+    - Yunqing Wang
+    - Qigui Zhu
+    - Jun Wu
+    year: 2017
+    excerpt: ''
+    relevance: supporting
+    edge_id: cpi_to_nominal_income
+    paper_id: ff476e581ee27f7e02a692c075aeae16860e81c1
+    citation_count: 19
+    search_query: Headline CPI Nominal monetary income causal effect
+    source: semantic_scholar
+    pdf_url: ''
+  - doi: 10.32468/inf-pol-mont-eng.tr1-2023
+    title: Monetary Policy Report - January 2023
+    authors: []
+    year: 2023
+    excerpt: 1. Macroeconomic Summary In December, headline inflation (13.1%) and
+      the average of the core inflation measures (10.3%) continued to trend upward,
+      posting higher rates than those estimated by the Central Bank's technical staff
+      and surpassing the market average. Inflation expectations for all terms e
+    relevance: supporting
+    edge_id: cpi_to_nominal_income
+    paper_id: 4a38e5f258dbb6ad7a390c3b3d59e7bc104a6fa5
+    citation_count: 1
+    search_query: Headline CPI Nominal monetary income causal effect
+    source: semantic_scholar
+    pdf_url: ''
   challenging: []
   methodological: []
-  search_status: PENDING
-  search_timestamp: null
-  search_query: ''
-  total_results: 0
+  search_status: SEARCHED
+  search_timestamp: '2026-02-18T17:53:57.458108'
+  search_query: Headline CPI Nominal monetary income causal effect
+  total_results: 5
 companion_edge_id: null
 variant_of: null
 is_precisely_null: false

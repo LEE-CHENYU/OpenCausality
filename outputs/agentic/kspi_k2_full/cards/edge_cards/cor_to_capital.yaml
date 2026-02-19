@@ -1,6 +1,6 @@
 edge_id: cor_to_capital
-dag_version_hash: a0d5c383631c52aa262f288704c6f7868d48b73d5034761245939de8eeea1d72
-created_at: '2026-02-16T16:23:45.564779'
+dag_version_hash: a26a41545ca6450142f55ab723c7eb60cac211ece2deb42ccbb70552bdd790a8
+created_at: '2026-02-18T17:53:57.785265'
 data_provenance:
   treatment_source: null
   outcome_source: null
@@ -29,10 +29,6 @@ estimates:
   - -22.4
   - -22.4
   pvalue: null
-  treatment_unit: 1pp CoR increase
-  outcome_unit: bn KZT capital decline (provisions)
-  n_calendar_periods: 1
-  n_effective_obs_h0: 1
 diagnostics:
   identity_consistency:
     name: identity_consistency
@@ -40,18 +36,15 @@ diagnostics:
     value: -22.4
     threshold: null
     pvalue: null
-    message: 'Accounting bridge: d(capital)/d(CoR) = -avg_loans * (1 - tax_rate) /
-      100'
+    message: 'Deterministic: d(capital)/d(CoR) = -avg_loans * (1 - tax_rate) / 100'
 all_diagnostics_pass: true
 interpretation:
-  estimand: 'Accounting sensitivity: d(capital)/d(CoR) = -avg_loans * (1 - tax_rate)
-    / 100'
-  is_not: Causal effect; this is a near-mechanical accounting relationship
-  channels:
-  - accounting/mechanical
+  estimand: A 1pp increase in CoR reduces capital by ~22.4 bn KZT (pre-tax provision
+    impact on capital).
+  is_not: Causal effect; this is an accounting identity
+  channels: []
   population: ''
-  conditions: 'Evaluated at: {''loans'': 2800.0, ''capital'': 259.2, ''tax_rate'':
-    0.2, ''cor'': 3.2}'
+  conditions: ''
   allowed_uses: []
   forbidden_uses: []
 failure_flags:
@@ -67,8 +60,7 @@ failure_flags:
 counterfactual:
   supports_shock_path: true
   supports_policy_intervention: true
-  intervention_note: Accounting bridge; holds by construction under current risk weights
-    / tax regime
+  intervention_note: Accounting bridge; deterministic at current values
   external_validity: ''
 credibility_rating: A
 credibility_score: 0.9299999999999999
@@ -81,12 +73,12 @@ identification:
     measurement_error: low
     selection: low
   untestable_assumptions: []
-  testable_threats_passed: []
+  testable_threats_passed:
+  - identity_consistency
   testable_threats_failed: []
-  strategy_type: accounting_identity
-  strategy_argument: Provisions directly reduce retained earnings and thus regulatory
-    capital.
-  strategy_key_assumption: IFRS accounting rules mechanically link provisions to capital.
+  strategy_type: ''
+  strategy_argument: ''
+  strategy_key_assumption: ''
 counterfactual_block:
   shock_scenario_allowed: true
   policy_intervention_allowed: false
@@ -111,13 +103,98 @@ propagation_role:
     REDUCED_FORM: false
     DESCRIPTIVE: false
 literature:
-  supporting: []
+  supporting:
+  - doi: 10.3390/su15086420
+    title: A New Hybrid Decision-Making Model for Promoting Sustainable Social Rental
+      Housing
+    authors:
+    - Wei Jiang
+    - Wentao Lu Qiu
+    - Sheng-Hau Lin
+    - Huiming Lv
+    - Xiaofeng Zhao
+    - Cong Hao
+    year: 2023
+    excerpt: The realization of sustainable social rental housing is regarded as an
+      important policy to solve the housing burden, but social rental housing is often
+      unsustainable. This study assesses the sustainability of social rental housing.
+      However, the decision-making models, such as the classical decision-
+    relevance: supporting
+    edge_id: cor_to_capital
+    paper_id: ''
+    citation_count: 12
+    search_query: KSPI cost of risk KSPI total capital causal effect
+    source: openalex
+    pdf_url: https://www.mdpi.com/2071-1050/15/8/6420/pdf?version=1681111230
+  - doi: 10.25501/soas.00029228
+    title: 'Emerging stock markets in the Pacific Basin : An empirical analysis with
+      particular reference to the Korean stock market.'
+    authors:
+    - Hyun-Jung Ryoo
+    year: 2001
+    excerpt: 'This thesis investigates emerging stock markets in the Pacific Basin
+      with particular reference to the Korean stock market, which is representative
+      of typical, fast-growing emerging markets. Using a broader range of econometric
+      models, the short-run and long-run behaviour of stock prices, the impact '
+    relevance: supporting
+    edge_id: cor_to_capital
+    paper_id: ''
+    citation_count: 1
+    search_query: KSPI cost of risk KSPI total capital causal effect
+    source: openalex
+    pdf_url: https://eprints.soas.ac.uk/29228/1/10731323.pdf
+  - doi: ''
+    title: 'Foundations of a Welfare Regime: The Case of Indonesia'
+    authors:
+    - Ramadani Torheim
+    year: 2013
+    excerpt: Indonesia is at a crossroads in building its welfare regime. The study
+      seeks to analyse the salient characteristics and enabling factors that influence
+      Indonesia’s current social policies in light of welfare state theories. The
+      adoption of the Social Security Providers Law in late 2011 underlined th
+    relevance: supporting
+    edge_id: cor_to_capital
+    paper_id: ''
+    citation_count: 1
+    search_query: KSPI cost of risk KSPI total capital causal effect
+    source: openalex
+    pdf_url: http://hdl.handle.net/10852/36942
+  - doi: 10.17170/kobra-202005181267
+    title: the Indonesian Oil Palm Plantation and Automobile Sectors
+    authors:
+    - Sinaga, Hariati
+    year: 2020
+    excerpt: Zugleich Dissertation, Universität Kassel, 2017. Die gedruckte Ausg.
+      ist im Rainer Hampp Verlag, Augsburg, München (www.Hampp-Verlag.de) erschienen
+    relevance: supporting
+    edge_id: cor_to_capital
+    paper_id: ''
+    citation_count: 0
+    search_query: KSPI cost of risk KSPI total capital causal effect
+    source: core
+    pdf_url: https://core.ac.uk/download/638846868.pdf
+  - doi: 10.17635/lancaster/thesis/1413
+    title: Essays on International Economics
+    authors:
+    - Yang, Huan
+    year: 2021
+    excerpt: This thesis has three essays corresponding to the three research projects
+      I undertook in the area of foreign direct investment, international and labor
+      economics. In the first essay, I quantify the welfare and employment effect
+      of international trade both at the aggregate and sector level. I build i
+    relevance: supporting
+    edge_id: cor_to_capital
+    paper_id: ''
+    citation_count: 0
+    search_query: KSPI cost of risk KSPI total capital causal effect
+    source: core
+    pdf_url: https://core.ac.uk/download/477680585.pdf
   challenging: []
   methodological: []
-  search_status: PENDING
-  search_timestamp: null
-  search_query: ''
-  total_results: 0
+  search_status: SEARCHED
+  search_timestamp: '2026-02-18T17:53:57.785345'
+  search_query: KSPI cost of risk KSPI total capital causal effect
+  total_results: 5
 companion_edge_id: null
 variant_of: null
 is_precisely_null: false

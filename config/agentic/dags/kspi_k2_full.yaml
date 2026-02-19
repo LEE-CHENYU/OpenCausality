@@ -2320,9 +2320,10 @@ edges:
       enabled: true
       equivalence_bound: 0.1
   unit_specification:
-    treatment_unit: log
+    treatment_unit: growth
     outcome_unit: pct
   notes: Income squeeze channel. Falling real income raises credit risk (delinquencies, provisions).
+    Treatment is already a growth rate (nominal_income_growth - inflation_mom).
   provenance:
     source: manual
     added_at: '2026-02-18'
@@ -2364,9 +2365,10 @@ edges:
       enabled: true
       equivalence_bound: 0.1
   unit_specification:
-    treatment_unit: log
+    treatment_unit: growth
     outcome_unit: log
   notes: Consumer spending drives fintech transaction revenue and thus PPOP.
+    Treatment is already a growth rate (real_expenditure_growth from processed data).
   provenance:
     source: manual
     added_at: '2026-02-18'
