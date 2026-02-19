@@ -179,6 +179,17 @@ causal_logic_probes:
     Does the estimated coefficient sign match the declared
     expected_sign in the DAG YAML? Flag contradictions where
     a positive coefficient is declared negative, or vice versa.
+  derived_frequency_mismatch: >
+    For derived nodes with identity formulas, do all dependency
+    nodes share the same declared frequency? Flag when monthly
+    and quarterly nodes are combined in a formula (e.g., subtracting
+    monthly MoM inflation from quarterly growth rates).
+  treatment_outcome_scale_gap: >
+    Do the treatment and outcome data have compatible magnitudes?
+    From edge card data provenance, compare row counts and scale
+    proxies. Flag edges where coefficient magnitude and unit kinds
+    together suggest a scale mismatch (e.g., decimal growth rate
+    treatment with percentage-form outcome).
 
 # ──────────────────────────────────────────────────────────────────
 # Quality Weights (sum to 1.0)

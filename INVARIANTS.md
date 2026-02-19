@@ -1277,7 +1277,7 @@ patterns as *expansion opportunities* and proposes `add_missing_node` /
 
 ### 35.8 Causal Logic Probes
 
-Chain-level probes detect issues that per-edge diagnostics miss. Four probes:
+Chain-level probes detect issues that per-edge diagnostics miss. Six probes:
 
 | Probe | What it checks | Severity |
 |-------|---------------|----------|
@@ -1285,6 +1285,8 @@ Chain-level probes detect issues that per-edge diagnostics miss. Four probes:
 | `scale_consistency` | Unit-kind mismatches between consecutive edges | warning |
 | `magnitude_plausibility` | \|coefficient\| > 10 or < 0.001 with p < 0.05 | warning/info |
 | `sign_vs_estimate` | Estimated coefficient sign contradicts declared expected_sign | warning |
+| `derived_frequency_mismatch` | Derived node formula mixes different-frequency dependencies | error |
+| `treatment_outcome_scale_gap` | Treatment and outcome unit kinds imply ~100x scale gap | warning |
 
 Invariants:
 
