@@ -293,6 +293,12 @@ class DAGCritic:
         "gdp", "eme", "sdp", "usa", "usd", "eur", "cee", "see",
         "log", "ln", "pp", "bp", "bps", "pct", "std", "se",
         "trumps", "covid", "pandemic", "crisis",
+        # Method/model acronyms
+        "nardl", "ardl", "cwt", "wct", "dwt", "dcc", "ewt",
+        # Stock exchange / proper noun abbreviations
+        "kase", "nepse", "moex", "bse", "nse", "nyse", "lse",
+        # Generic index/indicator abbreviations
+        "eri", "reer", "neer", "hdi", "pmi",
     })
 
     def _extract_paper_mentioned_variables(self) -> list[dict[str, Any]]:

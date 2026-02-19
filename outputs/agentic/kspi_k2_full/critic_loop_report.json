@@ -26,18 +26,39 @@
       "proposed": 8,
       "applied": 8,
       "rejected": 0
+    },
+    {
+      "iteration": 5,
+      "quality": 0.7909962406015038,
+      "gaps": 5,
+      "probes": 36,
+      "applied": 11
+    },
+    {
+      "iteration": 6,
+      "quality": 0.75225,
+      "gaps": 4,
+      "probes": 35,
+      "applied": 9
+    },
+    {
+      "iteration": 7,
+      "quality": 0.8039221664275467,
+      "gaps": 3,
+      "probes": 37,
+      "applied": 5
     }
   ],
-  "final_quality": 0.7761261261261262,
+  "final_quality": 0.8526646341463415,
   "final_quality_components": {
-    "edge_type_diversity": 0.6756756756756757,
-    "identification_coverage": 0.9166666666666666,
-    "metadata_completeness": 0.8108108108108109,
-    "structural_soundness": 0.25,
-    "unit_completeness": 0.972972972972973,
+    "edge_type_diversity": 0.5853658536585367,
+    "identification_coverage": 1.0,
+    "metadata_completeness": 0.8780487804878049,
+    "structural_soundness": 0.595,
+    "unit_completeness": 1.0,
     "formula_correctness": 1.0,
-    "total": 0.7761261261261262
+    "total": 0.8526646341463415
   },
-  "remaining_probes": 34,
-  "remaining_gaps": 21
+  "remaining_probes": 37,
+  "remaining_gaps": 3
 }
