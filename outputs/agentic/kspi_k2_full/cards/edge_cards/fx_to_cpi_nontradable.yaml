@@ -1,6 +1,6 @@
 edge_id: fx_to_cpi_nontradable
-dag_version_hash: a0d5c383631c52aa262f288704c6f7868d48b73d5034761245939de8eeea1d72
-created_at: '2026-02-16T16:23:41.927594'
+dag_version_hash: a26a41545ca6450142f55ab723c7eb60cac211ece2deb42ccbb70552bdd790a8
+created_at: '2026-02-18T17:53:57.230523'
 data_provenance:
   treatment_source: null
   outcome_source: null
@@ -29,9 +29,6 @@ estimates:
   - -0.029
   - 0.029
   pvalue: 0.99
-  treatment_unit: 10% KZT depreciation
-  outcome_unit: pp non-tradable CPI (cumulative 12m)
-  n_effective_obs_h0: 1200
 diagnostics:
   validated_evidence:
     name: validated_evidence
@@ -40,22 +37,14 @@ diagnostics:
     threshold: null
     pvalue: null
     message: Validated from Block A DiD (falsification)
-  effective_obs:
-    name: effective_obs
-    passed: true
-    value: 1200.0
-    threshold: 20.0
-    pvalue: null
-    message: ''
 all_diagnostics_pass: true
 interpretation:
   estimand: FX pass-through to non-tradable CPI. Precisely null result from falsification
     test confirming identification validity.
-  is_not: Re-estimated result; this is locked validated evidence
-  channels:
-  - as identified in source block
+  is_not: Re-estimated result; locked validated evidence
+  channels: []
   population: ''
-  conditions: 'Source: Block A DiD (falsification)'
+  conditions: ''
   allowed_uses: []
   forbidden_uses: []
 failure_flags:
@@ -84,12 +73,12 @@ identification:
     measurement_error: low
     selection: low
   untestable_assumptions: []
-  testable_threats_passed: []
+  testable_threats_passed:
+  - validated_evidence
   testable_threats_failed: []
-  strategy_type: validated_prior
-  strategy_argument: Block A falsification test using non-tradable goods as placebo.
-  strategy_key_assumption: Non-tradable CPI should not respond to FX if pass-through
-    is import-driven.
+  strategy_type: ''
+  strategy_argument: ''
+  strategy_key_assumption: ''
 counterfactual_block:
   shock_scenario_allowed: true
   policy_intervention_allowed: false
@@ -114,13 +103,102 @@ propagation_role:
     REDUCED_FORM: false
     DESCRIPTIVE: false
 literature:
-  supporting: []
+  supporting:
+  - doi: 10.5089/9781475598759.002
+    title: Republic of Kazakhstan
+    authors:
+    - International Monetary Fund. Middle East and Central Asia Dept.
+    year: 2017
+    excerpt: This Selected Issues Paper evaluates Kazakhstan’s oil rules, current
+      fiscal stance, and long-term sustainability. The sharp and sustained drop in
+      oil prices since 2014 has reduced the value of Kazakhstan’s oil wealth. Kazakhstan’s
+      non-oil deficit path has been higher than suggested by long-term benc
+    relevance: supporting
+    edge_id: fx_to_cpi_nontradable
+    paper_id: ''
+    citation_count: 1
+    search_query: KZT/USD exchange rate Non-tradable CPI causal effect
+    source: openalex
+    pdf_url: https://www.elibrary.imf.org/doc/IMF002/24266-9781475598759/24266-9781475598759/Other_formats/Source_PDF/24266-9781475598810.pdf
+  - doi: 10.1515/jci-2021-0042
+    title: A Unifying Causal Framework for Analyzing Dataset Shift-stable Learning
+      Algorithms
+    authors:
+    - Adarsh Subbaswamy
+    - Bryant Chen
+    - Suchi Saria
+    year: 2019
+    excerpt: Recent interest in the external validity of prediction models (i.e.,
+      the problem of different train and test distributions, known as dataset shift)
+      has produced many methods for finding predictive distributions that are invariant
+      to dataset shifts and can be used for prediction in new, unseen enviro
+    relevance: supporting
+    edge_id: fx_to_cpi_nontradable
+    paper_id: 1905.11374v5
+    citation_count: 0
+    search_query: KZT/USD exchange rate Non-tradable CPI causal effect
+    source: arxiv
+    pdf_url: https://arxiv.org/pdf/1905.11374v5
+  - doi: ''
+    title: 'Natural resource funds as mechanisms for avoiding the resource curse :
+      a comparative study of Kazakhstan, Azerbaijan and Norway'
+    authors:
+    - Le, Tommy Khang
+    - Munthe-Dahl, Oskar
+    year: 2014
+    excerpt: Studies show that countries blessed with an abundance of natural resources
+      such as oil tend to have less economic growth and a less fortunate development
+      than countries with fewer natural resources. This master thesis is motivated
+      by the fact that there are relatively few studies conducted on a natu
+    relevance: supporting
+    edge_id: fx_to_cpi_nontradable
+    paper_id: ''
+    citation_count: 0
+    search_query: KZT/USD exchange rate Non-tradable CPI causal effect
+    source: core
+    pdf_url: https://core.ac.uk/download/30913679.pdf
+  - doi: ''
+    title: International analyses of natural resource curse and Kazakhstan’s related
+      economic performance with special attention to its wheat and energy sectors
+    authors:
+    - Oskenbayev, Yessengali
+    year: 2015
+    excerpt: The bottom line of this study is to examine the role of natural resource
+      endowments for economic growth and institutional quality with special focus
+      on Kazakhstan and CIS countries. It is documented that resource rents share
+      in income has a negative effect on institutional quality and thus undermine
+    relevance: supporting
+    edge_id: fx_to_cpi_nontradable
+    paper_id: ''
+    citation_count: 0
+    search_query: KZT/USD exchange rate Non-tradable CPI causal effect
+    source: core
+    pdf_url: https://core.ac.uk/download/304638845.pdf
   challenging: []
-  methodological: []
-  search_status: PENDING
-  search_timestamp: null
-  search_query: ''
-  total_results: 0
+  methodological:
+  - doi: 10.1515/jci-2022-0060
+    title: 'Quantitative probing: Validating causal models using quantitative domain
+      knowledge'
+    authors:
+    - Daniel Grünbaum
+    - Maike L. Stern
+    - Elmar W. Lang
+    year: 2022
+    excerpt: We present quantitative probing as a model-agnostic framework for validating
+      causal models in the presence of quantitative domain knowledge. The method is
+      constructed as an analogue of the train/test split in correlation-based machine
+      learning and as an enhancement of current causal validation strat
+    relevance: methodological
+    edge_id: fx_to_cpi_nontradable
+    paper_id: 2209.03013v1
+    citation_count: 0
+    search_query: KZT/USD exchange rate Non-tradable CPI causal effect
+    source: arxiv
+    pdf_url: https://arxiv.org/pdf/2209.03013v1
+  search_status: SEARCHED
+  search_timestamp: '2026-02-18T17:53:57.230566'
+  search_query: KZT/USD exchange rate Non-tradable CPI causal effect
+  total_results: 5
 companion_edge_id: null
 variant_of: null
 is_precisely_null: true

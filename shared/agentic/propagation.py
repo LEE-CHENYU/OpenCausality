@@ -49,6 +49,7 @@ _UNIT_PATTERNS: list[tuple[str, str]] = [
     (r"\bsd\b|standard\s*deviation", "sd"),
     (r"\bbps\b|basis\s*point", "bps"),
     (r"\binnovation\b", "sd"),  # innovation ≈ 1 SD shock
+    (r"\bgrowth\b", "pct"),     # growth rate ≈ percentage change
 ]
 
 

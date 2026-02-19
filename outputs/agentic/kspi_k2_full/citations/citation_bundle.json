@@ -13,7 +13,7 @@
         "relevance": "supporting",
         "edge_id": "oil_supply_to_brent",
         "paper_id": "cd2fa5dd72f0747b172109d4f53f6f39470312fb",
-        "citation_count": 4232,
+        "citation_count": 4213,
         "search_query": "Oil supply shock Brent crude oil price causal effect",
         "source": "semantic_scholar",
         "pdf_url": ""
@@ -33,7 +33,7 @@
         "relevance": "supporting",
         "edge_id": "oil_supply_to_brent",
         "paper_id": "",
-        "citation_count": 1946,
+        "citation_count": 1947,
         "search_query": "Oil supply shock Brent crude oil price causal effect",
         "source": "openalex",
         "pdf_url": "https://academic.oup.com/qje/article-pdf/135/2/645/32994954/qjaa004.pdf"
@@ -1067,152 +1067,6 @@
     ]
   },
   {
-    "edge_id": "shock_to_npl_kspi",
-    "citations": [
-      {
-        "doi": "10.1515/jci-2018-0008",
-        "title": "The Inflation Technique Completely Solves the Causal Compatibility Problem",
-        "authors": [
-          "Miguel Navascues",
-          "Elie Wolfe"
-        ],
-        "year": 2017,
-        "excerpt": "The causal compatibility question asks whether a given causal structure graph -- possibly involving latent variables -- constitutes a genuinely plausible causal explanation for a given probability distribution over the graph's observed variables. Algorithms predicated on merely necessary constraints",
-        "relevance": "supporting",
-        "edge_id": "shock_to_npl_kspi",
-        "paper_id": "1707.06476v3",
-        "citation_count": 0,
-        "search_query": "Imported inflation IV KSPI NPL ratio causal effect",
-        "source": "arxiv",
-        "pdf_url": "https://arxiv.org/pdf/1707.06476v3"
-      },
-      {
-        "doi": "10.1515/jci-2022-0060",
-        "title": "Quantitative probing: Validating causal models using quantitative domain knowledge",
-        "authors": [
-          "Daniel Gr\u00fcnbaum",
-          "Maike L. Stern",
-          "Elmar W. Lang"
-        ],
-        "year": 2022,
-        "excerpt": "We present quantitative probing as a model-agnostic framework for validating causal models in the presence of quantitative domain knowledge. The method is constructed as an analogue of the train/test split in correlation-based machine learning and as an enhancement of current causal validation strat",
-        "relevance": "methodological",
-        "edge_id": "shock_to_npl_kspi",
-        "paper_id": "2209.03013v1",
-        "citation_count": 0,
-        "search_query": "Imported inflation IV KSPI NPL ratio causal effect",
-        "source": "arxiv",
-        "pdf_url": "https://arxiv.org/pdf/2209.03013v1"
-      },
-      {
-        "doi": "",
-        "title": "Text as Causal Mediators: Research Design for Causal Estimates of Differential Treatment of Social Groups via Language Aspects",
-        "authors": [
-          "Katherine A. Keith",
-          "Douglas Rice",
-          "Brendan O'Connor"
-        ],
-        "year": 2021,
-        "excerpt": "Using observed language to understand interpersonal interactions is important in high-stakes decision making. We propose a causal research design for observational (non-experimental) data to estimate the natural direct and indirect effects of social group signals (e.g. race or gender) on speakers' r",
-        "relevance": "supporting",
-        "edge_id": "shock_to_npl_kspi",
-        "paper_id": "2109.07542v1",
-        "citation_count": 0,
-        "search_query": "Imported inflation IV KSPI NPL ratio causal effect",
-        "source": "arxiv",
-        "pdf_url": "https://arxiv.org/pdf/2109.07542v1"
-      }
-    ]
-  },
-  {
-    "edge_id": "shock_to_cor_kspi",
-    "citations": [
-      {
-        "doi": "10.25501/soas.00029228",
-        "title": "Emerging stock markets in the Pacific Basin : An empirical analysis with particular reference to the Korean stock market.",
-        "authors": [
-          "Hyun-Jung Ryoo"
-        ],
-        "year": 2001,
-        "excerpt": "This thesis investigates emerging stock markets in the Pacific Basin with particular reference to the Korean stock market, which is representative of typical, fast-growing emerging markets. Using a broader range of econometric models, the short-run and long-run behaviour of stock prices, the impact ",
-        "relevance": "supporting",
-        "edge_id": "shock_to_cor_kspi",
-        "paper_id": "",
-        "citation_count": 1,
-        "search_query": "Imported inflation IV KSPI cost of risk causal effect",
-        "source": "openalex",
-        "pdf_url": "https://eprints.soas.ac.uk/29228/1/10731323.pdf"
-      },
-      {
-        "doi": "10.17170/kobra-202005181267",
-        "title": "the Indonesian Oil Palm Plantation and Automobile Sectors",
-        "authors": [
-          "Sinaga, Hariati"
-        ],
-        "year": 2020,
-        "excerpt": "Zugleich Dissertation, Universit\u00e4t Kassel, 2017. Die gedruckte Ausg. ist im Rainer Hampp Verlag, Augsburg, M\u00fcnchen (www.Hampp-Verlag.de) erschienen",
-        "relevance": "supporting",
-        "edge_id": "shock_to_cor_kspi",
-        "paper_id": "",
-        "citation_count": 0,
-        "search_query": "Imported inflation IV KSPI cost of risk causal effect",
-        "source": "core",
-        "pdf_url": "https://core.ac.uk/download/638846868.pdf"
-      },
-      {
-        "doi": "10.1515/jci-2018-0008",
-        "title": "The Inflation Technique Completely Solves the Causal Compatibility Problem",
-        "authors": [
-          "Miguel Navascues",
-          "Elie Wolfe"
-        ],
-        "year": 2017,
-        "excerpt": "The causal compatibility question asks whether a given causal structure graph -- possibly involving latent variables -- constitutes a genuinely plausible causal explanation for a given probability distribution over the graph's observed variables. Algorithms predicated on merely necessary constraints",
-        "relevance": "supporting",
-        "edge_id": "shock_to_cor_kspi",
-        "paper_id": "1707.06476v3",
-        "citation_count": 0,
-        "search_query": "Imported inflation IV KSPI cost of risk causal effect",
-        "source": "arxiv",
-        "pdf_url": "https://arxiv.org/pdf/1707.06476v3"
-      },
-      {
-        "doi": "10.21314/JOP.2019.229",
-        "title": "On the Selection of Loss Severity Distributions to Model Operational Risk",
-        "authors": [
-          "Daniel Hadley",
-          "Harry Joe",
-          "Natalia Nolde"
-        ],
-        "year": 2021,
-        "excerpt": "Accurate modeling of operational risk is important for a bank and the finance industry as a whole to prepare for potentially catastrophic losses. One approach to modeling operational is the loss distribution approach, which requires a bank to group operational losses into risk categories and select ",
-        "relevance": "supporting",
-        "edge_id": "shock_to_cor_kspi",
-        "paper_id": "2107.03979v1",
-        "citation_count": 0,
-        "search_query": "Imported inflation IV KSPI cost of risk causal effect",
-        "source": "arxiv",
-        "pdf_url": "https://arxiv.org/pdf/2107.03979v1"
-      },
-      {
-        "doi": "",
-        "title": "Welfare in transition: the political economy of social protection reform in Indonesia",
-        "authors": [
-          "van Diermen, Maryke"
-        ],
-        "year": 2018,
-        "excerpt": "There has been significant reform in social protection systems in developing countries in recent years. The extent, nature, and timing of such reform has varied significantly both between countries and within countries between sectors. Most scholars have explained these developments in terms of tech",
-        "relevance": "supporting",
-        "edge_id": "shock_to_cor_kspi",
-        "paper_id": "",
-        "citation_count": 0,
-        "search_query": "Imported inflation IV KSPI cost of risk causal effect",
-        "source": "core",
-        "pdf_url": "https://core.ac.uk/download/482254650.pdf"
-      }
-    ]
-  },
-  {
     "edge_id": "expenditure_to_payments_revenue",
     "citations": [
       {
@@ -1635,11 +1489,16 @@
       },
       {
         "doi": "",
-        "title": "The development of an operational LCIA-methodology with impact categories based on the control variables in the Planetary Boundaries framework",
+        "title": "Algal toxicity of platinum nanoparticles - Implications of NP aggregation, dissolution and shading",
         "authors": [
-          "Hauschild, Michael Zwicky",
-          "Owsianiak, Mikolaj",
-          "Ryberg, Morten"
+          "Baun, Anders",
+          "Engelbrekt, Christian",
+          "Giron Delgado, Cristina",
+          "Jim\u00e9nez-Lamana, Javier",
+          "L\u00fctzh\u00f8ft, Hans-Christian Holten",
+          "Noori, Jafar Safaa",
+          "Slaveykova, V",
+          "S\u00f8rensen, Sara N\u00f8rgaard"
         ],
         "year": 2016,
         "excerpt": "",
@@ -1649,7 +1508,7 @@
         "citation_count": 0,
         "search_query": "KSPI total capital KSPI K2 capital ratio causal effect",
         "source": "core",
-        "pdf_url": "https://core.ac.uk/download/84003389.pdf"
+        "pdf_url": "https://core.ac.uk/download/84002495.pdf"
       },
       {
         "doi": "",
@@ -1759,11 +1618,16 @@
       },
       {
         "doi": "",
-        "title": "The development of an operational LCIA-methodology with impact categories based on the control variables in the Planetary Boundaries framework",
+        "title": "Algal toxicity of platinum nanoparticles - Implications of NP aggregation, dissolution and shading",
         "authors": [
-          "Hauschild, Michael Zwicky",
-          "Owsianiak, Mikolaj",
-          "Ryberg, Morten"
+          "Baun, Anders",
+          "Engelbrekt, Christian",
+          "Giron Delgado, Cristina",
+          "Jim\u00e9nez-Lamana, Javier",
+          "L\u00fctzh\u00f8ft, Hans-Christian Holten",
+          "Noori, Jafar Safaa",
+          "Slaveykova, V",
+          "S\u00f8rensen, Sara N\u00f8rgaard"
         ],
         "year": 2016,
         "excerpt": "",
@@ -1773,7 +1637,7 @@
         "citation_count": 0,
         "search_query": "KSPI risk-weighted assets KSPI K2 capital ratio causal effect",
         "source": "core",
-        "pdf_url": "https://core.ac.uk/download/84003389.pdf"
+        "pdf_url": "https://core.ac.uk/download/84002495.pdf"
       },
       {
         "doi": "",
@@ -1829,7 +1693,7 @@
         "relevance": "challenging",
         "edge_id": "import_share_to_iv",
         "paper_id": "",
-        "citation_count": 2125,
+        "citation_count": 2129,
         "search_query": "Pre-period import share Imported inflation IV causal effect",
         "source": "openalex",
         "pdf_url": "https://academic.oup.com/qje/article-pdf/134/3/1405/29173920/qjz014.pdf"
@@ -1903,7 +1767,7 @@
         "relevance": "supporting",
         "edge_id": "nominal_expenditure_to_real",
         "paper_id": "",
-        "citation_count": 4112,
+        "citation_count": 4115,
         "search_query": "Nominal consumption expenditure Real consumption expenditure causal effect",
         "source": "openalex",
         "pdf_url": "https://www.aeaweb.org/articles/pdf/doi/10.1257/aer.103.6.2121"
@@ -1996,7 +1860,7 @@
         "relevance": "supporting",
         "edge_id": "wage_to_nominal_income",
         "paper_id": "",
-        "citation_count": 2141,
+        "citation_count": 2142,
         "search_query": "Wage income Nominal monetary income causal effect",
         "source": "openalex",
         "pdf_url": "https://onlinelibrary.wiley.com/doi/pdfdirect/10.1111/j.1468-0335.2009.00843.x"
@@ -2016,7 +1880,7 @@
         "relevance": "supporting",
         "edge_id": "wage_to_nominal_income",
         "paper_id": "",
-        "citation_count": 1946,
+        "citation_count": 1947,
         "search_query": "Wage income Nominal monetary income causal effect",
         "source": "openalex",
         "pdf_url": "https://academic.oup.com/qje/article-pdf/135/2/645/32994954/qjaa004.pdf"
@@ -2076,6 +1940,965 @@
         "search_query": "Wage income Nominal monetary income causal effect",
         "source": "semantic_scholar",
         "pdf_url": ""
+      }
+    ]
+  },
+  {
+    "edge_id": "cpi_tradable_to_cpi_headline",
+    "citations": [
+      {
+        "doi": "10.3386/w15836",
+        "title": "The Natural Resource Curse: A Survey",
+        "authors": [
+          "Jeffrey A. Frankel"
+        ],
+        "year": 2010,
+        "excerpt": "It is striking how often countries with oil or other natural resource wealth have failed to grow more rapidly than those without. This is the phenomenon known as the Natural Resource Curse. The principle is not confined to individual anecdotes or case studies, but has been borne out in econometric t",
+        "relevance": "supporting",
+        "edge_id": "cpi_tradable_to_cpi_headline",
+        "paper_id": "",
+        "citation_count": 582,
+        "search_query": "Tradable CPI Headline CPI causal effect",
+        "source": "openalex",
+        "pdf_url": "https://doi.org/10.3386/w15836"
+      },
+      {
+        "doi": "10.1353/eca.2013.0015",
+        "title": "Boom, Bust, Recovery: Forensics of the Latvia Crisis",
+        "authors": [
+          "Olivier Blanchard",
+          "Mark D. Griffiths",
+          "Bertrand Gruss"
+        ],
+        "year": 2013,
+        "excerpt": "Latvia\u2019s boom, bust, and recovery provide a rare case study for macroeconomists: an economy that responded to a balance-of-payments crisis by maintaining its currency peg and adjusting through internal devaluation and front-loaded consolidation. This paper lays down the facts about Latvia\u2019s boom and",
+        "relevance": "supporting",
+        "edge_id": "cpi_tradable_to_cpi_headline",
+        "paper_id": "",
+        "citation_count": 93,
+        "search_query": "Tradable CPI Headline CPI causal effect",
+        "source": "openalex",
+        "pdf_url": "https://muse.jhu.edu/article/543823/pdf"
+      },
+      {
+        "doi": "10.3386/w28005",
+        "title": "The Slope of the Phillips Curve: Evidence from U.S. States",
+        "authors": [
+          "Jonathon Hazell",
+          "Juan Herre\u00f1o",
+          "Emi Nakamura",
+          "J\u00f3n Steinsson"
+        ],
+        "year": 2020,
+        "excerpt": "We estimate the slope of the Phillips curve in the cross section of U.S. states using newly constructed state-level price indexes for non-tradeable goods back to 1978.Our estimates indicate that the slope of the Phillips curve is small and was small even during the early 1980s.We estimate only a mod",
+        "relevance": "supporting",
+        "edge_id": "cpi_tradable_to_cpi_headline",
+        "paper_id": "",
+        "citation_count": 59,
+        "search_query": "Tradable CPI Headline CPI causal effect",
+        "source": "openalex",
+        "pdf_url": "https://doi.org/10.3386/w28005"
+      },
+      {
+        "doi": "10.1080/23311932.2023.2212458",
+        "title": "Measuring the pass-through effect of global food price volatility and South Africa\u2019s CPI on the headline inflation of Zimbabwe",
+        "authors": [
+          "Gabriel Mhonyera",
+          "Stein Masunda",
+          "D. Meyer"
+        ],
+        "year": 2023,
+        "excerpt": "Abstract Pronounced food price volatility has challenging effects on the macroeconomic performance of countries. Particularly, large food price swings can generate rippling effects on inflation and poverty. This article examines the inflation effect of global food price volatility and South Africa\u2019s",
+        "relevance": "supporting",
+        "edge_id": "cpi_tradable_to_cpi_headline",
+        "paper_id": "2b43fdefb48d7029b942112204c0ff34c66cd881",
+        "citation_count": 5,
+        "search_query": "Tradable CPI Headline CPI causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      },
+      {
+        "doi": "10.30586/pek.1561475",
+        "title": "ECONOMIC DETERMINANTS OF E-COMMERCE: A FREQUENCY-DOMAIN CAUSALITY ANALYSIS OF CPI AND PERSONAL LOANS IN T\u00dcRK\u0130YE",
+        "authors": [
+          "Mehmet Mert T\u00fcrk"
+        ],
+        "year": 2024,
+        "excerpt": "This study explores the relationship between e-commerce volume, the Consumer Price Index (CPI), and personal loan rates in Turkey, focusing on the period from 2015 to 2024. By employing time series analysis and frequency-domain causality tests, the research aims to identify the factors influencing t",
+        "relevance": "supporting",
+        "edge_id": "cpi_tradable_to_cpi_headline",
+        "paper_id": "1ea10378f3b33ed676b831273d239ba213c8a725",
+        "citation_count": 0,
+        "search_query": "Tradable CPI Headline CPI causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      }
+    ]
+  },
+  {
+    "edge_id": "cpi_nontradable_to_cpi_headline",
+    "citations": [
+      {
+        "doi": "10.3386/w15836",
+        "title": "The Natural Resource Curse: A Survey",
+        "authors": [
+          "Jeffrey A. Frankel"
+        ],
+        "year": 2010,
+        "excerpt": "It is striking how often countries with oil or other natural resource wealth have failed to grow more rapidly than those without. This is the phenomenon known as the Natural Resource Curse. The principle is not confined to individual anecdotes or case studies, but has been borne out in econometric t",
+        "relevance": "supporting",
+        "edge_id": "cpi_nontradable_to_cpi_headline",
+        "paper_id": "",
+        "citation_count": 582,
+        "search_query": "Non-tradable CPI Headline CPI causal effect",
+        "source": "openalex",
+        "pdf_url": "https://doi.org/10.3386/w15836"
+      },
+      {
+        "doi": "10.1353/eca.2013.0015",
+        "title": "Boom, Bust, Recovery: Forensics of the Latvia Crisis",
+        "authors": [
+          "Olivier Blanchard",
+          "Mark D. Griffiths",
+          "Bertrand Gruss"
+        ],
+        "year": 2013,
+        "excerpt": "Latvia\u2019s boom, bust, and recovery provide a rare case study for macroeconomists: an economy that responded to a balance-of-payments crisis by maintaining its currency peg and adjusting through internal devaluation and front-loaded consolidation. This paper lays down the facts about Latvia\u2019s boom and",
+        "relevance": "supporting",
+        "edge_id": "cpi_nontradable_to_cpi_headline",
+        "paper_id": "",
+        "citation_count": 93,
+        "search_query": "Non-tradable CPI Headline CPI causal effect",
+        "source": "openalex",
+        "pdf_url": "https://muse.jhu.edu/article/543823/pdf"
+      },
+      {
+        "doi": "10.3386/w28005",
+        "title": "The Slope of the Phillips Curve: Evidence from U.S. States",
+        "authors": [
+          "Jonathon Hazell",
+          "Juan Herre\u00f1o",
+          "Emi Nakamura",
+          "J\u00f3n Steinsson"
+        ],
+        "year": 2020,
+        "excerpt": "We estimate the slope of the Phillips curve in the cross section of U.S. states using newly constructed state-level price indexes for non-tradeable goods back to 1978.Our estimates indicate that the slope of the Phillips curve is small and was small even during the early 1980s.We estimate only a mod",
+        "relevance": "supporting",
+        "edge_id": "cpi_nontradable_to_cpi_headline",
+        "paper_id": "",
+        "citation_count": 59,
+        "search_query": "Non-tradable CPI Headline CPI causal effect",
+        "source": "openalex",
+        "pdf_url": "https://doi.org/10.3386/w28005"
+      },
+      {
+        "doi": "10.1017/S1365100525000240",
+        "title": "Are inflation movements global in nature?",
+        "authors": [
+          "Zo Andriantomanga"
+        ],
+        "year": 2025,
+        "excerpt": "Abstract This paper adds to the literature on global inflation synchronization by distinguishing the traded and non-traded content of the consumption basket. Using a novel database of monthly CPI series of 40 countries from 2000, a dynamic factor model with stochastic volatility decomposes inflation",
+        "relevance": "methodological",
+        "edge_id": "cpi_nontradable_to_cpi_headline",
+        "paper_id": "397f56e4dcd2a7f810b242954e9e4bb9b146a7da",
+        "citation_count": 0,
+        "search_query": "Non-tradable CPI Headline CPI causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      },
+      {
+        "doi": "10.3126/ern.v8i2.88153",
+        "title": "Is inflation persistence in Nepal substantially imported and influenced by shocks?",
+        "authors": [
+          "A. Pokhrel"
+        ],
+        "year": 2025,
+        "excerpt": "This study examines the inflation persistence in Nepal, stating whether macroeconomic shocks and the external drivers affect the persistence and the channels. Prior studies discuss imported inflation and the domestic transmission, but do not address evidences that how persistence changes after the s",
+        "relevance": "methodological",
+        "edge_id": "cpi_nontradable_to_cpi_headline",
+        "paper_id": "2780a9cb30487e9ff8b37030580f6f37c81af0cc",
+        "citation_count": 0,
+        "search_query": "Non-tradable CPI Headline CPI causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      }
+    ]
+  },
+  {
+    "edge_id": "cpi_headline_to_real_income",
+    "citations": [
+      {
+        "doi": "10.3386/w23687",
+        "title": "The Rise of Market Power and the Macroeconomic Implications",
+        "authors": [
+          "Jan De Loecker",
+          "Jan Eeckhout"
+        ],
+        "year": 2017,
+        "excerpt": "wages; market power; mark-ups; technology; market dynamism; market structure",
+        "relevance": "supporting",
+        "edge_id": "cpi_headline_to_real_income",
+        "paper_id": "",
+        "citation_count": 783,
+        "search_query": "Headline CPI Real monetary income causal effect",
+        "source": "openalex",
+        "pdf_url": "https://doi.org/10.3386/w23687"
+      },
+      {
+        "doi": "10.3386/w15836",
+        "title": "The Natural Resource Curse: A Survey",
+        "authors": [
+          "Jeffrey A. Frankel"
+        ],
+        "year": 2010,
+        "excerpt": "It is striking how often countries with oil or other natural resource wealth have failed to grow more rapidly than those without. This is the phenomenon known as the Natural Resource Curse. The principle is not confined to individual anecdotes or case studies, but has been borne out in econometric t",
+        "relevance": "supporting",
+        "edge_id": "cpi_headline_to_real_income",
+        "paper_id": "",
+        "citation_count": 582,
+        "search_query": "Headline CPI Real monetary income causal effect",
+        "source": "openalex",
+        "pdf_url": "https://doi.org/10.3386/w15836"
+      },
+      {
+        "doi": "10.1108/ajar-09-2018-0029",
+        "title": "Macroeconomic factors, firm characteristics and financial performance",
+        "authors": [
+          "Chinedu Francis Egbunike",
+          "Chinedu U. Okerekeoti"
+        ],
+        "year": 2018,
+        "excerpt": "Purpose The purpose of this paper is to explore the interrelationship between macroeconomic factors, firm characteristics and financial performance of quoted manufacturing firms in Nigeria. Specifically, the study investigates the effect of interest rate, inflation rate, exchange rate and the gross ",
+        "relevance": "challenging",
+        "edge_id": "cpi_headline_to_real_income",
+        "paper_id": "",
+        "citation_count": 173,
+        "search_query": "Headline CPI Real monetary income causal effect",
+        "source": "openalex",
+        "pdf_url": "https://www.emerald.com:443/insight/content/doi/10.1108/AJAR-09-2018-0029/full/pdf?title=macroeconomic-factors-firm-characteristics-and-financial-performance-a-study-of-selected-quoted-manufacturing-firms-in-nigeria"
+      },
+      {
+        "doi": "10.1080/01621459.2025.2596297",
+        "title": "The impact of job stability on monetary poverty in Italy: causal small area estimation",
+        "authors": [
+          "Katarzyna Reluga",
+          "Dehan Kong",
+          "Setareh Ranjbar",
+          "Nicola Salvati",
+          "Mark van der Laan"
+        ],
+        "year": 2025,
+        "excerpt": "Job stability - encompassing secure contracts, adequate wages, social benefits, and career opportunities - is a critical determinant in reducing monetary poverty, as it provides households with reliable income and enhances economic well-being. This study leverages EU-SILC survey and census data to e",
+        "relevance": "methodological",
+        "edge_id": "cpi_headline_to_real_income",
+        "paper_id": "d566768db235aa427cc184ab0bcb1f9352311650",
+        "citation_count": 0,
+        "search_query": "Headline CPI Real monetary income causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      },
+      {
+        "doi": "10.1017/S1365100525000240",
+        "title": "Are inflation movements global in nature?",
+        "authors": [
+          "Zo Andriantomanga"
+        ],
+        "year": 2025,
+        "excerpt": "Abstract This paper adds to the literature on global inflation synchronization by distinguishing the traded and non-traded content of the consumption basket. Using a novel database of monthly CPI series of 40 countries from 2000, a dynamic factor model with stochastic volatility decomposes inflation",
+        "relevance": "methodological",
+        "edge_id": "cpi_headline_to_real_income",
+        "paper_id": "397f56e4dcd2a7f810b242954e9e4bb9b146a7da",
+        "citation_count": 0,
+        "search_query": "Headline CPI Real monetary income causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      }
+    ]
+  },
+  {
+    "edge_id": "real_income_to_cor_kspi",
+    "citations": [
+      {
+        "doi": "10.25501/soas.00029228",
+        "title": "Emerging stock markets in the Pacific Basin : An empirical analysis with particular reference to the Korean stock market.",
+        "authors": [
+          "Hyun-Jung Ryoo"
+        ],
+        "year": 2001,
+        "excerpt": "This thesis investigates emerging stock markets in the Pacific Basin with particular reference to the Korean stock market, which is representative of typical, fast-growing emerging markets. Using a broader range of econometric models, the short-run and long-run behaviour of stock prices, the impact ",
+        "relevance": "supporting",
+        "edge_id": "real_income_to_cor_kspi",
+        "paper_id": "",
+        "citation_count": 1,
+        "search_query": "Real monetary income KSPI cost of risk causal effect",
+        "source": "openalex",
+        "pdf_url": "https://eprints.soas.ac.uk/29228/1/10731323.pdf"
+      },
+      {
+        "doi": "",
+        "title": "Foundations of a Welfare Regime: The Case of Indonesia",
+        "authors": [
+          "Ramadani Torheim"
+        ],
+        "year": 2013,
+        "excerpt": "Indonesia is at a crossroads in building its welfare regime. The study seeks to analyse the salient characteristics and enabling factors that influence Indonesia\u2019s current social policies in light of welfare state theories. The adoption of the Social Security Providers Law in late 2011 underlined th",
+        "relevance": "supporting",
+        "edge_id": "real_income_to_cor_kspi",
+        "paper_id": "",
+        "citation_count": 1,
+        "search_query": "Real monetary income KSPI cost of risk causal effect",
+        "source": "openalex",
+        "pdf_url": "http://hdl.handle.net/10852/36942"
+      },
+      {
+        "doi": "10.17170/kobra-202005181267",
+        "title": "the Indonesian Oil Palm Plantation and Automobile Sectors",
+        "authors": [
+          "Sinaga, Hariati"
+        ],
+        "year": 2020,
+        "excerpt": "Zugleich Dissertation, Universit\u00e4t Kassel, 2017. Die gedruckte Ausg. ist im Rainer Hampp Verlag, Augsburg, M\u00fcnchen (www.Hampp-Verlag.de) erschienen",
+        "relevance": "supporting",
+        "edge_id": "real_income_to_cor_kspi",
+        "paper_id": "",
+        "citation_count": 0,
+        "search_query": "Real monetary income KSPI cost of risk causal effect",
+        "source": "core",
+        "pdf_url": "https://core.ac.uk/download/638846868.pdf"
+      },
+      {
+        "doi": "10.21314/JOP.2019.229",
+        "title": "On the Selection of Loss Severity Distributions to Model Operational Risk",
+        "authors": [
+          "Daniel Hadley",
+          "Harry Joe",
+          "Natalia Nolde"
+        ],
+        "year": 2021,
+        "excerpt": "Accurate modeling of operational risk is important for a bank and the finance industry as a whole to prepare for potentially catastrophic losses. One approach to modeling operational is the loss distribution approach, which requires a bank to group operational losses into risk categories and select ",
+        "relevance": "supporting",
+        "edge_id": "real_income_to_cor_kspi",
+        "paper_id": "2107.03979v1",
+        "citation_count": 0,
+        "search_query": "Real monetary income KSPI cost of risk causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/2107.03979v1"
+      },
+      {
+        "doi": "",
+        "title": "Levels of pharmaceuticals and endocrine disruptors in commercially available seafood before and after cooking",
+        "authors": [
+          "Barcelo, D.",
+          "Caceres, N.",
+          "Fernandez-Tejedor, M.",
+          "Granby, Kit",
+          "M. Marques, A.",
+          "Maulvault, A.",
+          "Munoz, D. A.",
+          "Robbens, Johan",
+          "Rodr\u00edguez-Mozaz, S",
+          "Serra, A.",
+          "Sioen, Isabelle",
+          "Tediosi, A.",
+          "Verbeke, K.",
+          "Williamson, J."
+        ],
+        "year": 2016,
+        "excerpt": "",
+        "relevance": "supporting",
+        "edge_id": "real_income_to_cor_kspi",
+        "paper_id": "",
+        "citation_count": 0,
+        "search_query": "Real monetary income KSPI cost of risk causal effect",
+        "source": "core",
+        "pdf_url": "https://core.ac.uk/download/84002501.pdf"
+      }
+    ]
+  },
+  {
+    "edge_id": "real_expenditure_to_ppop_kspi",
+    "citations": [
+      {
+        "doi": "10.1515/jci-2022-0060",
+        "title": "Quantitative probing: Validating causal models using quantitative domain knowledge",
+        "authors": [
+          "Daniel Gr\u00fcnbaum",
+          "Maike L. Stern",
+          "Elmar W. Lang"
+        ],
+        "year": 2022,
+        "excerpt": "We present quantitative probing as a model-agnostic framework for validating causal models in the presence of quantitative domain knowledge. The method is constructed as an analogue of the train/test split in correlation-based machine learning and as an enhancement of current causal validation strat",
+        "relevance": "methodological",
+        "edge_id": "real_expenditure_to_ppop_kspi",
+        "paper_id": "2209.03013v1",
+        "citation_count": 0,
+        "search_query": "Real consumption expenditure KSPI pre-provision operating profit causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/2209.03013v1"
+      },
+      {
+        "doi": "",
+        "title": "Welfare in transition: the political economy of social protection reform in Indonesia",
+        "authors": [
+          "van Diermen, Maryke"
+        ],
+        "year": 2018,
+        "excerpt": "There has been significant reform in social protection systems in developing countries in recent years. The extent, nature, and timing of such reform has varied significantly both between countries and within countries between sectors. Most scholars have explained these developments in terms of tech",
+        "relevance": "supporting",
+        "edge_id": "real_expenditure_to_ppop_kspi",
+        "paper_id": "",
+        "citation_count": 0,
+        "search_query": "Real consumption expenditure KSPI pre-provision operating profit causal effect",
+        "source": "core",
+        "pdf_url": "https://core.ac.uk/download/482254650.pdf"
+      },
+      {
+        "doi": "",
+        "title": "Levels of pharmaceuticals and endocrine disruptors in commercially available seafood before and after cooking",
+        "authors": [
+          "Barcelo, D.",
+          "Caceres, N.",
+          "Fernandez-Tejedor, M.",
+          "Granby, Kit",
+          "M. Marques, A.",
+          "Maulvault, A.",
+          "Munoz, D. A.",
+          "Robbens, Johan",
+          "Rodr\u00edguez-Mozaz, S",
+          "Serra, A.",
+          "Sioen, Isabelle",
+          "Tediosi, A.",
+          "Verbeke, K.",
+          "Williamson, J."
+        ],
+        "year": 2016,
+        "excerpt": "",
+        "relevance": "supporting",
+        "edge_id": "real_expenditure_to_ppop_kspi",
+        "paper_id": "",
+        "citation_count": 0,
+        "search_query": "Real consumption expenditure KSPI pre-provision operating profit causal effect",
+        "source": "core",
+        "pdf_url": "https://core.ac.uk/download/84002501.pdf"
+      },
+      {
+        "doi": "",
+        "title": "Exposure to Chemicals in Consumer Products: The Role of the Near-Field Environment",
+        "authors": [
+          "Ernstoff, Alexi",
+          "Fantke, Peter",
+          "Huang, L.",
+          "Jolliet, O."
+        ],
+        "year": 2016,
+        "excerpt": "",
+        "relevance": "supporting",
+        "edge_id": "real_expenditure_to_ppop_kspi",
+        "paper_id": "",
+        "citation_count": 0,
+        "search_query": "Real consumption expenditure KSPI pre-provision operating profit causal effect",
+        "source": "core",
+        "pdf_url": "https://core.ac.uk/download/84002493.pdf"
+      },
+      {
+        "doi": "",
+        "title": "A statistical physics analysis of expenditure in the UK",
+        "authors": [
+          "Elvis Oltean",
+          "Fedor Kusmartsev"
+        ],
+        "year": 2014,
+        "excerpt": "Most papers which explored so far macroeconomic variables took into account income and wealth. Equally important as the previous macroeconomic variables is the expenditure or consumption, which shows the amount of goods and services that a person or a household purchased. Using statistical distribut",
+        "relevance": "supporting",
+        "edge_id": "real_expenditure_to_ppop_kspi",
+        "paper_id": "1410.3865v2",
+        "citation_count": 0,
+        "search_query": "Real consumption expenditure KSPI pre-provision operating profit causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/1410.3865v2"
+      }
+    ]
+  },
+  {
+    "edge_id": "ppop_to_capital",
+    "citations": [
+      {
+        "doi": "10.1515/jci-2022-0060",
+        "title": "Quantitative probing: Validating causal models using quantitative domain knowledge",
+        "authors": [
+          "Daniel Gr\u00fcnbaum",
+          "Maike L. Stern",
+          "Elmar W. Lang"
+        ],
+        "year": 2022,
+        "excerpt": "We present quantitative probing as a model-agnostic framework for validating causal models in the presence of quantitative domain knowledge. The method is constructed as an analogue of the train/test split in correlation-based machine learning and as an enhancement of current causal validation strat",
+        "relevance": "methodological",
+        "edge_id": "ppop_to_capital",
+        "paper_id": "2209.03013v1",
+        "citation_count": 0,
+        "search_query": "KSPI pre-provision operating profit KSPI total capital causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/2209.03013v1"
+      },
+      {
+        "doi": "10.1515/jci-2021-0042",
+        "title": "A Unifying Causal Framework for Analyzing Dataset Shift-stable Learning Algorithms",
+        "authors": [
+          "Adarsh Subbaswamy",
+          "Bryant Chen",
+          "Suchi Saria"
+        ],
+        "year": 2019,
+        "excerpt": "Recent interest in the external validity of prediction models (i.e., the problem of different train and test distributions, known as dataset shift) has produced many methods for finding predictive distributions that are invariant to dataset shifts and can be used for prediction in new, unseen enviro",
+        "relevance": "supporting",
+        "edge_id": "ppop_to_capital",
+        "paper_id": "1905.11374v5",
+        "citation_count": 0,
+        "search_query": "KSPI pre-provision operating profit KSPI total capital causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/1905.11374v5"
+      },
+      {
+        "doi": "",
+        "title": "Welfare in transition: the political economy of social protection reform in Indonesia",
+        "authors": [
+          "van Diermen, Maryke"
+        ],
+        "year": 2018,
+        "excerpt": "There has been significant reform in social protection systems in developing countries in recent years. The extent, nature, and timing of such reform has varied significantly both between countries and within countries between sectors. Most scholars have explained these developments in terms of tech",
+        "relevance": "supporting",
+        "edge_id": "ppop_to_capital",
+        "paper_id": "",
+        "citation_count": 0,
+        "search_query": "KSPI pre-provision operating profit KSPI total capital causal effect",
+        "source": "core",
+        "pdf_url": "https://core.ac.uk/download/482254650.pdf"
+      },
+      {
+        "doi": "",
+        "title": "Knowledge and HRM practice transfer in emerging economies: the case of Japanese joint ventures in Indonesia",
+        "authors": [
+          "Soehardjojo, J."
+        ],
+        "year": null,
+        "excerpt": "This thesis investigates the mechanisms used to transfer the management practices of multinational corporations (MNCs) to an emerging market economy (EME) context. Examining an MNC\u2019s ownership and control of its subsidiaries in a setting of institutional resistance, this research focuses on the obje",
+        "relevance": "supporting",
+        "edge_id": "ppop_to_capital",
+        "paper_id": "",
+        "citation_count": 0,
+        "search_query": "KSPI pre-provision operating profit KSPI total capital causal effect",
+        "source": "core",
+        "pdf_url": "https://core.ac.uk/download/237395927.pdf"
+      },
+      {
+        "doi": "",
+        "title": "Process-oriented explanation of institutional changes : comparative cases of national health and pension system reforms in Indonesia",
+        "authors": [
+          "YUDA, Tauchid Komara"
+        ],
+        "year": 2024,
+        "excerpt": "This dissertation compares the causal mechanisms by which healthcare and pension systems in Indonesia have been developed. Despite their shared historical trajectories, the health reform emerged successful, while the pension reform faltered. The study employs process tracing to dissect the specific ",
+        "relevance": "supporting",
+        "edge_id": "ppop_to_capital",
+        "paper_id": "",
+        "citation_count": 0,
+        "search_query": "KSPI pre-provision operating profit KSPI total capital causal effect",
+        "source": "core",
+        "pdf_url": "https://commons.ln.edu.hk/cgi/viewcontent.cgi?article=1238&context=otd"
+      }
+    ]
+  },
+  {
+    "edge_id": "vix_to_deposit_cost_kspi",
+    "citations": [
+      {
+        "doi": "10.2870/011665",
+        "title": "Essays on the economics of firms and of financial institutions",
+        "authors": [
+          "M. Gatti"
+        ],
+        "year": 2019,
+        "excerpt": "",
+        "relevance": "supporting",
+        "edge_id": "vix_to_deposit_cost_kspi",
+        "paper_id": "ed5a9ef3da44796debde86629322e24fabe212e9",
+        "citation_count": 0,
+        "search_query": "VIX shock KSPI deposit cost causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      },
+      {
+        "doi": "10.1515/jci-2022-0060",
+        "title": "Quantitative probing: Validating causal models using quantitative domain knowledge",
+        "authors": [
+          "Daniel Gr\u00fcnbaum",
+          "Maike L. Stern",
+          "Elmar W. Lang"
+        ],
+        "year": 2022,
+        "excerpt": "We present quantitative probing as a model-agnostic framework for validating causal models in the presence of quantitative domain knowledge. The method is constructed as an analogue of the train/test split in correlation-based machine learning and as an enhancement of current causal validation strat",
+        "relevance": "methodological",
+        "edge_id": "vix_to_deposit_cost_kspi",
+        "paper_id": "2209.03013v1",
+        "citation_count": 0,
+        "search_query": "VIX shock KSPI deposit cost causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/2209.03013v1"
+      },
+      {
+        "doi": "10.1515/jci-2021-0042",
+        "title": "A Unifying Causal Framework for Analyzing Dataset Shift-stable Learning Algorithms",
+        "authors": [
+          "Adarsh Subbaswamy",
+          "Bryant Chen",
+          "Suchi Saria"
+        ],
+        "year": 2019,
+        "excerpt": "Recent interest in the external validity of prediction models (i.e., the problem of different train and test distributions, known as dataset shift) has produced many methods for finding predictive distributions that are invariant to dataset shifts and can be used for prediction in new, unseen enviro",
+        "relevance": "supporting",
+        "edge_id": "vix_to_deposit_cost_kspi",
+        "paper_id": "1905.11374v5",
+        "citation_count": 0,
+        "search_query": "VIX shock KSPI deposit cost causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/1905.11374v5"
+      },
+      {
+        "doi": "",
+        "title": "Financial institutions after the crisis: facing new challenges and new regulatory frameworks",
+        "authors": [
+          "S. Bressan",
+          "Taylor A. Begley",
+          "N. Martynova"
+        ],
+        "year": 2015,
+        "excerpt": "",
+        "relevance": "supporting",
+        "edge_id": "vix_to_deposit_cost_kspi",
+        "paper_id": "f1d447d7217c57d054425ee2f5b3fd176f21df62",
+        "citation_count": 0,
+        "search_query": "VIX shock KSPI deposit cost causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      },
+      {
+        "doi": "",
+        "title": "Text as Causal Mediators: Research Design for Causal Estimates of Differential Treatment of Social Groups via Language Aspects",
+        "authors": [
+          "Katherine A. Keith",
+          "Douglas Rice",
+          "Brendan O'Connor"
+        ],
+        "year": 2021,
+        "excerpt": "Using observed language to understand interpersonal interactions is important in high-stakes decision making. We propose a causal research design for observational (non-experimental) data to estimate the natural direct and indirect effects of social group signals (e.g. race or gender) on speakers' r",
+        "relevance": "supporting",
+        "edge_id": "vix_to_deposit_cost_kspi",
+        "paper_id": "2109.07542v1",
+        "citation_count": 0,
+        "search_query": "VIX shock KSPI deposit cost causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/2109.07542v1"
+      }
+    ]
+  },
+  {
+    "edge_id": "nominal_income_to_real_income",
+    "citations": [
+      {
+        "doi": "10.1596/1813-9450-1678",
+        "title": "Financial Development and Economic Growth: Views and Agenda",
+        "authors": [
+          "Ross Levine"
+        ],
+        "year": 1999,
+        "excerpt": "No AccessPolicy Research Working Papers21 Jun 2013Financial Development and Economic Growth: Views and AgendaAuthors/Editors: Ross LevineRoss Levinehttps://doi.org/10.1596/1813-9450-1678SectionsAboutPDF (3.4 MB) ToolsAdd to favoritesDownload CitationsTrack Citations ShareFacebookTwitterLinked In Abs",
+        "relevance": "supporting",
+        "edge_id": "nominal_income_to_real_income",
+        "paper_id": "",
+        "citation_count": 3033,
+        "search_query": "Nominal monetary income Real monetary income causal effect",
+        "source": "openalex",
+        "pdf_url": ""
+      },
+      {
+        "doi": "10.1086/654340",
+        "title": "An Optimization-Based Econometric Framework for the Evaluation of Monetary Policy",
+        "authors": [
+          "Julio J. Rotemberg",
+          "Michael Woodford"
+        ],
+        "year": 1997,
+        "excerpt": "This paper considers a simple quantitative model of output, interest rate and inflation determination in the United States, and uses it to evaluate alternative rules by which the Fed may set interest rates. The model is derived from optimizing behavior under rational expectations, both on the part o",
+        "relevance": "supporting",
+        "edge_id": "nominal_income_to_real_income",
+        "paper_id": "",
+        "citation_count": 1898,
+        "search_query": "Nominal monetary income Real monetary income causal effect",
+        "source": "openalex",
+        "pdf_url": "https://www.journals.uchicago.edu/doi/epdf/10.1086/654340"
+      },
+      {
+        "doi": "10.3386/w21162",
+        "title": "Dilemma not Trilemma: The Global Financial Cycle and Monetary Policy Independence",
+        "authors": [
+          "H\u00e9l\u00e8ne Rey"
+        ],
+        "year": 2015,
+        "excerpt": "There is a global financial cycle in capital flows, asset prices and in credit growth.This cycle co moves with the VIX, a measure of uncertainty and risk aversion of the markets.Asset markets in countries with more credit inflows are more sensitive to the global cycle.The global financial cycle is n",
+        "relevance": "supporting",
+        "edge_id": "nominal_income_to_real_income",
+        "paper_id": "",
+        "citation_count": 1881,
+        "search_query": "Nominal monetary income Real monetary income causal effect",
+        "source": "openalex",
+        "pdf_url": "https://doi.org/10.3386/w21162"
+      },
+      {
+        "doi": "10.1186/s12889-024-19049-w",
+        "title": "Estimating the causal effects of income on health: how researchers\u2019 definitions of \u201cincome\u201d matter",
+        "authors": [
+          "E. Igelstr\u00f6m",
+          "D. Kopasker",
+          "Peter Craig",
+          "J. Lewsey",
+          "S. Katikireddi"
+        ],
+        "year": 2024,
+        "excerpt": "There is a well-established cross-sectional association between income and health, but estimates of the causal effects of income vary substantially. Different definitions of income may lead to substantially different empirical results, yet research is often framed as investigating \u201cthe effect of inc",
+        "relevance": "supporting",
+        "edge_id": "nominal_income_to_real_income",
+        "paper_id": "dd876faa37663300eb303ce87b7119b2e4936175",
+        "citation_count": 6,
+        "search_query": "Nominal monetary income Real monetary income causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      },
+      {
+        "doi": "10.26425/1816-4277-2025-8-92-101",
+        "title": "Statistical analysis of average per capita monetary income of the population in Russia and its regions",
+        "authors": [
+          "E. Dolgikh",
+          "V. A. Filatova"
+        ],
+        "year": 2025,
+        "excerpt": "The population\u2019s monetary incomes structure for 2015 and 2023 has been analyzed, and the characteristics of structural shifts during the period under review have been given. Special attention has been paid to the characterization of the trends in changes in the average per capita population\u2019s moneta",
+        "relevance": "supporting",
+        "edge_id": "nominal_income_to_real_income",
+        "paper_id": "e64842f84c44e87a0e257daa8bf410715cda9412",
+        "citation_count": 0,
+        "search_query": "Nominal monetary income Real monetary income causal effect",
+        "source": "semantic_scholar",
+        "pdf_url": ""
+      }
+    ]
+  },
+  {
+    "edge_id": "deposit_cost_to_ppop",
+    "citations": [
+      {
+        "doi": "10.1515/jci-2022-0060",
+        "title": "Quantitative probing: Validating causal models using quantitative domain knowledge",
+        "authors": [
+          "Daniel Gr\u00fcnbaum",
+          "Maike L. Stern",
+          "Elmar W. Lang"
+        ],
+        "year": 2022,
+        "excerpt": "We present quantitative probing as a model-agnostic framework for validating causal models in the presence of quantitative domain knowledge. The method is constructed as an analogue of the train/test split in correlation-based machine learning and as an enhancement of current causal validation strat",
+        "relevance": "methodological",
+        "edge_id": "deposit_cost_to_ppop",
+        "paper_id": "2209.03013v1",
+        "citation_count": 0,
+        "search_query": "KSPI deposit cost KSPI pre-provision operating profit causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/2209.03013v1"
+      },
+      {
+        "doi": "10.1515/jci-2021-0042",
+        "title": "A Unifying Causal Framework for Analyzing Dataset Shift-stable Learning Algorithms",
+        "authors": [
+          "Adarsh Subbaswamy",
+          "Bryant Chen",
+          "Suchi Saria"
+        ],
+        "year": 2019,
+        "excerpt": "Recent interest in the external validity of prediction models (i.e., the problem of different train and test distributions, known as dataset shift) has produced many methods for finding predictive distributions that are invariant to dataset shifts and can be used for prediction in new, unseen enviro",
+        "relevance": "supporting",
+        "edge_id": "deposit_cost_to_ppop",
+        "paper_id": "1905.11374v5",
+        "citation_count": 0,
+        "search_query": "KSPI deposit cost KSPI pre-provision operating profit causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/1905.11374v5"
+      },
+      {
+        "doi": "",
+        "title": "Levels of pharmaceuticals and endocrine disruptors in commercially available seafood before and after cooking",
+        "authors": [
+          "Barcelo, D.",
+          "Caceres, N.",
+          "Fernandez-Tejedor, M.",
+          "Granby, Kit",
+          "M. Marques, A.",
+          "Maulvault, A.",
+          "Munoz, D. A.",
+          "Robbens, Johan",
+          "Rodr\u00edguez-Mozaz, S",
+          "Serra, A.",
+          "Sioen, Isabelle",
+          "Tediosi, A.",
+          "Verbeke, K.",
+          "Williamson, J."
+        ],
+        "year": 2016,
+        "excerpt": "",
+        "relevance": "supporting",
+        "edge_id": "deposit_cost_to_ppop",
+        "paper_id": "",
+        "citation_count": 0,
+        "search_query": "KSPI deposit cost KSPI pre-provision operating profit causal effect",
+        "source": "core",
+        "pdf_url": "https://core.ac.uk/download/84002501.pdf"
+      },
+      {
+        "doi": "",
+        "title": "Exposure to Chemicals in Consumer Products: The Role of the Near-Field Environment",
+        "authors": [
+          "Ernstoff, Alexi",
+          "Fantke, Peter",
+          "Huang, L.",
+          "Jolliet, O."
+        ],
+        "year": 2016,
+        "excerpt": "",
+        "relevance": "supporting",
+        "edge_id": "deposit_cost_to_ppop",
+        "paper_id": "",
+        "citation_count": 0,
+        "search_query": "KSPI deposit cost KSPI pre-provision operating profit causal effect",
+        "source": "core",
+        "pdf_url": "https://core.ac.uk/download/84002493.pdf"
+      },
+      {
+        "doi": "",
+        "title": "The development of an operational LCIA-methodology with impact categories based on the control variables in the Planetary Boundaries framework",
+        "authors": [
+          "Hauschild, Michael Zwicky",
+          "Owsianiak, Mikolaj",
+          "Ryberg, Morten"
+        ],
+        "year": 2016,
+        "excerpt": "",
+        "relevance": "supporting",
+        "edge_id": "deposit_cost_to_ppop",
+        "paper_id": "",
+        "citation_count": 0,
+        "search_query": "KSPI deposit cost KSPI pre-provision operating profit causal effect",
+        "source": "core",
+        "pdf_url": "https://core.ac.uk/download/84003389.pdf"
+      }
+    ]
+  },
+  {
+    "edge_id": "payments_revenue_to_ppop",
+    "citations": [
+      {
+        "doi": "10.1515/jci-2022-0060",
+        "title": "Quantitative probing: Validating causal models using quantitative domain knowledge",
+        "authors": [
+          "Daniel Gr\u00fcnbaum",
+          "Maike L. Stern",
+          "Elmar W. Lang"
+        ],
+        "year": 2022,
+        "excerpt": "We present quantitative probing as a model-agnostic framework for validating causal models in the presence of quantitative domain knowledge. The method is constructed as an analogue of the train/test split in correlation-based machine learning and as an enhancement of current causal validation strat",
+        "relevance": "methodological",
+        "edge_id": "payments_revenue_to_ppop",
+        "paper_id": "2209.03013v1",
+        "citation_count": 0,
+        "search_query": "KSPI Payments revenue KSPI pre-provision operating profit causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/2209.03013v1"
+      },
+      {
+        "doi": "10.1515/jci-2021-0042",
+        "title": "A Unifying Causal Framework for Analyzing Dataset Shift-stable Learning Algorithms",
+        "authors": [
+          "Adarsh Subbaswamy",
+          "Bryant Chen",
+          "Suchi Saria"
+        ],
+        "year": 2019,
+        "excerpt": "Recent interest in the external validity of prediction models (i.e., the problem of different train and test distributions, known as dataset shift) has produced many methods for finding predictive distributions that are invariant to dataset shifts and can be used for prediction in new, unseen enviro",
+        "relevance": "supporting",
+        "edge_id": "payments_revenue_to_ppop",
+        "paper_id": "1905.11374v5",
+        "citation_count": 0,
+        "search_query": "KSPI Payments revenue KSPI pre-provision operating profit causal effect",
+        "source": "arxiv",
+        "pdf_url": "https://arxiv.org/pdf/1905.11374v5"
+      },
+      {
+        "doi": "",
+        "title": "Welfare in transition: the political economy of social protection reform in Indonesia",
+        "authors": [
+          "van Diermen, Maryke"
+        ],
+        "year": 2018,
+        "excerpt": "There has been significant reform in social protection systems in developing countries in recent years. The extent, nature, and timing of such reform has varied significantly both between countries and within countries between sectors. Most scholars have explained these developments in terms of tech",
+        "relevance": "supporting",
+        "edge_id": "payments_revenue_to_ppop",
+        "paper_id": "",
+        "citation_count": 0,
+        "search_query": "KSPI Payments revenue KSPI pre-provision operating profit causal effect",
+        "source": "core",
+        "pdf_url": "https://core.ac.uk/download/482254650.pdf"
+      },
+      {
+        "doi": "",
+        "title": "Process-oriented explanation of institutional changes : comparative cases of national health and pension system reforms in Indonesia",
+        "authors": [
+          "YUDA, Tauchid Komara"
+        ],
+        "year": 2024,
+        "excerpt": "This dissertation compares the causal mechanisms by which healthcare and pension systems in Indonesia have been developed. Despite their shared historical trajectories, the health reform emerged successful, while the pension reform faltered. The study employs process tracing to dissect the specific ",
+        "relevance": "supporting",
+        "edge_id": "payments_revenue_to_ppop",
+        "paper_id": "",
+        "citation_count": 0,
+        "search_query": "KSPI Payments revenue KSPI pre-provision operating profit causal effect",
+        "source": "core",
+        "pdf_url": "https://commons.ln.edu.hk/cgi/viewcontent.cgi?article=1238&context=otd"
+      },
+      {
+        "doi": "",
+        "title": "Levels of pharmaceuticals and endocrine disruptors in commercially available seafood before and after cooking",
+        "authors": [
+          "Barcelo, D.",
+          "Caceres, N.",
+          "Fernandez-Tejedor, M.",
+          "Granby, Kit",
+          "M. Marques, A.",
+          "Maulvault, A.",
+          "Munoz, D. A.",
+          "Robbens, Johan",
+          "Rodr\u00edguez-Mozaz, S",
+          "Serra, A.",
+          "Sioen, Isabelle",
+          "Tediosi, A.",
+          "Verbeke, K.",
+          "Williamson, J."
+        ],
+        "year": 2016,
+        "excerpt": "",
+        "relevance": "supporting",
+        "edge_id": "payments_revenue_to_ppop",
+        "paper_id": "",
+        "citation_count": 0,
+        "search_query": "KSPI Payments revenue KSPI pre-provision operating profit causal effect",
+        "source": "core",
+        "pdf_url": "https://core.ac.uk/download/84002501.pdf"
       }
     ]
   }
