@@ -1,28 +1,28 @@
 {
   "manifest_version": "1.0",
-  "updated_at": "2026-02-19T02:47:41.026012+00:00",
+  "updated_at": "2026-02-19T03:59:07.781642+00:00",
   "datasets": [
     {
       "file_id": "api_downloads__world_bank__e_import_share",
       "original_path": "data/raw/api_downloads/world_bank/E_import_share.parquet",
       "format": "parquet",
-      "rows": 15,
+      "rows": 22,
       "columns": [
         {
           "name": "value",
           "dtype": "numeric",
-          "non_null_count": 15,
+          "non_null_count": 22,
           "null_count": 0,
-          "mean": 26.79182688319535,
-          "std": 1.719414886939061,
+          "mean": 31.263806977848354,
+          "std": 7.164527367974098,
           "min_val": 24.427634998983,
-          "max_val": 29.8940863973107
+          "max_val": 44.5681447702344
         }
       ],
       "date_column": null,
       "frequency": "annual",
       "date_range": [
-        "2010-01-01",
+        "2003-01-01",
         "2024-01-01"
       ],
       "value_columns": [
@@ -30,11 +30,11 @@
       ],
       "primary_value_column": "value",
       "output_path": "data/processed/ingested/api_downloads__world_bank__e_import_share.parquet",
-      "ingested_at": "2026-02-19T02:47:41.025980+00:00",
-      "file_hash": "5b898e13c3bf0bb58f3a18f335446472275a7893388f53341d4f085929e2ee65",
-      "file_size": 2297,
-      "mtime": 1771466142.5801167,
-      "n_unique_dates": 15,
+      "ingested_at": "2026-02-19T03:59:07.781616+00:00",
+      "file_hash": "38c4186d85f0801b75cfd4bb354094ceee5faacdbb8ae6b2350c9e12c5aa4fcf",
+      "file_size": 2425,
+      "mtime": 1771469683.0293272,
+      "n_unique_dates": 22,
       "n_duplicate_dates": 0,
       "sidecar": null
     },

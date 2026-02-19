@@ -1,0 +1,18 @@
+node_id: E_import_share
+connector: api:world_bank
+dataset: regional_accounts
+series: import_share
+download_time: '2026-02-18T19:59:42.565358'
+file_path: data/raw/api_downloads/world_bank/E_import_share.parquet
+size_bytes: 0
+row_count: 5
+date_range:
+- '2020-01-01 00:00:00'
+- '2024-01-01 00:00:00'
+quality_notes:
+- small_sample
+provenance:
+  source: data_scout
+  added_at: '2026-02-18'
+  connector: api:world_bank
+  dataset: regional_accounts
