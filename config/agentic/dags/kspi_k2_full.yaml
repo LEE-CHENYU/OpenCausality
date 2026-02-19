@@ -2209,6 +2209,393 @@ edges:
   provenance:
     source: manual
     added_at: '2026-02-09'
+- id: cpi_tradable_to_cpi_headline
+  from: cpi_tradable
+  to: cpi_headline
+  edge_type: identity
+  edge_status: IDENTITY
+  timing:
+    lag: 0
+    lag_unit: month
+    contemporaneous: true
+    max_anticipation: 0
+  allowed_designs: []
+  interpretation:
+    is: 'Aggregation bridge: tradable CPI feeds headline CPI'
+    is_not:
+    - Causal relationship
+    allowed_uses:
+    - scenario_only
+  unit_specification:
+    treatment_unit: log
+    outcome_unit: log
+  notes: CPI headline = weighted average of tradable and non-tradable CPI.
+  provenance:
+    source: manual
+    added_at: '2026-02-18'
+- id: cpi_nontradable_to_cpi_headline
+  from: cpi_nontradable
+  to: cpi_headline
+  edge_type: identity
+  edge_status: IDENTITY
+  timing:
+    lag: 0
+    lag_unit: month
+    contemporaneous: true
+    max_anticipation: 0
+  allowed_designs: []
+  interpretation:
+    is: 'Aggregation bridge: non-tradable CPI feeds headline CPI'
+    is_not:
+    - Causal relationship
+    allowed_uses:
+    - scenario_only
+  unit_specification:
+    treatment_unit: log
+    outcome_unit: log
+  notes: CPI headline = weighted average of tradable and non-tradable CPI.
+  provenance:
+    source: manual
+    added_at: '2026-02-18'
+- id: cpi_headline_to_real_income
+  from: cpi_headline
+  to: real_income
+  edge_type: identity
+  edge_status: IDENTITY
+  timing:
+    lag: 0
+    lag_unit: quarter
+    contemporaneous: true
+    max_anticipation: 0
+  allowed_designs: []
+  interpretation:
+    is: 'Identity component: real_income = nominal_income - cpi_headline'
+    is_not:
+    - Causal relationship
+    allowed_uses:
+    - scenario_only
+  unit_specification:
+    treatment_unit: log
+    outcome_unit: log
+  notes: Deflation identity. real_income depends on both nominal_income and cpi_headline.
+  provenance:
+    source: manual
+    added_at: '2026-02-18'
+- id: real_income_to_cor_kspi
+  from: real_income
+  to: cor_kspi
+  edge_type: causal
+  timing:
+    lag: 1
+    lag_unit: quarter
+    contemporaneous: false
+    max_anticipation: 0
+  estimand:
+    type: elasticity
+    horizon:
+    - 0
+    - 1
+    - 2
+    scale: log
+  allowed_designs:
+  - LOCAL_PROJECTIONS
+  design_priority:
+  - LOCAL_PROJECTIONS
+  diagnostics_required:
+  - pre_trends
+  - stability
+  acceptance_criteria:
+    diagnostics:
+      pretrend_p_min: 0.1
+    data:
+      max_missing_rate: 0.1
+      min_obs: 20
+      min_pre_periods: 4
+    plausibility:
+      expected_sign: negative
+      magnitude_range:
+      - -1.0
+      - 0.0
+    null_acceptance:
+      enabled: true
+      equivalence_bound: 0.1
+  unit_specification:
+    treatment_unit: log
+    outcome_unit: pct
+  notes: Income squeeze channel. Falling real income raises credit risk (delinquencies, provisions).
+  provenance:
+    source: manual
+    added_at: '2026-02-18'
+- id: real_expenditure_to_ppop_kspi
+  from: real_expenditure
+  to: ppop_kspi
+  edge_type: causal
+  timing:
+    lag: 1
+    lag_unit: quarter
+    contemporaneous: false
+    max_anticipation: 0
+  estimand:
+    type: elasticity
+    horizon:
+    - 0
+    - 1
+    - 2
+    scale: log
+  allowed_designs:
+  - LOCAL_PROJECTIONS
+  design_priority:
+  - LOCAL_PROJECTIONS
+  diagnostics_required:
+  - stability
+  acceptance_criteria:
+    diagnostics:
+      pretrend_p_min: 0.1
+    data:
+      max_missing_rate: 0.1
+      min_obs: 20
+      min_pre_periods: 4
+    plausibility:
+      expected_sign: positive
+      magnitude_range:
+      - 0.0
+      - 2.0
+    null_acceptance:
+      enabled: true
+      equivalence_bound: 0.1
+  unit_specification:
+    treatment_unit: log
+    outcome_unit: log
+  notes: Consumer spending drives fintech transaction revenue and thus PPOP.
+  provenance:
+    source: manual
+    added_at: '2026-02-18'
+- id: ppop_to_capital
+  from: ppop_kspi
+  to: total_capital_kspi
+  edge_type: mechanical
+  timing:
+    lag: 0
+    lag_unit: quarter
+    contemporaneous: true
+    max_anticipation: 0
+  estimand:
+    type: elasticity
+    horizon:
+    - 0
+    - 1
+    scale: log
+  allowed_designs:
+  - LOCAL_PROJECTIONS
+  design_priority:
+  - LOCAL_PROJECTIONS
+  diagnostics_required:
+  - stability
+  acceptance_criteria:
+    diagnostics:
+      pretrend_p_min: 0.1
+    data:
+      max_missing_rate: 0.1
+      min_obs: 20
+      min_pre_periods: 4
+    plausibility:
+      expected_sign: positive
+      magnitude_range:
+      - 0.0
+      - 2.0
+    null_acceptance:
+      enabled: true
+      equivalence_bound: 0.1
+  interpretation:
+    is: PPOP flows into retained earnings and thus regulatory capital
+    is_not:
+    - Net income effect (ignores provisions)
+    allowed_uses:
+    - scenario_only
+  identification_strategy:
+    type: accounting_identity
+    argument: PPOP is the pre-provision income that builds capital after provisions.
+    key_assumption: IFRS accounting mechanically links PPOP to capital via retained earnings.
+  unit_specification:
+    treatment_unit: log
+    outcome_unit: log
+  notes: PPOP feeds capital numerator. Mechanical accounting link.
+  provenance:
+    source: manual
+    added_at: '2026-02-18'
+- id: vix_to_deposit_cost_kspi
+  from: vix_shock
+  to: deposit_cost_kspi
+  edge_type: reduced_form
+  timing:
+    lag: 1
+    lag_unit: quarter
+    contemporaneous: false
+    max_anticipation: 0
+  estimand:
+    type: elasticity
+    horizon:
+    - 0
+    - 1
+    - 2
+    scale: level
+  allowed_designs:
+  - LOCAL_PROJECTIONS
+  design_priority:
+  - LOCAL_PROJECTIONS
+  diagnostics_required:
+  - stability
+  acceptance_criteria:
+    diagnostics:
+      pretrend_p_min: 0.1
+    data:
+      max_missing_rate: 0.1
+      min_obs: 20
+      min_pre_periods: 4
+    plausibility:
+      expected_sign: positive
+      magnitude_range:
+      - 0.0
+      - 1.0
+    null_acceptance:
+      enabled: true
+      equivalence_bound: 0.1
+  unit_specification:
+    treatment_unit: innovation
+    outcome_unit: pct
+  notes: Financial stress raises deposit rates as banks compete for funding.
+  provenance:
+    source: manual
+    added_at: '2026-02-18'
+- id: nominal_income_to_real_income
+  from: nominal_income
+  to: real_income
+  edge_type: identity
+  edge_status: IDENTITY
+  timing:
+    lag: 0
+    lag_unit: quarter
+    contemporaneous: true
+    max_anticipation: 0
+  allowed_designs: []
+  interpretation:
+    is: 'Identity component: real_income = nominal_income - cpi_headline'
+    is_not:
+    - Causal relationship
+    allowed_uses:
+    - scenario_only
+  unit_specification:
+    treatment_unit: log
+    outcome_unit: log
+  notes: Deflation identity. nominal_income is the numerator component of real_income.
+  provenance:
+    source: manual
+    added_at: '2026-02-18'
+- id: deposit_cost_to_ppop
+  from: deposit_cost_kspi
+  to: ppop_kspi
+  edge_type: mechanical
+  timing:
+    lag: 0
+    lag_unit: quarter
+    contemporaneous: true
+    max_anticipation: 0
+  estimand:
+    type: elasticity
+    horizon:
+    - 0
+    - 1
+    scale: log
+  allowed_designs:
+  - LOCAL_PROJECTIONS
+  design_priority:
+  - LOCAL_PROJECTIONS
+  diagnostics_required:
+  - stability
+  acceptance_criteria:
+    diagnostics:
+      pretrend_p_min: 0.1
+    data:
+      max_missing_rate: 0.1
+      min_obs: 20
+      min_pre_periods: 4
+    plausibility:
+      expected_sign: negative
+      magnitude_range:
+      - -2.0
+      - 0.0
+    null_acceptance:
+      enabled: true
+      equivalence_bound: 0.1
+  interpretation:
+    is: Deposit funding cost reduces pre-provision profit
+    is_not:
+    - Net income effect
+    allowed_uses:
+    - scenario_only
+  identification_strategy:
+    type: accounting_identity
+    argument: PPOP = interest income - interest expense - opex. Deposit cost drives interest expense.
+    key_assumption: Interest expense structure is stable.
+  unit_specification:
+    treatment_unit: pct
+    outcome_unit: log
+  notes: Higher deposit rates increase interest expense, reducing PPOP.
+  provenance:
+    source: manual
+    added_at: '2026-02-18'
+- id: payments_revenue_to_ppop
+  from: payments_revenue_kspi
+  to: ppop_kspi
+  edge_type: mechanical
+  timing:
+    lag: 0
+    lag_unit: quarter
+    contemporaneous: true
+    max_anticipation: 0
+  estimand:
+    type: elasticity
+    horizon:
+    - 0
+    scale: log
+  allowed_designs:
+  - LOCAL_PROJECTIONS
+  design_priority:
+  - LOCAL_PROJECTIONS
+  diagnostics_required:
+  - stability
+  acceptance_criteria:
+    diagnostics:
+      pretrend_p_min: 0.1
+    data:
+      max_missing_rate: 0.1
+      min_obs: 20
+      min_pre_periods: 4
+    plausibility:
+      expected_sign: positive
+      magnitude_range:
+      - 0.0
+      - 2.0
+    null_acceptance:
+      enabled: true
+      equivalence_bound: 0.1
+  interpretation:
+    is: Payments revenue component of PPOP
+    is_not:
+    - Full revenue effect
+    allowed_uses:
+    - scenario_only
+  identification_strategy:
+    type: accounting_identity
+    argument: Payments revenue is a revenue line feeding into PPOP.
+    key_assumption: Revenue decomposition is exhaustive.
+  unit_specification:
+    treatment_unit: log
+    outcome_unit: log
+  notes: Payments segment revenue feeds into pre-provision operating profit.
+  provenance:
+    source: manual
+    added_at: '2026-02-18'
 assumptions:
 - id: oil_shock_exogeneity
   statement: Baumeister oil shocks are exogenous to Kazakhstan macro conditions.

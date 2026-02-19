@@ -725,41 +725,24 @@ edges:
 - id: cpi_headline_to_real_income
   from: cpi_headline
   to: real_income
+  edge_type: identity
+  edge_status: IDENTITY
   timing:
-    lag: 1
+    lag: 0
     lag_unit: quarter
-    contemporaneous: false
+    contemporaneous: true
     max_anticipation: 0
-  estimand:
-    type: elasticity
-    horizon: 0
-    scale: level
-  allowed_designs:
-  - PANEL_FE_BACKDOOR
-  acceptance_criteria:
-    diagnostics:
-      pretrend_p_min: 0.1
-      first_stage_f_min: 10.0
-      placebo_p_min: 0.1
-      density_p_min: 0.1
-    data:
-      max_missing_rate: 0.05
-      min_obs: 50
-      min_pre_periods: 4
-    plausibility:
-      expected_sign: any
-    stability:
-      regime_split_date: null
-      max_coefficient_change: 0.5
-    null_acceptance:
-      enabled: true
-      equivalence_bound: 0.1
+  allowed_designs: []
+  interpretation:
+    is: 'Identity component: real_income = nominal_income - cpi_headline'
+    is_not:
+    - Causal relationship
+    allowed_uses:
+    - scenario_only
   unit_specification:
     treatment_unit: log
     outcome_unit: log
-  edge_type: causal
-  notes: 'NL-extracted: Imported inflation (price level increase) with sticky incomes->Real
-    disposable income (negative)'
+  notes: Identity dependency. real_income = nominal_income - cpi_headline (deflation identity).
 - id: transfer_income_to_nominal_income_buffering
   from: transfer_income
   to: nominal_income

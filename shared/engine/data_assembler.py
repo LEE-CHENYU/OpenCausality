@@ -598,13 +598,23 @@ def _align_frequencies(treatment: pd.Series, outcome: pd.Series) -> tuple[pd.Ser
     return treatment.reindex(common).dropna(), outcome.reindex(common).dropna()
 
 
-def assemble_edge_data(edge_id: str) -> pd.DataFrame:
+def assemble_edge_data(
+    edge_id: str,
+    unit_spec: dict[str, str] | None = None,
+) -> pd.DataFrame:
     """
     Assemble treatment and outcome data for an edge.
 
     Returns a DataFrame indexed by date with columns:
     - 'treatment': The treatment variable (possibly transformed)
     - 'outcome': The outcome variable (possibly transformed)
+
+    Args:
+        edge_id: Edge identifier (must exist in EDGE_NODE_MAP).
+        unit_spec: Optional dict with 'treatment_unit' and 'outcome_unit' from
+            DAG YAML unit_specification.  When provided, log transforms are
+            derived from the spec (treatment_unit/outcome_unit == "log").
+            When *not* provided, falls back to the legacy hardcoded sets.
 
     Handles:
     - Frequency alignment (daily -> monthly, monthly -> quarterly)
@@ -620,25 +630,27 @@ def assemble_edge_data(edge_id: str) -> pd.DataFrame:
     treatment = load_node_series(treatment_node)
     outcome = load_node_series(outcome_node)
 
-    # Apply transforms: log-return on treatment
-    if edge_id in LOG_RETURN_TREATMENT:
+    # Determine which transforms to apply.
+    # Prefer DAG-driven unit_spec; fall back to hardcoded sets.
+    if unit_spec is not None:
+        treat_needs_log = unit_spec.get("treatment_unit", "") == "log"
+        outcome_needs_log = unit_spec.get("outcome_unit", "") == "log"
+    else:
+        treat_needs_log = (
+            edge_id in LOG_RETURN_TREATMENT or edge_id in LOG_TRANSFORM_TREATMENT
+        )
+        outcome_needs_log = (
+            edge_id in LOG_RETURN_OUTCOME or edge_id in LOG_TRANSFORM_OUTCOME
+        )
+
+    if treat_needs_log:
         log_level = np.log(treatment.clip(lower=1e-6))
         treatment = log_level.diff().dropna()
         treatment.name = f"dlog_{treatment_node}"
 
-    if edge_id in LOG_RETURN_OUTCOME:
+    if outcome_needs_log:
         log_level = np.log(outcome.clip(lower=1e-6))
         outcome = log_level.diff().dropna()
-        outcome.name = f"dlog_{outcome_node}"
-
-    if edge_id in LOG_TRANSFORM_TREATMENT:
-        treatment = np.log(treatment.clip(lower=1e-6))
-        treatment = treatment.diff().dropna()
-        treatment.name = f"dlog_{treatment_node}"
-
-    if edge_id in LOG_TRANSFORM_OUTCOME:
-        outcome = np.log(outcome.clip(lower=1e-6))
-        outcome = outcome.diff().dropna()
         outcome.name = f"dlog_{outcome_node}"
 
     # Align frequencies

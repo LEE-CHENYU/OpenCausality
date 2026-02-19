@@ -1017,8 +1017,18 @@ class AgentLoop:
             if not edge:
                 raise ValueError(f"Edge not found: {task.edge_id}")
 
-            # Determine edge group and dispatch to appropriate card creator
+            # Determine edge group and dispatch to appropriate card creator.
+            # First try the hardcoded classifier; then fall back to DAG edge_type
+            # so narrative/generated DAG edges are routed correctly.
             group = get_edge_group(task.edge_id)
+            if group == "UNKNOWN" and edge:
+                _etype = getattr(edge, "edge_type", "")
+                if _etype == "identity":
+                    group = "IDENTITY"
+                elif _etype in ("bridge", "accounting_bridge"):
+                    group = "ACCOUNTING_BRIDGE"
+                elif _etype == "mechanical":
+                    group = "ACCOUNTING_BRIDGE"
             design_id = self._GROUP_TO_DESIGN.get(group)
 
             if group == "IMMUTABLE":
@@ -1487,7 +1497,11 @@ class AgentLoop:
         )
         from shared.agentic.output.provenance import SpecDetails, DataProvenance, SourceProvenance
 
-        data = assemble_edge_data(task.edge_id)
+        # Pass DAG unit_specification so transforms are driven by the DAG,
+        # not hardcoded edge-ID sets.
+        edge_for_units = self.dag.get_edge(task.edge_id)
+        unit_spec = edge_for_units.unit_specification if edge_for_units else None
+        data = assemble_edge_data(task.edge_id, unit_spec=unit_spec)
         max_h = 2 if is_quarterly else 6
         n_lags = 1 if is_quarterly else 2
 
