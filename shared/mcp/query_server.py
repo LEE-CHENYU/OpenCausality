@@ -444,9 +444,13 @@ def _do_compare_modes() -> list[dict]:
 
 def _do_run_placebo(max_tests: int, alpha: float) -> dict:
     from shared.agentic.falsification import PlaceboFalsifier
+    from shared.engine.dynamic_loader import DynamicLoaderFactory
 
     dag = _state["dag"]
     issue_ledger = _state["issue_ledger"]
+
+    factory = DynamicLoaderFactory()
+    factory.auto_populate_from_dag(dag)
 
     falsifier = PlaceboFalsifier(
         dag=dag,
