@@ -184,7 +184,7 @@ counterfactual:
 credibility_rating: B
 credibility_score: 0.6511111111111112
 identification:
-  claim_level: BLOCKED_ID
+  claim_level: IDENTIFIED_CAUSAL
   risks:
     unmeasured_confounding: medium
     simultaneity: low
@@ -208,12 +208,12 @@ identification:
   strategy_argument: ''
   strategy_key_assumption: ''
 counterfactual_block:
-  shock_scenario_allowed: false
-  policy_intervention_allowed: false
-  reason_shock_blocked: Shock CF requires REDUCED_FORM+, edge has BLOCKED_ID
-  reason_policy_blocked: REDUCED_FORM mode does not allow policy interventions
-  allowed: false
-  reason_blocked: Shock CF requires REDUCED_FORM+, edge has BLOCKED_ID
+  shock_scenario_allowed: true
+  policy_intervention_allowed: true
+  reason_shock_blocked: ''
+  reason_policy_blocked: ''
+  allowed: true
+  reason_blocked: ''
 propagation_role:
   role: bridge
   overlapping_paths: []

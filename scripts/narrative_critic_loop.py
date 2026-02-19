@@ -167,6 +167,11 @@ class NarrativeCriticLoop:
                 self._run_estimation(iteration)
                 critic.reload_dag()
 
+            # Deterministic auto-fixes (no LLM needed)
+            n_auto_fixed = critic.apply_auto_fixes()
+            if n_auto_fixed > 0:
+                console.print(f"  Auto-fixed {n_auto_fixed} issue(s)")
+
             # Collect feedback
             console.print("  [dim]Collecting feedback...[/dim]")
             feedback = critic.collect_feedback(iteration)

@@ -1,0 +1,98 @@
+edge_id: deposit_cost_kspi_to_ppop_kspi
+created_at: '2026-02-19T00:00:00'
+data_provenance:
+  treatment_source:
+    connector: kspi_quarterly
+    dataset: income_statement
+    series: deposit_rate
+  outcome_source:
+    connector: kspi_quarterly
+    dataset: income_statement
+    series: ppop
+  combined_row_count: 0
+  combined_date_range: null
+spec_details:
+  design: PLACEHOLDER
+  controls: []
+  instruments: []
+  fixed_effects: []
+  se_method: null
+  sample_filter: null
+  horizon:
+  - 0
+  bandwidth: null
+estimates: null
+diagnostics: {}
+all_diagnostics_pass: false
+interpretation:
+  estimand: Effect of deposit cost on PPOP
+  is_not: Structural causal effect under all interventions
+  channels:
+  - direct
+  population: ''
+  conditions: ''
+  allowed_uses: []
+  forbidden_uses: []
+failure_flags:
+  weak_identification: false
+  potential_bad_control: false
+  mechanical_identity_risk: false
+  regime_break_detected: false
+  small_sample: false
+  high_missing_rate: false
+  entity_boundary_change: false
+  definition_inconsistency: false
+  data_insufficient: true
+counterfactual:
+  supports_shock_path: false
+  supports_policy_intervention: false
+  intervention_note: Needs estimation
+  external_validity: ''
+credibility_rating: D
+credibility_score: 0.0
+identification:
+  claim_level: DESCRIPTIVE
+  risks:
+    unmeasured_confounding: medium
+    simultaneity: low
+    weak_variation: low
+    measurement_error: low
+    selection: low
+  untestable_assumptions: []
+  testable_threats_passed: []
+  testable_threats_failed: []
+  strategy_type: ''
+  strategy_argument: ''
+  strategy_key_assumption: ''
+counterfactual_block:
+  shock_scenario_allowed: false
+  policy_intervention_allowed: false
+  reason_shock_blocked: Placeholder card — needs estimation
+  reason_policy_blocked: Placeholder card — needs estimation
+  allowed: false
+  reason_blocked: Placeholder card — needs estimation
+propagation_role:
+  role: diagnostic_only
+  overlapping_paths: []
+  selected_for_counterfactual: false
+  mode_propagation_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: false
+    DESCRIPTIVE: true
+  mode_shock_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: false
+    DESCRIPTIVE: false
+  mode_policy_cf_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: false
+    DESCRIPTIVE: false
+literature:
+  supporting: []
+  challenging: []
+  methodological: []
+  search_status: NOT_SEARCHED
+companion_edge_id: null
+variant_of: null
+is_precisely_null: false
+null_equivalence_bound: null

@@ -211,6 +211,8 @@ class CriticFeedback:
     propagation_health: PropagationHealthScore | None = None
     edge_card_diagnostics: list[dict[str, Any]] = field(default_factory=list)
     blocked_path_details: list[dict[str, Any]] = field(default_factory=list)
+    identity_claim_mismatches: list[dict[str, Any]] = field(default_factory=list)
+    unit_chain_mismatches: list[dict[str, Any]] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -226,6 +228,8 @@ class CriticFeedback:
             "propagation_health": self.propagation_health.to_dict() if self.propagation_health else None,
             "edge_card_diagnostics": self.edge_card_diagnostics,
             "blocked_path_details": self.blocked_path_details,
+            "identity_claim_mismatches": self.identity_claim_mismatches,
+            "unit_chain_mismatches": self.unit_chain_mismatches,
         }
 
 

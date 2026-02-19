@@ -651,10 +651,11 @@ edges:
     estimate: 0.113
   unit_specification:
     treatment_unit: log
-    outcome_unit: log
+    outcome_unit: pct
   edge_status: IMMUTABLE
   edge_type: immutable
-  notes: 'Block A validated result: 11.3% FX pass-through to tradable CPI.'
+  notes: 'Block A validated result: 11.3% FX pass-through to tradable CPI. outcome_unit=pct
+    because CPI loaders return inflation_mom (monthly rates), not index levels.'
 - id: kzt_usd_to_cpi_nontradable
   from: kzt_usd
   to: cpi_nontradable
@@ -718,10 +719,11 @@ edges:
     estimate: 0.0
   unit_specification:
     treatment_unit: log
-    outcome_unit: log
+    outcome_unit: pct
   edge_status: IMMUTABLE
   edge_type: immutable
-  notes: 'Block A falsification: Near-zero pass-through to non-tradable CPI.'
+  notes: 'Block A falsification: Near-zero pass-through to non-tradable CPI. outcome_unit=pct
+    because CPI loaders return inflation_mom (monthly rates), not index levels.'
 - id: cpi_headline_to_real_income
   from: cpi_headline
   to: real_income
@@ -756,7 +758,9 @@ edges:
     horizon: 0
     scale: level
   allowed_designs:
-  - PANEL_FE_BACKDOOR
+  - LOCAL_PROJECTIONS
+  design_priority:
+  - LOCAL_PROJECTIONS
   acceptance_criteria:
     diagnostics:
       pretrend_p_min: 0.1
@@ -780,7 +784,8 @@ edges:
     outcome_unit: log
   edge_type: causal
   notes: 'NL-extracted: Transfers and regulated prices (buffers) during exchange-rate/price
-    shock->Headline nominal income stability (positive)'
+    shock->Headline nominal income stability (positive). Design changed from PANEL_FE_BACKDOOR
+    to LOCAL_PROJECTIONS (time-series edge, not panel).'
 - id: real_income_to_cor_kspi
   from: real_income
   to: cor_kspi
@@ -897,6 +902,33 @@ edges:
   edge_type: causal
   notes: 'NL-extracted: Tighter financial conditions->Kaspi interest margins (profit
     margins) (negative)'
+- id: deposit_cost_kspi_to_ppop_kspi
+  from: deposit_cost_kspi
+  to: ppop_kspi
+  edge_type: causal
+  timing:
+    lag: 0
+    lag_unit: quarter
+    contemporaneous: true
+    max_anticipation: 0
+  estimand:
+    type: elasticity
+    horizon: 0
+    scale: level
+  allowed_designs:
+  - LOCAL_PROJECTIONS
+  design_priority:
+  - LOCAL_PROJECTIONS
+  acceptance_criteria:
+    plausibility:
+      expected_sign: negative
+    stability:
+      regime_split_date: null
+      max_coefficient_change: 0.5
+  unit_specification:
+    treatment_unit: pct
+    outcome_unit: log
+  notes: Higher deposit costs squeeze net interest margin, reducing PPOP
 - id: ppop_kspi_to_total_capital_kspi
   from: ppop_kspi
   to: total_capital_kspi

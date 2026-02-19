@@ -184,7 +184,7 @@ counterfactual:
 credibility_rating: A
 credibility_score: 0.97
 identification:
-  claim_level: REDUCED_FORM
+  claim_level: IDENTIFIED_CAUSAL
   risks:
     unmeasured_confounding: medium
     simultaneity: low
@@ -208,12 +208,12 @@ identification:
   strategy_argument: ''
   strategy_key_assumption: ''
 counterfactual_block:
-  shock_scenario_allowed: false
-  policy_intervention_allowed: false
-  reason_shock_blocked: Design LOCAL_PROJECTIONS provides REDUCED_FORM level only
-  reason_policy_blocked: REDUCED_FORM mode does not allow policy interventions
-  allowed: false
-  reason_blocked: Design LOCAL_PROJECTIONS provides REDUCED_FORM level only
+  shock_scenario_allowed: true
+  policy_intervention_allowed: true
+  reason_shock_blocked: ''
+  reason_policy_blocked: ''
+  allowed: true
+  reason_blocked: ''
 propagation_role:
   role: structural
   overlapping_paths: []
