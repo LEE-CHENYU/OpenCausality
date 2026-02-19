@@ -1769,6 +1769,16 @@ def dag_critic_feedback(
         console.print(f"  Missing units: {len(feedback.edges_missing_units)} edges")
         console.print(f"  Formula violations: {len(feedback.formula_violations)}")
         console.print(f"  Open issues: {len(feedback.open_issues)}")
+        console.print(f"  Structural gaps: {len(feedback.structural_gaps)}")
+        console.print(f"  Causal logic probes: {len(feedback.causal_logic_probes)} finding(s)")
+        if feedback.causal_logic_probes:
+            for probe in feedback.causal_logic_probes:
+                sev = probe.get("severity", "info")
+                color = "yellow" if sev == "warning" else "dim"
+                console.print(
+                    f"    [{color}][{sev}] {probe.get('probe', '?')}: "
+                    f"{probe.get('finding', '')}[/{color}]"
+                )
 
 
 # ============================================================================

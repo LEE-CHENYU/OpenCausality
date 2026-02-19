@@ -346,21 +346,33 @@ opencausality dag critic-feedback config/agentic/dags/kspi_k2_narrative.yaml \
     outputs/agentic/kspi_k2_narrative/
 ```
 
-The critic operates in two layers:
+The critic operates in three layers:
 
 1. **Layer 1 (code-verifiable):** Mathematical/structural rules that are always correct
    and domain-agnostic -- identity edges from formulas, no double-log transforms,
    acyclicity, unit compatibility, metadata completeness. Violations are auto-detected.
 
-2. **Layer 2 (LLM + papers):** PaperScout literature + LLM reasoning proposes
+2. **Layer 1.5 (causal logic probes):** Four chain-level diagnostics that catch issues
+   per-edge checks miss. These are computed from edge card estimates and DAG structure,
+   then surfaced as informational context to the LLM critic:
+   - **Sign coherence:** Flags nodes where incoming edges have contradictory expected signs
+     (e.g., one positive and one negative to the same target).
+   - **Scale consistency:** Parses unit specifications and flags non-unity scales or
+     unit-kind mismatches between consecutive edges in a chain.
+   - **Magnitude plausibility:** Flags |coefficient| > 10 (possibly mis-scaled) or
+     |coefficient| < 0.001 with p < 0.05 (negligible but significant).
+   - **Sign vs. estimate:** Compares the DAG-declared expected sign against the
+     estimated coefficient sign. Flags contradictions.
+
+3. **Layer 2 (LLM + papers):** PaperScout literature + LLM reasoning proposes
    identification strategies, expected signs, forbidden controls, and edge type
    refinements. Each proposal carries a confidence score and is code-validated
    before application.
 
-Each iteration runs: AgentLoop estimation, structured feedback collection, LLM
-critique, code validation, revision application, structural repair, and quality
-scoring. Convergence is declared when the quality delta falls below 0.02 for 2
-consecutive iterations.
+Each iteration runs: AgentLoop estimation, structured feedback collection (including
+causal logic probes), LLM critique, code validation, revision application, structural
+repair, and quality scoring. Convergence is declared when the quality delta falls below
+0.02 for 2 consecutive iterations.
 
 **End-to-end test results** on the Kazakhstan narrative DAG:
 
@@ -735,7 +747,7 @@ shared/
 ├── agentic/
 │   ├── dag/              # DAG parser, schema, validator
 │   ├── agents/           # DAGScout, PaperScout, ModelSmithCritic, PatchBot,
-│   │                     #   PaperDAGExtractor, DAGCritic
+│   │                     #   PaperDAGExtractor, DAGCritic (with causal logic probes)
 │   ├── governance/       # HITL gate, audit log, patch policy, notifier
 │   ├── issues/           # Issue ledger, registry (30 rules), gates
 │   ├── identification/   # Identifiability screen (back-door, front-door)
@@ -1147,6 +1159,17 @@ fallback for environments without Claude Code.
 - **INVARIANTS.md §16 update** -- Distinguishes 6 CRITICAL + 1 HIGH architecturally
   essential issue rules. `SIGNIFICANT_BUT_NOT_IDENTIFIED` is HIGH (blocks CF only),
   not CRITICAL.
+
+#### Causal Logic Probes
+
+- **DAG Critic causal logic probes** -- Four chain-level diagnostics that catch issues
+  per-edge checks miss: sign coherence (contradictory expected signs converging on the
+  same node), scale consistency (unit-kind mismatches between consecutive edges),
+  magnitude plausibility (|coeff| > 10 or < 0.001 with p < 0.05), and sign vs. estimate
+  (DAG-declared sign contradicts estimated coefficient). Probe findings are surfaced as
+  informational context to the LLM critic and displayed in CLI `dag critic-feedback`
+  output and NarrativeCriticLoop iteration logs. No new revision types or quality score
+  changes -- probes inform the LLM's reasoning without altering the governance framework.
 
 #### Claude Code Plugin
 
