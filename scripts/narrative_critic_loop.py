@@ -170,6 +170,10 @@ class NarrativeCriticLoop:
             # Collect feedback
             console.print("  [dim]Collecting feedback...[/dim]")
             feedback = critic.collect_feedback(iteration)
+            if feedback.causal_logic_probes:
+                n_warn = sum(1 for p in feedback.causal_logic_probes if p.get("severity") == "warning")
+                n_info = len(feedback.causal_logic_probes) - n_warn
+                console.print(f"  Causal logic probes: {n_warn} warning(s), {n_info} info")
 
             # Get critique from LLM
             console.print(
