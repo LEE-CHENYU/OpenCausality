@@ -196,7 +196,10 @@ class DAGCritic:
         Returns a list of gap dicts with keys: rule, node_id, context.
         """
         gaps: list[dict[str, Any]] = []
-        target = self.dag.get("target_node", "")
+        target = (
+            self.dag.get("target_node", "")
+            or self.dag.get("metadata", {}).get("target_node", "")
+        )
         exogenous = set(self.dag.get("exogenous_nodes", []))
         latents = {
             a.get("latent", "")
@@ -311,12 +314,16 @@ class DAGCritic:
         known = set()
         for nid, node in self.nodes.items():
             known.add(nid.lower())
+            # Split node IDs on underscores for substring matching
+            for part in nid.lower().split("_"):
+                if len(part) >= 3:
+                    known.add(part)
             name = node.get("name", "")
             if name:
                 known.add(name.lower())
                 # Also add individual words for fuzzy matching
                 for word in name.lower().split():
-                    if len(word) > 3:
+                    if len(word) >= 3:
                         known.add(word)
 
         # Scan excerpts for quoted terms or parenthetical abbreviations

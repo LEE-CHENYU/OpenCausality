@@ -47,18 +47,66 @@
       "gaps": 3,
       "probes": 37,
       "applied": 5
+    },
+    {
+      "iteration": 8,
+      "quality": 0.74,
+      "gaps": 3,
+      "probes": 37,
+      "applied": 10,
+      "rejected": 4
+    },
+    {
+      "iteration": 9,
+      "quality": 0.8417,
+      "gaps": 4,
+      "probes": 34,
+      "applied": 11,
+      "rejected": 2
+    },
+    {
+      "iteration": 10,
+      "quality": 0.8748,
+      "gaps": 3,
+      "probes": 37,
+      "applied": 8,
+      "rejected": 6
+    },
+    {
+      "iteration": 11,
+      "quality": 0.8928,
+      "gaps": 0,
+      "probes": 38,
+      "applied": 7,
+      "rejected": 6
+    },
+    {
+      "iteration": 12,
+      "quality": 0.8928,
+      "gaps": 0,
+      "probes": 38,
+      "applied": 12,
+      "rejected": 3
+    },
+    {
+      "iteration": 13,
+      "quality": 0.9228,
+      "gaps": 0,
+      "probes": 45,
+      "applied": 11,
+      "rejected": 1
     }
   ],
-  "final_quality": 0.8526646341463415,
+  "final_quality": 0.9228260869565218,
   "final_quality_components": {
-    "edge_type_diversity": 0.5853658536585367,
+    "edge_type_diversity": 0.6304347826086957,
     "identification_coverage": 1.0,
-    "metadata_completeness": 0.8780487804878049,
-    "structural_soundness": 0.595,
+    "metadata_completeness": 0.8913043478260869,
+    "structural_soundness": 1.0,
     "unit_completeness": 1.0,
     "formula_correctness": 1.0,
-    "total": 0.8526646341463415
+    "total": 0.9228260869565218
   },
-  "remaining_probes": 37,
-  "remaining_gaps": 3
+  "remaining_probes": 45,
+  "remaining_gaps": 0
 }
