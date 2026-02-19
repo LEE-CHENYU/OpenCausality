@@ -1,6 +1,6 @@
 edge_id: nominal_income_to_real_income
-dag_version_hash: a26a41545ca6450142f55ab723c7eb60cac211ece2deb42ccbb70552bdd790a8
-created_at: '2026-02-18T17:53:57.675813'
+dag_version_hash: 09cbbdd15d1e238525a93232938ee5d1c91a0d7fc98f8f8b4023356c450bd56a
+created_at: '2026-02-18T18:53:54.812278'
 data_provenance:
   treatment_source:
     connector: parquet_file
@@ -9,11 +9,11 @@ data_provenance:
     retrieval_time: null
     file_path: null
     file_checksum: null
-    row_count: 57
+    row_count: 42
     column_count: null
     date_range:
-    - '2011-06-01'
-    - '2025-09-01'
+    - '2010-06-01'
+    - '2024-06-01'
     cache_key: null
   outcome_source:
     connector: parquet_file
@@ -22,18 +22,18 @@ data_provenance:
     retrieval_time: null
     file_path: null
     file_checksum: null
-    row_count: 57
+    row_count: 42
     column_count: null
     date_range:
-    - '2011-06-01'
-    - '2025-09-01'
+    - '2010-06-01'
+    - '2024-06-01'
     cache_key: null
   control_sources: {}
   instrument_sources: {}
-  combined_row_count: 57
+  combined_row_count: 42
   combined_date_range:
-  - '2011-06-01'
-  - '2025-09-01'
+  - '2010-06-01'
+  - '2024-06-01'
   missing_rate: null
   panel_dimensions: null
   entity_boundary_note: null
@@ -60,37 +60,37 @@ spec_details:
   - 6
   bandwidth: null
 estimates:
-  point: 0.9446005320796494
-  se: 0.0410136140847279
+  point: 0.9440270603902569
+  se: 0.40155415161420704
   ci_95:
-  - 0.8642138484735827
-  - 1.024987215685716
-  pvalue: 2.260243547263154e-117
+  - 0.1569809232264111
+  - 1.7310731975541027
+  pvalue: 0.018726386118384362
   horizons: *id001
   irf:
-  - 0.9446005320796494
-  - -0.9599725251682837
-  - 0.18098914836831745
-  - -0.15052616617839
-  - 0.7358588985148061
-  - -0.806109681303756
-  - 0.27139521951564805
+  - 0.9440270603902569
+  - 0.24741672456378092
+  - -0.34332916494599736
+  - 0.6496603781690546
+  - 0.42180234431420677
+  - -0.6059002113533956
+  - 0.5412009869874287
   irf_ci_lower:
-  - 0.864215325597758
-  - -1.0692443100702593
-  - 0.019108881752913337
-  - -0.32460000867423017
-  - 0.5019943089509742
-  - -1.0085532587079264
-  - 0.04020425117955667
+  - 0.15699538538387459
+  - -0.46162150547143255
+  - -0.7385604299554179
+  - -0.008193379350061147
+  - -0.2848542728598054
+  - -1.1776224320533735
+  - -0.2561811947506194
   irf_ci_upper:
-  - 1.0249857385615408
-  - -0.850700740266308
-  - 0.3428694149837216
-  - 0.023547676317450195
-  - 0.9697234880786381
-  - -0.6036661038995856
-  - 0.5025861878517395
+  - 1.7310587353966391
+  - 0.9564549545989944
+  - 0.05190210006342322
+  - 1.3075141356881703
+  - 1.128458961488219
+  - -0.034177990653417645
+  - 1.3385831687254768
 diagnostics:
   hac_bandwidth:
     name: hac_bandwidth
@@ -102,7 +102,7 @@ diagnostics:
   effective_obs:
     name: effective_obs
     passed: true
-    value: 55.0
+    value: 40.0
     threshold: 20.0
     pvalue: null
     message: ''
@@ -182,7 +182,7 @@ counterfactual:
   intervention_note: Reduced-form LP estimate
   external_validity: ''
 credibility_rating: A
-credibility_score: 0.8355555555555555
+credibility_score: 0.8055555555555556
 identification:
   claim_level: BLOCKED_ID
   risks:
@@ -325,7 +325,7 @@ literature:
   challenging: []
   methodological: []
   search_status: SEARCHED
-  search_timestamp: '2026-02-18T17:53:57.675882'
+  search_timestamp: '2026-02-18T18:53:54.812367'
   search_query: Nominal monetary income Real monetary income causal effect
   total_results: 5
 companion_edge_id: null

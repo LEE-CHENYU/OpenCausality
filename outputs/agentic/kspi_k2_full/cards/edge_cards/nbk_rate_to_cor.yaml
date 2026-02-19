@@ -1,6 +1,6 @@
 edge_id: nbk_rate_to_cor
-dag_version_hash: a26a41545ca6450142f55ab723c7eb60cac211ece2deb42ccbb70552bdd790a8
-created_at: '2026-02-18T17:53:57.592169'
+dag_version_hash: 09cbbdd15d1e238525a93232938ee5d1c91a0d7fc98f8f8b4023356c450bd56a
+created_at: '2026-02-18T18:53:54.716327'
 data_provenance:
   treatment_source:
     connector: parquet_file
@@ -232,24 +232,6 @@ literature:
     search_query: NBK base rate KSPI cost of risk causal effect
     source: arxiv
     pdf_url: https://arxiv.org/pdf/2107.03979v1
-  - doi: ''
-    title: IMPACTOF CORONA VIRUS ON HEALTH,ECONOMY AND EDUCATION
-    authors:
-    - fathun, fatimah azahrah
-    - Rohana, Rohana
-    - taufiqurakman, Muh
-    year: 2020
-    excerpt: Corona Virus has given bad affect to some areas such as Health, Economic
-      and Education that very important for human life, Corona Virus it change human
-      life is different, all activity at home and by online, some countries has decided
-      to lock down and Indonesia has PSBB large scale social Restriction
-    relevance: supporting
-    edge_id: nbk_rate_to_cor
-    paper_id: ''
-    citation_count: 0
-    search_query: NBK base rate KSPI cost of risk causal effect
-    source: core
-    pdf_url: https://core.ac.uk/download/392335507.pdf
   challenging: []
   methodological:
   - doi: ''
@@ -287,9 +269,9 @@ literature:
     source: arxiv
     pdf_url: https://arxiv.org/pdf/1508.00310v2
   search_status: SEARCHED
-  search_timestamp: '2026-02-18T17:53:57.592235'
+  search_timestamp: '2026-02-18T18:53:54.716387'
   search_query: NBK base rate KSPI cost of risk causal effect
-  total_results: 4
+  total_results: 3
 companion_edge_id: null
 variant_of: null
 is_precisely_null: false

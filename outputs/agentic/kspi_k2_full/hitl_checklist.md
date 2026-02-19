@@ -1,5 +1,5 @@
 # Human-in-the-Loop Checklist
-Run ID: 26d536df
+Run ID: 21cc2c8d
 
 > This checklist contains issues that require your expert judgment before
 > the pipeline can proceed. For each item, review the context, understand
@@ -38,7 +38,12 @@ Run ID: 26d536df
 - **Suggested:** Split estimand by regime or restrict counterfactual scope
 - [ ] Decision: _________________
 
-### 7. Null link cpi_headline->cpi_tradable | kzt_usd: significant partial association (beta=0.9622, p=0.0000, N=178). DAG may need this edge.
+### 7. Regime Instability Decision
+- **Edge:** `cpi_headline_to_real_income`
+- **Suggested:** Split estimand by regime or restrict counterfactual scope
+- [ ] Decision: _________________
+
+### 8. Null link cpi_headline->cpi_tradable | kzt_usd: significant partial association (beta=0.9622, p=0.0000, N=178). DAG may need this edge.
 - from_node: cpi_headline
 - to_node: cpi_tradable
 - coefficient: 0.9621923746483524
@@ -50,7 +55,7 @@ Run ID: 26d536df
 - shared_neighbors: []
 - [ ] Decision: _________________
 
-### 8. p=0.0262 but claim_level=REDUCED_FORM. Significance does not establish causation.
+### 9. p=0.0262 but claim_level=REDUCED_FORM. Significance does not establish causation.
 - **Edge:** `cpi_nontradable_to_cpi_headline`
 - **Why this matters:** This edge shows a statistically significant result (low p-value), but the identification strategy has not been validated as causal. A significant correlation is not the same as a causal effect — without proper identification (e.g., IV, RDD, DiD), the estimate may reflect reverse causation, omitted variable bias, or spurious correlation. Accepting this as causal without acknowledgement constitutes overclaiming.
 
@@ -60,7 +65,7 @@ Run ID: 26d536df
 - claim_level: REDUCED_FORM
 - [ ] Decision: _________________
 
-### 9. p=0.0029 but claim_level=REDUCED_FORM. Significance does not establish causation.
+### 10. p=0.0029 but claim_level=REDUCED_FORM. Significance does not establish causation.
 - **Edge:** `shock_to_npl_sector`
 - **Why this matters:** This edge shows a statistically significant result (low p-value), but the identification strategy has not been validated as causal. A significant correlation is not the same as a causal effect — without proper identification (e.g., IV, RDD, DiD), the estimate may reflect reverse causation, omitted variable bias, or spurious correlation. Accepting this as causal without acknowledgement constitutes overclaiming.
 
@@ -70,7 +75,7 @@ Run ID: 26d536df
 - claim_level: REDUCED_FORM
 - [ ] Decision: _________________
 
-### 10. Leave-one-out shows sign flip or >50% magnitude change.
+### 11. Leave-one-out shows sign flip or >50% magnitude change.
 - **Edge:** `shock_to_npl_sector`
 - **Why this matters:** Leave-one-out (LOO) analysis drops each unit in turn and re-estimates. If the coefficient flips sign or changes magnitude by more than 50%, the result is driven by a single influential unit rather than a systematic pattern. Such fragility undermines confidence in the estimate as a general causal effect.
 
@@ -79,7 +84,7 @@ Run ID: 26d536df
 - loo_message: Sign flipped when excluding: kaspi
 - [ ] Decision: _________________
 
-### 11. p=0.0000 but claim_level=REDUCED_FORM. Significance does not establish causation.
+### 12. p=0.0000 but claim_level=REDUCED_FORM. Significance does not establish causation.
 - **Edge:** `ppop_to_capital`
 - **Why this matters:** This edge shows a statistically significant result (low p-value), but the identification strategy has not been validated as causal. A significant correlation is not the same as a causal effect — without proper identification (e.g., IV, RDD, DiD), the estimate may reflect reverse causation, omitted variable bias, or spurious correlation. Accepting this as causal without acknowledgement constitutes overclaiming.
 
@@ -89,7 +94,7 @@ Run ID: 26d536df
 - claim_level: REDUCED_FORM
 - [ ] Decision: _________________
 
-### 12. p=0.0018 but claim_level=REDUCED_FORM. Significance does not establish causation.
+### 13. p=0.0018 but claim_level=REDUCED_FORM. Significance does not establish causation.
 - **Edge:** `portfolio_mix_to_rwa`
 - **Why this matters:** This edge shows a statistically significant result (low p-value), but the identification strategy has not been validated as causal. A significant correlation is not the same as a causal effect — without proper identification (e.g., IV, RDD, DiD), the estimate may reflect reverse causation, omitted variable bias, or spurious correlation. Accepting this as causal without acknowledgement constitutes overclaiming.
 
@@ -99,7 +104,7 @@ Run ID: 26d536df
 - claim_level: REDUCED_FORM
 - [ ] Decision: _________________
 
-### 13. p=0.0000 but claim_level=REDUCED_FORM. Significance does not establish causation.
+### 14. p=0.0000 but claim_level=REDUCED_FORM. Significance does not establish causation.
 - **Edge:** `expenditure_to_payments_revenue`
 - **Why this matters:** This edge shows a statistically significant result (low p-value), but the identification strategy has not been validated as causal. A significant correlation is not the same as a causal effect — without proper identification (e.g., IV, RDD, DiD), the estimate may reflect reverse causation, omitted variable bias, or spurious correlation. Accepting this as causal without acknowledgement constitutes overclaiming.
 
@@ -109,7 +114,7 @@ Run ID: 26d536df
 - claim_level: REDUCED_FORM
 - [ ] Decision: _________________
 
-### 14. p=0.0029 but claim_level=BLOCKED_ID. Significance does not establish causation.
+### 15. p=0.0029 but claim_level=BLOCKED_ID. Significance does not establish causation.
 - **Edge:** `nbk_rate_to_cor`
 - **Why this matters:** This edge shows a statistically significant result (low p-value), but the identification strategy has not been validated as causal. A significant correlation is not the same as a causal effect — without proper identification (e.g., IV, RDD, DiD), the estimate may reflect reverse causation, omitted variable bias, or spurious correlation. Accepting this as causal without acknowledgement constitutes overclaiming.
 
@@ -119,7 +124,7 @@ Run ID: 26d536df
 - claim_level: BLOCKED_ID
 - [ ] Decision: _________________
 
-### 15. p=0.0000 but claim_level=REDUCED_FORM. Significance does not establish causation.
+### 16. p=0.0000 but claim_level=REDUCED_FORM. Significance does not establish causation.
 - **Edge:** `real_expenditure_to_ppop_kspi`
 - **Why this matters:** This edge shows a statistically significant result (low p-value), but the identification strategy has not been validated as causal. A significant correlation is not the same as a causal effect — without proper identification (e.g., IV, RDD, DiD), the estimate may reflect reverse causation, omitted variable bias, or spurious correlation. Accepting this as causal without acknowledgement constitutes overclaiming.
 
@@ -129,7 +134,7 @@ Run ID: 26d536df
 - claim_level: REDUCED_FORM
 - [ ] Decision: _________________
 
-### 16. p=0.0000 but claim_level=REDUCED_FORM. Significance does not establish causation.
+### 17. p=0.0000 but claim_level=REDUCED_FORM. Significance does not establish causation.
 - **Edge:** `oil_supply_to_brent`
 - **Why this matters:** This edge shows a statistically significant result (low p-value), but the identification strategy has not been validated as causal. A significant correlation is not the same as a causal effect — without proper identification (e.g., IV, RDD, DiD), the estimate may reflect reverse causation, omitted variable bias, or spurious correlation. Accepting this as causal without acknowledgement constitutes overclaiming.
 
@@ -139,7 +144,7 @@ Run ID: 26d536df
 - claim_level: REDUCED_FORM
 - [ ] Decision: _________________
 
-### 17. p=0.0000 but claim_level=REDUCED_FORM. Significance does not establish causation.
+### 18. p=0.0000 but claim_level=REDUCED_FORM. Significance does not establish causation.
 - **Edge:** `shock_to_cor_sector`
 - **Why this matters:** This edge shows a statistically significant result (low p-value), but the identification strategy has not been validated as causal. A significant correlation is not the same as a causal effect — without proper identification (e.g., IV, RDD, DiD), the estimate may reflect reverse causation, omitted variable bias, or spurious correlation. Accepting this as causal without acknowledgement constitutes overclaiming.
 
@@ -149,7 +154,7 @@ Run ID: 26d536df
 - claim_level: REDUCED_FORM
 - [ ] Decision: _________________
 
-### 18. Leave-one-out shows sign flip or >50% magnitude change.
+### 19. Leave-one-out shows sign flip or >50% magnitude change.
 - **Edge:** `shock_to_cor_sector`
 - **Why this matters:** Leave-one-out (LOO) analysis drops each unit in turn and re-estimates. If the coefficient flips sign or changes magnitude by more than 50%, the result is driven by a single influential unit rather than a systematic pattern. Such fragility undermines confidence in the estimate as a general causal effect.
 
@@ -158,7 +163,7 @@ Run ID: 26d536df
 - loo_message: Sign flipped when excluding: halyk
 - [ ] Decision: _________________
 
-### 19. p=0.0000 but claim_level=REDUCED_FORM. Significance does not establish causation.
+### 20. p=0.0000 but claim_level=REDUCED_FORM. Significance does not establish causation.
 - **Edge:** `deposit_cost_to_ppop`
 - **Why this matters:** This edge shows a statistically significant result (low p-value), but the identification strategy has not been validated as causal. A significant correlation is not the same as a causal effect — without proper identification (e.g., IV, RDD, DiD), the estimate may reflect reverse causation, omitted variable bias, or spurious correlation. Accepting this as causal without acknowledgement constitutes overclaiming.
 
@@ -168,7 +173,7 @@ Run ID: 26d536df
 - claim_level: REDUCED_FORM
 - [ ] Decision: _________________
 
-### 20. Leave-one-out shows sign flip or >50% magnitude change.
+### 21. Leave-one-out shows sign flip or >50% magnitude change.
 - **Edge:** `nbk_rate_to_cor_sector`
 - **Why this matters:** Leave-one-out (LOO) analysis drops each unit in turn and re-estimates. If the coefficient flips sign or changes magnitude by more than 50%, the result is driven by a single influential unit rather than a systematic pattern. Such fragility undermines confidence in the estimate as a general causal effect.
 
@@ -177,7 +182,7 @@ Run ID: 26d536df
 - loo_message: Sign flipped when excluding: bcc, halyk
 - [ ] Decision: _________________
 
-### 21. p=0.0000 but claim_level=REDUCED_FORM. Significance does not establish causation.
+### 22. p=0.0000 but claim_level=REDUCED_FORM. Significance does not establish causation.
 - **Edge:** `payments_revenue_to_ppop`
 - **Why this matters:** This edge shows a statistically significant result (low p-value), but the identification strategy has not been validated as causal. A significant correlation is not the same as a causal effect — without proper identification (e.g., IV, RDD, DiD), the estimate may reflect reverse causation, omitted variable bias, or spurious correlation. Accepting this as causal without acknowledgement constitutes overclaiming.
 
@@ -187,7 +192,7 @@ Run ID: 26d536df
 - claim_level: REDUCED_FORM
 - [ ] Decision: _________________
 
-### 22. p=0.0098 but claim_level=REDUCED_FORM. Significance does not establish causation.
+### 23. p=0.0098 but claim_level=REDUCED_FORM. Significance does not establish causation.
 - **Edge:** `oil_demand_to_fx`
 - **Why this matters:** This edge shows a statistically significant result (low p-value), but the identification strategy has not been validated as causal. A significant correlation is not the same as a causal effect — without proper identification (e.g., IV, RDD, DiD), the estimate may reflect reverse causation, omitted variable bias, or spurious correlation. Accepting this as causal without acknowledgement constitutes overclaiming.
 
@@ -197,7 +202,7 @@ Run ID: 26d536df
 - claim_level: REDUCED_FORM
 - [ ] Decision: _________________
 
-### 23. p=0.0003 but claim_level=BLOCKED_ID. Significance does not establish causation.
+### 24. p=0.0003 but claim_level=BLOCKED_ID. Significance does not establish causation.
 - **Edge:** `nbk_rate_to_deposit_cost`
 - **Why this matters:** This edge shows a statistically significant result (low p-value), but the identification strategy has not been validated as causal. A significant correlation is not the same as a causal effect — without proper identification (e.g., IV, RDD, DiD), the estimate may reflect reverse causation, omitted variable bias, or spurious correlation. Accepting this as causal without acknowledgement constitutes overclaiming.
 
@@ -207,12 +212,22 @@ Run ID: 26d536df
 - claim_level: BLOCKED_ID
 - [ ] Decision: _________________
 
-### 24. p=0.0000 but claim_level=BLOCKED_ID. Significance does not establish causation.
+### 25. p=0.0000 but claim_level=REDUCED_FORM. Significance does not establish causation.
+- **Edge:** `real_income_to_cor_kspi`
+- **Why this matters:** This edge shows a statistically significant result (low p-value), but the identification strategy has not been validated as causal. A significant correlation is not the same as a causal effect — without proper identification (e.g., IV, RDD, DiD), the estimate may reflect reverse causation, omitted variable bias, or spurious correlation. Accepting this as causal without acknowledgement constitutes overclaiming.
+
+- **Decision guidance:** If you have a credible identification strategy, upgrade to IDENTIFIED_CAUSAL and document it. Otherwise, accept as REDUCED_FORM — informative but not usable for counterfactual predictions without caveats.
+
+- pvalue: 7.122151798006042e-92
+- claim_level: REDUCED_FORM
+- [ ] Decision: _________________
+
+### 26. p=0.0187 but claim_level=BLOCKED_ID. Significance does not establish causation.
 - **Edge:** `nominal_income_to_real_income`
 - **Why this matters:** This edge shows a statistically significant result (low p-value), but the identification strategy has not been validated as causal. A significant correlation is not the same as a causal effect — without proper identification (e.g., IV, RDD, DiD), the estimate may reflect reverse causation, omitted variable bias, or spurious correlation. Accepting this as causal without acknowledgement constitutes overclaiming.
 
 - **Decision guidance:** If you have a credible identification strategy, upgrade to IDENTIFIED_CAUSAL and document it. Otherwise, accept as REDUCED_FORM — informative but not usable for counterfactual predictions without caveats.
 
-- pvalue: 2.260243547263154e-117
+- pvalue: 0.018726386118384362
 - claim_level: BLOCKED_ID
 - [ ] Decision: _________________

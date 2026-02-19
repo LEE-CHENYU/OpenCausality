@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-02-19T01:55:46.268969+00:00",
+  "last_updated": "2026-02-19T02:55:07.004141+00:00",
   "baseline_run_id": "",
   "baseline_mode": "",
   "baseline_dag_hash": "",
@@ -213,6 +213,13 @@
       "severity": "HIGH",
       "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
       "message": "A-rating despite failed diagnostics."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:real_income_to_cor_kspi": {
+      "status": "OPEN",
+      "opened_run": "21cc2c8d",
+      "severity": "HIGH",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0000 but claim_level=REDUCED_FORM. Significance does not establish causation."
     }
   }
 }

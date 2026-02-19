@@ -337,6 +337,23 @@ def _load_nominal_income() -> pd.Series:
     return df[col].dropna().rename("nominal_income")
 
 
+@_register("real_income")
+def _load_real_income() -> pd.Series:
+    """Load pre-computed real income growth from spending_series.
+
+    This bypasses the derived-node formula (nominal_income - cpi_headline)
+    which incorrectly subtracts monthly MoM inflation from quarterly growth.
+    The spending_series already has real_income_growth properly computed.
+    """
+    df = _load_parquet(PROCESSED_DIR / "fx_passthrough" / "spending_series.parquet")
+    if "date" in df.columns:
+        df = df.set_index("date")
+    if not isinstance(df.index, pd.DatetimeIndex):
+        df.index = pd.to_datetime(df.index)
+    col = "real_income_growth" if "real_income_growth" in df.columns else df.columns[0]
+    return df[col].dropna().rename("real_income")
+
+
 @_register("real_expenditure")
 def _load_real_expenditure() -> pd.Series:
     # Try spending_series first, then expenditure_series
@@ -449,6 +466,7 @@ EDGE_NODE_MAP: dict[str, tuple[str, str]] = {
     "shock_to_cor_kspi": ("cpi_tradable", "cor_kspi"),
     "nbk_rate_to_deposit_cost": ("nbk_policy_rate", "deposit_cost_kspi"),
     "nbk_rate_to_cor": ("nbk_policy_rate", "cor_kspi"),
+    "real_income_to_cor_kspi": ("real_income", "cor_kspi"),
     # Group C-KSPI: KSPI-only, no extension possible
     "expenditure_to_payments_revenue": ("real_expenditure", "payments_revenue_kspi"),
     "portfolio_mix_to_rwa": ("portfolio_mix_kspi", "rwa_kspi"),

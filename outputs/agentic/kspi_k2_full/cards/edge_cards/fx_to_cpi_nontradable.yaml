@@ -1,6 +1,6 @@
 edge_id: fx_to_cpi_nontradable
-dag_version_hash: a26a41545ca6450142f55ab723c7eb60cac211ece2deb42ccbb70552bdd790a8
-created_at: '2026-02-18T17:53:57.230523'
+dag_version_hash: 09cbbdd15d1e238525a93232938ee5d1c91a0d7fc98f8f8b4023356c450bd56a
+created_at: '2026-02-18T18:53:54.318245'
 data_provenance:
   treatment_source: null
   outcome_source: null
@@ -196,7 +196,7 @@ literature:
     source: arxiv
     pdf_url: https://arxiv.org/pdf/2209.03013v1
   search_status: SEARCHED
-  search_timestamp: '2026-02-18T17:53:57.230566'
+  search_timestamp: '2026-02-18T18:53:54.318283'
   search_query: KZT/USD exchange rate Non-tradable CPI causal effect
   total_results: 5
 companion_edge_id: null

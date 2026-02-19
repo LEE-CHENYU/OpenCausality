@@ -637,6 +637,75 @@ class DAGCritic:
                     "severity": "warning",
                 })
 
+        # ── Probe 5: derived_frequency_mismatch ──
+        # For derived nodes with identity formulas, check if all dependency
+        # nodes share the same declared frequency.
+        _FREQ_RANK = {"daily": 1, "monthly": 2, "quarterly": 3, "annual": 4}
+        for nid, node in self.nodes.items():
+            if not node.get("derived"):
+                continue
+            identity = node.get("identity", {})
+            deps = identity.get("depends_on") or node.get("depends_on", [])
+            if len(deps) < 2:
+                continue
+            dep_freqs: dict[str, str] = {}
+            for dep in deps:
+                dep_node = self.nodes.get(dep)
+                if dep_node:
+                    freq = dep_node.get("frequency", "")
+                    if freq:
+                        dep_freqs[dep] = freq
+            if len(dep_freqs) < 2:
+                continue
+            unique_freqs = set(dep_freqs.values())
+            if len(unique_freqs) > 1:
+                detail = ", ".join(f"{d}={f}" for d, f in dep_freqs.items())
+                findings.append({
+                    "probe": "derived_frequency_mismatch",
+                    "finding": (
+                        f"Derived node '{nid}' formula mixes frequencies: "
+                        f"{detail}. Arithmetic on mismatched frequencies "
+                        f"produces nonsensical results."
+                    ),
+                    "edges_involved": [
+                        eid for eid, e in self.edges.items()
+                        if e.get("to") == nid
+                    ],
+                    "severity": "error",
+                })
+
+        # ── Probe 6: treatment_outcome_scale_gap ──
+        # Detect edges where unit kinds suggest different data magnitudes
+        # (e.g., decimal growth rate treatment with percentage-form outcome).
+        _DECIMAL_KINDS = {"ratio", "log_point"}
+        _PERCENT_KINDS = {"pct", "pp", "bps"}
+        for eid, edge in self.edges.items():
+            unit_spec = edge.get("unit_specification", {})
+            tu = unit_spec.get("treatment_unit", "")
+            ou = unit_spec.get("outcome_unit", "")
+            if not tu or not ou:
+                continue
+            tu_parsed = UnitSpec.parse(tu)
+            ou_parsed = UnitSpec.parse(ou)
+            # Flag when one side is decimal-scale and the other is pct-scale
+            tu_is_decimal = tu_parsed.kind in _DECIMAL_KINDS
+            ou_is_decimal = ou_parsed.kind in _DECIMAL_KINDS
+            tu_is_pct = tu_parsed.kind in _PERCENT_KINDS
+            ou_is_pct = ou_parsed.kind in _PERCENT_KINDS
+            if (tu_is_decimal and ou_is_pct) or (tu_is_pct and ou_is_decimal):
+                findings.append({
+                    "probe": "treatment_outcome_scale_gap",
+                    "finding": (
+                        f"Edge '{eid}' has scale gap: "
+                        f"treatment_unit='{tu}' (kind={tu_parsed.kind}) vs "
+                        f"outcome_unit='{ou}' (kind={ou_parsed.kind}). "
+                        f"Decimal vs percentage scale difference (~100x) "
+                        f"inflates coefficient magnitudes."
+                    ),
+                    "edges_involved": [eid],
+                    "severity": "warning",
+                })
+
         return findings
 
     # ──────────────────────────────────────────────────────────────

@@ -425,20 +425,14 @@ nodes:
     added_at: '2026-02-02'
 - id: real_income
   name: Real monetary income
-  description: Nominal income deflated by CPI. Identity node.
-  unit: log
+  description: Real income growth rate (pre-computed from spending_series).
+  unit: growth
   frequency: quarterly
   type: continuous
   observed: true
   latent: false
   scope: kazakhstan_only
-  derived: true
-  identity:
-    name: real_income_identity
-    formula: nominal_income - cpi_headline
-    depends_on:
-    - nominal_income
-    - cpi_headline
+  derived: false
   release_lag:
     periods: 1
     lag_unit: quarter
@@ -2275,9 +2269,9 @@ edges:
     allowed_uses:
     - scenario_only
   unit_specification:
-    treatment_unit: log
-    outcome_unit: log
-  notes: Deflation identity. real_income depends on both nominal_income and cpi_headline.
+    treatment_unit: pct
+    outcome_unit: growth
+  notes: Deflation identity. real_income is pre-computed as real_income_growth from spending_series.
   provenance:
     source: manual
     added_at: '2026-02-18'
@@ -2487,9 +2481,9 @@ edges:
     allowed_uses:
     - scenario_only
   unit_specification:
-    treatment_unit: log
-    outcome_unit: log
-  notes: Deflation identity. nominal_income is the numerator component of real_income.
+    treatment_unit: growth
+    outcome_unit: growth
+  notes: Deflation identity. real_income is pre-computed as real_income_growth from spending_series.
   provenance:
     source: manual
     added_at: '2026-02-18'
