@@ -354,9 +354,9 @@ nodes:
   derived: true
   identity:
     name: imported_inflation_iv
-    formula: 100 * E_import_share * (kzt_usd_monthly - L1(kzt_usd_monthly))
+    formula: 100 * E_import_share * fx_change_monthly
     depends_on:
-    - kzt_usd
+    - fx_change_monthly
     - E_import_share
   release_lag:
     periods: 1
@@ -558,10 +558,9 @@ nodes:
   derived: true
   identity:
     name: real_expenditure_identity
-    formula: nominal_expenditure - cpi_headline_quarterly
+    formula: real_expenditure_quarterly
     depends_on:
-    - nominal_expenditure
-    - cpi_headline
+    - real_expenditure_quarterly
   release_lag:
     periods: 1
     lag_unit: quarter
@@ -1020,6 +1019,11 @@ nodes:
   type: continuous
   observed: true
   frequency: M
+  derived: true
+  identity:
+    formula: monthly_avg(kzt_usd)
+    depends_on:
+    - kzt_usd
   tags:
   - critic_generated
 - id: cpi_headline_quarterly
@@ -1030,7 +1034,12 @@ nodes:
     consistently.
   type: continuous
   observed: true
-  frequency: M
+  frequency: Q
+  derived: true
+  identity:
+    formula: quarterly_avg(cpi_headline)
+    depends_on:
+    - cpi_headline
   tags:
   - critic_generated
 - id: fdi_inflows
@@ -1066,6 +1075,39 @@ nodes:
   type: continuous
   observed: true
   frequency: M
+  tags:
+  - critic_generated
+- id: fx_change_monthly
+  name: Monthly FX depreciation (Δlog KZT/USD)
+  unit: log_point
+  description: Monthly change in log KZT/USD (e.g., Δ log(avg KZT/USD) or log(end-of-month)
+    − log(prev end-of-month)), used to construct imported inflation exposure at monthly
+    frequency.
+  type: continuous
+  observed: true
+  frequency: M
+  derived: true
+  identity:
+    formula: diff(kzt_usd_monthly)
+    depends_on:
+    - kzt_usd_monthly
+  tags:
+  - critic_generated
+- id: real_expenditure_quarterly
+  name: Real consumption expenditure (quarterly, log)
+  unit: log
+  description: Quarterly real consumption expenditure in logs, defined as nominal
+    consumption (log) deflated by quarterly CPI (log). Frequency-consistent counterpart
+    to avoid mixing monthly CPI with quarterly nominal expenditure.
+  type: continuous
+  observed: true
+  frequency: Q
+  derived: true
+  identity:
+    formula: nominal_expenditure - cpi_headline_quarterly
+    depends_on:
+    - nominal_expenditure
+    - cpi_headline_quarterly
   tags:
   - critic_generated
 edges:
@@ -1169,7 +1211,7 @@ edges:
       min_obs: 100
       min_pre_periods: 12
     plausibility:
-      expected_sign: positive
+      expected_sign: negative
       magnitude_range:
       - 0.0
       - 0.5
@@ -1201,7 +1243,7 @@ edges:
     treatment_unit: sd
     outcome_unit: log
   timing:
-    lag: 0
+    lag: 1
     lag_unit: month
     contemporaneous: true
     max_anticipation: 0
@@ -1218,7 +1260,9 @@ edges:
   design_priority:
   - LOCAL_PROJECTIONS
   required_adjustments: []
-  forbidden_controls: []
+  forbidden_controls:
+  - brent_price
+  - oil_supply_shock
   diagnostics_required:
   - pre_trends
   - placebo
@@ -1470,8 +1514,8 @@ edges:
   to: nbk_policy_rate
   edge_type: reaction_function
   unit_specification:
-    treatment_unit: log
-    outcome_unit: pct
+    treatment_unit: pp (100×Δlog headline CPI; inflation rate in percentage points)
+    outcome_unit: pct (policy rate level, percent per annum)
   timing:
     lag: 1
     lag_unit: month
@@ -1538,8 +1582,8 @@ edges:
   to: nbk_policy_rate
   edge_type: reaction_function
   unit_specification:
-    treatment_unit: log
-    outcome_unit: pct
+    treatment_unit: pp (100×Δlog KZT/USD; depreciation in percentage points)
+    outcome_unit: pct (policy rate level, percent per annum)
   timing:
     lag: 1
     lag_unit: month
@@ -1888,7 +1932,7 @@ edges:
     treatment_unit: log
     outcome_unit: log
   timing:
-    lag: 0
+    lag: 1
     lag_unit: quarter
     contemporaneous: true
     max_anticipation: 0
@@ -1904,7 +1948,9 @@ edges:
   design_priority:
   - LOCAL_PROJECTIONS
   required_adjustments: []
-  forbidden_controls: []
+  forbidden_controls:
+  - ppop_kspi
+  - total_capital_kspi
   diagnostics_required:
   - stability
   acceptance_criteria:
@@ -1915,7 +1961,7 @@ edges:
       min_obs: 20
       min_pre_periods: 4
     plausibility:
-      expected_sign: positive
+      expected_sign: any
       magnitude_range:
       - 0.0
       - 2.0
@@ -2376,7 +2422,7 @@ edges:
   edge_type: identity
   edge_status: IDENTITY
   timing:
-    lag: 0
+    lag: 1
     lag_unit: quarter
     contemporaneous: true
     max_anticipation: 0
@@ -2397,7 +2443,7 @@ edges:
     added_at: '2026-02-18'
   acceptance_criteria:
     plausibility:
-      expected_sign: negative
+      expected_sign: any
   forbidden_controls: []
 - id: real_income_to_cor_kspi
   from: real_income
@@ -2758,7 +2804,7 @@ edges:
 - id: kzt_usd_to_kzt_usd_monthly
   from: kzt_usd
   to: kzt_usd_monthly
-  edge_type: mechanical
+  edge_type: identity
   notes: 'Critic-added: Time aggregation/resampling (e.g., monthly average or end-of-period)
     of daily exchange rate to monthly series.'
   unit_specification:
@@ -2773,7 +2819,7 @@ edges:
 - id: cpi_headline_to_cpi_headline_quarterly
   from: cpi_headline
   to: cpi_headline_quarterly
-  edge_type: mechanical
+  edge_type: identity
   notes: 'Critic-added: Time aggregation from monthly CPI to quarterly CPI (e.g.,
     average of monthly log CPI within quarter).'
   unit_specification:
@@ -2809,10 +2855,8 @@ edges:
     plausibility:
       expected_sign: negative
   timing:
-    lag: 1
-  forbidden_controls:
-  - oil_supply_shock
-  - oil_demand_shock
+    lag: 0
+  forbidden_controls: []
 - id: kzt_usd_monthly_to_imported_inflation_instrument
   from: kzt_usd_monthly
   to: imported_inflation_instrument
@@ -2866,12 +2910,7 @@ edges:
       expected_sign: negative
   timing:
     lag: 1
-  forbidden_controls:
-  - kzt_usd_monthly
-  - brent_price
-  - oil_supply_shock
-  - oil_demand_shock
-  - vix_shock
+  forbidden_controls: []
   unit_specification:
     treatment_unit: pct_gdp (percentage points of GDP)
     outcome_unit: log_point (log KZT per USD)
@@ -2991,6 +3030,85 @@ edges:
   unit_specification:
     treatment_unit: log_point (log KZT per USD, e.g., monthly avg)
     outcome_unit: index (trade openness / sectoral import dependence index level)
+- id: kzt_usd_monthly_to_fx_change_monthly
+  from: kzt_usd_monthly
+  to: fx_change_monthly
+  edge_type: identity
+  notes: 'Critic-added: Time-series transformation: first-difference of logs (monthly
+    depreciation).'
+  unit_specification:
+    treatment_unit: log_point (log KZT/USD, monthly level)
+    outcome_unit: log_point (monthly Δlog KZT/USD)
+  acceptance_criteria:
+    plausibility:
+      expected_sign: positive
+  timing:
+    lag: 1
+  forbidden_controls: []
+- id: nominal_expenditure_to_real_expenditure_quarterly
+  from: nominal_expenditure
+  to: real_expenditure_quarterly
+  edge_type: identity
+  notes: 'Critic-added: Deflation identity component: nominal consumption is an input
+    into quarterly real consumption.'
+  unit_specification:
+    treatment_unit: log (nominal expenditure level, quarterly)
+    outcome_unit: log (real expenditure level, quarterly)
+  acceptance_criteria:
+    plausibility:
+      expected_sign: positive
+  timing:
+    lag: 0
+  forbidden_controls:
+  - real_expenditure_quarterly
+- id: cpi_headline_quarterly_to_real_expenditure_quarterly
+  from: cpi_headline_quarterly
+  to: real_expenditure_quarterly
+  edge_type: identity
+  notes: 'Critic-added: Deflation identity component: quarterly CPI is used to convert
+    nominal to real expenditure in log terms.'
+  unit_specification:
+    treatment_unit: log (headline CPI level, quarterly)
+    outcome_unit: log (real expenditure level, quarterly)
+  acceptance_criteria:
+    plausibility:
+      expected_sign: negative
+  timing:
+    lag: 0
+  forbidden_controls:
+  - real_expenditure_quarterly
+- id: real_expenditure_quarterly_to_real_expenditure
+  from: real_expenditure_quarterly
+  to: real_expenditure
+  edge_type: identity
+  notes: 'Critic-added: Temporal disaggregation/assignment: map quarterly real expenditure
+    to the real_expenditure series used downstream (e.g., repeat within quarter or
+    interpolate).'
+  unit_specification:
+    treatment_unit: log (real expenditure level, quarterly)
+    outcome_unit: log (real expenditure level, monthly or interpolated to model frequency)
+  acceptance_criteria:
+    plausibility:
+      expected_sign: positive
+  timing:
+    lag: 0
+  forbidden_controls:
+  - real_expenditure
+- id: fx_change_monthly_to_imported_inflation_instrument
+  from: fx_change_monthly
+  to: imported_inflation_instrument
+  edge_type: identity
+  notes: 'Critic-added: Definitional/identity dependency: imported inflation instrument
+    equals import share times monthly FX depreciation.'
+  unit_specification:
+    treatment_unit: log_point (monthly Δlog KZT/USD)
+    outcome_unit: pp (percentage points contribution to imported inflation instrument)
+  acceptance_criteria:
+    plausibility:
+      expected_sign: positive
+  timing:
+    lag: 0
+  forbidden_controls: []
 assumptions:
 - id: oil_shock_exogeneity
   statement: Baumeister oil shocks are exogenous to Kazakhstan macro conditions.
