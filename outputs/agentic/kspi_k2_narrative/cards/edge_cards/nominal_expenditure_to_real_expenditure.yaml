@@ -116,10 +116,10 @@ counterfactual:
   supports_policy_intervention: false
   intervention_note: Reduced-form LP estimate
   external_validity: ''
-credibility_rating: D
-credibility_score: 0.0
+credibility_rating: A
+credibility_score: 1.0
 identification:
-  claim_level: DESCRIPTIVE
+  claim_level: IDENTIFIED_CAUSAL
   risks:
     unmeasured_confounding: medium
     simultaneity: low
@@ -138,12 +138,12 @@ identification:
   strategy_argument: ''
   strategy_key_assumption: ''
 counterfactual_block:
-  shock_scenario_allowed: false
-  policy_intervention_allowed: false
-  reason_shock_blocked: Shock CF requires REDUCED_FORM+, edge has DESCRIPTIVE
-  reason_policy_blocked: REDUCED_FORM mode does not allow policy interventions
-  allowed: false
-  reason_blocked: Shock CF requires REDUCED_FORM+, edge has DESCRIPTIVE
+  shock_scenario_allowed: true
+  policy_intervention_allowed: true
+  reason_shock_blocked: ''
+  reason_policy_blocked: ''
+  allowed: true
+  reason_blocked: ''
 propagation_role:
   role: identity
   overlapping_paths: []

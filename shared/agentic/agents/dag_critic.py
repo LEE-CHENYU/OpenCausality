@@ -469,6 +469,230 @@ class DAGCritic:
         return fixes.get(category, "Investigate the blocking reason")
 
     # ──────────────────────────────────────────────────────────────
+    # Identity Claim Mismatch Detection
+    # ──────────────────────────────────────────────────────────────
+
+    def _detect_identity_claim_mismatches(self) -> list[dict[str, Any]]:
+        """Detect identity/mechanical/bridge/immutable edges with wrong claim on card."""
+        DEFINITIONAL_TYPES = {"identity", "mechanical", "bridge", "immutable"}
+        mismatches: list[dict[str, Any]] = []
+        cards_dir = self.output_dir / "cards" / "edge_cards"
+        if not cards_dir.exists():
+            return mismatches
+        for eid, edge in self.edges.items():
+            edge_type = edge.get("edge_type", "")
+            if edge_type not in DEFINITIONAL_TYPES:
+                continue
+            card_path = cards_dir / f"{eid}.yaml"
+            if not card_path.exists():
+                continue
+            try:
+                with open(card_path) as f:
+                    card_data = yaml.safe_load(f)
+                stored_claim = card_data.get("identification", {}).get(
+                    "claim_level", ""
+                )
+                if stored_claim != "IDENTIFIED_CAUSAL":
+                    mismatches.append({
+                        "edge_id": eid,
+                        "edge_type": edge_type,
+                        "stored_claim": stored_claim,
+                        "correct_claim": "IDENTIFIED_CAUSAL",
+                    })
+            except (yaml.YAMLError, OSError):
+                continue
+        return mismatches
+
+    def _auto_fix_identity_claims(self) -> list[CriticRevision]:
+        """Generate auto-fix revisions for identity claim mismatches.
+
+        These are applied deterministically (no LLM needed) because
+        identity/mechanical/bridge/immutable edges are always
+        IDENTIFIED_CAUSAL per INVARIANTS.md Section 1.
+        """
+        auto_revisions: list[CriticRevision] = []
+        for mismatch in self._detect_identity_claim_mismatches():
+            auto_rev = CriticRevision(
+                revision_type=RevisionType.UPDATE_CLAIM_LEVEL,
+                target_edge_id=mismatch["edge_id"],
+                confidence=1.0,
+                reasoning=(
+                    f"Definitional override: {mismatch['edge_type']} edges are always "
+                    f"IDENTIFIED_CAUSAL (stored: {mismatch['stored_claim']})"
+                ),
+                details={"new_claim_level": "IDENTIFIED_CAUSAL"},
+            )
+            auto_revisions.append(auto_rev)
+        return auto_revisions
+
+    # ──────────────────────────────────────────────────────────────
+    # Unit Chain Mismatch Detection & Auto-Fix
+    # ──────────────────────────────────────────────────────────────
+
+    _DEFINITIONAL_TYPES = frozenset({"identity", "mechanical", "bridge", "immutable"})
+
+    def _detect_unit_chain_mismatches(self) -> list[dict[str, Any]]:
+        """Detect unit-kind mismatches between consecutive edges at shared nodes.
+
+        For each node, checks that every incoming edge's outcome_unit is
+        compatible with every outgoing edge's treatment_unit. Returns a
+        list of mismatch dicts with fix_target indicating which edge to
+        auto-fix (or "none" if both are causal).
+        """
+        from shared.agentic.propagation import UnitSpec
+
+        # Build incoming/outgoing maps: node -> [(edge_id, edge_dict)]
+        incoming: dict[str, list[tuple[str, dict]]] = {}
+        outgoing: dict[str, list[tuple[str, dict]]] = {}
+        for eid, edge in self.edges.items():
+            fn = edge.get("from", "")
+            tn = edge.get("to", "")
+            if tn:
+                incoming.setdefault(tn, []).append((eid, edge))
+            if fn:
+                outgoing.setdefault(fn, []).append((eid, edge))
+
+        mismatches: list[dict[str, Any]] = []
+        seen: set[tuple[str, str]] = set()
+
+        for node_id in self.nodes:
+            for up_eid, up_edge in incoming.get(node_id, []):
+                ou_text = up_edge.get("unit_specification", {}).get("outcome_unit", "")
+                if not ou_text:
+                    continue
+                ou_spec = UnitSpec.parse(ou_text)
+                if ou_spec.kind == "unknown":
+                    continue
+
+                for down_eid, down_edge in outgoing.get(node_id, []):
+                    tu_text = down_edge.get("unit_specification", {}).get("treatment_unit", "")
+                    if not tu_text:
+                        continue
+                    tu_spec = UnitSpec.parse(tu_text)
+                    if tu_spec.kind == "unknown":
+                        continue
+
+                    # Skip if compatible (same kind or approved pair like log_point<->pct)
+                    if ou_spec.compatible_with(tu_spec):
+                        continue
+
+                    pair_key = (up_eid, down_eid)
+                    if pair_key in seen:
+                        continue
+                    seen.add(pair_key)
+
+                    # Determine which edge to fix
+                    up_type = up_edge.get("edge_type", "")
+                    down_type = down_edge.get("edge_type", "")
+                    up_is_def = up_type in self._DEFINITIONAL_TYPES
+                    down_is_def = down_type in self._DEFINITIONAL_TYPES
+
+                    if down_is_def:
+                        fix_target = "downstream"
+                    elif up_is_def:
+                        fix_target = "upstream"
+                    else:
+                        fix_target = "none"  # both causal — needs human judgment
+
+                    mismatches.append({
+                        "upstream_edge_id": up_eid,
+                        "downstream_edge_id": down_eid,
+                        "node_id": node_id,
+                        "upstream_outcome": ou_text,
+                        "upstream_outcome_kind": ou_spec.kind,
+                        "downstream_treatment": tu_text,
+                        "downstream_treatment_kind": tu_spec.kind,
+                        "fix_target": fix_target,
+                    })
+
+        return mismatches
+
+    def _auto_fix_unit_chains(self) -> list[CriticRevision]:
+        """Generate auto-fix revisions for unit chain mismatches.
+
+        When a definitional edge has an incompatible unit with its neighbor,
+        the definitional edge adapts — it has no estimation-dependent unit
+        semantics.
+        """
+        auto_revisions: list[CriticRevision] = []
+        for mm in self._detect_unit_chain_mismatches():
+            fix_target = mm["fix_target"]
+            if fix_target == "none":
+                continue  # Both causal — skip, needs human judgment
+
+            if fix_target == "downstream":
+                # Set downstream edge's treatment_unit to upstream's outcome_unit
+                target_eid = mm["downstream_edge_id"]
+                new_unit = mm["upstream_outcome"]
+                field_name = "treatment_unit"
+                reasoning = (
+                    f"Unit chain fix: downstream edge '{target_eid}' is definitional, "
+                    f"adapting treatment_unit from '{mm['downstream_treatment']}' "
+                    f"(kind={mm['downstream_treatment_kind']}) to '{new_unit}' "
+                    f"(kind={mm['upstream_outcome_kind']}) to match upstream "
+                    f"'{mm['upstream_edge_id']}' outcome_unit at node '{mm['node_id']}'"
+                )
+            else:
+                # fix_target == "upstream"
+                target_eid = mm["upstream_edge_id"]
+                new_unit = mm["downstream_treatment"]
+                field_name = "outcome_unit"
+                reasoning = (
+                    f"Unit chain fix: upstream edge '{target_eid}' is definitional, "
+                    f"adapting outcome_unit from '{mm['upstream_outcome']}' "
+                    f"(kind={mm['upstream_outcome_kind']}) to '{new_unit}' "
+                    f"(kind={mm['downstream_treatment_kind']}) to match downstream "
+                    f"'{mm['downstream_edge_id']}' treatment_unit at node '{mm['node_id']}'"
+                )
+
+            auto_revisions.append(CriticRevision(
+                revision_type=RevisionType.ADD_UNIT_SPECIFICATION,
+                target_edge_id=target_eid,
+                confidence=1.0,
+                reasoning=reasoning,
+                details={"unit_specification": {field_name: new_unit}},
+            ))
+
+        return auto_revisions
+
+    def apply_auto_fixes(self) -> int:
+        """Run ALL deterministic auto-fix routines in a converging loop.
+
+        Iterates until no more fixes are found (or max 5 loops for safety).
+        Returns total count of applied revisions.
+        """
+        total_applied = 0
+        max_loops = 5
+
+        for loop_i in range(max_loops):
+            revisions: list[CriticRevision] = []
+
+            # 1. Identity claim auto-fixes
+            identity_revs = self._auto_fix_identity_claims()
+            revisions.extend(identity_revs)
+
+            # 2. Unit chain auto-fixes
+            unit_revs = self._auto_fix_unit_chains()
+            revisions.extend(unit_revs)
+
+            if not revisions:
+                break  # Converged — no more auto-fixable issues
+
+            applied, rejected = self.apply_revisions(revisions)
+            n_applied = len(applied)
+            total_applied += n_applied
+
+            if n_applied > 0:
+                logger.info(
+                    f"Auto-fix loop {loop_i + 1}: applied {n_applied}, "
+                    f"rejected {len(rejected)}"
+                )
+            else:
+                break  # All proposed fixes were rejected — stop
+
+        return total_applied
+
+    # ──────────────────────────────────────────────────────────────
     # Structural Gap Detection
     # ──────────────────────────────────────────────────────────────
 
@@ -743,6 +967,20 @@ class DAGCritic:
             logger.warning(f"Blocked path details failed: {e}")
             blocked_details = []
 
+        # Identity claim mismatches
+        try:
+            identity_mismatches = self._detect_identity_claim_mismatches()
+        except Exception as e:
+            logger.warning(f"Identity claim mismatch detection failed: {e}")
+            identity_mismatches = []
+
+        # Unit chain mismatches
+        try:
+            unit_mismatches = self._detect_unit_chain_mismatches()
+        except Exception as e:
+            logger.warning(f"Unit chain mismatch detection failed: {e}")
+            unit_mismatches = []
+
         return CriticFeedback(
             quality_score=quality,
             edge_diagnostics=edge_diagnostics,
@@ -755,6 +993,8 @@ class DAGCritic:
             propagation_health=propagation_health,
             edge_card_diagnostics=edge_card_diags,
             blocked_path_details=blocked_details,
+            identity_claim_mismatches=identity_mismatches,
+            unit_chain_mismatches=unit_mismatches,
         )
 
     def _load_open_issues(self) -> list[dict[str, Any]]:
@@ -1043,6 +1283,10 @@ class DAGCritic:
 
         Dispatches to backend: claude-code, codex, or api.
         All backends receive the same prompt and return JSON.
+
+        Deterministic auto-fixes are handled separately by apply_auto_fixes()
+        which should be called before critique() in the loop. This method
+        only returns LLM-proposed revisions.
         """
         system_prompt = self._build_system_prompt()
         user_prompt = self._build_user_prompt(feedback, iteration)

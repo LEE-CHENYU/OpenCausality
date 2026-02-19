@@ -159,6 +159,9 @@ interpretation:
   conditions: ''
   allowed_uses: []
   forbidden_uses: []
+data_limitation_note: Only 8 quarterly observations (KSPI Q1 2021-Q2 2024). HAC SE
+  collapses to near-zero (~6e-12), making CI meaninglessly narrow. Coefficient magnitude
+  is plausible but precision is unreliable. Needs more quarterly data before re-estimation.
 failure_flags:
   weak_identification: false
   potential_bad_control: false
