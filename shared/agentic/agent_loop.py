@@ -950,6 +950,10 @@ class AgentLoop:
     def _run_placebo_falsification(self) -> None:
         """Phase 2.5: Run placebo tests on null links."""
         from shared.agentic.falsification import PlaceboFalsifier
+        from shared.engine.dynamic_loader import DynamicLoaderFactory
+
+        factory = DynamicLoaderFactory()
+        factory.auto_populate_from_dag(self.dag)
 
         falsifier = PlaceboFalsifier(
             dag=self.dag,
