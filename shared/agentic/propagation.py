@@ -24,7 +24,7 @@ import math
 import re
 import warnings
 from dataclasses import dataclass, field
-from typing import Any, Literal
+from typing import Any, ClassVar, Literal
 
 logger = logging.getLogger(__name__)
 
@@ -89,9 +89,17 @@ class UnitSpec:
 
         return UnitSpec(kind="unknown")
 
+    # Pairs of unit kinds that are approximately interchangeable.
+    # log_point ≈ pct for small changes: Δlog(X) ≈ ΔX/X.
+    _COMPATIBLE_PAIRS: ClassVar[set[frozenset[str]]] = {
+        frozenset({"log_point", "pct"}),
+    }
+
     def compatible_with(self, other: UnitSpec) -> bool:
-        """True if units are the same kind (scale differences handled by rescaling)."""
-        return self.kind == other.kind
+        """True if units are the same kind or an approved compatible pair."""
+        if self.kind == other.kind:
+            return True
+        return frozenset({self.kind, other.kind}) in self._COMPATIBLE_PAIRS
 
 
 # ──────────────────────────────────────────────────────────────────────

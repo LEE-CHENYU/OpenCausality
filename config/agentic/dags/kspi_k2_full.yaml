@@ -1514,8 +1514,8 @@ edges:
   to: nbk_policy_rate
   edge_type: reaction_function
   unit_specification:
-    treatment_unit: pp (100×Δlog headline CPI; inflation rate in percentage points)
-    outcome_unit: pct (policy rate level, percent per annum)
+    treatment_unit: pp
+    outcome_unit: pct
   timing:
     lag: 1
     lag_unit: month
@@ -1582,8 +1582,8 @@ edges:
   to: nbk_policy_rate
   edge_type: reaction_function
   unit_specification:
-    treatment_unit: pp (100×Δlog KZT/USD; depreciation in percentage points)
-    outcome_unit: pct (policy rate level, percent per annum)
+    treatment_unit: pp
+    outcome_unit: pct
   timing:
     lag: 1
     lag_unit: month
@@ -2808,8 +2808,8 @@ edges:
   notes: 'Critic-added: Time aggregation/resampling (e.g., monthly average or end-of-period)
     of daily exchange rate to monthly series.'
   unit_specification:
-    treatment_unit: log_level (daily ln KZT/USD)
-    outcome_unit: log_level (monthly ln KZT/USD, e.g., monthly average of daily logs)
+    treatment_unit: log
+    outcome_unit: log
   acceptance_criteria:
     plausibility:
       expected_sign: positive
@@ -2823,9 +2823,8 @@ edges:
   notes: 'Critic-added: Time aggregation from monthly CPI to quarterly CPI (e.g.,
     average of monthly log CPI within quarter).'
   unit_specification:
-    treatment_unit: log_level (monthly ln CPI index)
-    outcome_unit: log_level (quarterly ln CPI index, e.g., quarterly average of monthly
-      logs)
+    treatment_unit: log
+    outcome_unit: log
   acceptance_criteria:
     plausibility:
       expected_sign: positive
@@ -2849,8 +2848,8 @@ edges:
       terms-of-trade), not via other direct channels once global risk (VIX) and global
       activity are conditioned on.
   unit_specification:
-    treatment_unit: log_level (ln Brent price, USD/barrel)
-    outcome_unit: log_level (ln KZT/USD)
+    treatment_unit: log
+    outcome_unit: log
   acceptance_criteria:
     plausibility:
       expected_sign: negative
@@ -2870,8 +2869,8 @@ edges:
     lag: 0
   forbidden_controls: []
   unit_specification:
-    treatment_unit: log_point (monthly average log KZT/USD)
-    outcome_unit: pct (percentage points of imported inflation instrument)
+    treatment_unit: log
+    outcome_unit: pp
 - id: cpi_headline_quarterly_to_real_expenditure
   from: cpi_headline_quarterly
   to: real_expenditure
@@ -2885,8 +2884,8 @@ edges:
     lag: 0
   forbidden_controls: []
   unit_specification:
-    treatment_unit: log_point (quarterly log CPI index)
-    outcome_unit: log_point (quarterly log real expenditure)
+    treatment_unit: log
+    outcome_unit: log
 - id: fdi_inflows_to_kzt_usd
   from: fdi_inflows
   to: kzt_usd
@@ -2912,8 +2911,8 @@ edges:
     lag: 1
   forbidden_controls: []
   unit_specification:
-    treatment_unit: pct_gdp (percentage points of GDP)
-    outcome_unit: log_point (log KZT per USD)
+    treatment_unit: pp
+    outcome_unit: log
 - id: real_income_level_to_nominal_expenditure
   from: real_income_level
   to: nominal_expenditure
@@ -2922,8 +2921,8 @@ edges:
     expenditure (via higher consumption demand); in logs this is an elasticity-type
     relationship.'
   unit_specification:
-    treatment_unit: log_point (log real disposable income level)
-    outcome_unit: log_point (log nominal consumption expenditure)
+    treatment_unit: log
+    outcome_unit: log
   acceptance_criteria:
     plausibility:
       expected_sign: positive
@@ -2961,10 +2960,8 @@ edges:
       shares are predetermined and affect cpi_tradable only through exposure to exchange-rate-driven
       import cost changes (exclusion restriction).
   unit_specification:
-    treatment_unit: pp (percentage points of imported inflation exposure; E_import_share
-      in ratio × monthly log-point FX change scaled to pp if desired)
-    outcome_unit: log_point (monthly or quarterly change in log tradable CPI, consistent
-      with node definition)
+    treatment_unit: pp
+    outcome_unit: log
   acceptance_criteria:
     plausibility:
       expected_sign: positive
@@ -2991,8 +2988,8 @@ edges:
     key_assumption: No reverse causality from later outcomes/shocks to pre-period
       import shares; measurement is locked in before the analysis window.
   unit_specification:
-    treatment_unit: index (dimensionless trade openness / import-dependence index)
-    outcome_unit: share (ratio from 0 to 1)
+    treatment_unit: index
+    outcome_unit: share
   acceptance_criteria:
     plausibility:
       expected_sign: positive
@@ -3028,8 +3025,8 @@ edges:
   - cpi_headline
   - nbk_policy_rate
   unit_specification:
-    treatment_unit: log_point (log KZT per USD, e.g., monthly avg)
-    outcome_unit: index (trade openness / sectoral import dependence index level)
+    treatment_unit: log
+    outcome_unit: index
 - id: kzt_usd_monthly_to_fx_change_monthly
   from: kzt_usd_monthly
   to: fx_change_monthly
@@ -3037,8 +3034,8 @@ edges:
   notes: 'Critic-added: Time-series transformation: first-difference of logs (monthly
     depreciation).'
   unit_specification:
-    treatment_unit: log_point (log KZT/USD, monthly level)
-    outcome_unit: log_point (monthly Δlog KZT/USD)
+    treatment_unit: log
+    outcome_unit: log_point
   acceptance_criteria:
     plausibility:
       expected_sign: positive
@@ -3052,8 +3049,8 @@ edges:
   notes: 'Critic-added: Deflation identity component: nominal consumption is an input
     into quarterly real consumption.'
   unit_specification:
-    treatment_unit: log (nominal expenditure level, quarterly)
-    outcome_unit: log (real expenditure level, quarterly)
+    treatment_unit: log
+    outcome_unit: log
   acceptance_criteria:
     plausibility:
       expected_sign: positive
@@ -3068,8 +3065,8 @@ edges:
   notes: 'Critic-added: Deflation identity component: quarterly CPI is used to convert
     nominal to real expenditure in log terms.'
   unit_specification:
-    treatment_unit: log (headline CPI level, quarterly)
-    outcome_unit: log (real expenditure level, quarterly)
+    treatment_unit: log
+    outcome_unit: log
   acceptance_criteria:
     plausibility:
       expected_sign: negative
@@ -3085,8 +3082,8 @@ edges:
     to the real_expenditure series used downstream (e.g., repeat within quarter or
     interpolate).'
   unit_specification:
-    treatment_unit: log (real expenditure level, quarterly)
-    outcome_unit: log (real expenditure level, monthly or interpolated to model frequency)
+    treatment_unit: log
+    outcome_unit: log
   acceptance_criteria:
     plausibility:
       expected_sign: positive
@@ -3101,8 +3098,8 @@ edges:
   notes: 'Critic-added: Definitional/identity dependency: imported inflation instrument
     equals import share times monthly FX depreciation.'
   unit_specification:
-    treatment_unit: log_point (monthly Δlog KZT/USD)
-    outcome_unit: pp (percentage points contribution to imported inflation instrument)
+    treatment_unit: log_point
+    outcome_unit: pp
   acceptance_criteria:
     plausibility:
       expected_sign: positive

@@ -1115,7 +1115,20 @@ block propagation in `STRUCTURAL` and `REDUCED_FORM` modes; they emit warnings i
 - Unknown or unparseable units fall back to `"unknown"` and block propagation in
   `STRUCTURAL` and `REDUCED_FORM` modes (conservative default).
 
-### 33.4 Scale Warnings
+### 33.4 Approximate Unit Compatibility
+
+The `UnitSpec.compatible_with()` method allows approved compatible pairs beyond exact
+equality. Currently the only approved pair is:
+
+- **log_point ↔ pct**: For small changes, Δlog(X) ≈ ΔX/X. This is standard in
+  macroeconomic chain propagation where some edges use log-point coefficients
+  (semi-elasticities) and others use percentage-change coefficients. The approximation
+  is valid for the small effect sizes typical in causal DAG propagation.
+
+New compatible pairs require explicit justification in this section. `pp` (percentage
+points, additive) is NOT compatible with `pct` (percent, multiplicative).
+
+### 33.6 Scale Warnings
 
 Guardrail 6 emits **warnings** (never blockers) for non-unity treatment scales:
 - **Non-unity scale note**: When `treatment_unit.scale != 1.0`, a `scale_note` warning
@@ -1126,7 +1139,7 @@ Guardrail 6 emits **warnings** (never blockers) for non-unity treatment scales:
 `validate_chain_units()` also emits a `non_unity_treatment_scale` WARNING for any
 edge card whose parsed treatment unit has `scale != 1.0`.
 
-### 33.5 Companion Card Audit
+### 33.7 Companion Card Audit
 
 `load_dag` and `dag_doctor` report `cards_not_on_dag` — edge cards present in the
 artifact store that do not correspond to any registered DAG edge. These are typically
