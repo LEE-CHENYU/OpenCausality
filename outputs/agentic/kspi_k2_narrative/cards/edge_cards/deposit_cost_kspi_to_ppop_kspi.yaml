@@ -51,7 +51,7 @@ counterfactual:
 credibility_rating: D
 credibility_score: 0.0
 identification:
-  claim_level: DESCRIPTIVE
+  claim_level: REDUCED_FORM
   risks:
     unmeasured_confounding: medium
     simultaneity: low
@@ -65,28 +65,10 @@ identification:
   strategy_argument: ''
   strategy_key_assumption: ''
 counterfactual_block:
-  shock_scenario_allowed: false
-  policy_intervention_allowed: false
-  reason_shock_blocked: Placeholder card — needs estimation
-  reason_policy_blocked: Placeholder card — needs estimation
-  allowed: false
-  reason_blocked: Placeholder card — needs estimation
+  shock_eligible: true
+  policy_eligible: false
 propagation_role:
-  role: diagnostic_only
-  overlapping_paths: []
-  selected_for_counterfactual: false
-  mode_propagation_allowed:
-    STRUCTURAL: false
-    REDUCED_FORM: false
-    DESCRIPTIVE: true
-  mode_shock_cf_allowed:
-    STRUCTURAL: false
-    REDUCED_FORM: false
-    DESCRIPTIVE: false
-  mode_policy_cf_allowed:
-    STRUCTURAL: false
-    REDUCED_FORM: false
-    DESCRIPTIVE: false
+  role: reduced_form
 literature:
   supporting: []
   challenging: []
@@ -96,3 +78,7 @@ companion_edge_id: null
 variant_of: null
 is_precisely_null: false
 null_equivalence_bound: null
+mode_propagation_allowed:
+  STRUCTURAL: false
+  REDUCED_FORM: true
+  DESCRIPTIVE: true

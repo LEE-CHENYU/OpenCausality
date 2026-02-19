@@ -1518,12 +1518,13 @@ class DAGCritic:
     # ── Backend dispatch ──────────────────────────────────────────
 
     def _call_claude_code(self, system: str, user: str) -> str:
-        """Shell out to claude CLI."""
+        """Shell out to claude CLI, passing prompt via stdin."""
         prompt = f"System:\n{system}\n\nUser:\n{user}"
         try:
             result = subprocess.run(
-                ["claude", "-p", prompt, "--output-format", "text"],
-                capture_output=True, text=True, timeout=300,
+                ["claude", "-p", "-", "--output-format", "text"],
+                input=prompt,
+                capture_output=True, text=True, timeout=600,
             )
             if result.returncode != 0:
                 logger.warning(f"claude CLI failed: {result.stderr[:200]}")

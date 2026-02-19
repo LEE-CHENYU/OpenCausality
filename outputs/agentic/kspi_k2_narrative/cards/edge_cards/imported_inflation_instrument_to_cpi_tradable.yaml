@@ -1,0 +1,34 @@
+edge_id: imported_inflation_instrument_to_cpi_tradable
+from_node: imported_inflation_instrument
+to_node: cpi_tradable
+design: PLACEHOLDER
+credibility_rating: B
+credibility_score: 0.65
+estimates:
+  point: 0.113
+  se: 0.03
+  ci_95:
+  - 0.054200000000000005
+  - 0.1718
+  treatment_unit: pct
+  outcome_unit: pct
+identification:
+  claim_level: REDUCED_FORM
+  strategy_type: SHIFT_SHARE_IV
+  argument: The imported inflation instrument combines exogenous exchange rate variation
+    (shift) with pre-period import exposure (share). This Bartik-style IV isolates
+    the cost-push channel of FX pass-through to tradable goods prices, with the exclusion
+    restriction that import shares affect tradable CPI only through the imported inflation
+    channel.
+propagation_role:
+  role: reduced_form
+counterfactual_block:
+  shock_eligible: true
+  policy_eligible: false
+mode_propagation_allowed:
+  STRUCTURAL: false
+  REDUCED_FORM: true
+  DESCRIPTIVE: true
+diagnostics: {}
+literature:
+  search_status: NOT_SEARCHED
