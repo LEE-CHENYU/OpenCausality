@@ -196,12 +196,13 @@ causal_logic_probes:
 # ──────────────────────────────────────────────────────────────────
 
 quality_weights:
-  edge_type_diversity: 0.15
-  identification_coverage: 0.25
-  metadata_completeness: 0.20
+  edge_type_diversity: 0.10
+  identification_coverage: 0.20
+  metadata_completeness: 0.15
   structural_soundness: 0.15
-  unit_completeness: 0.15
+  unit_completeness: 0.10
   formula_correctness: 0.10
+  propagation_health: 0.20
 
 # ──────────────────────────────────────────────────────────────────
 # Convergence Criteria
@@ -254,3 +255,11 @@ allowed_revision_types:
   - type: invert_edge_direction
     description: "Correct aggregation direction (components -> aggregate)"
     requires_reestimation: true
+
+  - type: create_edge_card
+    description: "Create placeholder edge card for causal edge missing one"
+    requires_reestimation: true
+
+  - type: update_claim_level
+    description: "Update claim_level on existing edge card"
+    requires_reestimation: false

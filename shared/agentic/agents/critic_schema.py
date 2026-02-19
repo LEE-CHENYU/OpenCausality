@@ -57,6 +57,8 @@ class RevisionType(str, Enum):
     ADD_STRUCTURAL_METADATA = "add_structural_metadata"
     ADD_UNIT_SPECIFICATION = "add_unit_specification"
     INVERT_EDGE_DIRECTION = "invert_edge_direction"
+    CREATE_EDGE_CARD = "create_edge_card"
+    UPDATE_CLAIM_LEVEL = "update_claim_level"
 
 
 # Map revision types to whether they require re-estimation
@@ -69,6 +71,8 @@ REVISION_REQUIRES_REESTIMATION: dict[RevisionType, bool] = {
     RevisionType.ADD_STRUCTURAL_METADATA: False,
     RevisionType.ADD_UNIT_SPECIFICATION: False,
     RevisionType.INVERT_EDGE_DIRECTION: True,
+    RevisionType.CREATE_EDGE_CARD: True,
+    RevisionType.UPDATE_CLAIM_LEVEL: False,
 }
 
 
@@ -127,6 +131,7 @@ class QualityScore:
     structural_soundness: float = 0.0
     unit_completeness: float = 0.0
     formula_correctness: float = 0.0
+    propagation_health: float = 0.0
     total: float = 0.0
 
     def to_dict(self) -> dict[str, float]:
@@ -137,7 +142,56 @@ class QualityScore:
             "structural_soundness": self.structural_soundness,
             "unit_completeness": self.unit_completeness,
             "formula_correctness": self.formula_correctness,
+            "propagation_health": self.propagation_health,
             "total": self.total,
+        }
+
+
+@dataclass
+class PropagationHealthScore:
+    """Propagation health metrics computed from PropagationEngine."""
+
+    total_paths: int = 0
+    open_paths: int = 0
+    blocked_paths: int = 0
+    open_ratio: float = 0.0
+    edges_without_cards: list[str] = field(default_factory=list)
+    edges_with_blocked_id: list[str] = field(default_factory=list)
+    edges_diagnostic_only: list[str] = field(default_factory=list)
+    blocked_reasons_summary: dict[str, int] = field(default_factory=dict)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "total_paths": self.total_paths,
+            "open_paths": self.open_paths,
+            "blocked_paths": self.blocked_paths,
+            "open_ratio": self.open_ratio,
+            "edges_without_cards": self.edges_without_cards,
+            "edges_with_blocked_id": self.edges_with_blocked_id,
+            "edges_diagnostic_only": self.edges_diagnostic_only,
+            "blocked_reasons_summary": self.blocked_reasons_summary,
+        }
+
+
+@dataclass
+class EdgeCardDiagnostic:
+    """Per-edge card status for critic visibility."""
+
+    edge_id: str
+    has_card: bool
+    claim_level: str = ""
+    propagation_role: str = ""
+    is_allowed_reduced_form: bool = False
+    blocked_reason: str = ""
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "edge_id": self.edge_id,
+            "has_card": self.has_card,
+            "claim_level": self.claim_level,
+            "propagation_role": self.propagation_role,
+            "is_allowed_reduced_form": self.is_allowed_reduced_form,
+            "blocked_reason": self.blocked_reason,
         }
 
 
@@ -154,6 +208,9 @@ class CriticFeedback:
     formula_violations: list[dict[str, Any]] = field(default_factory=list)
     structural_gaps: list[dict[str, Any]] = field(default_factory=list)
     causal_logic_probes: list[dict[str, Any]] = field(default_factory=list)
+    propagation_health: PropagationHealthScore | None = None
+    edge_card_diagnostics: list[dict[str, Any]] = field(default_factory=list)
+    blocked_path_details: list[dict[str, Any]] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -166,6 +223,9 @@ class CriticFeedback:
             "formula_violations": self.formula_violations,
             "structural_gaps": self.structural_gaps,
             "causal_logic_probes": self.causal_logic_probes,
+            "propagation_health": self.propagation_health.to_dict() if self.propagation_health else None,
+            "edge_card_diagnostics": self.edge_card_diagnostics,
+            "blocked_path_details": self.blocked_path_details,
         }
 
 
@@ -475,6 +535,89 @@ class CriticRevisionValidator:
             rev.validated = False
             rev.rejection_reason = (
                 f"Inverting {from_node} -> {to_node} would create a cycle"
+            )
+            return rev
+
+        rev.validated = True
+        return rev
+
+    def _validate_create_edge_card(self, rev: CriticRevision) -> CriticRevision:
+        """Validate edge card creation."""
+        edge = self.edges.get(rev.target_edge_id)
+        if edge is None:
+            rev.validated = False
+            rev.rejection_reason = f"Edge '{rev.target_edge_id}' not found in DAG"
+            return rev
+
+        edge_type = edge.get("edge_type", "")
+        if edge_type != "causal":
+            rev.validated = False
+            rev.rejection_reason = (
+                f"create_edge_card only for causal edges, "
+                f"'{rev.target_edge_id}' is '{edge_type}'"
+            )
+            return rev
+
+        # Check card doesn't already exist
+        details = rev.details
+        card_dir = details.get("_card_dir")
+        if card_dir:
+            card_path = Path(card_dir) / f"{rev.target_edge_id}.yaml"
+            if card_path.exists():
+                rev.validated = False
+                rev.rejection_reason = (
+                    f"Edge card already exists: {card_path}"
+                )
+                return rev
+
+        # Required fields
+        for required in ("claim_level", "point_estimate", "se",
+                         "treatment_unit", "outcome_unit"):
+            if required not in details:
+                rev.validated = False
+                rev.rejection_reason = f"details.{required} is required"
+                return rev
+
+        # Validate claim_level
+        valid_claims = {"IDENTIFIED_CAUSAL", "REDUCED_FORM", "DESCRIPTIVE", "BLOCKED_ID"}
+        if details["claim_level"] not in valid_claims:
+            rev.validated = False
+            rev.rejection_reason = (
+                f"Invalid claim_level '{details['claim_level']}'. "
+                f"Must be one of: {valid_claims}"
+            )
+            return rev
+
+        rev.validated = True
+        return rev
+
+    def _validate_update_claim_level(self, rev: CriticRevision) -> CriticRevision:
+        """Validate claim level update on existing card."""
+        edge = self.edges.get(rev.target_edge_id)
+        if edge is None:
+            rev.validated = False
+            rev.rejection_reason = f"Edge '{rev.target_edge_id}' not found in DAG"
+            return rev
+
+        # Check card exists
+        details = rev.details
+        card_dir = details.get("_card_dir")
+        if card_dir:
+            card_path = Path(card_dir) / f"{rev.target_edge_id}.yaml"
+            if not card_path.exists():
+                rev.validated = False
+                rev.rejection_reason = (
+                    f"No edge card found at {card_path}"
+                )
+                return rev
+
+        new_claim = details.get("new_claim_level", "")
+        valid_claims = {"IDENTIFIED_CAUSAL", "REDUCED_FORM", "DESCRIPTIVE", "BLOCKED_ID"}
+        if new_claim not in valid_claims:
+            rev.validated = False
+            rev.rejection_reason = (
+                f"Invalid new_claim_level '{new_claim}'. "
+                f"Must be one of: {valid_claims}"
             )
             return rev
 

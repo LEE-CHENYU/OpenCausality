@@ -175,6 +175,23 @@ class NarrativeCriticLoop:
                 n_info = len(feedback.causal_logic_probes) - n_warn
                 console.print(f"  Causal logic probes: {n_warn} warning(s), {n_info} info")
 
+            # Propagation health
+            if feedback.propagation_health:
+                ph = feedback.propagation_health
+                console.print(
+                    f"  Propagation: {ph.open_paths}/{ph.total_paths} "
+                    f"paths open ({ph.open_ratio:.0%})"
+                )
+                blockers = []
+                if ph.edges_without_cards:
+                    blockers.append(f"{len(ph.edges_without_cards)} without cards")
+                if ph.edges_with_blocked_id:
+                    blockers.append(f"{len(ph.edges_with_blocked_id)} blocked ID")
+                if ph.edges_diagnostic_only:
+                    blockers.append(f"{len(ph.edges_diagnostic_only)} diagnostic-only")
+                if blockers:
+                    console.print(f"  Top blockers: {', '.join(blockers)}")
+
             # Get critique from LLM
             console.print(
                 f"  [dim]Getting critique (backend={self.config.critic_backend})...[/dim]"

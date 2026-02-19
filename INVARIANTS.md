@@ -1314,6 +1314,52 @@ Invariants:
 5. **No quality score changes**: Probes do not add a scoring component. They inform
    the LLM's revision proposals but do not penalize the DAG score directly.
 
+### 35.9 Propagation-Aware Critic
+
+The critic constructs a `PropagationEngine` lazily (via `_get_propagation_engine()`)
+to compute path health from the current DAG, edge cards, TSGuard results, and issue
+ledger. This enables the critic to see which paths are open/blocked and why.
+
+Invariants:
+
+1. **`propagation_health` quality component**: Equals `open_paths / total_paths` in
+   REDUCED_FORM mode from all exogenous nodes to the target node. Weight 0.20 (highest
+   single component, reflecting that a DAG with blocked paths is not usable for queries).
+2. **Engine rebuilt per iteration**: `_propagation_engine` is set to `None` on
+   `reload_dag()` and after card operations. The engine is never cached across
+   DAG modifications.
+3. **Graceful degradation**: If the PropagationEngine cannot be constructed (e.g.,
+   parse error, missing files), propagation_health defaults to 0.0 and propagation
+   fields on `CriticFeedback` default to `None`/`[]`.
+4. **REDUCED_FORM mode only**: Propagation health uses REDUCED_FORM mode because it
+   is the default query mode and most actionable. DESCRIPTIVE allows everything (always
+   100%), and STRUCTURAL requires stronger claims than most edges have.
+
+### 35.10 Critic Card Operations
+
+The critic may propose two card-level revision types:
+
+| Revision | What it does | Requires re-estimation |
+|----------|-------------|:---:|
+| `create_edge_card` | Creates a PLACEHOLDER-design edge card YAML | Yes |
+| `update_claim_level` | Modifies `identification.claim_level` on existing card | No |
+
+Invariants:
+
+1. **Validator gates**: `create_edge_card` requires edge exists in DAG, edge_type is
+   `causal`, and card file does not already exist. `update_claim_level` requires edge
+   exists and card file exists. New claim must be in `CLAIM_HIERARCHY`.
+2. **Placeholder design**: Cards created by the critic use `design: PLACEHOLDER`,
+   `credibility_rating: B`, `credibility_score: 0.65`. They are functional for
+   propagation but marked for future re-estimation.
+3. **Required fields**: `create_edge_card` details must include `claim_level`,
+   `point_estimate`, `se`, `treatment_unit`, `outcome_unit`.
+4. **Derived fields**: `propagation_role`, `counterfactual_block`, and
+   `mode_propagation_allowed` are computed from claim_level via
+   `derive_propagation_role()` — never set directly by the LLM.
+5. **Engine invalidation**: Both card operations set `_propagation_engine = None`
+   to force rebuild on next access.
+
 ---
 
 ## §36 — MCP Query Server

@@ -27,6 +27,8 @@ from shared.agentic.agents.critic_schema import (
     CriticReport,
     CriticRevision,
     CriticRevisionValidator,
+    EdgeCardDiagnostic,
+    PropagationHealthScore,
     QualityScore,
     RevisionType,
     VALID_EDGE_TYPES,
@@ -69,12 +71,16 @@ class DAGCritic:
         self.weights = self.principles.get("quality_weights", {})
         self.confidence_threshold = self.principles.get("confidence_threshold", 0.7)
 
+        # Lazy-initialized PropagationEngine (rebuilt per reload)
+        self._propagation_engine = None
+
     def reload_dag(self) -> None:
         """Reload DAG from disk (after revisions applied externally)."""
         with open(self.dag_path) as f:
             self.dag = yaml.safe_load(f)
         self.nodes = {n["id"]: n for n in self.dag.get("nodes", [])}
         self.edges = {e["id"]: e for e in self.dag.get("edges", [])}
+        self._propagation_engine = None  # Force rebuild
 
     # ──────────────────────────────────────────────────────────────
     # Quality Score
@@ -141,15 +147,24 @@ class DAGCritic:
         else:
             formula_correctness = 1.0
 
+        # 7. Propagation health: open_ratio from PropagationEngine
+        try:
+            prop_health = self._compute_propagation_health()
+            propagation_health = prop_health.open_ratio
+        except Exception as e:
+            logger.warning(f"Propagation health computation failed: {e}")
+            propagation_health = 0.0
+
         # Weighted total
         w = self.weights
         total = (
-            w.get("edge_type_diversity", 0.15) * edge_type_diversity
-            + w.get("identification_coverage", 0.25) * identification_coverage
-            + w.get("metadata_completeness", 0.20) * metadata_completeness
+            w.get("edge_type_diversity", 0.10) * edge_type_diversity
+            + w.get("identification_coverage", 0.20) * identification_coverage
+            + w.get("metadata_completeness", 0.15) * metadata_completeness
             + w.get("structural_soundness", 0.15) * structural_soundness
-            + w.get("unit_completeness", 0.15) * unit_completeness
+            + w.get("unit_completeness", 0.10) * unit_completeness
             + w.get("formula_correctness", 0.10) * formula_correctness
+            + w.get("propagation_health", 0.20) * propagation_health
         )
 
         return QualityScore(
@@ -159,6 +174,7 @@ class DAGCritic:
             structural_soundness=structural_soundness,
             unit_completeness=unit_completeness,
             formula_correctness=formula_correctness,
+            propagation_health=propagation_health,
             total=total,
         )
 
@@ -185,6 +201,272 @@ class DAGCritic:
         n_gaps = len(self._detect_structural_gaps())
         gap_factor = max(0.5, 1.0 - n_gaps * 0.05)
         return base * gap_factor
+
+    # ──────────────────────────────────────────────────────────────
+    # Propagation Engine Integration
+    # ──────────────────────────────────────────────────────────────
+
+    def _get_propagation_engine(self):
+        """Lazily construct a PropagationEngine from current DAG state."""
+        if self._propagation_engine is not None:
+            return self._propagation_engine
+
+        try:
+            from shared.agentic.dag.parser import parse_dag
+            from shared.agentic.propagation import PropagationEngine
+            from shared.agentic.artifact_store import ArtifactStore
+
+            dag_spec = parse_dag(self.dag_path)
+
+            # Load edge cards
+            edge_cards: dict[str, Any] = {}
+            cards_dir = self.output_dir / "cards"
+            if cards_dir.exists():
+                store = ArtifactStore(cards_dir)
+                for card_path in sorted((cards_dir / "edge_cards").glob("*.yaml")):
+                    edge_id = card_path.stem
+                    card = store.load_edge_card(edge_id)
+                    if card:
+                        edge_cards[edge_id] = card
+
+            # Load TSGuard results
+            tsguard_results: dict[str, Any] = {}
+            tsguard_path = self.output_dir / "tsguard_results.json"
+            if tsguard_path.exists():
+                with open(tsguard_path) as f:
+                    tsguard_results = json.load(f)
+
+            # Load issue ledger
+            issue_ledger = None
+            issues_dir = self.output_dir / "issues"
+            if issues_dir.exists():
+                try:
+                    from shared.agentic.issues.issue_ledger import IssueLedger
+                    issue_ledger = IssueLedger(issues_dir)
+                except Exception:
+                    pass
+
+            self._propagation_engine = PropagationEngine(
+                dag=dag_spec,
+                edge_cards=edge_cards,
+                tsguard_results=tsguard_results,
+                issue_ledger=issue_ledger,
+            )
+            return self._propagation_engine
+
+        except Exception as e:
+            logger.warning(f"Failed to construct PropagationEngine: {e}")
+            return None
+
+    def _compute_propagation_health(self) -> PropagationHealthScore:
+        """Compute propagation health by checking paths from exogenous to target."""
+        engine = self._get_propagation_engine()
+        if engine is None:
+            return PropagationHealthScore()
+
+        target = (
+            self.dag.get("target_node", "")
+            or self.dag.get("metadata", {}).get("target_node", "")
+        )
+        exogenous = self.dag.get("exogenous_nodes", [])
+
+        if not target or not exogenous:
+            return PropagationHealthScore()
+
+        total_paths = 0
+        open_paths = 0
+        blocked_paths = 0
+        blocked_reasons: dict[str, int] = {}
+
+        for source in exogenous:
+            result = engine.find_all_paths(
+                source, target, mode="REDUCED_FORM", scenario_type="shock",
+            )
+            for path in result.paths:
+                total_paths += 1
+                if path.is_blocked:
+                    blocked_paths += 1
+                    for reason in path.blocked_reasons:
+                        # Categorize the reason
+                        category = self._categorize_blocked_reason(reason)
+                        blocked_reasons[category] = blocked_reasons.get(category, 0) + 1
+                else:
+                    open_paths += 1
+
+        # Collect edge-level issues
+        edges_without_cards = []
+        edges_with_blocked_id = []
+        edges_diagnostic_only = []
+        self._collect_edge_status(
+            edges_without_cards, edges_with_blocked_id, edges_diagnostic_only,
+        )
+
+        open_ratio = open_paths / total_paths if total_paths > 0 else 0.0
+
+        return PropagationHealthScore(
+            total_paths=total_paths,
+            open_paths=open_paths,
+            blocked_paths=blocked_paths,
+            open_ratio=open_ratio,
+            edges_without_cards=edges_without_cards,
+            edges_with_blocked_id=edges_with_blocked_id,
+            edges_diagnostic_only=edges_diagnostic_only,
+            blocked_reasons_summary=blocked_reasons,
+        )
+
+    def _collect_edge_status(
+        self,
+        edges_without_cards: list[str],
+        edges_with_blocked_id: list[str],
+        edges_diagnostic_only: list[str],
+    ) -> None:
+        """Collect per-edge propagation status from cards directory."""
+        from shared.agentic.query_mode import derive_propagation_role
+
+        cards_dir = self.output_dir / "cards" / "edge_cards"
+        for eid, edge in self.edges.items():
+            edge_type = edge.get("edge_type", "")
+            if edge_type != "causal":
+                continue
+            card_path = cards_dir / f"{eid}.yaml" if cards_dir.exists() else None
+            if card_path is None or not card_path.exists():
+                edges_without_cards.append(eid)
+                continue
+            try:
+                with open(card_path) as f:
+                    card_data = yaml.safe_load(f)
+                claim = card_data.get("identification", {}).get("claim_level", "")
+                if claim == "BLOCKED_ID":
+                    edges_with_blocked_id.append(eid)
+                role = derive_propagation_role(edge_type, claim)
+                if role == "diagnostic_only":
+                    edges_diagnostic_only.append(eid)
+            except (yaml.YAMLError, OSError):
+                edges_without_cards.append(eid)
+
+    def _compute_edge_card_diagnostics(self) -> list[dict[str, Any]]:
+        """Compute per-edge card status for critic visibility."""
+        from shared.agentic.query_mode import (
+            derive_propagation_role,
+            is_edge_allowed_for_propagation,
+            QueryModeConfig,
+        )
+
+        mode_config = QueryModeConfig.load()
+        rf_spec = mode_config.get_spec("REDUCED_FORM")
+        cards_dir = self.output_dir / "cards" / "edge_cards"
+        diagnostics: list[dict[str, Any]] = []
+
+        for eid, edge in self.edges.items():
+            edge_type = edge.get("edge_type", "")
+            has_card = False
+            claim_level = ""
+            blocked_reason = ""
+
+            # Non-causal edges get definitional claim
+            if edge_type in ("identity", "mechanical", "bridge", "immutable"):
+                claim_level = "IDENTIFIED_CAUSAL"
+                has_card = True  # effectively always valid
+            elif cards_dir.exists():
+                card_path = cards_dir / f"{eid}.yaml"
+                if card_path.exists():
+                    has_card = True
+                    try:
+                        with open(card_path) as f:
+                            card_data = yaml.safe_load(f)
+                        claim_level = card_data.get("identification", {}).get(
+                            "claim_level", ""
+                        )
+                    except (yaml.YAMLError, OSError):
+                        blocked_reason = "card_parse_error"
+                else:
+                    blocked_reason = "no_card"
+
+            role = derive_propagation_role(edge_type, claim_level)
+            allowed_rf = is_edge_allowed_for_propagation(role, rf_spec)
+
+            diag = EdgeCardDiagnostic(
+                edge_id=eid,
+                has_card=has_card,
+                claim_level=claim_level,
+                propagation_role=role,
+                is_allowed_reduced_form=allowed_rf,
+                blocked_reason=blocked_reason,
+            )
+            diagnostics.append(diag.to_dict())
+
+        return diagnostics
+
+    def _collect_blocked_path_details(self) -> list[dict[str, Any]]:
+        """Collect unique blocked edges with reasons and suggested fixes."""
+        engine = self._get_propagation_engine()
+        if engine is None:
+            return []
+
+        target = (
+            self.dag.get("target_node", "")
+            or self.dag.get("metadata", {}).get("target_node", "")
+        )
+        exogenous = self.dag.get("exogenous_nodes", [])
+        if not target or not exogenous:
+            return []
+
+        seen: set[str] = set()
+        details: list[dict[str, Any]] = []
+
+        for source in exogenous:
+            result = engine.find_all_paths(
+                source, target, mode="REDUCED_FORM", scenario_type="shock",
+            )
+            for blocked_edge in result.blocked_edges:
+                if blocked_edge.edge_id in seen:
+                    continue
+                seen.add(blocked_edge.edge_id)
+                category = self._categorize_blocked_reason(blocked_edge.reason)
+                details.append({
+                    "edge_id": blocked_edge.edge_id,
+                    "from": blocked_edge.from_node,
+                    "to": blocked_edge.to_node,
+                    "reason": blocked_edge.reason,
+                    "category": category,
+                    "suggested_fix": self._suggest_fix(category),
+                })
+
+        return details[:20]  # Cap at 20
+
+    @staticmethod
+    def _categorize_blocked_reason(reason: str) -> str:
+        """Categorize a blocked reason string."""
+        reason_lower = reason.lower()
+        if "no edge card" in reason_lower or "no card" in reason_lower:
+            return "missing_card"
+        if "diagnostic_only" in reason_lower:
+            return "diagnostic_only"
+        if "unit" in reason_lower and ("compat" in reason_lower or "mismatch" in reason_lower):
+            return "unit_mismatch"
+        if "blocked_id" in reason_lower:
+            return "blocked_id"
+        if "tsguard" in reason_lower or "timing" in reason_lower:
+            return "tsguard_block"
+        if "issue" in reason_lower or "critical" in reason_lower:
+            return "issue_block"
+        if "reaction_function" in reason_lower:
+            return "reaction_function"
+        return "other"
+
+    @staticmethod
+    def _suggest_fix(category: str) -> str:
+        """Map blocked reason category to actionable advice."""
+        fixes = {
+            "missing_card": "Create edge card with create_edge_card revision",
+            "diagnostic_only": "Upgrade claim_level or create card with REDUCED_FORM+ claim",
+            "unit_mismatch": "Fix unit_specification with add_unit_specification revision",
+            "blocked_id": "Upgrade claim_level with update_claim_level revision",
+            "tsguard_block": "Fix timing test failures (requires re-estimation)",
+            "issue_block": "Resolve open CRITICAL issues on this edge",
+            "reaction_function": "Reaction function edges are diagnostic-only by design",
+        }
+        return fixes.get(category, "Investigate the blocking reason")
 
     # ──────────────────────────────────────────────────────────────
     # Structural Gap Detection
@@ -440,6 +722,27 @@ class DAGCritic:
         # Causal logic probes
         causal_logic_probes = self._compute_causal_logic_probes()
 
+        # Propagation health
+        try:
+            propagation_health = self._compute_propagation_health()
+        except Exception as e:
+            logger.warning(f"Propagation health failed: {e}")
+            propagation_health = None
+
+        # Edge card diagnostics
+        try:
+            edge_card_diags = self._compute_edge_card_diagnostics()
+        except Exception as e:
+            logger.warning(f"Edge card diagnostics failed: {e}")
+            edge_card_diags = []
+
+        # Blocked path details
+        try:
+            blocked_details = self._collect_blocked_path_details()
+        except Exception as e:
+            logger.warning(f"Blocked path details failed: {e}")
+            blocked_details = []
+
         return CriticFeedback(
             quality_score=quality,
             edge_diagnostics=edge_diagnostics,
@@ -449,6 +752,9 @@ class DAGCritic:
             formula_violations=formula_violations,
             structural_gaps=structural_gaps,
             causal_logic_probes=causal_logic_probes,
+            propagation_health=propagation_health,
+            edge_card_diagnostics=edge_card_diags,
+            blocked_path_details=blocked_details,
         )
 
     def _load_open_issues(self) -> list[dict[str, Any]]:
@@ -700,6 +1006,9 @@ class DAGCritic:
                 continue
             tu_parsed = UnitSpec.parse(tu)
             ou_parsed = UnitSpec.parse(ou)
+            # Skip if units are an approved compatible pair (e.g., log_point <-> pct)
+            if tu_parsed.compatible_with(ou_parsed):
+                continue
             # Flag when one side is decimal-scale and the other is pct-scale
             tu_is_decimal = tu_parsed.kind in _DECIMAL_KINDS
             ou_is_decimal = ou_parsed.kind in _DECIMAL_KINDS
@@ -767,12 +1076,16 @@ class DAGCritic:
             f"- **{key}**: {val}" for key, val in probes.items()
         ) if probes else "No causal logic probes configured."
 
+        # Check if propagation engine is available for context
+        has_propagation = self._get_propagation_engine() is not None
+
         return DAG_CRITIC_SYSTEM.format(
             structural_rules=rules_text,
             domain_questions=questions_text,
             structural_gap_rules=gap_rules_text,
             causal_logic_probes_questions=probes_text,
             confidence_threshold=self.confidence_threshold,
+            has_propagation_engine=has_propagation,
         )
 
     def _build_user_prompt(self, feedback: CriticFeedback, iteration: int) -> str:
@@ -842,6 +1155,64 @@ class DAGCritic:
         ]
         causal_logic_probes_str = "\n".join(probe_lines) or "None"
 
+        # Propagation health
+        if feedback.propagation_health:
+            ph = feedback.propagation_health
+            prop_lines = [
+                f"- **Open paths**: {ph.open_paths}/{ph.total_paths} "
+                f"({ph.open_ratio:.0%})",
+                f"- **Blocked paths**: {ph.blocked_paths}",
+            ]
+            if ph.edges_without_cards:
+                prop_lines.append(
+                    f"- **Edges without cards**: {', '.join(ph.edges_without_cards)}"
+                )
+            if ph.edges_with_blocked_id:
+                prop_lines.append(
+                    f"- **Edges with BLOCKED_ID**: {', '.join(ph.edges_with_blocked_id)}"
+                )
+            if ph.edges_diagnostic_only:
+                prop_lines.append(
+                    f"- **Edges diagnostic_only**: {', '.join(ph.edges_diagnostic_only)}"
+                )
+            if ph.blocked_reasons_summary:
+                top_reasons = sorted(
+                    ph.blocked_reasons_summary.items(), key=lambda x: -x[1]
+                )[:5]
+                prop_lines.append("- **Top blockers**: " + ", ".join(
+                    f"{cat}={n}" for cat, n in top_reasons
+                ))
+            propagation_health_str = "\n".join(prop_lines)
+        else:
+            propagation_health_str = "Propagation engine not available"
+
+        # Edge card diagnostics
+        if feedback.edge_card_diagnostics:
+            card_lines = []
+            for d in feedback.edge_card_diagnostics:
+                status = "OK" if d.get("is_allowed_reduced_form") else "BLOCKED"
+                reason = d.get("blocked_reason", "")
+                card_lines.append(
+                    f"- {d['edge_id']}: card={'YES' if d.get('has_card') else 'NO'} "
+                    f"claim={d.get('claim_level', 'none')} "
+                    f"role={d.get('propagation_role', '?')} [{status}]"
+                    + (f" ({reason})" if reason else "")
+                )
+            edge_card_diagnostics_str = "\n".join(card_lines)
+        else:
+            edge_card_diagnostics_str = "None"
+
+        # Blocked path details
+        if feedback.blocked_path_details:
+            blocked_lines = [
+                f"- {d['edge_id']} ({d['from']}->{d['to']}): "
+                f"{d['category']} — {d['suggested_fix']}"
+                for d in feedback.blocked_path_details
+            ]
+            blocked_path_details_str = "\n".join(blocked_lines)
+        else:
+            blocked_path_details_str = "None"
+
         return DAG_CRITIC_USER.format(
             iteration=iteration,
             edge_type_diversity=qs.edge_type_diversity,
@@ -850,6 +1221,7 @@ class DAGCritic:
             structural_soundness=qs.structural_soundness,
             unit_completeness=qs.unit_completeness,
             formula_correctness=qs.formula_correctness,
+            propagation_health=qs.propagation_health,
             total=qs.total,
             edge_diagnostics=edge_diagnostics_str,
             open_issues=open_issues_str,
@@ -858,6 +1230,9 @@ class DAGCritic:
             formula_violations=formula_str,
             structural_gaps=structural_gaps_str,
             causal_logic_probes=causal_logic_probes_str,
+            propagation_health_details=propagation_health_str,
+            edge_card_diagnostics=edge_card_diagnostics_str,
+            blocked_path_details=blocked_path_details_str,
             placebo_results="None",  # populated when placebo data available
             node_summary=node_summary_str,
             literature_summary=literature_str,
@@ -983,6 +1358,15 @@ class DAGCritic:
         Returns:
             (applied, rejected) tuple of revision lists.
         """
+        # Inject _card_dir into details for card-level validators
+        card_dir = str(self.output_dir / "cards" / "edge_cards")
+        for rev in revisions:
+            if rev.revision_type in (
+                RevisionType.CREATE_EDGE_CARD,
+                RevisionType.UPDATE_CLAIM_LEVEL,
+            ):
+                rev.details.setdefault("_card_dir", card_dir)
+
         validator = CriticRevisionValidator(
             self.dag, confidence_threshold=self.confidence_threshold
         )
@@ -1120,6 +1504,124 @@ class DAGCritic:
                 # Update edge ID to reflect new direction
                 edge["id"] = f"{edge['from']}_to_{edge['to']}"
                 break
+
+    def _apply_create_edge_card(self, rev: CriticRevision) -> None:
+        """Create a placeholder EdgeCard YAML for a causal edge."""
+        from shared.agentic.query_mode import derive_propagation_role
+
+        d = rev.details
+        edge_id = rev.target_edge_id
+        claim_level = d["claim_level"]
+        point = d["point_estimate"]
+        se = d["se"]
+        tu = d["treatment_unit"]
+        ou = d["outcome_unit"]
+
+        role = derive_propagation_role("causal", claim_level)
+
+        # Determine counterfactual eligibility
+        shock_cf = claim_level in ("IDENTIFIED_CAUSAL", "REDUCED_FORM")
+        policy_cf = claim_level == "IDENTIFIED_CAUSAL"
+
+        # Find edge endpoints
+        edge = self.edges.get(edge_id, {})
+        from_node = edge.get("from", "")
+        to_node = edge.get("to", "")
+
+        card_data = {
+            "edge_id": edge_id,
+            "from_node": from_node,
+            "to_node": to_node,
+            "design": "PLACEHOLDER",
+            "credibility_rating": "B",
+            "credibility_score": 0.65,
+            "estimates": {
+                "point": point,
+                "se": se,
+                "ci_95": [point - 1.96 * se, point + 1.96 * se],
+                "treatment_unit": tu,
+                "outcome_unit": ou,
+            },
+            "identification": {
+                "claim_level": claim_level,
+                "strategy_type": d.get("strategy_type", "literature_prior"),
+                "argument": d.get("argument", "Placeholder from critic — needs estimation"),
+            },
+            "propagation_role": {
+                "role": role,
+            },
+            "counterfactual_block": {
+                "shock_eligible": shock_cf,
+                "policy_eligible": policy_cf,
+            },
+            "mode_propagation_allowed": {
+                "STRUCTURAL": role in ("structural", "bridge", "identity"),
+                "REDUCED_FORM": role in ("structural", "reduced_form", "bridge", "identity"),
+                "DESCRIPTIVE": True,
+            },
+            "diagnostics": {},
+            "literature": {"search_status": "NOT_SEARCHED"},
+        }
+
+        cards_dir = self.output_dir / "cards" / "edge_cards"
+        cards_dir.mkdir(parents=True, exist_ok=True)
+        card_path = cards_dir / f"{edge_id}.yaml"
+        with open(card_path, "w", encoding="utf-8") as f:
+            yaml.dump(
+                card_data, f,
+                sort_keys=False, allow_unicode=True, default_flow_style=False,
+            )
+        logger.info(f"Created placeholder edge card: {card_path}")
+        self._propagation_engine = None  # Invalidate cached engine
+
+    def _apply_update_claim_level(self, rev: CriticRevision) -> None:
+        """Update claim_level on an existing edge card."""
+        from shared.agentic.query_mode import derive_propagation_role
+
+        d = rev.details
+        edge_id = rev.target_edge_id
+        new_claim = d["new_claim_level"]
+
+        cards_dir = self.output_dir / "cards" / "edge_cards"
+        card_path = cards_dir / f"{edge_id}.yaml"
+        if not card_path.exists():
+            raise FileNotFoundError(f"Edge card not found: {card_path}")
+
+        with open(card_path) as f:
+            card_data = yaml.safe_load(f)
+
+        # Update identification block
+        if "identification" not in card_data:
+            card_data["identification"] = {}
+        card_data["identification"]["claim_level"] = new_claim
+
+        # Re-derive propagation role
+        edge_type = self.edges.get(edge_id, {}).get("edge_type", "causal")
+        role = derive_propagation_role(edge_type, new_claim)
+        card_data["propagation_role"] = {"role": role}
+
+        # Update counterfactual block
+        shock_cf = new_claim in ("IDENTIFIED_CAUSAL", "REDUCED_FORM")
+        policy_cf = new_claim == "IDENTIFIED_CAUSAL"
+        card_data["counterfactual_block"] = {
+            "shock_eligible": shock_cf,
+            "policy_eligible": policy_cf,
+        }
+
+        # Update mode maps
+        card_data["mode_propagation_allowed"] = {
+            "STRUCTURAL": role in ("structural", "bridge", "identity"),
+            "REDUCED_FORM": role in ("structural", "reduced_form", "bridge", "identity"),
+            "DESCRIPTIVE": True,
+        }
+
+        with open(card_path, "w", encoding="utf-8") as f:
+            yaml.dump(
+                card_data, f,
+                sort_keys=False, allow_unicode=True, default_flow_style=False,
+            )
+        logger.info(f"Updated claim_level to {new_claim} on {card_path}")
+        self._propagation_engine = None  # Invalidate cached engine
 
     def _write_dag(self) -> None:
         """Write current DAG state back to YAML file."""
