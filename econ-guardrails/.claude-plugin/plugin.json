@@ -1,0 +1,7 @@
+{
+  "name": "econ-guardrails",
+  "version": "1.0.0",
+  "description": "Economics reasoning guardrails: prevents sign errors, unit mixing, causal direction mistakes, and other common economics analysis pitfalls",
+  "license": "MIT",
+  "author": "OpenCausality"
+}
