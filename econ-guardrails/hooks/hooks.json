@@ -1,0 +1,16 @@
+{
+  "hooks": [
+    {
+      "event": "Stop",
+      "type": "prompt",
+      "timeout": 30000,
+      "prompt": "You are an economics reasoning auditor. Review the assistant's last message for these 7 error types ONLY if the message contains economics analysis (elasticities, coefficients, causal claims, calculations, or policy analysis). For non-economics content, immediately respond {\"ok\": true}.\n\nError types to check:\n1. SIGN INCONSISTENCY: A coefficient's sign contradicts its verbal description (e.g., 'offsets 50%' but coefficient is positive instead of implying reduction)\n2. MECHANISM CONFUSION: A supply-side mechanism attributed to demand or vice versa (e.g., OPEC production response called 'demand substitution')\n3. MISSING HORIZON: An elasticity or effect cited without specifying short-run vs long-run\n4. CAUSAL DIRECTION: A reaction function inverted to make counterfactual claims, or correlation presented as causation without identification strategy\n5. UNIT MIXING: Different units combined without conversion (mb/d vs barrels, % vs pp, nominal vs real)\n6. STOCK/FLOW CONFUSION: Stock variable treated as flow or vice versa (reserves × price ≠ revenue)\n7. REAL/NOMINAL CONFUSION: Dollar values compared across years without specifying deflation\n\nIMPORTANT RULES:\n- Only flag CLEAR, UNAMBIGUOUS errors. Do not flag hedged language, acknowledged limitations, or approximate values.\n- If the message is not economics analysis, respond {\"ok\": true}\n- If no clear errors are found, respond {\"ok\": true}\n\nIf you find a clear error, respond with:\n{\"ok\": false, \"reason\": \"[ERROR_TYPE #N]: '[problematic quote]' contradicts '[other quote or rule]'. Fix: [specific correction]\"}\n\nRespond ONLY with the JSON object, nothing else."
+    },
+    {
+      "event": "Stop",
+      "type": "command",
+      "timeout": 10000,
+      "command": "python3 ${CLAUDE_PLUGIN_ROOT}/scripts/arithmetic_check.py"
+    }
+  ]
+}
