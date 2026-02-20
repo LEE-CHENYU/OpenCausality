@@ -1,11 +1,11 @@
-edge_id: deposit_cost_kspi_to_ppop_kspi
-from_node: deposit_cost_kspi
-to_node: ppop_kspi
+edge_id: brent_oil_to_kzt_usd
+from_node: brent_oil
+to_node: kzt_usd
 spec_details:
   design: LOCAL_PROJECTIONS
   se_method: HAC_Newey_West
-  max_horizon: 4
-  n_lags: 1
+  max_horizon: 6
+  n_lags: 2
   controls: []
   instruments: []
   fixed_effects: []
@@ -15,14 +15,16 @@ spec_details:
   - 2
   - 3
   - 4
+  - 5
+  - 6
 estimates:
-  point: -0.142123470510243
-  se: 0.06587998343730521
+  point: -0.0541160851377251
+  se: 0.04036769100198357
   ci_95:
-  - -0.2712458653494565
-  - -0.01300107567102951
-  pvalue: 0.030981608848577348
-  treatment_unit: pct
+  - -0.1332353056406545
+  - 0.025003135365204307
+  pvalue: 0.1800571284750574
+  treatment_unit: log
   outcome_unit: log
 diagnostics:
   sign_consistency:
@@ -35,17 +37,17 @@ diagnostics:
   sample_size:
     name: sample_size
     passed: true
-    value: 15.0
+    value: 189.0
     threshold: 15.0
     pvalue: null
-    message: N=15
+    message: N=189
 all_diagnostics_pass: true
 interpretation:
-  estimand: LP impulse response of ppop_kspi to deposit_cost_kspi
-  effective_obs: 15
-  hac_bandwidth: 2
+  estimand: LP impulse response of kzt_usd to brent_oil
+  effective_obs: 189
+  hac_bandwidth: 4
 failure_flags:
-  weak_identification: false
+  weak_identification: true
   potential_bad_control: false
   mechanical_identity_risk: false
   regime_break_detected: false
@@ -58,14 +60,14 @@ counterfactual:
   supports_shock_path: false
   supports_policy_intervention: false
 credibility_rating: A
-credibility_score: 0.9
+credibility_score: 0.8899999999999999
 identification:
   claim_level: REDUCED_FORM
-  strategy_type: IV_2SLS
+  strategy_type: EXTERNAL_INSTRUMENT
   risks:
     unmeasured_confounding: medium
     simultaneity: medium
-    weak_variation: low
+    weak_variation: high
     measurement_error: low
     selection: none
 counterfactual_block:
@@ -82,6 +84,6 @@ propagation_role:
     REDUCED_FORM: true
     DESCRIPTIVE: true
 data_provenance:
-  date_range: 2020-10-01 to 2024-07-01
-  n_obs: 15
-  frequency: quarterly
+  date_range: 2010-02-01 to 2025-12-01
+  n_obs: 189
+  frequency: monthly

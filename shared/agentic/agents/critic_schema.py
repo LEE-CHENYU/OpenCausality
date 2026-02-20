@@ -174,6 +174,79 @@ class PropagationHealthScore:
 
 
 @dataclass
+class EdgeHealthRecord:
+    """Per-edge health snapshot for before/after comparison."""
+
+    edge_id: str
+    edge_type: str
+    has_card: bool
+    point_estimate: float | None = None
+    credibility_rating: str = ""
+    claim_level: str = ""
+    propagation_role: str = ""
+    issues: list[str] = field(default_factory=list)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "edge_id": self.edge_id,
+            "edge_type": self.edge_type,
+            "has_card": self.has_card,
+            "point_estimate": self.point_estimate,
+            "credibility_rating": self.credibility_rating,
+            "claim_level": self.claim_level,
+            "propagation_role": self.propagation_role,
+            "issues": self.issues,
+        }
+
+
+@dataclass
+class DAGHealthSnapshot:
+    """Full DAG health at a point in time, for before/after diffing."""
+
+    timestamp: str
+    quality_score: QualityScore
+    propagation_health: PropagationHealthScore | None = None
+    edge_records: dict[str, EdgeHealthRecord] = field(default_factory=dict)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "timestamp": self.timestamp,
+            "quality_score": self.quality_score.to_dict(),
+            "propagation_health": (
+                self.propagation_health.to_dict()
+                if self.propagation_health else None
+            ),
+            "edge_records": {
+                k: v.to_dict() for k, v in self.edge_records.items()
+            },
+        }
+
+
+@dataclass
+class DAGHealthDiff:
+    """Diff between two DAGHealthSnapshots."""
+
+    quality_delta: float = 0.0
+    propagation_delta: float = 0.0
+    edges_downgraded: list[dict] = field(default_factory=list)
+    edges_upgraded: list[dict] = field(default_factory=list)
+    new_issues: list[dict] = field(default_factory=list)
+    resolved_issues: list[dict] = field(default_factory=list)
+    net_regression: bool = False
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "quality_delta": self.quality_delta,
+            "propagation_delta": self.propagation_delta,
+            "edges_downgraded": self.edges_downgraded,
+            "edges_upgraded": self.edges_upgraded,
+            "new_issues": self.new_issues,
+            "resolved_issues": self.resolved_issues,
+            "net_regression": self.net_regression,
+        }
+
+
+@dataclass
 class EdgeCardDiagnostic:
     """Per-edge card status for critic visibility."""
 
@@ -478,6 +551,20 @@ class CriticRevisionValidator:
                 f"Adding {from_node} -> {to_node} would create a cycle"
             )
             return rev
+
+        # Data availability: reject edges where non-derived nodes lack data
+        try:
+            from shared.agentic.agents.data_scout import check_edge_data_feasible
+            feasible, reason = check_edge_data_feasible(
+                from_node, to_node, self.nodes,
+            )
+            if not feasible:
+                rev.validated = False
+                rev.rejection_reason = reason
+                return rev
+        except Exception as exc:
+            # Don't block validation if import/check fails
+            logger.warning(f"Data availability check skipped: {exc}")
 
         rev.validated = True
         return rev

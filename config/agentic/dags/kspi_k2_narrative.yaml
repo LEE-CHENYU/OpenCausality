@@ -98,6 +98,13 @@ nodes:
   tags:
   - prices
   - inflation
+  identity:
+    formula: 0.42 * cpi_tradable + 0.58 * cpi_nontradable
+    depends_on:
+    - cpi_tradable
+    - cpi_nontradable
+    name: cpi_headline_auto_researched
+  derived: true
 - id: cpi_nontradable
   name: Non-tradable CPI
   description: CPI for non-tradable goods (services). Block A falsification.
@@ -587,13 +594,33 @@ nodes:
   - financial
   - shock
   - exogenous
+- id: brent_oil
+  name: Brent crude oil price
+  unit: log
+  description: Global Brent crude oil price in USD/barrel (log level). Primary exogenous
+    driver of Kazakhstan's exchange rate given oil's ~60% share of exports.
+  type: continuous
+  observed: true
+  frequency: monthly
+  tags:
+  - critic_generated
+- id: nbk_base_rate
+  name: NBK base rate
+  unit: pp
+  description: National Bank of Kazakhstan base interest rate in percentage points.
+    Primary domestic monetary policy instrument affecting bank funding costs.
+  type: continuous
+  observed: true
+  frequency: monthly
+  tags:
+  - critic_generated
 edges:
 - id: kzt_usd_to_cpi_tradable
   from: kzt_usd
   to: cpi_tradable
   timing:
-    lag: 1
-    lag_unit: month
+    lag: 2
+    lag_unit: months
     contemporaneous: false
     max_anticipation: 0
   estimand:
@@ -657,12 +684,14 @@ edges:
   edge_type: immutable
   notes: 'Block A validated result: 11.3% FX pass-through to tradable CPI. outcome_unit=pct
     because CPI loaders return inflation_mom (monthly rates), not index levels.'
+  forbidden_controls:
+  - imported_inflation_instrument
 - id: kzt_usd_to_cpi_nontradable
   from: kzt_usd
   to: cpi_nontradable
   timing:
-    lag: 1
-    lag_unit: month
+    lag: 4
+    lag_unit: months
     contemporaneous: false
     max_anticipation: 0
   estimand:
@@ -694,7 +723,7 @@ edges:
       min_obs: 80
       min_pre_periods: 12
     plausibility:
-      expected_sign: any
+      expected_sign: positive
       magnitude_range:
       - -0.05
       - 0.1
@@ -725,6 +754,8 @@ edges:
   edge_type: immutable
   notes: 'Block A falsification: Near-zero pass-through to non-tradable CPI. outcome_unit=pct
     because CPI loaders return inflation_mom (monthly rates), not index levels.'
+  forbidden_controls:
+  - cpi_tradable
 - id: cpi_headline_to_real_income
   from: cpi_headline
   to: real_income
@@ -732,7 +763,7 @@ edges:
   edge_status: IDENTITY
   timing:
     lag: 0
-    lag_unit: quarter
+    lag_unit: month
     contemporaneous: true
     max_anticipation: 0
   allowed_designs: []
@@ -805,7 +836,7 @@ edges:
   from: real_income
   to: cor_kspi
   timing:
-    lag: 2
+    lag: 1
     lag_unit: quarter
     contemporaneous: false
     max_anticipation: 0
@@ -826,7 +857,7 @@ edges:
       min_obs: 50
       min_pre_periods: 4
     plausibility:
-      expected_sign: negative
+      expected_sign: positive
     stability:
       regime_split_date: null
       max_coefficient_change: 0.5
@@ -850,7 +881,6 @@ edges:
     key_assumption: Exchange rate shocks affect bank cost of risk only through the
       real income channel, not directly (exclusion restriction).
   forbidden_controls:
-  - real_expenditure
   - ppop_kspi
 - id: vix_shock_to_deposit_cost_kspi
   from: vix_shock
@@ -988,7 +1018,7 @@ edges:
   from: ppop_kspi
   to: total_capital_kspi
   timing:
-    lag: 1
+    lag: 0
     lag_unit: quarter
     contemporaneous: false
     max_anticipation: 0
@@ -1009,7 +1039,7 @@ edges:
       min_obs: 50
       min_pre_periods: 4
     plausibility:
-      expected_sign: any
+      expected_sign: positive
     stability:
       regime_split_date: null
       max_coefficient_change: 0.5
@@ -1022,12 +1052,13 @@ edges:
   edge_type: mechanical
   notes: 'NL-extracted: Profits and provisions dynamics->Kaspi capital headroom (capital
     numerator) (ambiguous)'
+  forbidden_controls: []
 - id: rwa_kspi_to_k2_ratio_kspi
   from: rwa_kspi
   to: k2_ratio_kspi
   timing:
     lag: 0
-    lag_unit: quarter
+    lag_unit: month
     contemporaneous: true
     max_anticipation: 0
   estimand:
@@ -1092,7 +1123,7 @@ edges:
       min_obs: 50
       min_pre_periods: 4
     plausibility:
-      expected_sign: positive
+      expected_sign: negative
     stability:
       regime_split_date: null
       max_coefficient_change: 0.5
@@ -1114,7 +1145,6 @@ edges:
       expenditure channel, not through direct commodity-sector lending exposure.
   forbidden_controls:
   - real_income
-  - cor_kspi
 - id: kzt_usd_to_imported_inflation_instrument
   from: kzt_usd
   to: imported_inflation_instrument
@@ -1122,7 +1152,7 @@ edges:
   edge_status: IDENTITY
   timing:
     lag: 0
-    lag_unit: quarter
+    lag_unit: month
     contemporaneous: true
     max_anticipation: 0
   allowed_designs: []
@@ -1187,7 +1217,7 @@ edges:
     outcome_unit: pct
   timing:
     lag: 0
-    lag_unit: quarter
+    lag_unit: month
     contemporaneous: true
     max_anticipation: 0
   estimand:
@@ -1225,7 +1255,7 @@ edges:
     outcome_unit: log
   timing:
     lag: 0
-    lag_unit: quarter
+    lag_unit: month
     contemporaneous: true
     max_anticipation: 0
   estimand:
@@ -1262,7 +1292,7 @@ edges:
   edge_status: IDENTITY
   timing:
     lag: 0
-    lag_unit: quarter
+    lag_unit: months
     contemporaneous: true
     max_anticipation: 0
   allowed_designs: []
@@ -1279,7 +1309,8 @@ edges:
   acceptance_criteria:
     plausibility:
       expected_sign: negative
-  forbidden_controls: []
+  forbidden_controls:
+  - nominal_expenditure
 - id: nominal_income_to_real_income
   from: nominal_income
   to: real_income
@@ -1287,7 +1318,7 @@ edges:
   edge_status: IDENTITY
   timing:
     lag: 0
-    lag_unit: quarter
+    lag_unit: month
     contemporaneous: true
     max_anticipation: 0
   allowed_designs: []
@@ -1476,6 +1507,114 @@ edges:
   forbidden_controls:
   - cpi_headline
   - kzt_usd
+- id: brent_oil_to_kzt_usd
+  from: brent_oil
+  to: kzt_usd
+  edge_type: causal
+  notes: 'Critic-added: Oil export revenues drive Kazakhstan''s current account and
+    capital flows. Higher oil prices increase USD inflows, appreciating KZT (reducing
+    kzt_usd). This is the primary channel of external shocks to the domestic economy.'
+  identification_strategy:
+    type: EXTERNAL_INSTRUMENT
+    argument: Brent oil price is determined in global commodity markets and exogenous
+      to Kazakhstan as a small price-taking economy. Oil revenue (~60% of exports)
+      drives the current account surplus and NBK foreign exchange interventions, mechanically
+      affecting KZT/USD.
+    key_assumption: Kazakhstan is a price-taker in global oil markets; Brent price
+      is not affected by Kazakhstan-specific shocks.
+  unit_specification:
+    treatment_unit: log
+    outcome_unit: log
+  acceptance_criteria:
+    plausibility:
+      expected_sign: negative
+  timing:
+    lag: 1
+    lag_unit: month
+  forbidden_controls:
+  - kzt_usd
+- id: nbk_base_rate_to_deposit_cost_kspi
+  from: nbk_base_rate
+  to: deposit_cost_kspi
+  edge_type: causal
+  notes: 'Critic-added: The NBK base rate sets the floor for interbank rates and directly
+    influences deposit pricing by commercial banks. Higher base rates increase deposit
+    costs as banks compete for funding.'
+  identification_strategy:
+    type: EXTERNAL_INSTRUMENT
+    argument: The NBK base rate is a monetary policy instrument set by the central
+      bank based on inflation targeting. It is exogenous to individual bank balance
+      sheet conditions. The pass-through to deposit costs operates through the interbank
+      market and competitive deposit pricing.
+    key_assumption: The NBK sets the base rate based on aggregate inflation and output
+      gap, not in response to Kaspi-specific deposit market conditions.
+  unit_specification:
+    treatment_unit: pp
+    outcome_unit: pct
+  acceptance_criteria:
+    plausibility:
+      expected_sign: positive
+  timing:
+    lag: 1
+    lag_unit: quarter
+  forbidden_controls:
+  - vix_shock
+- id: cor_kspi_to_rwa_kspi
+  from: cor_kspi
+  to: rwa_kspi
+  edge_type: causal
+  notes: 'Critic-added: Higher cost of risk reflects credit quality deterioration;
+    non-performing loans receive higher risk weights under Basel regulatory framework,
+    mechanically increasing risk-weighted assets.'
+  identification_strategy:
+    type: panel_regression
+    argument: Cost of risk (provisions-to-assets ratio) maps to risk-weighted assets
+      through Basel regulatory risk-weight schedules. Bank-level panel with time fixed
+      effects absorbs macro shocks; cross-sectional variation in portfolio composition
+      provides identification.
+    key_assumption: Basel risk-weight rules provide a stable mapping from provision
+      rates to risk weights; no omitted bank-specific shocks simultaneously drive
+      both provisioning policy and asset composition.
+  unit_specification:
+    treatment_unit: pct
+    outcome_unit: log
+  acceptance_criteria:
+    plausibility:
+      expected_sign: positive
+  timing:
+    lag: 1
+    lag_unit: quarter
+  forbidden_controls:
+  - total_capital_kspi
+  - k2_ratio_kspi
+- id: real_expenditure_to_rwa_kspi
+  from: real_expenditure
+  to: rwa_kspi
+  edge_type: causal
+  notes: 'Critic-added: Higher real consumption expenditure drives consumer credit
+    demand and loan origination at Kaspi.kz, expanding the loan portfolio and thus
+    risk-weighted assets.'
+  identification_strategy:
+    type: panel_regression
+    argument: Real household expenditure drives consumer credit origination which
+      expands risk-weighted assets. Regional variation in consumption growth (driven
+      by local labor market conditions) provides cross-sectional identification, controlling
+      for bank-level lending standards.
+    key_assumption: Regional consumption shocks affect RWA only through the credit
+      demand channel, not through simultaneous changes in bank risk appetite or portfolio
+      rebalancing.
+  unit_specification:
+    treatment_unit: log
+    outcome_unit: log
+  acceptance_criteria:
+    plausibility:
+      expected_sign: positive
+  timing:
+    lag: 1
+    lag_unit: quarter
+  forbidden_controls:
+  - ppop_kspi
+  - cor_kspi
 assumptions:
 - id: scope_consistency
   description: Transmission of global shocks to Kazakhstan-specific outcomes preserves

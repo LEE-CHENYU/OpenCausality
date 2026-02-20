@@ -427,6 +427,50 @@ def _load_k2_ratio() -> pd.Series:
     return df["k2_ratio"].dropna().rename("k2_ratio_kspi")
 
 
+@_register("ppop_kspi")
+def _load_ppop_kspi() -> pd.Series:
+    """Load pre-provision operating profit from base KSPI historical KPIs.
+
+    Uses the base file (kspi_historical_kpis.json) because the extended
+    file (kaspi_bank_extended_kpis.json) does not include the ppop column.
+    """
+    json_path = RAW_DIR / "kspi" / "kspi_historical_kpis.json"
+    if not json_path.exists():
+        raise FileNotFoundError(f"KSPI historical KPIs not found: {json_path}")
+    with open(json_path) as f:
+        data = json.load(f)
+    records = data["quarters"]
+    df = pd.DataFrame(records)
+    df["date"] = df["quarter"].apply(_quarterly_label_to_date)
+    df = df.set_index("date").sort_index()
+    if "ppop" not in df.columns:
+        raise KeyError("ppop column not found in kspi_historical_kpis.json")
+    return df["ppop"].dropna().rename("ppop_kspi")
+
+
+# ---------------------------------------------------------------------------
+# Node aliases: map critic-generated names to canonical loader names
+# ---------------------------------------------------------------------------
+
+NODE_ALIASES: dict[str, str] = {
+    "brent_oil": "brent_price",
+    "nbk_base_rate": "nbk_policy_rate",
+}
+
+_aliases_registered = False
+
+
+def _register_aliases() -> None:
+    """Register node aliases so critic-generated names resolve to existing loaders."""
+    global _aliases_registered
+    if _aliases_registered:
+        return
+    for alias, canonical in NODE_ALIASES.items():
+        if alias not in NODE_LOADERS and canonical in NODE_LOADERS:
+            NODE_LOADERS[alias] = NODE_LOADERS[canonical]
+    _aliases_registered = True
+
+
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------

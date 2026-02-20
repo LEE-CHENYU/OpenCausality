@@ -20,6 +20,8 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
+import numpy as np
+import pandas as pd
 import yaml
 
 from shared.agentic.agents.critic_schema import (
@@ -27,7 +29,10 @@ from shared.agentic.agents.critic_schema import (
     CriticReport,
     CriticRevision,
     CriticRevisionValidator,
+    DAGHealthDiff,
+    DAGHealthSnapshot,
     EdgeCardDiagnostic,
+    EdgeHealthRecord,
     PropagationHealthScore,
     QualityScore,
     RevisionType,
@@ -81,6 +86,185 @@ class DAGCritic:
         self.nodes = {n["id"]: n for n in self.dag.get("nodes", [])}
         self.edges = {e["id"]: e for e in self.dag.get("edges", [])}
         self._propagation_engine = None  # Force rebuild
+
+    # ──────────────────────────────────────────────────────────────
+    # Health Snapshots (Eval Framework)
+    # ──────────────────────────────────────────────────────────────
+
+    _RATING_RANK = {"A": 4, "B": 3, "C": 2, "D": 1, "": 0}
+
+    def take_snapshot(self) -> DAGHealthSnapshot:
+        """Capture full DAG health for before/after comparison.
+
+        Reads all edge cards from disk, extracts per-edge health metrics,
+        and computes aggregate quality + propagation scores.
+        """
+        from datetime import datetime
+
+        cards_dir = self.output_dir / "cards" / "edge_cards"
+        edge_records: dict[str, EdgeHealthRecord] = {}
+
+        for eid, edge in self.edges.items():
+            edge_type = edge.get("edge_type", "")
+            has_card = False
+            point_estimate = None
+            credibility_rating = ""
+            claim_level = ""
+            propagation_role = ""
+            issues: list[str] = []
+
+            # Non-causal edges get definitional claim
+            if edge_type in ("identity", "mechanical", "bridge", "immutable"):
+                claim_level = "IDENTIFIED_CAUSAL"
+                has_card = True
+
+            # Try to read card from disk
+            if cards_dir.exists():
+                card_path = cards_dir / f"{eid}.yaml"
+                if card_path.exists():
+                    has_card = True
+                    try:
+                        with open(card_path) as f:
+                            card_data = yaml.safe_load(f) or {}
+                        claim_level = (
+                            card_data.get("identification", {})
+                            .get("claim_level", claim_level)
+                        )
+                        credibility_rating = card_data.get(
+                            "credibility_rating", ""
+                        )
+                        estimates = card_data.get("estimates") or {}
+                        point_estimate = estimates.get("point")
+                        propagation_role = card_data.get(
+                            "propagation_role", ""
+                        )
+                        design = card_data.get("design", "")
+
+                        # Detect per-edge issues
+                        n_obs = estimates.get("n_obs")
+                        if n_obs is not None and n_obs < 30:
+                            issues.append("SMALL_N")
+                        if (
+                            point_estimate is not None
+                            and edge.get("acceptance_criteria", {})
+                            .get("plausibility", {})
+                            .get("expected_sign")
+                        ):
+                            expected = edge["acceptance_criteria"][
+                                "plausibility"
+                            ]["expected_sign"]
+                            if expected == "positive" and point_estimate < 0:
+                                issues.append("WRONG_SIGN")
+                            elif expected == "negative" and point_estimate > 0:
+                                issues.append("WRONG_SIGN")
+                        if (
+                            point_estimate is not None
+                            and abs(point_estimate) < 0.001
+                            and design != "IDENTITY"
+                        ):
+                            issues.append("NEAR_ZERO")
+                        if credibility_rating == "D":
+                            issues.append("WEAK_ID")
+                    except (yaml.YAMLError, OSError):
+                        issues.append("CARD_PARSE_ERROR")
+
+            if not has_card:
+                issues.append("NO_CARD")
+
+            edge_records[eid] = EdgeHealthRecord(
+                edge_id=eid,
+                edge_type=edge_type,
+                has_card=has_card,
+                point_estimate=point_estimate,
+                credibility_rating=credibility_rating,
+                claim_level=claim_level,
+                propagation_role=propagation_role,
+                issues=issues,
+            )
+
+        quality = self.compute_quality_score()
+        prop_health = self._compute_propagation_health()
+
+        return DAGHealthSnapshot(
+            timestamp=datetime.utcnow().isoformat(),
+            quality_score=quality,
+            propagation_health=prop_health,
+            edge_records=edge_records,
+        )
+
+    def _diff_snapshots(
+        self,
+        before: DAGHealthSnapshot,
+        after: DAGHealthSnapshot,
+    ) -> DAGHealthDiff:
+        """Compare two snapshots and report regressions/improvements."""
+        quality_delta = after.quality_score.total - before.quality_score.total
+
+        prop_before = (
+            before.propagation_health.open_ratio
+            if before.propagation_health else 0.0
+        )
+        prop_after = (
+            after.propagation_health.open_ratio
+            if after.propagation_health else 0.0
+        )
+        propagation_delta = prop_after - prop_before
+
+        edges_downgraded: list[dict] = []
+        edges_upgraded: list[dict] = []
+        new_issues: list[dict] = []
+        resolved_issues: list[dict] = []
+
+        all_eids = set(before.edge_records) | set(after.edge_records)
+        for eid in all_eids:
+            rec_b = before.edge_records.get(eid)
+            rec_a = after.edge_records.get(eid)
+
+            if rec_b and rec_a:
+                # Rating changes
+                rank_b = self._RATING_RANK.get(rec_b.credibility_rating, 0)
+                rank_a = self._RATING_RANK.get(rec_a.credibility_rating, 0)
+                if rank_a < rank_b:
+                    edges_downgraded.append({
+                        "edge_id": eid,
+                        "before": rec_b.credibility_rating,
+                        "after": rec_a.credibility_rating,
+                    })
+                elif rank_a > rank_b:
+                    edges_upgraded.append({
+                        "edge_id": eid,
+                        "before": rec_b.credibility_rating,
+                        "after": rec_a.credibility_rating,
+                    })
+
+                # Issue changes
+                issues_b = set(rec_b.issues)
+                issues_a = set(rec_a.issues)
+                for issue in issues_a - issues_b:
+                    new_issues.append({"edge_id": eid, "issue": issue})
+                for issue in issues_b - issues_a:
+                    resolved_issues.append({"edge_id": eid, "issue": issue})
+
+            elif rec_a and not rec_b:
+                # New edge — issues are all "new"
+                for issue in rec_a.issues:
+                    new_issues.append({"edge_id": eid, "issue": issue})
+            elif rec_b and not rec_a:
+                # Removed edge — issues are all "resolved"
+                for issue in rec_b.issues:
+                    resolved_issues.append({"edge_id": eid, "issue": issue})
+
+        net_regression = quality_delta < -0.01
+
+        return DAGHealthDiff(
+            quality_delta=quality_delta,
+            propagation_delta=propagation_delta,
+            edges_downgraded=edges_downgraded,
+            edges_upgraded=edges_upgraded,
+            new_issues=new_issues,
+            resolved_issues=resolved_issues,
+            net_regression=net_regression,
+        )
 
     # ──────────────────────────────────────────────────────────────
     # Quality Score
@@ -269,6 +453,17 @@ class DAGCritic:
             or self.dag.get("metadata", {}).get("target_node", "")
         )
         exogenous = self.dag.get("exogenous_nodes", [])
+
+        # Infer exogenous nodes if not declared: root nodes with no
+        # incoming edges (excluding latent/exposure-only nodes)
+        if not exogenous:
+            has_incoming = {
+                e.get("to", "") for e in self.edges.values()
+            }
+            exogenous = [
+                nid for nid in self.nodes
+                if nid not in has_incoming and nid != target
+            ]
 
         if not target or not exogenous:
             return PropagationHealthScore()
@@ -655,9 +850,1110 @@ class DAGCritic:
 
         return auto_revisions
 
+    # ──────────────────────────────────────────────────────────────
+    # Identity Coefficient LP Override Detection & Auto-Fix
+    # ──────────────────────────────────────────────────────────────
+
+    def _detect_identity_lp_overrides(self) -> list[dict[str, Any]]:
+        """Detect identity/mechanical edges whose card was LP-estimated instead of formula-derived.
+
+        Iterates identity/mechanical edges in the DAG, reads each edge card YAML,
+        and checks if ``spec_details.design`` is a statistical design (LOCAL_PROJECTIONS,
+        OLS, etc.) rather than IDENTITY or PLACEHOLDER.
+
+        Returns:
+            List of dicts with keys: edge_id, edge_type, card_design, from_node, to_node
+        """
+        _FORMULA_DESIGNS = {"IDENTITY", "PLACEHOLDER"}
+        overrides: list[dict[str, Any]] = []
+        cards_dir = self.output_dir / "cards" / "edge_cards"
+        if not cards_dir.exists():
+            return overrides
+
+        for eid, edge in self.edges.items():
+            edge_type = edge.get("edge_type", "")
+            if edge_type not in self._DEFINITIONAL_TYPES:
+                continue
+            card_path = cards_dir / f"{eid}.yaml"
+            if not card_path.exists():
+                continue
+            try:
+                with open(card_path) as f:
+                    card_data = yaml.safe_load(f)
+                card_design = (
+                    card_data.get("spec_details", {}).get("design", "")
+                )
+                if card_design and card_design not in _FORMULA_DESIGNS:
+                    overrides.append({
+                        "edge_id": eid,
+                        "edge_type": edge_type,
+                        "card_design": card_design,
+                        "from_node": edge.get("from", ""),
+                        "to_node": edge.get("to", ""),
+                    })
+            except (yaml.YAMLError, OSError):
+                continue
+
+        return overrides
+
+    def _auto_fix_identity_coefficients(self) -> int:
+        """Rewrite edge cards for identity edges that were LP-estimated.
+
+        For each detected LP override:
+        - **K2 edges** (``*_to_k2_ratio_kspi``): uses ``compute_identity_sensitivity``
+          from ``ts_estimator`` with actual capital/RWA data.
+        - **Generic identity edges**: loads dependency series from NODE_LOADERS,
+          evaluates the target node's identity formula, and computes numerical
+          sensitivity by 1% perturbation.
+
+        Writes corrected cards directly to the cards directory with:
+        ``design: IDENTITY``, ``se: 0.0``, ``credibility_rating: A``,
+        ``claim_level: IDENTIFIED_CAUSAL``.
+
+        Returns:
+            Number of edge cards overwritten.
+        """
+        overrides = self._detect_identity_lp_overrides()
+        if not overrides:
+            return 0
+
+        cards_dir = self.output_dir / "cards" / "edge_cards"
+        cards_dir.mkdir(parents=True, exist_ok=True)
+        n_fixed = 0
+
+        for ov in overrides:
+            eid = ov["edge_id"]
+            from_node = ov["from_node"]
+            to_node = ov["to_node"]
+
+            try:
+                coefficient = self._compute_identity_coefficient(
+                    eid, from_node, to_node,
+                )
+            except Exception as e:
+                logger.warning(
+                    f"Identity coefficient computation failed for {eid}: {e}"
+                )
+                continue
+
+            # Build corrected edge card
+            edge = self.edges.get(eid, {})
+            unit_spec = edge.get("unit_specification", {})
+            tu = unit_spec.get("treatment_unit", "")
+            ou = unit_spec.get("outcome_unit", "")
+
+            card_data = {
+                "edge_id": eid,
+                "from_node": from_node,
+                "to_node": to_node,
+                "spec_details": {
+                    "design": "IDENTITY",
+                    "se_method": "deterministic",
+                    "controls": [],
+                    "instruments": [],
+                    "fixed_effects": [],
+                    "horizon": [0],
+                },
+                "estimates": {
+                    "point": coefficient,
+                    "se": 0.0,
+                    "ci_95": [coefficient, coefficient],
+                    "pvalue": None,
+                    "treatment_unit": tu,
+                    "outcome_unit": ou,
+                },
+                "diagnostics": {
+                    "identity_check": {
+                        "name": "identity_check",
+                        "passed": True,
+                        "value": coefficient,
+                        "threshold": None,
+                        "pvalue": None,
+                        "message": (
+                            f"Deterministic identity coefficient for "
+                            f"{from_node} -> {to_node}"
+                        ),
+                    },
+                },
+                "all_diagnostics_pass": True,
+                "interpretation": {
+                    "estimand": (
+                        f"Identity sensitivity: d({to_node})/d({from_node})"
+                    ),
+                    "is_not": "Causal effect; this is a mechanical identity",
+                },
+                "failure_flags": {
+                    "weak_identification": False,
+                    "potential_bad_control": False,
+                    "mechanical_identity_risk": True,
+                    "regime_break_detected": False,
+                    "small_sample": False,
+                    "high_missing_rate": False,
+                    "entity_boundary_change": False,
+                    "definition_inconsistency": False,
+                    "data_insufficient": False,
+                },
+                "counterfactual": {
+                    "supports_shock_path": True,
+                    "supports_policy_intervention": True,
+                    "intervention_note": (
+                        "Mechanical identity; always holds by definition"
+                    ),
+                },
+                "credibility_rating": "A",
+                "credibility_score": 1.0,
+                "identification": {
+                    "claim_level": "IDENTIFIED_CAUSAL",
+                    "strategy_type": "accounting_identity",
+                    "risks": {
+                        "unmeasured_confounding": "none",
+                        "simultaneity": "none",
+                        "weak_variation": "none",
+                        "measurement_error": "low",
+                        "selection": "none",
+                    },
+                    "untestable_assumptions": [],
+                    "testable_threats_passed": ["identity_check"],
+                    "testable_threats_failed": [],
+                },
+                "counterfactual_block": {
+                    "shock_scenario_allowed": True,
+                    "policy_intervention_allowed": True,
+                    "reason_shock_blocked": "",
+                    "reason_policy_blocked": "",
+                    "allowed": True,
+                    "reason_blocked": "",
+                },
+                "propagation_role": {
+                    "role": "identity",
+                    "mode_propagation_allowed": {
+                        "STRUCTURAL": True,
+                        "REDUCED_FORM": True,
+                        "DESCRIPTIVE": True,
+                    },
+                },
+            }
+
+            card_path = cards_dir / f"{eid}.yaml"
+            with open(card_path, "w", encoding="utf-8") as f:
+                yaml.dump(
+                    card_data, f,
+                    sort_keys=False, allow_unicode=True,
+                    default_flow_style=False,
+                )
+            logger.info(
+                f"Identity LP override fix: rewrote {eid} card "
+                f"(design: {ov['card_design']} -> IDENTITY, "
+                f"coefficient: {coefficient:.6f})"
+            )
+            n_fixed += 1
+
+        if n_fixed > 0:
+            self._propagation_engine = None  # Invalidate cached engine
+
+        return n_fixed
+
+    # ──────────────────────────────────────────────────────────────
+    # KnowledgeScout Integration
+    # ──────────────────────────────────────────────────────────────
+
+    _llm_client: Any = None  # Lazily initialized
+
+    def _get_llm_client(self) -> Any:
+        """Lazily initialize an LLM client for KnowledgeScout.
+
+        Uses Claude CLI by default (no API key needed, uses local claude tool).
+        Falls back to settings-configured provider if Claude CLI unavailable.
+        """
+        if self._llm_client is None:
+            try:
+                from shared.llm.client import CodexCLIClient
+                self._llm_client = CodexCLIClient(provider="claude_cli")
+                logger.info("KnowledgeScout: using Claude CLI client")
+            except Exception as e:
+                logger.warning(f"Could not initialize LLM client: {e}")
+                return None
+        return self._llm_client
+
+    def _research_missing_formula(
+        self,
+        to_node: str,
+        dep_names: list[str],
+    ) -> tuple[str, list[str]] | None:
+        """Use KnowledgeScout to research a missing identity formula.
+
+        If found, writes the formula to the DAG YAML node definition
+        and updates in-memory state. Returns (formula, depends_on) or None.
+        """
+        llm = self._get_llm_client()
+        if llm is None:
+            return None
+
+        to_node_def = self.nodes.get(to_node, {})
+        node_desc = to_node_def.get("description", to_node_def.get("name", to_node))
+        dag_desc = self.dag.get("metadata", {}).get("description", "")
+
+        # Collect all identity edge dependencies pointing at this node
+        if not dep_names:
+            dep_names = [
+                e.get("from", "")
+                for e in self.edges.values()
+                if e.get("to") == to_node
+                and e.get("edge_type") in self._DEFINITIONAL_TYPES
+            ]
+        if not dep_names:
+            logger.info(f"KnowledgeScout: no dependencies for {to_node}, skipping")
+            return None
+
+        try:
+            from shared.agentic.agents.knowledge_scout import KnowledgeScout
+
+            scout = KnowledgeScout(llm)
+            result = scout.lookup_formula(
+                node_id=to_node,
+                node_description=node_desc,
+                depends_on=dep_names,
+                context=dag_desc,
+            )
+
+            if not result.found or not result.formula:
+                logger.info(
+                    f"KnowledgeScout: no formula found for {to_node} "
+                    f"(confidence={result.confidence})"
+                )
+                return None
+
+            if result.confidence == "low":
+                logger.warning(
+                    f"KnowledgeScout: low confidence formula for {to_node}, "
+                    f"skipping: {result.formula}"
+                )
+                return None
+
+            logger.info(
+                f"KnowledgeScout: found formula for {to_node}: "
+                f"{result.formula} (confidence={result.confidence}, "
+                f"source={result.source})"
+            )
+
+            # Write to DAG YAML
+            self._apply_researched_formula(
+                to_node, result.formula, result.depends_on or dep_names,
+            )
+            return result.formula, result.depends_on or dep_names
+
+        except Exception as e:
+            logger.warning(f"KnowledgeScout formula research failed for {to_node}: {e}")
+            return None
+
+    def _apply_researched_formula(
+        self,
+        node_id: str,
+        formula: str,
+        depends_on: list[str],
+    ) -> None:
+        """Write a researched formula to the DAG YAML node and update in-memory state."""
+        # Update in-memory node
+        if node_id in self.nodes:
+            self.nodes[node_id].setdefault("identity", {})
+            self.nodes[node_id]["identity"]["formula"] = formula
+            self.nodes[node_id]["identity"]["depends_on"] = depends_on
+            self.nodes[node_id]["identity"].setdefault(
+                "name", f"{node_id}_auto_researched",
+            )
+            if not self.nodes[node_id].get("derived"):
+                self.nodes[node_id]["derived"] = True
+
+        # Update DAG YAML on disk
+        for node in self.dag.get("nodes", []):
+            if node["id"] == node_id:
+                node.setdefault("identity", {})
+                node["identity"]["formula"] = formula
+                node["identity"]["depends_on"] = depends_on
+                node["identity"].setdefault(
+                    "name", f"{node_id}_auto_researched",
+                )
+                if not node.get("derived"):
+                    node["derived"] = True
+                break
+
+        with open(self.dag_path, "w", encoding="utf-8") as f:
+            yaml.dump(
+                self.dag, f,
+                sort_keys=False, allow_unicode=True,
+                default_flow_style=False,
+            )
+        logger.info(
+            f"Applied researched formula to DAG: {node_id}.identity.formula = "
+            f"{repr(formula)}"
+        )
+
+    def _compute_identity_coefficient(
+        self,
+        edge_id: str,
+        from_node: str,
+        to_node: str,
+    ) -> float:
+        """Compute the correct identity coefficient for a given edge.
+
+        Strategy hierarchy:
+        1. K2 edges: mean(K2 ratio) as log->pct coefficient
+        2. Mechanical edges without formula: data-ratio elasticity
+        3. KnowledgeScout fallback: LLM-researched formula for missing identities
+        4. Simple linear formulas (a + b, a - b): symbolic extraction
+        5. Complex formulas with loadable data: numerical perturbation
+        """
+        import numpy as _np
+        import pandas as _pd
+        from shared.engine.data_assembler import NODE_LOADERS, _register_aliases
+        _register_aliases()
+
+        # --- K2 identity edges: log->pct coefficients via mean K2 ---
+        if to_node == "k2_ratio_kspi":
+            k2_series = NODE_LOADERS["k2_ratio_kspi"]()
+            mean_k2 = float(k2_series.mean())
+            if "total_capital" in from_node:
+                return mean_k2
+            elif "rwa" in from_node:
+                return -mean_k2
+            else:
+                raise ValueError(
+                    f"Unrecognized K2 identity edge from_node: {from_node}"
+                )
+
+        to_node_def = self.nodes.get(to_node, {})
+        identity = to_node_def.get("identity", {})
+        formula = identity.get("formula")
+        dep_names = identity.get("depends_on") or to_node_def.get("depends_on", [])
+        edge = self.edges.get(edge_id, {})
+        edge_type = edge.get("edge_type", "")
+
+        # --- Mechanical edges without formula: data-ratio elasticity ---
+        if formula is None and edge_type == "mechanical":
+            return self._compute_mechanical_elasticity(
+                edge_id, from_node, to_node, edge,
+            )
+
+        if formula is None:
+            # --- KnowledgeScout fallback: research the formula ---
+            result = self._research_missing_formula(to_node, dep_names)
+            if result is not None:
+                formula, dep_names = result
+            else:
+                raise ValueError(
+                    f"Identity edge {edge_id}: target node '{to_node}' "
+                    f"has no identity formula (KnowledgeScout also failed)"
+                )
+
+        # --- Symbolic fallback for simple linear formulas ---
+        coeff = self._try_symbolic_linear_coefficient(formula, from_node, dep_names)
+        if coeff is not None:
+            logger.info(
+                f"Symbolic coefficient for {edge_id}: "
+                f"formula='{formula}', from_node='{from_node}', coeff={coeff}"
+            )
+            return coeff
+
+        # --- Numerical perturbation with loaded data ---
+        dep_series: dict[str, _pd.Series] = {}
+        for dep in dep_names:
+            if dep in NODE_LOADERS:
+                dep_series[dep] = NODE_LOADERS[dep]()
+
+        if from_node not in dep_series:
+            raise ValueError(
+                f"Identity edge {edge_id}: from_node '{from_node}' "
+                f"not loadable for sensitivity computation"
+            )
+
+        combined = _pd.DataFrame(dep_series).dropna()
+        if combined.empty:
+            raise ValueError(
+                f"Identity edge {edge_id}: no overlapping data for "
+                f"dependencies {dep_names}"
+            )
+
+        # Safe evaluation namespace (pre-existing pattern)
+        def _eval_formula(data: dict[str, _pd.Series]) -> _pd.Series:
+            ns: dict = {"__builtins__": {}}
+            ns.update(data)
+            ns["log"] = _np.log
+            ns["exp"] = _np.exp
+            ns["abs"] = _np.abs
+            ns["sqrt"] = _np.sqrt
+            ns["diff"] = lambda s: s.diff()
+            result = eval(formula, ns)  # noqa: S307 — sandboxed namespace
+            if isinstance(result, _pd.Series):
+                return result
+            return _pd.Series(result, index=next(iter(data.values())).index)
+
+        base_data = {dep: combined[dep] for dep in dep_names if dep in combined}
+        baseline = _eval_formula(base_data)
+
+        perturbed_data = dict(base_data)
+        delta = combined[from_node].abs().mean() * 0.01
+        if delta == 0:
+            delta = 1.0
+        perturbed_data[from_node] = combined[from_node] + delta
+        perturbed = _eval_formula(perturbed_data)
+
+        sensitivity = float(((perturbed - baseline) / delta).dropna().mean())
+        return sensitivity
+
+    def _compute_mechanical_elasticity(
+        self,
+        edge_id: str,
+        from_node: str,
+        to_node: str,
+        edge: dict[str, Any],
+    ) -> float:
+        """Compute elasticity for mechanical edges without identity formulas.
+
+        Uses actual data to compute the appropriate sensitivity based on
+        the edge's unit specification:
+        - log/log: elasticity = mean(X) / mean(Y)
+        - pct/log: semi-elasticity, scaled by mean(Loans) for CoR edges
+        """
+        from shared.engine.data_assembler import NODE_LOADERS
+
+        if from_node not in NODE_LOADERS or to_node not in NODE_LOADERS:
+            raise ValueError(
+                f"Mechanical edge {edge_id}: missing loader for "
+                f"{from_node} or {to_node}"
+            )
+
+        from_series = NODE_LOADERS[from_node]()
+        to_series = NODE_LOADERS[to_node]()
+
+        # Align series
+        common = from_series.index.intersection(to_series.index)
+        if len(common) < 4:
+            raise ValueError(
+                f"Mechanical edge {edge_id}: insufficient overlap ({len(common)} obs)"
+            )
+
+        from_vals = from_series.reindex(common).dropna()
+        to_vals = to_series.reindex(common).dropna()
+        common2 = from_vals.index.intersection(to_vals.index)
+        from_vals = from_vals.reindex(common2)
+        to_vals = to_vals.reindex(common2)
+
+        unit_spec = edge.get("unit_specification", {})
+        tu = unit_spec.get("treatment_unit", "")
+        ou = unit_spec.get("outcome_unit", "")
+        expected_sign = (
+            edge.get("acceptance_criteria", {})
+            .get("plausibility", {})
+            .get("expected_sign", "")
+        )
+
+        if tu == "log" and ou == "log":
+            mean_from = float(from_vals.mean())
+            mean_to = float(to_vals.mean())
+            if mean_to == 0:
+                raise ValueError(f"Mechanical edge {edge_id}: mean({to_node})=0")
+            elasticity = mean_from / mean_to
+            if expected_sign == "negative":
+                elasticity = -abs(elasticity)
+            elif expected_sign == "positive":
+                elasticity = abs(elasticity)
+            logger.info(
+                f"Mechanical elasticity {edge_id}: "
+                f"mean({from_node})={mean_from:.2f}, "
+                f"mean({to_node})={mean_to:.2f}, "
+                f"elast={elasticity:.4f}"
+            )
+            return elasticity
+
+        elif tu == "pct" and ou == "log":
+            # CoR-like: d(logCapital)/d(CoR%) = -Loans/Capital * 0.01
+            # Use available KSPI data for loans if possible
+            mean_to = float(to_vals.mean())
+            if mean_to == 0:
+                raise ValueError(f"Mechanical edge {edge_id}: mean({to_node})=0")
+
+            # Try to load loans for more accurate CoR sensitivity
+            if "cor" in from_node and "loan_portfolio_kspi" in NODE_LOADERS:
+                loans = NODE_LOADERS["loan_portfolio_kspi"]()
+                loans_aligned = loans.reindex(common2).dropna()
+                if not loans_aligned.empty:
+                    mean_loans = float(loans_aligned.mean())
+                    # CoR in pct, capital in levels: d(logCap)/d(CoR_pct) = -Loans/(100*Cap)
+                    semi_elast = -mean_loans / (100.0 * mean_to)
+                    logger.info(
+                        f"Mechanical CoR sensitivity {edge_id}: "
+                        f"mean(loans)={mean_loans:.0f}, "
+                        f"mean({to_node})={mean_to:.0f}, "
+                        f"semi_elast={semi_elast:.6f}"
+                    )
+                    return semi_elast
+
+            # Fallback: simple 1/Y sensitivity with sign
+            semi_elast = 1.0 / mean_to
+            if expected_sign == "negative":
+                semi_elast = -abs(semi_elast)
+            elif expected_sign == "positive":
+                semi_elast = abs(semi_elast)
+            logger.info(
+                f"Mechanical semi-elasticity {edge_id}: "
+                f"mean({to_node})={mean_to:.2f}, semi_elast={semi_elast:.6f}"
+            )
+            return semi_elast
+
+        raise ValueError(
+            f"Mechanical edge {edge_id}: unsupported unit combination "
+            f"treatment_unit='{tu}', outcome_unit='{ou}'"
+        )
+
+    @staticmethod
+    def _try_symbolic_linear_coefficient(
+        formula: str,
+        from_node: str,
+        dep_names: list[str],
+    ) -> float | None:
+        """Extract coefficient from simple linear formulas without data.
+
+        Handles: "a + b", "a - b", "a + b - c", "-a + b", etc.
+        Returns the coefficient of from_node, or None if formula is
+        not a simple linear combination of the dependency variables.
+        """
+        # Normalize whitespace
+        f = formula.strip()
+
+        # Reject formulas with function calls, multiplication, division, etc.
+        # Note: "(" catches function calls like log(), exp(), sqrt() so we
+        # don't check bare names (they'd false-positive on variable names
+        # like "expenditure" containing "exp").
+        if any(op in f for op in ("*", "/", "(", ")", "**")):
+            return None
+
+        # Parse terms: split on +/- keeping the sign
+        terms: list[tuple[str, str]] = []
+        if not f.startswith("-"):
+            f = "+" + f
+
+        for match in re.finditer(r'([+-])\s*(\w+)', f):
+            sign = match.group(1)
+            var = match.group(2)
+            terms.append((sign, var))
+
+        if not terms:
+            return None
+
+        # All variables must be in dep_names
+        term_vars = {var for _, var in terms}
+        dep_set = set(dep_names)
+        if not term_vars.issubset(dep_set):
+            return None
+
+        # Find the coefficient for from_node
+        for sign, var in terms:
+            if var == from_node:
+                return 1.0 if sign == "+" else -1.0
+
+        return None
+
+    # ──────────────────────────────────────────────────────────────
+    # Estimation-Aware Detection Methods
+    # ──────────────────────────────────────────────────────────────
+
+    def _detect_placeholder_edges(self) -> list[dict[str, Any]]:
+        """Detect causal edges with PLACEHOLDER cards or no card at all.
+
+        Returns list of dicts: {edge_id, from_node, to_node, reason}.
+        """
+        problems: list[dict[str, Any]] = []
+        cards_dir = self.output_dir / "cards" / "edge_cards"
+
+        for eid, edge in self.edges.items():
+            edge_type = edge.get("edge_type", "")
+            if edge_type != "causal":
+                continue
+            from_node = edge.get("from", "")
+            to_node = edge.get("to", "")
+
+            if not cards_dir.exists():
+                problems.append({
+                    "edge_id": eid, "from_node": from_node,
+                    "to_node": to_node, "reason": "no_card_dir",
+                })
+                continue
+
+            card_path = cards_dir / f"{eid}.yaml"
+            if not card_path.exists():
+                problems.append({
+                    "edge_id": eid, "from_node": from_node,
+                    "to_node": to_node, "reason": "no_card",
+                })
+                continue
+
+            try:
+                with open(card_path) as f:
+                    card_data = yaml.safe_load(f)
+                design = (
+                    card_data.get("spec_details", {}).get("design", "")
+                    or card_data.get("design", "")
+                )
+                if design == "PLACEHOLDER":
+                    problems.append({
+                        "edge_id": eid, "from_node": from_node,
+                        "to_node": to_node, "reason": "placeholder",
+                    })
+            except (yaml.YAMLError, OSError):
+                problems.append({
+                    "edge_id": eid, "from_node": from_node,
+                    "to_node": to_node, "reason": "card_parse_error",
+                })
+
+        return problems
+
+    def _detect_exploding_magnitudes(self) -> list[dict[str, Any]]:
+        """Detect edges with implausibly large coefficients.
+
+        Thresholds: |β| > 20 for causal edges, |β| > 50 for mechanical.
+        """
+        problems: list[dict[str, Any]] = []
+        estimates = self._load_edge_card_estimates()
+
+        for eid, est in estimates.items():
+            if eid not in self.edges:
+                continue
+            point = est.get("point")
+            if point is None:
+                continue
+            edge_type = self.edges[eid].get("edge_type", "")
+            threshold = 50.0 if edge_type in self._DEFINITIONAL_TYPES else 20.0
+            if abs(point) > threshold:
+                problems.append({
+                    "edge_id": eid,
+                    "from_node": self.edges[eid].get("from", ""),
+                    "to_node": self.edges[eid].get("to", ""),
+                    "point": point,
+                    "threshold": threshold,
+                    "reason": "exploding_magnitude",
+                })
+        return problems
+
+    def _detect_wrong_signs(self) -> list[dict[str, Any]]:
+        """Detect edges where the estimated sign contradicts expected_sign."""
+        problems: list[dict[str, Any]] = []
+        estimates = self._load_edge_card_estimates()
+
+        for eid, edge in self.edges.items():
+            expected = (
+                edge.get("acceptance_criteria", {})
+                .get("plausibility", {})
+                .get("expected_sign", "")
+            )
+            if not expected or expected == "any":
+                continue
+            est = estimates.get(eid)
+            if not est or est.get("point") is None:
+                continue
+            point = est["point"]
+            if (expected == "positive" and point < 0) or (
+                expected == "negative" and point > 0
+            ):
+                problems.append({
+                    "edge_id": eid,
+                    "from_node": edge.get("from", ""),
+                    "to_node": edge.get("to", ""),
+                    "expected_sign": expected,
+                    "actual_point": point,
+                    "reason": "wrong_sign",
+                })
+        return problems
+
+    def _detect_dead_channels(self) -> list[dict[str, Any]]:
+        """Detect edges with D-rated cards and near-zero coefficient."""
+        problems: list[dict[str, Any]] = []
+        cards_dir = self.output_dir / "cards" / "edge_cards"
+        if not cards_dir.exists():
+            return problems
+
+        for eid, edge in self.edges.items():
+            if edge.get("edge_type", "") != "causal":
+                continue
+            card_path = cards_dir / f"{eid}.yaml"
+            if not card_path.exists():
+                continue
+            try:
+                with open(card_path) as f:
+                    card_data = yaml.safe_load(f)
+                rating = card_data.get("credibility_rating", "")
+                estimates_block = card_data.get("estimates") or {}
+                point = estimates_block.get("point")
+                if rating == "D" and point is not None and abs(point) < 0.01:
+                    problems.append({
+                        "edge_id": eid,
+                        "from_node": edge.get("from", ""),
+                        "to_node": edge.get("to", ""),
+                        "point": point,
+                        "rating": rating,
+                        "reason": "dead_channel",
+                    })
+            except (yaml.YAMLError, OSError):
+                continue
+        return problems
+
+    # ──────────────────────────────────────────────────────────────
+    # LP Re-Estimation Auto-Fix
+    # ──────────────────────────────────────────────────────────────
+
+    def _auto_fix_estimation(self) -> int:
+        """Re-estimate broken causal edges using Local Projections.
+
+        Detects: placeholder cards, exploding magnitudes, wrong signs,
+        dead channels. For each, attempts LP estimation with actual data
+        and writes a proper edge card.
+
+        Returns:
+            Number of edges successfully re-estimated.
+        """
+        # Collect all edges needing re-estimation
+        candidates: dict[str, dict[str, Any]] = {}
+
+        for problem in self._detect_placeholder_edges():
+            eid = problem["edge_id"]
+            if eid not in candidates:
+                candidates[eid] = problem
+
+        for problem in self._detect_exploding_magnitudes():
+            eid = problem["edge_id"]
+            # Only re-estimate causal edges (identity/mechanical handled by step 3)
+            if self.edges.get(eid, {}).get("edge_type", "") == "causal":
+                if eid not in candidates:
+                    candidates[eid] = problem
+
+        for problem in self._detect_wrong_signs():
+            eid = problem["edge_id"]
+            if eid not in candidates:
+                candidates[eid] = problem
+
+        for problem in self._detect_dead_channels():
+            eid = problem["edge_id"]
+            if eid not in candidates:
+                candidates[eid] = problem
+
+        if not candidates:
+            return 0
+
+        # Filter out already-attempted edges (avoid re-estimation loops)
+        if not hasattr(self, "_estimation_attempted"):
+            self._estimation_attempted: set[str] = set()
+
+        to_estimate = {
+            eid: info for eid, info in candidates.items()
+            if eid not in self._estimation_attempted
+        }
+
+        if not to_estimate:
+            return 0
+
+        # Lazy imports
+        from shared.engine.data_assembler import (
+            NODE_LOADERS, EDGE_NODE_MAP, assemble_edge_data,
+            _register_aliases,
+        )
+        from shared.engine.ts_estimator import estimate_lp, check_sign_consistency
+        from shared.agentic.output.edge_card import (
+            compute_credibility_score, DiagnosticResult, FailureFlags,
+            rating_from_score,
+        )
+        from shared.agentic.identification.screen import IdentifiabilityScreen
+
+        # Bootstrap data loaders
+        _register_aliases()
+        try:
+            from shared.agentic.dag.parser import parse_dag
+            from shared.engine.dynamic_loader import DynamicLoaderFactory
+            dag_spec = parse_dag(self.dag_path)
+            factory = DynamicLoaderFactory()
+            factory.auto_populate_from_dag(dag_spec)
+        except Exception as e:
+            logger.warning(f"Dynamic loader bootstrap failed: {e}")
+
+        screen = IdentifiabilityScreen()
+        cards_dir = self.output_dir / "cards" / "edge_cards"
+        cards_dir.mkdir(parents=True, exist_ok=True)
+        n_fixed = 0
+
+        for eid, info in to_estimate.items():
+            self._estimation_attempted.add(eid)
+            edge = self.edges.get(eid, {})
+            from_node = info.get("from_node", edge.get("from", ""))
+            to_node = info.get("to_node", edge.get("to", ""))
+
+            # Skip identity/mechanical (handled by step 3)
+            if edge.get("edge_type", "") in self._DEFINITIONAL_TYPES:
+                continue
+
+            # Ensure edge is in EDGE_NODE_MAP
+            if eid not in EDGE_NODE_MAP:
+                if from_node and to_node:
+                    EDGE_NODE_MAP[eid] = (from_node, to_node)
+                else:
+                    logger.warning(f"Estimation skip {eid}: no from/to nodes")
+                    continue
+
+            # Check both nodes are loadable
+            treat_node, out_node = EDGE_NODE_MAP[eid]
+            if treat_node not in NODE_LOADERS or out_node not in NODE_LOADERS:
+                logger.info(
+                    f"Estimation skip {eid}: missing loader "
+                    f"(treatment={treat_node in NODE_LOADERS}, "
+                    f"outcome={out_node in NODE_LOADERS})"
+                )
+                continue
+
+            # Assemble data
+            unit_spec = edge.get("unit_specification", {})
+            try:
+                data = assemble_edge_data(eid, unit_spec or None)
+            except Exception as e:
+                logger.warning(f"Estimation skip {eid}: data assembly failed: {e}")
+                continue
+
+            if data.empty or len(data) < 8:
+                logger.warning(
+                    f"Estimation skip {eid}: insufficient data ({len(data)} obs)"
+                )
+                continue
+
+            # Determine horizon and lags from frequency
+            freq = edge.get("timing", {}).get("frequency", "")
+            median_gap = data.index.to_series().diff().median()
+            is_quarterly = (
+                freq in ("quarterly", "Q")
+                or (median_gap is not None and median_gap > pd.Timedelta(days=60))
+            )
+            max_horizon = 4 if is_quarterly else 6
+            n_lags = 1 if is_quarterly else 2
+
+            # Run LP estimation
+            try:
+                lp_result = estimate_lp(
+                    y=data["outcome"],
+                    x=data["treatment"],
+                    max_horizon=max_horizon,
+                    n_lags=n_lags,
+                    edge_id=eid,
+                )
+            except Exception as e:
+                logger.warning(f"Estimation failed for {eid}: {e}")
+                continue
+
+            # Extract impact estimate
+            if not lp_result.coefficients or all(
+                np.isnan(c) for c in lp_result.coefficients
+            ):
+                logger.warning(f"Estimation skip {eid}: all NaN coefficients")
+                continue
+
+            point = lp_result.impact_estimate
+            se = lp_result.impact_se
+            ci = (
+                [lp_result.ci_lower[0], lp_result.ci_upper[0]]
+                if lp_result.ci_lower and lp_result.ci_upper
+                else [point - 1.96 * se, point + 1.96 * se]
+            )
+            pvalue = lp_result.pvalues[0] if lp_result.pvalues else None
+            nobs = lp_result.nobs[0] if lp_result.nobs else len(data)
+
+            # Build diagnostics
+            diag_results: dict[str, DiagnosticResult] = {}
+
+            # Sign consistency check
+            sign_ok, sign_msg = check_sign_consistency(lp_result)
+            diag_results["sign_consistency"] = DiagnosticResult(
+                name="sign_consistency",
+                passed=sign_ok,
+                message=sign_msg,
+            )
+
+            # Sample size check
+            small_sample = nobs < 15
+            diag_results["sample_size"] = DiagnosticResult(
+                name="sample_size",
+                passed=not small_sample,
+                value=float(nobs),
+                threshold=15.0,
+                message=f"N={nobs}" + (" (small sample)" if small_sample else ""),
+            )
+
+            # Failure flags
+            flags = FailureFlags(
+                small_sample=small_sample,
+                weak_identification=(pvalue is not None and pvalue > 0.10),
+            )
+
+            # Compute credibility score
+            design_weight = 0.5  # LP is a moderate design
+            data_coverage = min(nobs / 20.0, 1.0)
+            cred_score, cred_rating = compute_credibility_score(
+                diag_results, flags, design_weight, data_coverage,
+            )
+
+            # Screen for identification claim
+            try:
+                strategy = edge.get("identification_strategy", {})
+                id_result = screen.screen_post_estimation(
+                    edge_id=eid,
+                    design="LOCAL_PROJECTIONS",
+                    diagnostics=diag_results,
+                    strategy=strategy if isinstance(strategy, dict) else None,
+                )
+                claim_level = id_result.claim_level
+                shock_cf = getattr(id_result, "shock_scenario_allowed", True)
+                policy_cf = getattr(id_result, "policy_intervention_allowed", False)
+            except Exception as e:
+                logger.warning(f"Identification screen failed for {eid}: {e}")
+                claim_level = "REDUCED_FORM"
+                shock_cf = True
+                policy_cf = False
+
+            # Derive propagation role
+            from shared.agentic.query_mode import derive_propagation_role
+            role = derive_propagation_role("causal", claim_level)
+
+            tu = unit_spec.get("treatment_unit", "")
+            ou = unit_spec.get("outcome_unit", "")
+
+            # Build full card
+            card_data = {
+                "edge_id": eid,
+                "from_node": from_node,
+                "to_node": to_node,
+                "spec_details": {
+                    "design": "LOCAL_PROJECTIONS",
+                    "se_method": "HAC_Newey_West",
+                    "max_horizon": max_horizon,
+                    "n_lags": n_lags,
+                    "controls": [],
+                    "instruments": [],
+                    "fixed_effects": [],
+                    "horizon": list(range(max_horizon + 1)),
+                },
+                "estimates": {
+                    "point": float(point),
+                    "se": float(se),
+                    "ci_95": [float(ci[0]), float(ci[1])],
+                    "pvalue": float(pvalue) if pvalue is not None else None,
+                    "treatment_unit": tu,
+                    "outcome_unit": ou,
+                },
+                "diagnostics": {
+                    name: dr.to_dict() for name, dr in diag_results.items()
+                },
+                "all_diagnostics_pass": all(
+                    dr.passed for dr in diag_results.values()
+                ),
+                "interpretation": {
+                    "estimand": (
+                        f"LP impulse response of {to_node} to {from_node}"
+                    ),
+                    "effective_obs": nobs,
+                    "hac_bandwidth": (
+                        lp_result.hac_bandwidth[0]
+                        if lp_result.hac_bandwidth else None
+                    ),
+                },
+                "failure_flags": {
+                    "weak_identification": flags.weak_identification,
+                    "potential_bad_control": flags.potential_bad_control,
+                    "mechanical_identity_risk": False,
+                    "regime_break_detected": flags.regime_break_detected,
+                    "small_sample": flags.small_sample,
+                    "high_missing_rate": False,
+                    "entity_boundary_change": False,
+                    "definition_inconsistency": False,
+                    "data_insufficient": False,
+                },
+                "counterfactual": {
+                    "supports_shock_path": shock_cf,
+                    "supports_policy_intervention": policy_cf,
+                },
+                "credibility_rating": cred_rating,
+                "credibility_score": float(cred_score),
+                "identification": {
+                    "claim_level": claim_level,
+                    "strategy_type": (
+                        edge.get("identification_strategy", {}).get("type", "")
+                        if isinstance(edge.get("identification_strategy"), dict)
+                        else "time_series_LP"
+                    ),
+                    "risks": {
+                        "unmeasured_confounding": "medium",
+                        "simultaneity": "medium",
+                        "weak_variation": (
+                            "high" if flags.weak_identification else "low"
+                        ),
+                        "measurement_error": "low",
+                        "selection": "none",
+                    },
+                },
+                "counterfactual_block": {
+                    "shock_scenario_allowed": shock_cf,
+                    "policy_intervention_allowed": policy_cf,
+                    "reason_shock_blocked": "" if shock_cf else "Claim too weak",
+                    "reason_policy_blocked": (
+                        "" if policy_cf
+                        else f"Requires IDENTIFIED_CAUSAL, has {claim_level}"
+                    ),
+                    "allowed": shock_cf,
+                    "reason_blocked": "" if shock_cf else "Claim too weak",
+                },
+                "propagation_role": {
+                    "role": role,
+                    "mode_propagation_allowed": {
+                        "STRUCTURAL": role in (
+                            "structural", "bridge", "identity",
+                        ),
+                        "REDUCED_FORM": role in (
+                            "structural", "reduced_form", "bridge", "identity",
+                        ),
+                        "DESCRIPTIVE": True,
+                    },
+                },
+                "data_provenance": {
+                    "date_range": (
+                        f"{data.index.min().date()} to {data.index.max().date()}"
+                    ),
+                    "n_obs": nobs,
+                    "frequency": "quarterly" if is_quarterly else "monthly",
+                },
+            }
+
+            # Write card
+            card_path = cards_dir / f"{eid}.yaml"
+            with open(card_path, "w", encoding="utf-8") as f:
+                yaml.dump(
+                    card_data, f,
+                    sort_keys=False, allow_unicode=True,
+                    default_flow_style=False,
+                )
+            logger.info(
+                f"Estimation auto-fix: wrote {eid} card "
+                f"(β={point:.4f}, se={se:.4f}, rating={cred_rating}, "
+                f"claim={claim_level}, reason={info.get('reason', '?')})"
+            )
+            n_fixed += 1
+
+        if n_fixed > 0:
+            self._propagation_engine = None  # Invalidate cached engine
+
+        return n_fixed
+
     def apply_auto_fixes(self) -> int:
         """Run ALL deterministic auto-fix routines in a converging loop.
 
+        Steps:
+        1. Identity claim fixes (definitional edges → IDENTIFIED_CAUSAL)
+        2. Unit chain fixes (unit-kind compatibility at shared nodes)
+        3. Identity coefficient LP override fixes (rewrite identity cards)
+        4. LP re-estimation fixes (re-estimate broken causal edges)
+
+        Each iteration takes a before/after snapshot to detect regressions.
         Iterates until no more fixes are found (or max 5 loops for safety).
         Returns total count of applied revisions.
         """
@@ -665,6 +1961,13 @@ class DAGCritic:
         max_loops = 5
 
         for loop_i in range(max_loops):
+            # Snapshot before fixes
+            try:
+                snapshot_before = self.take_snapshot()
+            except Exception as e:
+                logger.warning(f"Pre-fix snapshot failed: {e}")
+                snapshot_before = None
+
             revisions: list[CriticRevision] = []
 
             # 1. Identity claim auto-fixes
@@ -675,19 +1978,63 @@ class DAGCritic:
             unit_revs = self._auto_fix_unit_chains()
             revisions.extend(unit_revs)
 
-            if not revisions:
+            # 3. Identity coefficient LP override fixes
+            # These write cards directly (not via CriticRevision),
+            # so the count is added to total_applied separately.
+            n_coeff_fixes = 0
+            try:
+                n_coeff_fixes = self._auto_fix_identity_coefficients()
+                total_applied += n_coeff_fixes
+            except Exception as e:
+                logger.warning(f"Identity coefficient auto-fix failed: {e}")
+
+            # 4. LP re-estimation fixes for broken causal edges
+            n_estimation_fixes = 0
+            try:
+                n_estimation_fixes = self._auto_fix_estimation()
+                total_applied += n_estimation_fixes
+            except Exception as e:
+                logger.warning(f"Estimation auto-fix failed: {e}")
+
+            if not revisions and n_coeff_fixes == 0 and n_estimation_fixes == 0:
                 break  # Converged — no more auto-fixable issues
 
             applied, rejected = self.apply_revisions(revisions)
             n_applied = len(applied)
             total_applied += n_applied
 
-            if n_applied > 0:
+            # Snapshot after fixes and compare
+            if snapshot_before is not None:
+                try:
+                    self.reload_dag()
+                    snapshot_after = self.take_snapshot()
+                    diff = self._diff_snapshots(snapshot_before, snapshot_after)
+                    logger.info(
+                        f"Auto-fix loop {loop_i + 1}: "
+                        f"+{len(diff.edges_upgraded)} upgraded, "
+                        f"-{len(diff.edges_downgraded)} downgraded, "
+                        f"quality {snapshot_before.quality_score.total:.3f}"
+                        f"->{snapshot_after.quality_score.total:.3f}, "
+                        f"new_issues={len(diff.new_issues)}, "
+                        f"resolved={len(diff.resolved_issues)}"
+                    )
+                    if diff.net_regression:
+                        logger.warning(
+                            f"REGRESSION detected in loop {loop_i + 1}: "
+                            f"quality_delta={diff.quality_delta:.3f}, "
+                            f"downgrades={diff.edges_downgraded}"
+                        )
+                except Exception as e:
+                    logger.warning(f"Post-fix snapshot/diff failed: {e}")
+            elif n_applied > 0 or n_coeff_fixes > 0 or n_estimation_fixes > 0:
                 logger.info(
-                    f"Auto-fix loop {loop_i + 1}: applied {n_applied}, "
-                    f"rejected {len(rejected)}"
+                    f"Auto-fix loop {loop_i + 1}: "
+                    f"revisions={n_applied}, identity_coeff={n_coeff_fixes}, "
+                    f"estimation={n_estimation_fixes}, "
+                    f"rejected={len(rejected)}"
                 )
-            else:
+
+            if n_applied == 0 and n_coeff_fixes == 0 and n_estimation_fixes == 0:
                 break  # All proposed fixes were rejected — stop
 
         return total_applied

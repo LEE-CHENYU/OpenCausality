@@ -356,6 +356,31 @@ class KazakhstanBNSClient(HTTPDataSource):
         response.raise_for_status()
         return self._parse_excel_response(response.content)
 
+    def _validate_parsed_data(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Validate that parsed DataFrame contains usable data.
+
+        Rejects common failure modes: empty frames, all-unnamed columns
+        (HTML parsed as Excel), and all-null data.
+
+        Raises:
+            ValueError: If data fails quality checks.
+        """
+        if df.empty:
+            raise ValueError("Parsed DataFrame is empty")
+        real_cols = [c for c in df.columns if not str(c).startswith("Unnamed")]
+        if len(real_cols) == 0:
+            raise ValueError(
+                f"No named columns found (got {list(df.columns)}). "
+                "Likely parsed HTML instead of data file."
+            )
+        non_null_count = df[real_cols].count().sum()
+        if non_null_count == 0:
+            raise ValueError(
+                f"All data values are null in {len(df)} rows x "
+                f"{len(real_cols)} columns"
+            )
+        return df
+
     def _parse_excel_response(self, content: bytes) -> pd.DataFrame:
         """Parse Excel/CSV content from response."""
         import io
@@ -363,21 +388,27 @@ class KazakhstanBNSClient(HTTPDataSource):
         # Try Excel first
         try:
             df = pd.read_excel(io.BytesIO(content), engine="openpyxl")
-            return df
+            return self._validate_parsed_data(df)
+        except ValueError:
+            raise  # Re-raise validation errors
         except Exception:
             pass
 
         # Try older Excel format
         try:
             df = pd.read_excel(io.BytesIO(content), engine="xlrd")
-            return df
+            return self._validate_parsed_data(df)
+        except ValueError:
+            raise
         except Exception:
             pass
 
         # Try CSV
         try:
             df = pd.read_csv(io.BytesIO(content))
-            return df
+            return self._validate_parsed_data(df)
+        except ValueError:
+            raise
         except Exception:
             pass
 

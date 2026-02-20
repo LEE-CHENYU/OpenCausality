@@ -1,6 +1,6 @@
-edge_id: deposit_cost_kspi_to_ppop_kspi
-from_node: deposit_cost_kspi
-to_node: ppop_kspi
+edge_id: nbk_base_rate_to_deposit_cost_kspi
+from_node: nbk_base_rate
+to_node: deposit_cost_kspi
 spec_details:
   design: LOCAL_PROJECTIONS
   se_method: HAC_Newey_West
@@ -16,14 +16,14 @@ spec_details:
   - 3
   - 4
 estimates:
-  point: -0.142123470510243
-  se: 0.06587998343730521
+  point: 0.22265648578368194
+  se: 0.06178252515647664
   ci_95:
-  - -0.2712458653494565
-  - -0.01300107567102951
-  pvalue: 0.030981608848577348
-  treatment_unit: pct
-  outcome_unit: log
+  - 0.10156496160304786
+  - 0.34374800996431604
+  pvalue: 0.00031350811161777947
+  treatment_unit: pp
+  outcome_unit: pct
 diagnostics:
   sign_consistency:
     name: sign_consistency
@@ -35,14 +35,14 @@ diagnostics:
   sample_size:
     name: sample_size
     passed: true
-    value: 15.0
+    value: 18.0
     threshold: 15.0
     pvalue: null
-    message: N=15
+    message: N=18
 all_diagnostics_pass: true
 interpretation:
-  estimand: LP impulse response of ppop_kspi to deposit_cost_kspi
-  effective_obs: 15
+  estimand: LP impulse response of deposit_cost_kspi to nbk_base_rate
+  effective_obs: 18
   hac_bandwidth: 2
 failure_flags:
   weak_identification: false
@@ -58,10 +58,10 @@ counterfactual:
   supports_shock_path: false
   supports_policy_intervention: false
 credibility_rating: A
-credibility_score: 0.9
+credibility_score: 0.93
 identification:
   claim_level: REDUCED_FORM
-  strategy_type: IV_2SLS
+  strategy_type: EXTERNAL_INSTRUMENT
   risks:
     unmeasured_confounding: medium
     simultaneity: medium
@@ -82,6 +82,6 @@ propagation_role:
     REDUCED_FORM: true
     DESCRIPTIVE: true
 data_provenance:
-  date_range: 2020-10-01 to 2024-07-01
-  n_obs: 15
+  date_range: 2019-10-01 to 2024-07-01
+  n_obs: 18
   frequency: quarterly
