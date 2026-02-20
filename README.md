@@ -293,18 +293,26 @@ build one from scratch.
 
 ### Comparison
 
-| Metric                         | Expert DAG | NL-Extracted | Critic-Refined (4 iters) |
-|--------------------------------|------------|--------------|--------------------------|
-| Nodes                          | 32         | 18           | 20                       |
-| Edges                          | 23         | 22\*         | 22                       |
-| Edge types used                | 5          | 3            | 4                        |
-| Identification coverage        | 91%        | 0%           | 100%                     |
-| Expected signs specified       | 100%       | 0%           | 100%                     |
-| Forbidden controls specified   | 100%       | 0%           | 100%                     |
-| Open propagation paths (FX→K2) | --         | 0/9          | 9/9                      |
-| Quality score (7-weight)       | --         | 0.349        | 0.668                    |
+| Metric                         | Expert DAG | NL-Extracted | Critic-Refined (4 iters) | Full Pipeline |
+|--------------------------------|------------|--------------|--------------------------|---------------|
+| Nodes                          | 32         | 18           | 20                       | 20            |
+| Edges                          | 23         | 22\*         | 22                       | 26            |
+| Edge types used                | 5          | 3            | 4                        | 5             |
+| Identification coverage        | 91%        | 0%           | 100%                     | 100%          |
+| Expected signs specified       | 100%       | 0%           | 100%                     | 100%          |
+| Forbidden controls specified   | 100%       | 0%           | 100%                     | 100%          |
+| Open propagation paths (all→K2)| --         | 0/9          | 9/9                      | 33/33         |
+| Contributor paths to target    | --         | --           | --                       | 91            |
+| Quality score (7-weight)       | --         | 0.349        | 0.668                    | 0.894         |
 
 \*22 = 12 NL-extracted + 10 auto-bridged identity/repair edges.
+
+The **Full Pipeline** column reflects the result of estimation-aware auto-repair
+(Phase F), the KnowledgeScout formula research agent, the DAGHealthSnapshot eval
+framework, and the data-availability guardrail. The quality jump from 0.668 to
+0.894 comes primarily from identity coefficient corrections (KnowledgeScout found
+the CPI headline composition formula: 42% tradable + 58% nontradable) and LP
+re-estimation of edges with sufficient data.
 
 The NL pipeline extracts causal claims from a single paragraph; recall improves
 with longer or multi-document input. All 3 overlapping edges produce identical
@@ -391,19 +399,21 @@ declared when the quality delta falls below 0.02 for 2 consecutive iterations.
 
 **End-to-end test results** on the Kazakhstan narrative DAG:
 
-| Metric | Pre-Critic | Post-Critic (4 iters) | Delta |
-|--------|------------|----------------------|-------|
-| Quality score (7-weight) | 0.349 | 0.668 | +0.319 |
-| Identification coverage | 0% | 100% | +100pp |
-| Unit completeness | 0% | 100% | +100pp |
-| Open paths (kzt_usd→k2) | 0/9 | 9/9 | +9 |
-| Open paths (vix→k2) | 0/2 | 2/2 | +2 |
-| Edge types used | 3 | 4 | +1 |
+| Metric | Pre-Critic | Post-Critic (4 iters) | Full Pipeline | Delta (total) |
+|--------|------------|----------------------|---------------|---------------|
+| Quality score (7-weight) | 0.349 | 0.668 | 0.894 | +0.545 |
+| Identification coverage | 0% | 100% | 100% | +100pp |
+| Unit completeness | 0% | 100% | 100% | +100pp |
+| Open paths (all→k2) | 0/9 | 9/9 | 33/33 | +33 |
+| Contributor paths to target | -- | -- | 91 | -- |
+| Edge types used | 3 | 4 | 5 | +2 |
 
-41 revisions applied across 4 iterations (identification strategies, structural
-metadata, edge type upgrades, unit specifications, edge cards, claim level updates),
-4 rejected. The critic's confidence threshold (0.7) and code validation gate ensure
-only well-grounded revisions are applied.
+41 revisions applied across 4 critic iterations, plus estimation-aware auto-repair
+(identity coefficient corrections, LP re-estimation, KnowledgeScout formula
+research, data-availability guardrails). The critic's confidence threshold (0.7)
+and code validation gate ensure only well-grounded revisions are applied. The
+DAGHealthSnapshot eval framework tracks per-edge health before and after each
+auto-fix iteration, detecting and logging regressions.
 
 Quality score components (weights): identification coverage (20%), propagation
 health (20%), metadata completeness (15%), structural soundness (15%), edge type
@@ -762,7 +772,8 @@ shared/
 ├── agentic/
 │   ├── dag/              # DAG parser, schema, validator
 │   ├── agents/           # DAGScout, PaperScout, ModelSmithCritic, PatchBot,
-│   │                     #   PaperDAGExtractor, DAGCritic (with causal logic probes)
+│   │                     #   PaperDAGExtractor, DAGCritic (with causal logic probes),
+│   │                     #   KnowledgeScout (LLM formula research), DataScout oracle
 │   ├── governance/       # HITL gate, audit log, patch policy, notifier
 │   ├── issues/           # Issue ledger, registry (30 rules), gates
 │   ├── identification/   # Identifiability screen (back-door, front-door)
@@ -852,11 +863,12 @@ OpenCausality includes a 4-agent agentic loop that uses LLM reasoning (via CodeX
 
 | Agent | Role | Prompt |
 |-------|------|--------|
-| **DataScout** | Catalogs data availability, creates DataCards for each DAG node | `config/agentic/prompts/datascout.txt` |
+| **DataScout** | Catalogs data availability, creates DataCards for each DAG node. Includes data-availability oracle (`check_data_available()`, `check_edge_data_feasible()`) that prevents the critic from proposing edges for variables with no data. | `config/agentic/prompts/datascout.txt` |
 | **ModelSmith** | Selects designs from the registry, writes ModelSpecs with identification assumptions | `config/agentic/prompts/modelsmith.txt` |
 | **Estimator** | Executes ModelSpecs, runs diagnostics, produces EdgeCards | `config/agentic/prompts/estimator.txt` |
 | **Judge** | Scores credibility, flags weak links, proposes refinements | `config/agentic/prompts/judge.txt` |
-| **DAGCritic** | Iterative principle-based DAG refinement: identification strategies, edge types, metadata | `config/agentic/critic_principles.yaml` |
+| **DAGCritic** | Iterative principle-based DAG refinement: identification strategies, edge types, metadata. Includes eval framework (DAGHealthSnapshot before/after comparison) and estimation-aware auto-repair (identity coefficients, LP re-estimation). | `config/agentic/critic_principles.yaml` |
+| **KnowledgeScout** | LLM-backed formula research for identity edges missing formulas. Queries Claude CLI for domain knowledge (e.g., CPI composition weights), validates confidence, and writes found formulas to DAG YAML. | `shared/agentic/agents/knowledge_scout.py` |
 
 ### Running Agents
 
@@ -1143,6 +1155,50 @@ fallback for environments without Claude Code.
 ---
 
 ## Recent Changes
+
+### v0.3.2 — Eval Framework, KnowledgeScout & Data Guardrails
+
+#### New Features
+
+- **DAGHealthSnapshot eval framework** -- Before/after comparison for the auto-fix
+  loop. `take_snapshot()` captures per-edge health (rating, estimate, claim level,
+  propagation role, issues) and quality/propagation scores. `_diff_snapshots()`
+  detects rating downgrades, new issues, and quality regressions. Wired into
+  `apply_auto_fixes()` so every iteration logs upgrades, downgrades, and net delta.
+
+- **KnowledgeScout agent** -- LLM-backed formula research for identity edges missing
+  formulas. When `_compute_identity_coefficient()` encounters an identity edge with
+  no formula, KnowledgeScout queries Claude CLI for domain knowledge (e.g., CPI
+  basket composition weights), validates confidence, and writes found formulas to
+  both in-memory DAG and YAML file on disk. Low-confidence results are rejected.
+  Integrated as step 3 in the coefficient hierarchy: K2 → immutable validated
+  evidence → KnowledgeScout → symbolic extraction → numerical perturbation.
+
+- **Data-availability oracle** -- `check_data_available(node_id)` and
+  `check_edge_data_feasible(from, to, nodes)` module-level functions in
+  `data_scout.py`. The critic validator now rejects `ADD_MISSING_EDGE` revisions
+  when non-derived nodes lack data loaders, preventing silent estimation failures.
+
+- **BNS download validation** -- `_validate_parsed_data()` in the Kazakhstan BNS
+  connector rejects DataFrames with only "Unnamed" columns, all-null data, or empty
+  frames. Prevents phantom data files from garbage downloads. DataScout's
+  `_fetch_bns()` adds a quality gate rejecting trivially empty results.
+
+- **Immutable validated-evidence override** -- `_compute_identity_coefficient()` now
+  checks for `validated_evidence.estimate` on immutable edges before falling back to
+  LP estimation. Fixes FX pass-through edges that were using LP β=0.000131 instead
+  of validated evidence β=0.113.
+
+- **CPI headline identity formula** -- Added `derived: true` with identity formula
+  `0.43 * cpi_tradable + 0.57 * cpi_nontradable` to the DAG YAML. KnowledgeScout
+  auto-refined to 0.42/0.58 weights via Claude CLI research.
+
+#### Quality Improvements
+
+- Quality score: 0.668 → 0.894 (+0.226)
+- Open propagation paths: 9/9 → 33/33 (all exogenous→target paths now open)
+- Contributor paths: 91 ranked sources for target node
+- CPI composition edges: LP estimates replaced with identity coefficients (β≈0.42, β≈0.58)
 
 ### v0.3.1 — Propagation Consistency & Edge Card Round-Trip
 
