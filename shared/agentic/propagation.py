@@ -50,6 +50,10 @@ _UNIT_PATTERNS: list[tuple[str, str]] = [
     (r"\bbps\b|basis\s*point", "bps"),
     (r"\binnovation\b", "sd"),  # innovation ≈ 1 SD shock
     (r"\bgrowth\b", "pct"),     # growth rate ≈ percentage change
+    # Physical / domain-specific units (level-valued, not interchangeable)
+    (r"mb[/_]?per[/_]?d\b|mb/?d\b", "mb_per_d"),
+    (r"\bbn[_ ]?usd\b", "bn_usd"),
+    (r"usd[/_]?per[/_]?bbl\b", "usd_per_bbl"),
 ]
 
 

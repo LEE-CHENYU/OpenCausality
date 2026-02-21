@@ -87,6 +87,19 @@ pip install "mcp>=1.0.0"  # only prerequisite
 # verify: /mcp in Claude Code → opencausality-query with 13 tools
 ```
 
+### Economics Guardrails Plugin
+
+The `econ-guardrails/` plugin adds a four-layer defense against economics reasoning errors in Claude's interpretation of query results:
+
+| Layer | Mechanism | When |
+|-------|-----------|------|
+| **Prevention** | Background skill with error taxonomy + hedged language rules | Always loaded |
+| **Interpretation guard** | PostToolUse hooks inject hedged language constraints | After each MCP propagation call |
+| **Result validation** | PostToolUse command hook validates propagation JSON | After each MCP propagation call |
+| **Output audit** | Stop hooks check for sign errors, unit mixing, causal over-claims, arithmetic mistakes | Before every response |
+
+Install: symlink `econ-guardrails/` into `~/.claude/plugins/local/` and restart Claude Code.
+
 ---
 
 ## Key Features
