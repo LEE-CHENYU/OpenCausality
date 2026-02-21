@@ -29,7 +29,7 @@ with DAG-Based Reasoning and LLM-Assisted Discovery}
 %% ABSTRACT
 %% ============================================================
 \begin{abstract}
-We introduce \oc{}, an open-source platform that resolves the automation--transparency tradeoff in applied causal inference. \oc{} combines DAG-based causal reasoning with agentic estimation pipelines, where every modeling decision---from identification strategy selection to effect propagation---is logged in a hash-chained audit trail. An always-on \emph{sentinel loop} runs continuously in the background, re-validating the DAG after every change, auto-fixing schema regressions, and surfacing interactive review panels---so analysts never have to hunt for results or wonder whether the specification is still valid. The platform enforces 38 issue-detection rules that catch overclaiming, control shopping, and specification drift; a 7-guardrail propagation engine that performs unit-aware dimensional analysis across multi-edge causal paths; and a 3-stage identifiability screen that downgrades claims based on diagnostic evidence rather than statistical significance alone. A 4-agent agentic loop (DataScout, ModelSmith, Estimator, Judge) iterates between estimation, issue detection, and auto-repair under LLM guidance, while an LLM-assisted pipeline extracts causal claims from the literature and proposes DAG edges---achieving 100\% estimate precision on matched edges in our Kazakhstan bank stress-testing case study while discovering 9 novel edges absent from the expert-built DAG. A principle-based \emph{DAG Critic} loop iteratively refines DAG structure using LLM-generated feedback against domain-agnostic graph rules and four chain-level \emph{causal logic probes} (sign coherence, scale consistency, magnitude plausibility, sign-vs-estimate), supported by a \emph{KnowledgeScout} agent that auto-researches missing identity formulas via LLM and a \emph{DAGHealthSnapshot} eval framework that tracks per-edge health before and after each auto-fix iteration to detect regressions. A data-availability oracle prevents the critic from proposing edges where no data loaders exist. A Model Context Protocol (MCP) query server exposes the full propagation engine to external AI assistants. All governance decisions---including human-in-the-loop gates and automated patch policies that explicitly prohibit p-hacking---are recorded with cryptographic integrity. \oc{} ships with 19 estimation adapters spanning econometric and ML-based methods, a data-driven causal discovery agent (PC, GES, FCI, NOTEARS), an adaptive data discovery agent that uses LLM tool-use to find data sources for under-specified DAG nodes, a DoWhy refutation engine for post-estimation robustness, a natural-language query interface, and 362 passing tests across 82{,}000 lines of code.
+We introduce \oc{}, an open-source platform that resolves the automation--transparency tradeoff in applied causal inference. \oc{} combines DAG-based causal reasoning with agentic estimation pipelines, where every modeling decision---from identification strategy selection to effect propagation---is logged in a hash-chained audit trail. An always-on \emph{sentinel loop} runs continuously in the background, re-validating the DAG after every change, auto-fixing schema regressions, and surfacing interactive review panels---so analysts never have to hunt for results or wonder whether the specification is still valid. The platform enforces 38 issue-detection rules that catch overclaiming, control shopping, and specification drift; a 7-guardrail propagation engine that performs unit-aware dimensional analysis across multi-edge causal paths; and a 3-stage identifiability screen that downgrades claims based on diagnostic evidence rather than statistical significance alone. A 4-agent agentic loop (DataScout, ModelSmith, Estimator, Judge) iterates between estimation, issue detection, and auto-repair under LLM guidance, while an LLM-assisted pipeline extracts causal claims from the literature and proposes DAG edges---achieving 100\% estimate precision on matched edges in our Kazakhstan bank stress-testing case study while discovering 9 novel edges absent from the expert-built DAG. A principle-based \emph{DAG Critic} loop iteratively refines DAG structure using LLM-generated feedback against domain-agnostic graph rules and four chain-level \emph{causal logic probes} (sign coherence, scale consistency, magnitude plausibility, sign-vs-estimate), supported by a \emph{KnowledgeScout} agent that auto-researches missing identity formulas via LLM and a \emph{DAGHealthSnapshot} eval framework that tracks per-edge health before and after each auto-fix iteration to detect regressions. A data-availability oracle prevents the critic from proposing edges where no data loaders exist. A Model Context Protocol (MCP) query server exposes the full propagation engine to external AI assistants. All governance decisions---including human-in-the-loop gates and automated patch policies that explicitly prohibit p-hacking---are recorded with cryptographic integrity. \oc{} ships with 19 estimation adapters spanning econometric and ML-based methods, a data-driven causal discovery agent (PC, GES, FCI, NOTEARS), an adaptive data discovery agent that uses LLM tool-use to find data sources for under-specified DAG nodes, a DoWhy refutation engine for post-estimation robustness, a natural-language query interface, and 341 passing tests across 82{,}000 lines of code.
 \end{abstract}
 
 %% ============================================================
@@ -70,7 +70,7 @@ We introduce \oc{},\footnote{Code and data: \url{https://github.com/LEE-CHENYU/O
     \item A \textbf{Model Context Protocol (MCP) query server} that exposes 13 tools---propagation, falsification, edge inspection, and health checks---to external AI assistants via stdio transport, with full guardrail enforcement and a read-only contract (Section~\ref{sec:mcp}).
 \end{enumerate}
 
-We evaluate \oc{} on a Kazakhstan bank stress-testing case study involving 32 nodes and 21 causal edges, comparing expert-built DAGs against both LLM-extracted and data-driven discovery DAGs, and verifying pipeline reproducibility across 362 tests (Section~\ref{sec:experiments}).
+We evaluate \oc{} on two case studies: a Kazakhstan bank stress-testing DAG (32 nodes, 21 edges) with full estimation, and a Venezuelan oil supply unlock DAG (11 nodes, 13 edges) demonstrating cross-domain applicability with validated literature estimates. We compare expert-built DAGs against both LLM-extracted and data-driven discovery DAGs, and verify pipeline reproducibility across 341 tests (Section~\ref{sec:experiments}).
 
 %% ============================================================
 %% 2  RELATED WORK
@@ -142,7 +142,7 @@ The replication crisis~\citep{ioannidis2005why} has motivated pre-registration~\
     \node[component] at (-3.8, 1.5) {3-Stage ID Screen};
     \node[component] at (-1.5, 1.5) {TSGuard (7 diag.)};
     \node[component] at (0.8, 1.5) {Refutation (4)};
-    \node[component] at (2.8, 1.5) {30-Rule Issues};
+    \node[component] at (2.8, 1.5) {38-Rule Issues};
     \node[component] at (5.0, 1.5) {Propagation (7)};
 
     % Layer 4: Governance
@@ -700,7 +700,7 @@ When the validation suite detects structural errors, the \texttt{AgentLoop} invo
 \section{Experiments}
 \label{sec:experiments}
 
-We evaluate \oc{} on three dimensions: (1)~estimation accuracy via synthetic benchmarks, (2)~NL-to-DAG extraction quality, and (3)~end-to-end pipeline reproducibility.
+We evaluate \oc{} on four dimensions: (1)~estimation accuracy via synthetic benchmarks, (2)~NL-to-DAG extraction quality, (3)~cross-domain propagation with guardrail enforcement, and (4)~end-to-end pipeline reproducibility.
 
 \subsection{Synthetic Benchmarks}
 
@@ -785,6 +785,101 @@ The NL pipeline achieves 14\% structural recall---unsurprising given that a sing
     \item Household real income $\to$ cost of risk (bank lending channel)
     \item Pre-provision operating profit $\to$ total capital (fundamental banking relationship)
 \end{itemize}
+
+\subsection{Venezuelan Oil Supply Unlock: Cross-Domain Demonstration}
+\label{sec:venezuela}
+
+To demonstrate domain agnosticism, we construct a second DAG modeling the causal transmission from Venezuelan sanctions relief to global oil prices (Figure~\ref{fig:venezuela-dag}). The Venezuela DAG contains 11~nodes and 13~edges across 6~channels: direct production restart, FDI-investment pipeline, OPEC strategic response (reaction function), non-OPEC supply growth, supply-demand price formation, and a heavy-sour crude discount channel.
+
+\begin{figure}[t]
+    \centering
+    \begin{tikzpicture}[
+        node distance=1.3cm and 1.6cm,
+        every node/.style={font=\scriptsize},
+        nbox/.style={draw, rounded corners=2pt, fill=#1, minimum width=1.4cm, minimum height=0.5cm, font=\scriptsize, align=center, inner sep=2pt},
+        nbox/.default={blue!8},
+        arr/.style={-{Stealth[length=4pt]}, thick, #1},
+        arr/.default={gray!70},
+        blocked/.style={-{Stealth[length=4pt]}, thick, red!50, dashed},
+        idarr/.style={-{Stealth[length=4pt]}, thick, blue!60},
+        feedarr/.style={-{Stealth[length=4pt]}, thick, orange!60, dashed},
+    ]
+    % Row 1: Exogenous
+    \node[nbox=green!12] (sanc) at (0, 0) {sanctions\\relief};
+    \node[nbox=green!12] (noopec) at (5.5, 0) {non-OPEC\\growth};
+    \node[nbox=green!12] (demand) at (8.5, 0) {global oil\\demand};
+    \node[nbox=green!12] (spare) at (3.2, 0) {OPEC spare\\capacity};
+
+    % Row 2: Venezuelan chain
+    \node[nbox] (fdi) at (-0.5, -1.6) {FDI oil\\sector};
+    \node[nbox] (vzprod) at (2.2, -1.6) {VZ\\production};
+    \node[nbox=red!8] (opec) at (4.8, -1.6) {OPEC quota\\response};
+
+    % Row 3: Global market
+    \node[nbox=blue!12] (supply) at (4.8, -3.2) {global oil\\supply};
+    \node[nbox=blue!12] (balance) at (6.8, -3.2) {supply-demand\\balance};
+    \node[nbox=yellow!15] (brent) at (9.2, -3.2) {\textbf{Brent}\\price};
+
+    % Row 2 right: Heavy sour
+    \node[nbox] (heavy) at (9.2, -1.6) {heavy-sour\\discount};
+
+    % Edges: Structural path (black, thick)
+    \draw[arr] (sanc) -- node[above, font=\tiny] {+0.15} (vzprod);
+    \draw[idarr] (vzprod) -- node[left, font=\tiny] {1:1} (supply);
+    \draw[idarr] (supply) -- node[above, font=\tiny] {+1} (balance);
+    \draw[arr] (balance) -- node[above, font=\tiny] {-10} (brent);
+
+    % Edges: Identity to supply
+    \draw[idarr] (noopec) -- node[right, font=\tiny] {1:1} (supply);
+    \draw[idarr] (opec) -- node[right, font=\tiny] {1:1} (supply);
+    \draw[idarr] (demand) -- node[right, font=\tiny, pos=0.3] {-1} (balance);
+
+    % Edges: Investment channel
+    \draw[arr] (sanc) -- node[left, font=\tiny] {+3.0} (fdi);
+    \draw[arr] (fdi) -- node[above, font=\tiny] {+0.05} (vzprod);
+
+    % Edges: OPEC reaction (blocked)
+    \draw[blocked] (vzprod) -- node[above, font=\tiny, red!70] {\textit{-0.5}} (opec);
+    \draw[arr] (spare) -- (opec);
+
+    % Edges: Heavy sour channel
+    \draw[arr=gray!50] (vzprod) -- node[above, font=\tiny] {+5.0} (heavy);
+
+    % Edges: Feedback loop
+    \draw[feedarr] (brent) to[bend left=20] node[right, font=\tiny] {+0.05} (fdi);
+
+    % Legend
+    \node[font=\tiny, anchor=north west] at (-1.5, -4.2) {
+        \textcolor{gray!70}{\rule{0.5cm}{1.5pt}} causal \quad
+        \textcolor{blue!60}{\rule{0.5cm}{1.5pt}} identity \quad
+        \textcolor{red!50}{- - -} reaction fn (blocked) \quad
+        \textcolor{orange!60}{- - -} feedback
+    };
+
+    \end{tikzpicture}
+    \caption{Venezuela oil supply unlock DAG (11~nodes, 13~edges). The structural path (sanctions $\to$ production $\to$ supply $\to$ balance $\to$ Brent price) consists entirely of \texttt{IDENTIFIED\_CAUSAL} edges. The OPEC reaction function (red dashed) is correctly blocked in all propagation modes. Green nodes are exogenous; the yellow target is Brent crude price.}
+    \label{fig:venezuela-dag}
+\end{figure}
+
+Unlike the Kazakhstan case study (which uses estimated coefficients from data), the Venezuela DAG uses validated literature estimates as immutable evidence---enabling structural propagation without a data pipeline. Table~\ref{tab:venezuela-propagation} shows the propagation results.
+
+\begin{table}[t]
+\centering
+\caption{Propagation results for the Venezuela oil supply unlock DAG. The structural path produces a well-identified estimate; the investment channel adds magnitude but with wider confidence intervals.}
+\label{tab:venezuela-propagation}
+\small
+\begin{tabular}{@{}llrrl@{}}
+\toprule
+\textbf{Scenario} & \textbf{Mode} & \textbf{Effect} & \textbf{95\% CI} & \textbf{Paths} \\
+\midrule
+Sanctions relief (1 unit) & STRUCTURAL & $-\$1.50$/bbl & $[-2.82, -0.18]$ & 1 open, 3 blocked \\
+Sanctions relief (1 unit) & REDUCED\_FORM & $-\$3.00$/bbl & $[-6.40, +0.40]$ & 2 open, 2 blocked \\
+$+$0.4 mb/d VZ production & STRUCTURAL & $-\$4.00$/bbl & $[-6.35, -1.65]$ & 1 open \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Three key guardrail behaviors are demonstrated: (1)~the OPEC reaction function edge (\texttt{reaction\_function} type) is blocked in \emph{all} modes, preventing mechanical propagation of a strategic response that may diverge from historical patterns; (2)~the FDI-investment channel opens only in \texttt{REDUCED\_FORM} mode, correctly reflecting its weaker identification; (3)~the heavy-sour discount channel is gated separately, as Venezuelan 16~API crude is not fungible with light sweet benchmarks. The hedged language guardrails (Section~\ref{sec:mcp}) ensure that Claude uses ``causes'' only for the fully identified structural path and downgrades to ``is associated with'' when reduced-form edges are included.
 
 \subsection{End-to-End Reproducibility}
 
