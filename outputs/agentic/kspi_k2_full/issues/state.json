@@ -1,44 +1,232 @@
 {
-  "edge/cpi_to_nbk_rate/RATING_DIAGNOSTICS_CONFLICT": {
-    "status": "OPEN",
-    "severity": "HIGH",
-    "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
-    "edge_id": "cpi_to_nbk_rate",
-    "message": "A-rating despite failed diagnostics on cpi_to_nbk_rate."
-  },
-  "edge/vix_to_fx/RATING_DIAGNOSTICS_CONFLICT": {
-    "status": "OPEN",
-    "severity": "HIGH",
-    "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
-    "edge_id": "vix_to_fx",
-    "message": "A-rating despite failed diagnostics on vix_to_fx."
-  },
-  "edge/portfolio_mix_to_rwa/SIGNIFICANT_BUT_NOT_IDENTIFIED": {
-    "status": "OPEN",
-    "severity": "CRITICAL",
-    "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
-    "edge_id": "portfolio_mix_to_rwa",
-    "message": "p=0.0000 but claim_level=BLOCKED_ID. Significance does not establish causation."
-  },
-  "edge/expenditure_to_payments_revenue/SIGNIFICANT_BUT_NOT_IDENTIFIED": {
-    "status": "OPEN",
-    "severity": "HIGH",
-    "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
-    "edge_id": "expenditure_to_payments_revenue",
-    "message": "p=0.0000 but claim_level=DESCRIPTIVE. Significance does not establish causation."
-  },
-  "edge/nbk_rate_to_cor/SIGNIFICANT_BUT_NOT_IDENTIFIED": {
-    "status": "OPEN",
-    "severity": "CRITICAL",
-    "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
-    "edge_id": "nbk_rate_to_cor",
-    "message": "p=0.0029 but claim_level=BLOCKED_ID. Significance does not establish causation."
-  },
-  "edge/nbk_rate_to_deposit_cost/SIGNIFICANT_BUT_NOT_IDENTIFIED": {
-    "status": "OPEN",
-    "severity": "CRITICAL",
-    "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
-    "edge_id": "nbk_rate_to_deposit_cost",
-    "message": "p=0.0003 but claim_level=BLOCKED_ID. Significance does not establish causation."
+  "last_updated": "2026-02-19T04:11:21.196402+00:00",
+  "baseline_run_id": "",
+  "baseline_mode": "",
+  "baseline_dag_hash": "",
+  "issues": {
+    "LOADER_FAILED:imported_inflation_instrument": {
+      "status": "OPEN",
+      "opened_run": "61442d15",
+      "severity": "HIGH",
+      "rule_id": "LOADER_FAILED",
+      "message": "No data loader could be built for node 'imported_inflation_instrument' (Imported inflation IV). Tried sources: none declared."
+    },
+    "NULL_LINK_SIGNIFICANT:global": {
+      "status": "OPEN",
+      "opened_run": "61442d15",
+      "severity": "HIGH",
+      "rule_id": "NULL_LINK_SIGNIFICANT",
+      "message": "Null link cpi_headline->cpi_tradable | kzt_usd: significant partial association (beta=0.9622, p=0.0000, N=178). DAG may need this edge."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:cpi_nontradable_to_cpi_headline": {
+      "status": "OPEN",
+      "opened_run": "61442d15",
+      "severity": "HIGH",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0262 but claim_level=REDUCED_FORM. Significance does not establish causation."
+    },
+    "SMALL_SAMPLE_INFERENCE:shock_to_npl_kspi_annual": {
+      "status": "OPEN",
+      "opened_run": "61442d15",
+      "severity": "HIGH",
+      "rule_id": "SMALL_SAMPLE_INFERENCE",
+      "message": "N=8 < 30 with HAC SEs; inference fragile."
+    },
+    "DATA_INSUFFICIENT_EDGE:wage_to_nominal_income": {
+      "status": "OPEN",
+      "opened_run": "61442d15",
+      "severity": "HIGH",
+      "rule_id": "DATA_INSUFFICIENT_EDGE",
+      "message": "Edge 'wage_to_nominal_income' has insufficient data for estimation (fewer than 5 observations after alignment)."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:shock_to_npl_sector": {
+      "status": "OPEN",
+      "opened_run": "61442d15",
+      "severity": "HIGH",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0029 but claim_level=REDUCED_FORM. Significance does not establish causation."
+    },
+    "LOO_INSTABILITY:shock_to_npl_sector": {
+      "status": "OPEN",
+      "opened_run": "61442d15",
+      "severity": "HIGH",
+      "rule_id": "LOO_INSTABILITY",
+      "message": "Leave-one-out shows sign flip or >50% magnitude change."
+    },
+    "SMALL_SAMPLE_INFERENCE:shock_to_cor_kspi_annual": {
+      "status": "OPEN",
+      "opened_run": "61442d15",
+      "severity": "HIGH",
+      "rule_id": "SMALL_SAMPLE_INFERENCE",
+      "message": "N=8 < 30 with HAC SEs; inference fragile."
+    },
+    "RATING_DIAGNOSTICS_CONFLICT:vix_to_fx": {
+      "status": "OPEN",
+      "opened_run": "61442d15",
+      "severity": "HIGH",
+      "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
+      "message": "A-rating despite failed diagnostics."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:ppop_to_capital": {
+      "status": "OPEN",
+      "opened_run": "61442d15",
+      "severity": "HIGH",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0000 but claim_level=REDUCED_FORM. Significance does not establish causation."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:portfolio_mix_to_rwa": {
+      "status": "OPEN",
+      "opened_run": "61442d15",
+      "severity": "HIGH",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0018 but claim_level=REDUCED_FORM. Significance does not establish causation."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:expenditure_to_payments_revenue": {
+      "status": "OPEN",
+      "opened_run": "61442d15",
+      "severity": "HIGH",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0000 but claim_level=REDUCED_FORM. Significance does not establish causation."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:nbk_rate_to_cor": {
+      "status": "OPEN",
+      "opened_run": "61442d15",
+      "severity": "HIGH",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0029 but claim_level=BLOCKED_ID. Significance does not establish causation."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:real_expenditure_to_ppop_kspi": {
+      "status": "OPEN",
+      "opened_run": "61442d15",
+      "severity": "HIGH",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0000 but claim_level=REDUCED_FORM. Significance does not establish causation."
+    },
+    "RATING_DIAGNOSTICS_CONFLICT:oil_supply_to_fx": {
+      "status": "OPEN",
+      "opened_run": "61442d15",
+      "severity": "HIGH",
+      "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
+      "message": "A-rating despite failed diagnostics."
+    },
+    "SMALL_SAMPLE_INFERENCE:shock_to_cor_kspi": {
+      "status": "OPEN",
+      "opened_run": "61442d15",
+      "severity": "HIGH",
+      "rule_id": "SMALL_SAMPLE_INFERENCE",
+      "message": "N=26 < 30 with HAC SEs; inference fragile."
+    },
+    "SMALL_SAMPLE_INFERENCE:shock_to_npl_kspi": {
+      "status": "OPEN",
+      "opened_run": "61442d15",
+      "severity": "HIGH",
+      "rule_id": "SMALL_SAMPLE_INFERENCE",
+      "message": "N=26 < 30 with HAC SEs; inference fragile."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:oil_supply_to_brent": {
+      "status": "OPEN",
+      "opened_run": "61442d15",
+      "severity": "HIGH",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0000 but claim_level=REDUCED_FORM. Significance does not establish causation."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:shock_to_cor_sector": {
+      "status": "OPEN",
+      "opened_run": "61442d15",
+      "severity": "HIGH",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0000 but claim_level=REDUCED_FORM. Significance does not establish causation."
+    },
+    "LOO_INSTABILITY:shock_to_cor_sector": {
+      "status": "OPEN",
+      "opened_run": "61442d15",
+      "severity": "HIGH",
+      "rule_id": "LOO_INSTABILITY",
+      "message": "Leave-one-out shows sign flip or >50% magnitude change."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:deposit_cost_to_ppop": {
+      "status": "OPEN",
+      "opened_run": "61442d15",
+      "severity": "HIGH",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0000 but claim_level=REDUCED_FORM. Significance does not establish causation."
+    },
+    "LOO_INSTABILITY:nbk_rate_to_cor_sector": {
+      "status": "OPEN",
+      "opened_run": "61442d15",
+      "severity": "HIGH",
+      "rule_id": "LOO_INSTABILITY",
+      "message": "Leave-one-out shows sign flip or >50% magnitude change."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:payments_revenue_to_ppop": {
+      "status": "OPEN",
+      "opened_run": "61442d15",
+      "severity": "HIGH",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0000 but claim_level=REDUCED_FORM. Significance does not establish causation."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:oil_demand_to_fx": {
+      "status": "OPEN",
+      "opened_run": "61442d15",
+      "severity": "HIGH",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0098 but claim_level=REDUCED_FORM. Significance does not establish causation."
+    },
+    "RATING_DIAGNOSTICS_CONFLICT:oil_demand_to_fx": {
+      "status": "OPEN",
+      "opened_run": "61442d15",
+      "severity": "HIGH",
+      "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
+      "message": "A-rating despite failed diagnostics."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:nbk_rate_to_deposit_cost": {
+      "status": "OPEN",
+      "opened_run": "61442d15",
+      "severity": "HIGH",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0003 but claim_level=BLOCKED_ID. Significance does not establish causation."
+    },
+    "DATA_INSUFFICIENT_EDGE:nominal_expenditure_to_real": {
+      "status": "OPEN",
+      "opened_run": "61442d15",
+      "severity": "HIGH",
+      "rule_id": "DATA_INSUFFICIENT_EDGE",
+      "message": "Edge 'nominal_expenditure_to_real' has insufficient data for estimation (fewer than 5 observations after alignment)."
+    },
+    "SMALL_SAMPLE_INFERENCE:import_share_to_iv": {
+      "status": "OPEN",
+      "opened_run": "61442d15",
+      "severity": "HIGH",
+      "rule_id": "SMALL_SAMPLE_INFERENCE",
+      "message": "N=1 < 30 with HAC SEs; inference fragile."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:nominal_income_to_real_income": {
+      "status": "OPEN",
+      "opened_run": "61442d15",
+      "severity": "HIGH",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0000 but claim_level=BLOCKED_ID. Significance does not establish causation."
+    },
+    "RATING_DIAGNOSTICS_CONFLICT:nominal_income_to_real_income": {
+      "status": "OPEN",
+      "opened_run": "61442d15",
+      "severity": "HIGH",
+      "rule_id": "RATING_DIAGNOSTICS_CONFLICT",
+      "message": "A-rating despite failed diagnostics."
+    },
+    "SIGNIFICANT_BUT_NOT_IDENTIFIED:real_income_to_cor_kspi": {
+      "status": "OPEN",
+      "opened_run": "21cc2c8d",
+      "severity": "HIGH",
+      "rule_id": "SIGNIFICANT_BUT_NOT_IDENTIFIED",
+      "message": "p=0.0000 but claim_level=REDUCED_FORM. Significance does not establish causation."
+    },
+    "DATA_INSUFFICIENT_EDGE:import_share_to_iv": {
+      "status": "OPEN",
+      "opened_run": "40ef275e",
+      "severity": "HIGH",
+      "rule_id": "DATA_INSUFFICIENT_EDGE",
+      "message": "Edge 'import_share_to_iv' has insufficient data for estimation (fewer than 5 observations after alignment)."
+    }
   }
 }

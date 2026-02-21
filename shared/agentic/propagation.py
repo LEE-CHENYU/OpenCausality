@@ -24,7 +24,7 @@ import math
 import re
 import warnings
 from dataclasses import dataclass, field
-from typing import Any, Literal
+from typing import Any, ClassVar, Literal
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +49,11 @@ _UNIT_PATTERNS: list[tuple[str, str]] = [
     (r"\bsd\b|standard\s*deviation", "sd"),
     (r"\bbps\b|basis\s*point", "bps"),
     (r"\binnovation\b", "sd"),  # innovation ≈ 1 SD shock
+    (r"\bgrowth\b", "pct"),     # growth rate ≈ percentage change
+    # Physical / domain-specific units (level-valued, not interchangeable)
+    (r"mb[/_]?per[/_]?d\b|mb/?d\b", "mb_per_d"),
+    (r"\bbn[_ ]?usd\b", "bn_usd"),
+    (r"usd[/_]?per[/_]?bbl\b", "usd_per_bbl"),
 ]
 
 
@@ -88,9 +93,17 @@ class UnitSpec:
 
         return UnitSpec(kind="unknown")
 
+    # Pairs of unit kinds that are approximately interchangeable.
+    # log_point ≈ pct for small changes: Δlog(X) ≈ ΔX/X.
+    _COMPATIBLE_PAIRS: ClassVar[set[frozenset[str]]] = {
+        frozenset({"log_point", "pct"}),
+    }
+
     def compatible_with(self, other: UnitSpec) -> bool:
-        """True if units are the same kind (scale differences handled by rescaling)."""
-        return self.kind == other.kind
+        """True if units are the same kind or an approved compatible pair."""
+        if self.kind == other.kind:
+            return True
+        return frozenset({self.kind, other.kind}) in self._COMPATIBLE_PAIRS
 
 
 # ──────────────────────────────────────────────────────────────────────
@@ -669,6 +682,27 @@ class PropagationEngine:
                     f"unit_mismatch: {edges_in_path[i].edge_id} outcome "
                     f"({curr_outcome.kind}) != {edges_in_path[i+1].edge_id} "
                     f"treatment ({next_treatment.kind})"
+                )
+
+            # Scale mismatch between consecutive edges (warning only)
+            if (curr_outcome.scale != 1.0 and next_treatment.scale != 1.0
+                    and curr_outcome.scale != next_treatment.scale):
+                path.warnings.append(
+                    f"scale_mismatch: {edges_in_path[i].edge_id} outcome "
+                    f"scale={curr_outcome.scale} vs "
+                    f"{edges_in_path[i+1].edge_id} treatment "
+                    f"scale={next_treatment.scale} "
+                    f"— chain multiplication may need rescaling"
+                )
+
+        # Non-unity treatment scale warnings (informational)
+        for e in edges_in_path:
+            if e.treatment_unit.scale != 1.0:
+                path.warnings.append(
+                    f"scale_note: {e.edge_id} treatment scale="
+                    f"{e.treatment_unit.scale} "
+                    f"(coefficient is per {e.treatment_unit.scale} change, "
+                    f"not per 1)"
                 )
 
         # ── Guardrail 7: Frequency alignment ──

@@ -407,6 +407,22 @@ You may ONLY propose revisions of these types:
 6. add_structural_metadata — fill expected_sign, timing, forbidden_controls
 7. add_unit_specification — fill treatment_unit or outcome_unit
 8. invert_edge_direction — correct aggregation direction
+9. create_edge_card — create a placeholder edge card for a causal edge missing one
+10. update_claim_level — update the claim_level on an existing edge card
+
+## Propagation Health Context
+
+The DAG is used for causal propagation queries (e.g., "What if oil drops 30%?").
+Paths from exogenous shocks to the target node can be BLOCKED by:
+- **Missing edge cards**: Causal edges without cards default to diagnostic_only role
+- **BLOCKED_ID claim**: Card exists but identification was blocked
+- **diagnostic_only role**: Edge not allowed in REDUCED_FORM propagation
+- **Unit mismatches**: Incompatible treatment/outcome units between consecutive edges
+
+When edges_without_cards is non-empty, **prioritize create_edge_card revisions**
+to unblock propagation paths. This has the highest impact on DAG usability.
+
+Propagation engine available: {has_propagation_engine}
 
 ## Domain Questions (Layer 2 — per edge)
 
@@ -424,10 +440,20 @@ add_missing_edge revisions. Only propose additions you are confident about
 clear role in the causal story. For add_missing_edge, both endpoints must exist
 (propose the node first if needed).
 
+## Causal Logic Probes (code-computed, informational)
+
+The following probes detect chain-level issues that per-edge checks miss:
+{causal_logic_probes_questions}
+
+Probe findings are informational — they highlight potential issues for you to
+assess. Address probe findings using existing revision types (e.g.,
+add_structural_metadata to fix sign declarations, add_unit_specification to
+fix scale issues). Do NOT ignore probe warnings without reasoning.
+
 ## Output Format
 
 Return a JSON array of revision objects. Each object has:
-- "revision_type": one of the 8 types above (string)
+- "revision_type": one of the 10 types above (string)
 - "target_edge_id": the edge ID to modify (string, use "N/A" for add_missing_node)
 - "confidence": 0.0 to 1.0 (float) — only revisions >= {confidence_threshold} will be applied
 - "reasoning": why this revision improves the DAG (string)
@@ -440,13 +466,15 @@ Return a JSON array of revision objects. Each object has:
     - add_structural_metadata: {{"metadata": {{"expected_sign": "positive|negative|any", "timing": {{"lag": N}}, "forbidden_controls": [...]}}}}
     - add_unit_specification: {{"unit_specification": {{"treatment_unit": "...", "outcome_unit": "..."}}}}
     - invert_edge_direction: {{}}
+    - create_edge_card: {{"claim_level": "REDUCED_FORM|IDENTIFIED_CAUSAL|DESCRIPTIVE", "point_estimate": 0.0, "se": 0.0, "treatment_unit": "...", "outcome_unit": "...", "strategy_type": "...", "argument": "..."}}
+    - update_claim_level: {{"new_claim_level": "REDUCED_FORM|IDENTIFIED_CAUSAL|DESCRIPTIVE|BLOCKED_ID"}}
 
 When proposing both add_missing_node AND add_missing_edge for the same new node,
 include both revisions in the array — the validator processes nodes before edges.
 
 Return an EMPTY array [] if no revisions are needed.
 Do NOT propose changes you are not confident about.
-Prioritize revisions with the highest impact on identification coverage and structural correctness."""
+Prioritize revisions with the highest impact on propagation health and identification coverage."""
 
 
 DAG_CRITIC_USER = """\
@@ -454,12 +482,13 @@ DAG_CRITIC_USER = """\
 
 | Component | Score | Weight |
 |-----------|-------|--------|
-| Edge type diversity | {edge_type_diversity:.3f} | 0.15 |
-| Identification coverage | {identification_coverage:.3f} | 0.25 |
-| Metadata completeness | {metadata_completeness:.3f} | 0.20 |
+| Edge type diversity | {edge_type_diversity:.3f} | 0.10 |
+| Identification coverage | {identification_coverage:.3f} | 0.20 |
+| Metadata completeness | {metadata_completeness:.3f} | 0.15 |
 | Structural soundness | {structural_soundness:.3f} | 0.15 |
-| Unit completeness | {unit_completeness:.3f} | 0.15 |
+| Unit completeness | {unit_completeness:.3f} | 0.10 |
 | Formula correctness | {formula_correctness:.3f} | 0.10 |
+| Propagation health | {propagation_health:.3f} | 0.20 |
 | **Total** | **{total:.3f}** | |
 
 ## Edge Diagnostics
@@ -486,6 +515,28 @@ DAG_CRITIC_USER = """\
 
 {structural_gaps}
 
+## Causal Logic Probes
+
+{causal_logic_probes}
+
+If any probe findings are present, consider whether they warrant revisions
+using existing revision types (add_structural_metadata, add_unit_specification, etc.).
+
+## Propagation Health
+
+{propagation_health_details}
+
+If edges are missing cards, propose create_edge_card revisions to unblock paths.
+If edges have BLOCKED_ID or diagnostic_only roles, consider update_claim_level.
+
+## Edge Card Status
+
+{edge_card_diagnostics}
+
+## Blocked Paths (top issues)
+
+{blocked_path_details}
+
 ## Placebo Falsification Results
 
 {placebo_results}
@@ -498,4 +549,5 @@ DAG_CRITIC_USER = """\
 
 {literature_summary}
 
-Propose revisions to improve this DAG. Focus on the lowest-scoring components first."""
+Propose revisions to improve this DAG. Focus on the lowest-scoring components first.
+Propagation health has the highest weight — prioritize unblocking propagation paths."""

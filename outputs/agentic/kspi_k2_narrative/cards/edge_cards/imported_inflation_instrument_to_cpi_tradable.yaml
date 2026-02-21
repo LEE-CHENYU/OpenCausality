@@ -1,0 +1,89 @@
+edge_id: imported_inflation_instrument_to_cpi_tradable
+from_node: imported_inflation_instrument
+to_node: cpi_tradable
+spec_details:
+  design: LOCAL_PROJECTIONS
+  se_method: HAC_Newey_West
+  max_horizon: 6
+  n_lags: 2
+  controls: []
+  instruments: []
+  fixed_effects: []
+  horizon:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+estimates:
+  point: 0.0005203111668890154
+  se: 0.00029945421002168363
+  ci_95:
+  - -6.660829977237783e-05
+  - 0.0011072306335504086
+  pvalue: 0.08229337291333719
+  treatment_unit: pct
+  outcome_unit: pct
+diagnostics:
+  sign_consistency:
+    name: sign_consistency
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: No expected sign specified
+  sample_size:
+    name: sample_size
+    passed: true
+    value: 175.0
+    threshold: 15.0
+    pvalue: null
+    message: N=175
+all_diagnostics_pass: true
+interpretation:
+  estimand: LP impulse response of cpi_tradable to imported_inflation_instrument
+  effective_obs: 175
+  hac_bandwidth: 4
+failure_flags:
+  weak_identification: false
+  potential_bad_control: false
+  mechanical_identity_risk: false
+  regime_break_detected: false
+  small_sample: false
+  high_missing_rate: false
+  entity_boundary_change: false
+  definition_inconsistency: false
+  data_insufficient: false
+counterfactual:
+  supports_shock_path: false
+  supports_policy_intervention: false
+credibility_rating: A
+credibility_score: 0.95
+identification:
+  claim_level: REDUCED_FORM
+  strategy_type: SHIFT_SHARE_IV
+  risks:
+    unmeasured_confounding: medium
+    simultaneity: medium
+    weak_variation: low
+    measurement_error: low
+    selection: none
+counterfactual_block:
+  shock_scenario_allowed: false
+  policy_intervention_allowed: false
+  reason_shock_blocked: Claim too weak
+  reason_policy_blocked: Requires IDENTIFIED_CAUSAL, has REDUCED_FORM
+  allowed: false
+  reason_blocked: Claim too weak
+propagation_role:
+  role: reduced_form
+  mode_propagation_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: true
+    DESCRIPTIVE: true
+data_provenance:
+  date_range: 2010-05-01 to 2025-01-01
+  n_obs: 175
+  frequency: monthly

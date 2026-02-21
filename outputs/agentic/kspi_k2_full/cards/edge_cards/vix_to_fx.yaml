@@ -1,6 +1,6 @@
 edge_id: vix_to_fx
-dag_version_hash: a0d5c383631c52aa262f288704c6f7868d48b73d5034761245939de8eeea1d72
-created_at: '2026-02-16T16:23:41.814413'
+dag_version_hash: 09cbbdd15d1e238525a93232938ee5d1c91a0d7fc98f8f8b4023356c450bd56a
+created_at: '2026-02-18T20:11:19.228848'
 data_provenance:
   treatment_source:
     connector: parquet_file
@@ -9,10 +9,10 @@ data_provenance:
     retrieval_time: null
     file_path: null
     file_checksum: null
-    row_count: 192
+    row_count: 191
     column_count: null
     date_range:
-    - '2010-01-01'
+    - '2010-02-01'
     - '2025-12-01'
     cache_key: null
   outcome_source:
@@ -22,17 +22,17 @@ data_provenance:
     retrieval_time: null
     file_path: null
     file_checksum: null
-    row_count: 192
+    row_count: 191
     column_count: null
     date_range:
-    - '2010-01-01'
+    - '2010-02-01'
     - '2025-12-01'
     cache_key: null
   control_sources: {}
   instrument_sources: {}
-  combined_row_count: 192
+  combined_row_count: 191
   combined_date_range:
-  - '2010-01-01'
+  - '2010-02-01'
   - '2025-12-01'
   missing_rate: null
   panel_dimensions: null
@@ -60,49 +60,39 @@ spec_details:
   - 6
   bandwidth: null
 estimates:
-  point: -0.033193319731644945
-  se: 0.10968795862111944
+  point: 3.946887915167161e-05
+  se: 0.0005152757336542485
   ci_95:
-  - -0.24818171862903904
-  - 0.18179507916574916
-  pvalue: 0.7621825999315004
+  - -0.0009704715588106554
+  - 0.0010494093171139985
+  pvalue: 0.9389436765815454
   horizons: *id001
   irf:
-  - -0.033193319731644945
-  - 0.19856063408497354
-  - 0.36573082343485686
-  - 0.38052920419912106
-  - 0.4993923635356028
-  - 0.4146404564298069
-  - 0.44107323739676696
+  - 3.946887915167161e-05
+  - 0.0027040399004342837
+  - -0.00021738701059832843
+  - -0.0004953176439387227
+  - -0.00039994703655616597
+  - 0.0002606991817917538
+  - 0.00010273624735909184
   irf_ci_lower:
-  - -0.24817776816675877
-  - -0.19021682563806003
-  - -0.11037238279408479
-  - -0.07661194226800061
-  - -0.044945715304545386
-  - -0.22132036713857067
-  - -0.2274838779886149
+  - -0.0009704530009181089
+  - 0.0010179604744884503
+  - -0.0010915456673373208
+  - -0.0011683011432103581
+  - -0.001204457766000656
+  - -0.0005022972165670057
+  - -0.0005153266577520725
   irf_ci_upper:
-  - 0.1817911287034689
-  - 0.5873380938080071
-  - 0.8418340296637985
-  - 0.8376703506662427
-  - 1.043730442375751
-  - 1.0506012799981845
-  - 1.109630352782149
-  treatment_unit: 1 point VIX increase
-  outcome_unit: '% change in USD/KZT'
-  n_calendar_periods: 192
-  n_effective_obs_h0: 190
-  n_effective_obs_by_horizon:
-  - 190
-  - 189
-  - 188
-  - 187
-  - 186
-  - 185
-  - 184
+  - 0.001049390759221452
+  - 0.004390119326380117
+  - 0.0006567716461406639
+  - 0.00017766585533291292
+  - 0.0004045636928883241
+  - 0.0010236955801505134
+  - 0.0007207991524702562
+  treatment_unit: innovation
+  outcome_unit: log
 diagnostics:
   hac_bandwidth:
     name: hac_bandwidth
@@ -114,47 +104,75 @@ diagnostics:
   effective_obs:
     name: effective_obs
     passed: true
-    value: 190.0
+    value: 189.0
     threshold: 20.0
     pvalue: null
-    message: 190 observations
-  r_squared_h0:
-    name: r_squared_h0
-    passed: true
-    value: 0.9916887300747156
-    threshold: null
-    pvalue: null
-    message: 'R-squared at h=0: 0.9917'
-  residual_ac1:
-    name: residual_ac1
-    passed: true
-    value: -0.003871740230518359
-    threshold: 0.5
-    pvalue: null
-    message: 'AR(1) residual autocorrelation: -0.004'
+    message: ''
   sign_consistency:
     name: sign_consistency
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'Sign consistent: expected +, got 0.0000'
+  ts_leads_test:
+    name: ts_leads_test
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_residual_autocorr:
+    name: ts_residual_autocorr
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_hac_sensitivity:
+    name: ts_hac_sensitivity
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_lag_sensitivity:
+    name: ts_lag_sensitivity
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_regime_stability:
+    name: ts_regime_stability
     passed: false
     value: null
     threshold: null
     pvalue: null
-    message: 'Sign inconsistent: expected +, got -0.0332'
+    message: 'TSGuard: fail'
+  ts_shock_support:
+    name: ts_shock_support
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
 all_diagnostics_pass: false
 interpretation:
   estimand: IRF of kzt_usd to a unit shock in vix_shock
   is_not: Structural causal effect under all interventions
   channels:
   - direct
-  - indirect through unobserved channels
-  population: Kazakhstan aggregate time-series (Kaspi Bank)
-  conditions: Sample period, no regime changes
+  - indirect
+  population: ''
+  conditions: ''
   allowed_uses: []
   forbidden_uses: []
 failure_flags:
   weak_identification: false
   potential_bad_control: false
   mechanical_identity_risk: false
-  regime_break_detected: false
+  regime_break_detected: true
   small_sample: false
   high_missing_rate: false
   entity_boundary_change: false
@@ -163,13 +181,12 @@ failure_flags:
 counterfactual:
   supports_shock_path: true
   supports_policy_intervention: false
-  intervention_note: Reduced-form LP estimate; valid for shock propagation, not policy
-    counterfactuals
+  intervention_note: Reduced-form LP estimate
   external_validity: ''
 credibility_rating: A
-credibility_score: 0.8900000000000001
+credibility_score: 0.8655555555555556
 identification:
-  claim_level: IDENTIFIED_CAUSAL
+  claim_level: REDUCED_FORM
   risks:
     unmeasured_confounding: medium
     simultaneity: low
@@ -181,47 +198,145 @@ identification:
   testable_threats_passed:
   - hac_bandwidth
   - effective_obs
-  - r_squared_h0
-  - residual_ac1
-  testable_threats_failed:
   - sign_consistency
-  strategy_type: small_open_economy
-  strategy_argument: VIX innovations reflect global risk aversion, exogenous to Kazakhstan-specific
-    factors.
-  strategy_key_assumption: Kazakhstan financial markets do not influence global risk
-    sentiment.
+  - ts_leads_test
+  - ts_residual_autocorr
+  - ts_hac_sensitivity
+  - ts_lag_sensitivity
+  - ts_shock_support
+  testable_threats_failed:
+  - ts_regime_stability
+  strategy_type: ''
+  strategy_argument: ''
+  strategy_key_assumption: ''
 counterfactual_block:
-  shock_scenario_allowed: true
+  shock_scenario_allowed: false
   policy_intervention_allowed: false
-  reason_shock_blocked: null
+  reason_shock_blocked: 'Counterfactual Use: BLOCKED
+
+    Reason: regime break risk
+
+
+    Even if p<0.05, this does not establish a causal effect.'
   reason_policy_blocked: REDUCED_FORM mode does not allow policy interventions
-  allowed: true
-  reason_blocked: REDUCED_FORM mode does not allow policy interventions
+  allowed: false
+  reason_blocked: 'Counterfactual Use: BLOCKED
+
+    Reason: regime break risk
+
+
+    Even if p<0.05, this does not establish a causal effect.'
 propagation_role:
-  role: structural
+  role: reduced_form
   overlapping_paths: []
   selected_for_counterfactual: true
   mode_propagation_allowed:
-    STRUCTURAL: true
+    STRUCTURAL: false
     REDUCED_FORM: true
     DESCRIPTIVE: true
   mode_shock_cf_allowed:
-    STRUCTURAL: true
+    STRUCTURAL: false
     REDUCED_FORM: true
     DESCRIPTIVE: false
   mode_policy_cf_allowed:
-    STRUCTURAL: true
+    STRUCTURAL: false
     REDUCED_FORM: false
     DESCRIPTIVE: false
 literature:
-  supporting: []
+  supporting:
+  - doi: 10.32479/ijeep.16549
+    title: Asymmetric Effect of Oil Prices on Kazakhstan’s Stock Market Index and
+      Exchange Rate
+    authors:
+    - A. Syzdykova
+    - G. Azretbergenova
+    year: 2024
+    excerpt: In this study, the asymmetric effect of oil prices in Kazakhstan on the
+      exchange rate (USD/KZT) and Kazakhstan stock market index (KASE) returns was
+      analyzed using the non-linear ARDL cointegration (NARDL) method with monthly
+      data for the period January 2010-February 2024. As a result of the finding
+    relevance: supporting
+    edge_id: vix_to_fx
+    paper_id: 8e2de21c6f5846b2b256f24392952489a7125b8d
+    citation_count: 3
+    search_query: VIX shock KZT/USD exchange rate causal effect
+    source: semantic_scholar
+    pdf_url: ''
+  - doi: ''
+    title: 'Oil Price , Exchange Rate and DJIA : Effect to Malaysian Stock Market'
+    authors:
+    - Syukriah Ali
+    - N. Mokhtar
+    - Kartini Kasim
+    year: 2016
+    excerpt: ''
+    relevance: supporting
+    edge_id: vix_to_fx
+    paper_id: a304873b5f87197ee16e95deb5d33cf460b787b3
+    citation_count: 1
+    search_query: VIX shock KZT/USD exchange rate causal effect
+    source: semantic_scholar
+    pdf_url: ''
+  - doi: 10.22459/ccmthe.2021
+    title: China's Challenges in Moving towards a High-income Economy
+    authors: []
+    year: 2021
+    excerpt: With its per capita income surpassing US$10,000, China has now drawn
+      up ambitious plans to further lift its income to the level of developed countries.
+      Yet various constraints need to be overcome if China is to build on the achievements
+      of the last 40 years and further boost its growth potential. Be
+    relevance: supporting
+    edge_id: vix_to_fx
+    paper_id: ''
+    citation_count: 0
+    search_query: VIX shock KZT/USD exchange rate causal effect
+    source: core
+    pdf_url: https://core.ac.uk/download/479005373.pdf
+  - doi: 10.1515/jci-2021-0042
+    title: A Unifying Causal Framework for Analyzing Dataset Shift-stable Learning
+      Algorithms
+    authors:
+    - Adarsh Subbaswamy
+    - Bryant Chen
+    - Suchi Saria
+    year: 2019
+    excerpt: Recent interest in the external validity of prediction models (i.e.,
+      the problem of different train and test distributions, known as dataset shift)
+      has produced many methods for finding predictive distributions that are invariant
+      to dataset shifts and can be used for prediction in new, unseen enviro
+    relevance: supporting
+    edge_id: vix_to_fx
+    paper_id: 1905.11374v5
+    citation_count: 0
+    search_query: VIX shock KZT/USD exchange rate causal effect
+    source: arxiv
+    pdf_url: https://arxiv.org/pdf/1905.11374v5
   challenging: []
-  methodological: []
-  search_status: PENDING
-  search_timestamp: null
-  search_query: ''
-  total_results: 0
+  methodological:
+  - doi: 10.1515/jci-2022-0060
+    title: 'Quantitative probing: Validating causal models using quantitative domain
+      knowledge'
+    authors:
+    - Daniel Grünbaum
+    - Maike L. Stern
+    - Elmar W. Lang
+    year: 2022
+    excerpt: We present quantitative probing as a model-agnostic framework for validating
+      causal models in the presence of quantitative domain knowledge. The method is
+      constructed as an analogue of the train/test split in correlation-based machine
+      learning and as an enhancement of current causal validation strat
+    relevance: methodological
+    edge_id: vix_to_fx
+    paper_id: 2209.03013v1
+    citation_count: 0
+    search_query: VIX shock KZT/USD exchange rate causal effect
+    source: arxiv
+    pdf_url: https://arxiv.org/pdf/2209.03013v1
+  search_status: SEARCHED
+  search_timestamp: '2026-02-18T20:11:19.228917'
+  search_query: VIX shock KZT/USD exchange rate causal effect
+  total_results: 5
 companion_edge_id: null
 variant_of: null
 is_precisely_null: true
-null_equivalence_bound: 0.21937591724223887
+null_equivalence_bound: 0.001030551467308497

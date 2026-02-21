@@ -75,6 +75,8 @@ def _edge_in_path_to_dict(e: Any) -> dict:
         "se": _safe_float(e.se),
         "role": e.role,
         "claim_level": e.claim_level,
+        "treatment_unit": e.treatment_unit.kind,
+        "treatment_scale": e.treatment_unit.scale,
     }
 
 
@@ -215,6 +217,9 @@ def _do_load_dag(dag_path: str) -> dict:
         ],
         "n_cards": len(edge_cards),
         "n_issues": len(issue_ledger.issues) if issue_ledger else 0,
+        "cards_not_on_dag": [
+            cid for cid in edge_cards if cid not in {e.id for e in dag.edges}
+        ],
     }
 
 
@@ -439,9 +444,13 @@ def _do_compare_modes() -> list[dict]:
 
 def _do_run_placebo(max_tests: int, alpha: float) -> dict:
     from shared.agentic.falsification import PlaceboFalsifier
+    from shared.engine.dynamic_loader import DynamicLoaderFactory
 
     dag = _state["dag"]
     issue_ledger = _state["issue_ledger"]
+
+    factory = DynamicLoaderFactory()
+    factory.auto_populate_from_dag(dag)
 
     falsifier = PlaceboFalsifier(
         dag=dag,
@@ -496,6 +505,9 @@ def _do_dag_doctor() -> dict:
         "issues_total": len(issue_ledger.issues) if issue_ledger else 0,
         "issues_critical": len(issue_ledger.get_critical_open()) if issue_ledger else 0,
         "edges_without_cards": edges_without_cards,
+        "cards_not_on_dag": [
+            cid for cid in edge_cards if cid not in {e.id for e in dag.edges}
+        ],
         "current_mode": _state["mode"],
     }
 

@@ -1,0 +1,89 @@
+edge_id: brent_oil_to_kzt_usd
+from_node: brent_oil
+to_node: kzt_usd
+spec_details:
+  design: LOCAL_PROJECTIONS
+  se_method: HAC_Newey_West
+  max_horizon: 6
+  n_lags: 2
+  controls: []
+  instruments: []
+  fixed_effects: []
+  horizon:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+estimates:
+  point: -0.0541160851377251
+  se: 0.04036769100198357
+  ci_95:
+  - -0.1332353056406545
+  - 0.025003135365204307
+  pvalue: 0.1800571284750574
+  treatment_unit: log
+  outcome_unit: log
+diagnostics:
+  sign_consistency:
+    name: sign_consistency
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: No expected sign specified
+  sample_size:
+    name: sample_size
+    passed: true
+    value: 189.0
+    threshold: 15.0
+    pvalue: null
+    message: N=189
+all_diagnostics_pass: true
+interpretation:
+  estimand: LP impulse response of kzt_usd to brent_oil
+  effective_obs: 189
+  hac_bandwidth: 4
+failure_flags:
+  weak_identification: true
+  potential_bad_control: false
+  mechanical_identity_risk: false
+  regime_break_detected: false
+  small_sample: false
+  high_missing_rate: false
+  entity_boundary_change: false
+  definition_inconsistency: false
+  data_insufficient: false
+counterfactual:
+  supports_shock_path: false
+  supports_policy_intervention: false
+credibility_rating: A
+credibility_score: 0.8899999999999999
+identification:
+  claim_level: REDUCED_FORM
+  strategy_type: EXTERNAL_INSTRUMENT
+  risks:
+    unmeasured_confounding: medium
+    simultaneity: medium
+    weak_variation: high
+    measurement_error: low
+    selection: none
+counterfactual_block:
+  shock_scenario_allowed: false
+  policy_intervention_allowed: false
+  reason_shock_blocked: Claim too weak
+  reason_policy_blocked: Requires IDENTIFIED_CAUSAL, has REDUCED_FORM
+  allowed: false
+  reason_blocked: Claim too weak
+propagation_role:
+  role: reduced_form
+  mode_propagation_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: true
+    DESCRIPTIVE: true
+data_provenance:
+  date_range: 2010-02-01 to 2025-12-01
+  n_obs: 189
+  frequency: monthly

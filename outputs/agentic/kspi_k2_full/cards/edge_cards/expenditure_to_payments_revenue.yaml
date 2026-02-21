@@ -1,6 +1,6 @@
 edge_id: expenditure_to_payments_revenue
-dag_version_hash: a0d5c383631c52aa262f288704c6f7868d48b73d5034761245939de8eeea1d72
-created_at: '2026-02-16T16:23:45.484005'
+dag_version_hash: 09cbbdd15d1e238525a93232938ee5d1c91a0d7fc98f8f8b4023356c450bd56a
+created_at: '2026-02-18T20:11:19.513852'
 data_provenance:
   treatment_source:
     connector: parquet_file
@@ -38,14 +38,12 @@ data_provenance:
   panel_dimensions: null
   entity_boundary_note: null
   kpi_definitions: null
-spec_hash: c3c5071ebab1b83d9c2359a2c1302f42ef68b238b6d340b4b6d51b5ad93bd75f
+spec_hash: 2d952de6a9f225a46b956987d0a55069a9bb3d2c55a9600c2c18f16a7473ef2b
 spec_details:
   design: LOCAL_PROJECTIONS
   controls:
   - y_lag1
-  - y_lag2
   - x_lag1
-  - x_lag2
   instruments: []
   fixed_effects: []
   se_method: HAC_newey_west
@@ -56,33 +54,27 @@ spec_details:
   - 2
   bandwidth: null
 estimates:
-  point: 333.40898842797117
-  se: 70.95395662999425
+  point: -0.01310864881162322
+  se: 0.0008858198043883523
   ci_95:
-  - 194.33923343318244
-  - 472.47874342275986
-  pvalue: 2.615043739933785e-06
+  - -0.014844855628224391
+  - -0.01137244199502205
+  pvalue: 1.501773185983678e-49
   horizons: *id001
   irf:
-  - 333.40898842797117
-  - 87.1041214963046
-  - 311.3489543924303
+  - -0.01310864881162322
+  - 0.009176932026877579
+  - -0.011933271358369496
   irf_ci_lower:
-  - 194.34178887256544
-  - 36.733116458852045
-  - 230.03816819344956
+  - -0.014844823725016706
+  - 0.005941100446724272
+  - -0.012176537204309152
   irf_ci_upper:
-  - 472.4761879833769
-  - 137.47512653375716
-  - 392.65974059141104
-  treatment_unit: 1% real expenditure change
-  outcome_unit: bn KZT payments revenue
-  n_calendar_periods: 8
-  n_effective_obs_h0: 7
-  n_effective_obs_by_horizon:
-  - 7
-  - 6
-  - 5
+  - -0.011372473898229735
+  - 0.012412763607030886
+  - -0.01169000551242984
+  treatment_unit: log
+  outcome_unit: log
 diagnostics:
   hac_bandwidth:
     name: hac_bandwidth
@@ -97,21 +89,7 @@ diagnostics:
     value: 7.0
     threshold: 20.0
     pvalue: null
-    message: 7 observations (small sample)
-  r_squared_h0:
-    name: r_squared_h0
-    passed: true
-    value: 0.9893634199482262
-    threshold: null
-    pvalue: null
-    message: 'R-squared at h=0: 0.9894'
-  residual_ac1:
-    name: residual_ac1
-    passed: true
-    value: -0.3691860645217157
-    threshold: 0.5
-    pvalue: null
-    message: 'AR(1) residual autocorrelation: -0.369'
+    message: ''
   sign_consistency:
     name: sign_consistency
     passed: true
@@ -119,15 +97,50 @@ diagnostics:
     threshold: null
     pvalue: null
     message: No expected sign specified
+  ts_residual_autocorr:
+    name: ts_residual_autocorr
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_hac_sensitivity:
+    name: ts_hac_sensitivity
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_lag_sensitivity:
+    name: ts_lag_sensitivity
+    passed: false
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: fail'
+  ts_regime_stability:
+    name: ts_regime_stability
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_shock_support:
+    name: ts_shock_support
+    passed: false
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: fail'
 all_diagnostics_pass: false
 interpretation:
   estimand: IRF of payments_revenue_kspi to a unit shock in real_expenditure
   is_not: Structural causal effect under all interventions
   channels:
   - direct
-  - indirect through unobserved channels
-  population: Kazakhstan aggregate time-series (Kaspi Bank)
-  conditions: Sample period, no regime changes
+  - indirect
+  population: ''
+  conditions: ''
   allowed_uses: []
   forbidden_uses: []
 failure_flags:
@@ -143,13 +156,12 @@ failure_flags:
 counterfactual:
   supports_shock_path: true
   supports_policy_intervention: false
-  intervention_note: Reduced-form LP estimate; valid for shock propagation, not policy
-    counterfactuals
+  intervention_note: Reduced-form LP estimate
   external_validity: ''
 credibility_rating: B
-credibility_score: 0.6923529411764707
+credibility_score: 0.6223529411764707
 identification:
-  claim_level: DESCRIPTIVE
+  claim_level: REDUCED_FORM
   risks:
     unmeasured_confounding: medium
     simultaneity: low
@@ -160,15 +172,17 @@ identification:
   - No omitted common cause of treatment and outcome
   testable_threats_passed:
   - hac_bandwidth
-  - r_squared_h0
-  - residual_ac1
   - sign_consistency
+  - ts_residual_autocorr
+  - ts_hac_sensitivity
+  - ts_regime_stability
   testable_threats_failed:
   - effective_obs
-  strategy_type: none
-  strategy_argument: No identification strategy — confounded by KSPI market share
-    growth and platform dynamics.
-  strategy_key_assumption: N/A — association only.
+  - ts_lag_sensitivity
+  - ts_shock_support
+  strategy_type: ''
+  strategy_argument: ''
+  strategy_key_assumption: ''
 counterfactual_block:
   shock_scenario_allowed: false
   policy_intervention_allowed: false
@@ -178,12 +192,7 @@ counterfactual_block:
 
 
     Even if p<0.05, this does not establish a causal effect.'
-  reason_policy_blocked: 'Counterfactual Use: BLOCKED
-
-    Reason: insufficient shock episodes
-
-
-    Even if p<0.05, this does not establish a causal effect.'
+  reason_policy_blocked: REDUCED_FORM mode does not allow policy interventions
   allowed: false
   reason_blocked: 'Counterfactual Use: BLOCKED
 
@@ -192,29 +201,104 @@ counterfactual_block:
 
     Even if p<0.05, this does not establish a causal effect.'
 propagation_role:
-  role: diagnostic_only
+  role: reduced_form
   overlapping_paths: []
-  selected_for_counterfactual: false
+  selected_for_counterfactual: true
   mode_propagation_allowed:
     STRUCTURAL: false
-    REDUCED_FORM: false
+    REDUCED_FORM: true
     DESCRIPTIVE: true
   mode_shock_cf_allowed:
     STRUCTURAL: false
-    REDUCED_FORM: false
+    REDUCED_FORM: true
     DESCRIPTIVE: false
   mode_policy_cf_allowed:
     STRUCTURAL: false
     REDUCED_FORM: false
     DESCRIPTIVE: false
 literature:
-  supporting: []
+  supporting:
+  - doi: ''
+    title: Macroeconomic framework for the economy of Bangladesh
+    authors:
+    - B. Khondker
+    - Selim Raihan
+    year: 2008
+    excerpt: ''
+    relevance: supporting
+    edge_id: expenditure_to_payments_revenue
+    paper_id: 827dd3aa59ae7916f6104664647120278791958b
+    citation_count: 1
+    search_query: Real consumption expenditure KSPI Payments revenue causal effect
+    source: semantic_scholar
+    pdf_url: ''
+  - doi: ''
+    title: 'Foundations of a Welfare Regime: The Case of Indonesia'
+    authors:
+    - Ramadani Torheim
+    year: 2013
+    excerpt: Indonesia is at a crossroads in building its welfare regime. The study
+      seeks to analyse the salient characteristics and enabling factors that influence
+      Indonesia’s current social policies in light of welfare state theories. The
+      adoption of the Social Security Providers Law in late 2011 underlined th
+    relevance: supporting
+    edge_id: expenditure_to_payments_revenue
+    paper_id: ''
+    citation_count: 1
+    search_query: Real consumption expenditure KSPI Payments revenue causal effect
+    source: openalex
+    pdf_url: http://hdl.handle.net/10852/36942
+  - doi: 10.17635/lancaster/thesis/1413
+    title: Essays on International Economics
+    authors:
+    - Yang, Huan
+    year: 2021
+    excerpt: This thesis has three essays corresponding to the three research projects
+      I undertook in the area of foreign direct investment, international and labor
+      economics. In the first essay, I quantify the welfare and employment effect
+      of international trade both at the aggregate and sector level. I build i
+    relevance: supporting
+    edge_id: expenditure_to_payments_revenue
+    paper_id: ''
+    citation_count: 0
+    search_query: Real consumption expenditure KSPI Payments revenue causal effect
+    source: core
+    pdf_url: https://core.ac.uk/download/477680585.pdf
+  - doi: 10.17170/kobra-202005181267
+    title: the Indonesian Oil Palm Plantation and Automobile Sectors
+    authors:
+    - Sinaga, Hariati
+    year: 2020
+    excerpt: Zugleich Dissertation, Universität Kassel, 2017. Die gedruckte Ausg.
+      ist im Rainer Hampp Verlag, Augsburg, München (www.Hampp-Verlag.de) erschienen
+    relevance: supporting
+    edge_id: expenditure_to_payments_revenue
+    paper_id: ''
+    citation_count: 0
+    search_query: Real consumption expenditure KSPI Payments revenue causal effect
+    source: core
+    pdf_url: https://core.ac.uk/download/638846868.pdf
+  - doi: ''
+    title: Corporate Liquidity and Real Investments
+    authors:
+    - Yang Zhao
+    - Joshua D. Rauh
+    - A. Krishnamurthy
+    year: 2019
+    excerpt: ''
+    relevance: supporting
+    edge_id: expenditure_to_payments_revenue
+    paper_id: 07bedfd82cffadf7a1f645f6de296e0511409ad4
+    citation_count: 0
+    search_query: Real consumption expenditure KSPI Payments revenue causal effect
+    source: semantic_scholar
+    pdf_url: ''
   challenging: []
   methodological: []
-  search_status: PENDING
-  search_timestamp: null
-  search_query: ''
-  total_results: 0
+  search_status: SEARCHED
+  search_timestamp: '2026-02-18T20:11:19.513944'
+  search_query: Real consumption expenditure KSPI Payments revenue causal effect
+  total_results: 5
 companion_edge_id: null
 variant_of: null
 is_precisely_null: false

@@ -1,6 +1,6 @@
 edge_id: fx_to_nbk_rate
-dag_version_hash: a0d5c383631c52aa262f288704c6f7868d48b73d5034761245939de8eeea1d72
-created_at: '2026-02-16T16:23:41.905634'
+dag_version_hash: 09cbbdd15d1e238525a93232938ee5d1c91a0d7fc98f8f8b4023356c450bd56a
+created_at: '2026-02-18T20:11:19.420724'
 data_provenance:
   treatment_source:
     connector: parquet_file
@@ -91,18 +91,8 @@ estimates:
   - 4.384078027406209
   - 11.37428506050965
   - 5.467616264354246
-  treatment_unit: 1% KZT depreciation (MoM)
-  outcome_unit: pp NBK base rate
-  n_calendar_periods: 69
-  n_effective_obs_h0: 67
-  n_effective_obs_by_horizon:
-  - 67
-  - 66
-  - 65
-  - 64
-  - 63
-  - 62
-  - 61
+  treatment_unit: log
+  outcome_unit: pct
 diagnostics:
   hac_bandwidth:
     name: hac_bandwidth
@@ -117,21 +107,7 @@ diagnostics:
     value: 67.0
     threshold: 20.0
     pvalue: null
-    message: 67 observations
-  r_squared_h0:
-    name: r_squared_h0
-    passed: true
-    value: 0.9724581191776339
-    threshold: null
-    pvalue: null
-    message: 'R-squared at h=0: 0.9725'
-  residual_ac1:
-    name: residual_ac1
-    passed: true
-    value: -0.0019519680541277558
-    threshold: 0.5
-    pvalue: null
-    message: 'AR(1) residual autocorrelation: -0.002'
+    message: ''
   sign_consistency:
     name: sign_consistency
     passed: true
@@ -139,23 +115,64 @@ diagnostics:
     threshold: null
     pvalue: null
     message: 'Sign consistent: expected +, got 0.0184'
-all_diagnostics_pass: true
+  ts_leads_test:
+    name: ts_leads_test
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_residual_autocorr:
+    name: ts_residual_autocorr
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_hac_sensitivity:
+    name: ts_hac_sensitivity
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+  ts_lag_sensitivity:
+    name: ts_lag_sensitivity
+    passed: false
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: fail'
+  ts_regime_stability:
+    name: ts_regime_stability
+    passed: false
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: fail'
+  ts_shock_support:
+    name: ts_shock_support
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: 'TSGuard: pass'
+all_diagnostics_pass: false
 interpretation:
   estimand: IRF of nbk_policy_rate to a unit shock in kzt_usd
   is_not: Structural causal effect under all interventions
   channels:
   - direct
-  - indirect through unobserved channels
-  population: Kazakhstan aggregate time-series (Kaspi Bank)
-  conditions: Sample period, no regime changes
+  - indirect
+  population: ''
+  conditions: ''
   allowed_uses: []
-  forbidden_uses:
-  - policy_counterfactual
+  forbidden_uses: []
 failure_flags:
   weak_identification: false
   potential_bad_control: false
   mechanical_identity_risk: false
-  regime_break_detected: false
+  regime_break_detected: true
   small_sample: false
   high_missing_rate: false
   entity_boundary_change: false
@@ -164,13 +181,12 @@ failure_flags:
 counterfactual:
   supports_shock_path: true
   supports_policy_intervention: false
-  intervention_note: Reduced-form LP estimate; valid for shock propagation, not policy
-    counterfactuals
+  intervention_note: Reduced-form LP estimate
   external_validity: ''
-credibility_rating: A
-credibility_score: 0.904
+credibility_rating: B
+credibility_score: 0.7551111111111112
 identification:
-  claim_level: DESCRIPTIVE
+  claim_level: REDUCED_FORM
   risks:
     unmeasured_confounding: medium
     simultaneity: low
@@ -182,14 +198,17 @@ identification:
   testable_threats_passed:
   - hac_bandwidth
   - effective_obs
-  - r_squared_h0
-  - residual_ac1
   - sign_consistency
-  testable_threats_failed: []
-  strategy_type: none
-  strategy_argument: Reaction function — endogenous policy response, no identification
-    strategy.
-  strategy_key_assumption: N/A — this edge documents correlation, not causal effect.
+  - ts_leads_test
+  - ts_residual_autocorr
+  - ts_hac_sensitivity
+  - ts_shock_support
+  testable_threats_failed:
+  - ts_lag_sensitivity
+  - ts_regime_stability
+  strategy_type: ''
+  strategy_argument: ''
+  strategy_key_assumption: ''
 counterfactual_block:
   shock_scenario_allowed: false
   policy_intervention_allowed: false
@@ -199,12 +218,7 @@ counterfactual_block:
 
 
     Even if p<0.05, this does not establish a causal effect.'
-  reason_policy_blocked: 'Counterfactual Use: BLOCKED
-
-    Reason: regime break risk
-
-
-    Even if p<0.05, this does not establish a causal effect.'
+  reason_policy_blocked: REDUCED_FORM mode does not allow policy interventions
   allowed: false
   reason_blocked: 'Counterfactual Use: BLOCKED
 
@@ -215,27 +229,111 @@ counterfactual_block:
 propagation_role:
   role: diagnostic_only
   overlapping_paths: []
-  selected_for_counterfactual: false
+  selected_for_counterfactual: true
   mode_propagation_allowed:
     STRUCTURAL: false
     REDUCED_FORM: false
     DESCRIPTIVE: true
   mode_shock_cf_allowed:
     STRUCTURAL: false
-    REDUCED_FORM: false
+    REDUCED_FORM: true
     DESCRIPTIVE: false
   mode_policy_cf_allowed:
     STRUCTURAL: false
     REDUCED_FORM: false
     DESCRIPTIVE: false
 literature:
-  supporting: []
+  supporting:
+  - doi: 10.6007/IJAREMS/V4-I3/1798
+    title: 'International Oil Prices and Exchange Rate in Nigeria: A Causality Analysis'
+    authors:
+    - E. Osuji
+    year: 2015
+    excerpt: ''
+    relevance: supporting
+    edge_id: fx_to_nbk_rate
+    paper_id: 5d62b71bb43db2a0b37f66876519be666473ab03
+    citation_count: 29
+    search_query: KZT/USD exchange rate NBK base rate causal effect
+    source: semantic_scholar
+    pdf_url: ''
+  - doi: 10.12775/DEM.2018.003
+    title: 'An Inquiry into the Effect of the Interest Rate, Gold Price, and the Exchange
+      Rate on Stock Exchange Index: Evidence from Nepal'
+    authors:
+    - M. Devkota
+    - Humnath Panta
+    year: 2018
+    excerpt: This study examines the causal relationship between the Nepalese Stock
+      Exchange (NEPSE) Index, the interest rate, gold price, and the USD exchange
+      rate in Nepal. The monthly time series data from January 2006 to June 2018 are
+      used. Time series properties of the data are diagnosed using the Ng-Perron
+    relevance: supporting
+    edge_id: fx_to_nbk_rate
+    paper_id: 0ad17a6da3df790bc85e4cfc811d5bfb0e70d687
+    citation_count: 3
+    search_query: KZT/USD exchange rate NBK base rate causal effect
+    source: semantic_scholar
+    pdf_url: ''
+  - doi: ''
+    title: Institutions in transition countries
+    authors:
+    - Dawid Piątek
+    - Adam Baszyński
+    - Michał Pilc
+    year: 2014
+    excerpt: The aim of this report is to present and evaluate the changes which have
+      taken place in institutions of 28 transition countries after 1989. Institutions
+      are here understood as formal rules, including procedural and regulatory institutional
+      solutions determining the economic and political structure o
+    relevance: supporting
+    edge_id: fx_to_nbk_rate
+    paper_id: ''
+    citation_count: 3
+    search_query: KZT/USD exchange rate NBK base rate causal effect
+    source: openalex
+    pdf_url: https://depot.ceon.pl/handle/123456789/4621
+  - doi: 10.5089/9781475598759.002
+    title: Republic of Kazakhstan
+    authors:
+    - International Monetary Fund. Middle East and Central Asia Dept.
+    year: 2017
+    excerpt: This Selected Issues Paper evaluates Kazakhstan’s oil rules, current
+      fiscal stance, and long-term sustainability. The sharp and sustained drop in
+      oil prices since 2014 has reduced the value of Kazakhstan’s oil wealth. Kazakhstan’s
+      non-oil deficit path has been higher than suggested by long-term benc
+    relevance: supporting
+    edge_id: fx_to_nbk_rate
+    paper_id: ''
+    citation_count: 1
+    search_query: KZT/USD exchange rate NBK base rate causal effect
+    source: openalex
+    pdf_url: https://www.elibrary.imf.org/doc/IMF002/24266-9781475598759/24266-9781475598759/Other_formats/Source_PDF/24266-9781475598810.pdf
   challenging: []
-  methodological: []
-  search_status: PENDING
-  search_timestamp: null
-  search_query: ''
-  total_results: 0
+  methodological:
+  - doi: 10.1155/2021/7280879
+    title: 'Influence of Exchange Rate on Foreign Direct Investment Inflows: An Empirical
+      Analysis Based on Co-Integration and Granger Causality Test'
+    authors:
+    - Lan Tan
+    - Yifan Xu
+    - Alemayehu Gashaw
+    year: 2021
+    excerpt: Although it is widely recognized that Foreign Direct Investment (FDI)
+      inflows have a dominant effect on economic growth of host countries, the determinants
+      of FDI inflows are still unclear. Especially, about the effect of exchange rate
+      on FDI inflow, the results reached by scholars vary across count
+    relevance: methodological
+    edge_id: fx_to_nbk_rate
+    paper_id: f1801b0898815f72e4afa66aad665d9ea28aecad
+    citation_count: 17
+    search_query: KZT/USD exchange rate NBK base rate causal effect
+    source: semantic_scholar
+    pdf_url: ''
+  search_status: SEARCHED
+  search_timestamp: '2026-02-18T20:11:19.420785'
+  search_query: KZT/USD exchange rate NBK base rate causal effect
+  total_results: 5
 companion_edge_id: null
 variant_of: null
 is_precisely_null: true

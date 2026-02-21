@@ -1,6 +1,6 @@
 edge_id: fx_to_real_expenditure
-dag_version_hash: a0d5c383631c52aa262f288704c6f7868d48b73d5034761245939de8eeea1d72
-created_at: '2026-02-16T16:23:41.933105'
+dag_version_hash: 09cbbdd15d1e238525a93232938ee5d1c91a0d7fc98f8f8b4023356c450bd56a
+created_at: '2026-02-18T20:11:19.432433'
 data_provenance:
   treatment_source: null
   outcome_source: null
@@ -29,9 +29,8 @@ estimates:
   - -0.18
   - -0.02
   pvalue: 0.012
-  treatment_unit: 10% KZT depreciation
-  outcome_unit: '% real expenditure decline'
-  n_effective_obs_h0: 60
+  treatment_unit: log
+  outcome_unit: growth
 diagnostics:
   validated_evidence:
     name: validated_evidence
@@ -40,22 +39,14 @@ diagnostics:
     threshold: null
     pvalue: null
     message: Validated from Block F
-  effective_obs:
-    name: effective_obs
-    passed: true
-    value: 60.0
-    threshold: 20.0
-    pvalue: null
-    message: ''
 all_diagnostics_pass: true
 interpretation:
   estimand: Effect of exchange rate depreciation on real household expenditure. 10%
     depreciation reduces real spending by ~1%.
-  is_not: Re-estimated result; this is locked validated evidence
-  channels:
-  - as identified in source block
+  is_not: Re-estimated result; locked validated evidence
+  channels: []
   population: ''
-  conditions: 'Source: Block F'
+  conditions: ''
   allowed_uses: []
   forbidden_uses: []
 failure_flags:
@@ -84,12 +75,12 @@ identification:
     measurement_error: low
     selection: low
   untestable_assumptions: []
-  testable_threats_passed: []
+  testable_threats_passed:
+  - validated_evidence
   testable_threats_failed: []
-  strategy_type: validated_prior
-  strategy_argument: Block F LP estimate using regional panel variation in FX exposure.
-  strategy_key_assumption: Regional FX exposure variation is exogenous to expenditure
-    trends.
+  strategy_type: ''
+  strategy_argument: ''
+  strategy_key_assumption: ''
 counterfactual_block:
   shock_scenario_allowed: true
   policy_intervention_allowed: false
@@ -114,13 +105,102 @@ propagation_role:
     REDUCED_FORM: false
     DESCRIPTIVE: false
 literature:
-  supporting: []
-  challenging: []
+  supporting:
+  - doi: 10.17059/ekon.reg.2022-1-15
+    title: 'The Impact of the Local Financial Market on Economic Growth: A Case Study
+      of Kazakhstan'
+    authors:
+    - Yuliya Nichkasova
+    - E. Nezhinsky
+    - Halina A. Shmarlouskaya
+    year: 2022
+    excerpt: Kazakhstan’s financial market has always been the focus of the government
+      attention as an important element of country development. Therefore, the main
+      goal is to build a well-developed, competitive and trustworthy financial market
+      that has a dominant influence on the economy and sustainable develop
+    relevance: supporting
+    edge_id: fx_to_real_expenditure
+    paper_id: ''
+    citation_count: 2
+    search_query: KZT/USD exchange rate Real consumption expenditure causal effect
+    source: openalex
+    pdf_url: https://www.economyofregions.org/ojs/index.php/er/article/download/16/40/125
+  - doi: 10.3390/su17010036
+    title: 'Economic Aspects of Sustainable Development: Eco-Branding in Manufacturing
+      Enterprises from Kazakhstan'
+    authors:
+    - Л. М. Давиденко
+    - А. А. Титков
+    - Nurzhanat Sherimova
+    - Ansagan Beisembina
+    year: 2024
+    excerpt: Economic science provides a rich methodological toolkit for sustainable
+      development combined with the principles of the circular economy and green marketing.
+      The practical adaptation of a set of assessment tools helped the realisation
+      of the goal of this study in the form of the systematisation of i
+    relevance: supporting
+    edge_id: fx_to_real_expenditure
+    paper_id: ''
+    citation_count: 1
+    search_query: KZT/USD exchange rate Real consumption expenditure causal effect
+    source: openalex
+    pdf_url: https://www.mdpi.com/2071-1050/17/1/36/pdf?version=1735119338
+  - doi: 10.5089/9781475598759.002
+    title: Republic of Kazakhstan
+    authors:
+    - International Monetary Fund. Middle East and Central Asia Dept.
+    year: 2017
+    excerpt: This Selected Issues Paper evaluates Kazakhstan’s oil rules, current
+      fiscal stance, and long-term sustainability. The sharp and sustained drop in
+      oil prices since 2014 has reduced the value of Kazakhstan’s oil wealth. Kazakhstan’s
+      non-oil deficit path has been higher than suggested by long-term benc
+    relevance: supporting
+    edge_id: fx_to_real_expenditure
+    paper_id: ''
+    citation_count: 1
+    search_query: KZT/USD exchange rate Real consumption expenditure causal effect
+    source: openalex
+    pdf_url: https://www.elibrary.imf.org/doc/IMF002/24266-9781475598759/24266-9781475598759/Other_formats/Source_PDF/24266-9781475598810.pdf
+  challenging:
+  - doi: 10.21511/imfi.17(2).2020.01
+    title: 'Impact of inflation on economic growth: evidence from Nigeria'
+    authors:
+    - Anthony Olugbenga Adaramola
+    - Oluwabunmi Dada
+    year: 2020
+    excerpt: In an attempt to examine the influence of inflation on the growth prospects
+      of the Nigerian economy, the study employs the autoregressive distributed lag
+      on the selected variables, i.e. real gross domestic product (GDP), inflation
+      rate, interest rate, exchange rate, degree of economy`s openness, mon
+    relevance: challenging
+    edge_id: fx_to_real_expenditure
+    paper_id: 58f8b2604b1c529d259bc3671c36d042cbd61f41
+    citation_count: 98
+    search_query: KZT/USD exchange rate Real consumption expenditure causal effect
+    source: semantic_scholar
+    pdf_url: ''
+  - doi: 10.1186/s40854-023-00481-7
+    title: 'Triggering economic growth to ensure financial stability: case study of
+      Northern Cyprus'
+    authors:
+    - Ergin Akalpler
+    year: 2023
+    excerpt: This study questions the importance of public debt in stable growth between
+      1980 and 2018, specifically, the Ricardian equivalence hypothesis and Keynesian
+      view are questioned. This study used data obtained from the Northern Cyprus
+      State Planning Office. A restricted vector autoregressive model is u
+    relevance: challenging
+    edge_id: fx_to_real_expenditure
+    paper_id: 3054ab7e48ec2ead09c93e737123064b653982d3
+    citation_count: 7
+    search_query: KZT/USD exchange rate Real consumption expenditure causal effect
+    source: semantic_scholar
+    pdf_url: ''
   methodological: []
-  search_status: PENDING
-  search_timestamp: null
-  search_query: ''
-  total_results: 0
+  search_status: SEARCHED
+  search_timestamp: '2026-02-18T20:11:19.432485'
+  search_query: KZT/USD exchange rate Real consumption expenditure causal effect
+  total_results: 5
 companion_edge_id: null
 variant_of: null
 is_precisely_null: false

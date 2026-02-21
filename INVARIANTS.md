@@ -1115,6 +1115,37 @@ block propagation in `STRUCTURAL` and `REDUCED_FORM` modes; they emit warnings i
 - Unknown or unparseable units fall back to `"unknown"` and block propagation in
   `STRUCTURAL` and `REDUCED_FORM` modes (conservative default).
 
+### 33.4 Approximate Unit Compatibility
+
+The `UnitSpec.compatible_with()` method allows approved compatible pairs beyond exact
+equality. Currently the only approved pair is:
+
+- **log_point ↔ pct**: For small changes, Δlog(X) ≈ ΔX/X. This is standard in
+  macroeconomic chain propagation where some edges use log-point coefficients
+  (semi-elasticities) and others use percentage-change coefficients. The approximation
+  is valid for the small effect sizes typical in causal DAG propagation.
+
+New compatible pairs require explicit justification in this section. `pp` (percentage
+points, additive) is NOT compatible with `pct` (percent, multiplicative).
+
+### 33.6 Scale Warnings
+
+Guardrail 6 emits **warnings** (never blockers) for non-unity treatment scales:
+- **Non-unity scale note**: When `treatment_unit.scale != 1.0`, a `scale_note` warning
+  surfaces the scale factor (e.g., "coefficient is per 0.1 change, not per 1").
+- **Scale mismatch**: When consecutive edges have differing non-default scales, a
+  `scale_mismatch` warning flags potential rescaling needs in chain multiplication.
+
+`validate_chain_units()` also emits a `non_unity_treatment_scale` WARNING for any
+edge card whose parsed treatment unit has `scale != 1.0`.
+
+### 33.7 Companion Card Audit
+
+`load_dag` and `dag_doctor` report `cards_not_on_dag` — edge cards present in the
+artifact store that do not correspond to any registered DAG edge. These are typically
+companion/scenario cards (e.g., `shock_to_cor_kspi`) and should not be confused with
+DAG-edge cards when counting coverage.
+
 ---
 
 ## 34. Cross-Cutting Principles
@@ -1256,6 +1287,78 @@ The Sentinel's orphan/sink checks flag validation *errors* but never expand the
 DAG — doing so would violate §20.3. The Critic's gap detection flags the same
 patterns as *expansion opportunities* and proposes `add_missing_node` /
 `add_missing_edge` revisions at a higher governance tier.
+
+### 35.8 Causal Logic Probes
+
+Chain-level probes detect issues that per-edge diagnostics miss. Six probes:
+
+| Probe | What it checks | Severity |
+|-------|---------------|----------|
+| `sign_coherence` | Parallel paths to same node with conflicting expected_sign | warning |
+| `scale_consistency` | Unit-kind mismatches between consecutive edges | warning |
+| `magnitude_plausibility` | \|coefficient\| > 10 or < 0.001 with p < 0.05 | warning/info |
+| `sign_vs_estimate` | Estimated coefficient sign contradicts declared expected_sign | warning |
+| `derived_frequency_mismatch` | Derived node formula mixes different-frequency dependencies | error |
+| `treatment_outcome_scale_gap` | Treatment and outcome unit kinds imply ~100x scale gap | warning |
+
+Invariants:
+
+1. **Warning-only**: Probes produce informational findings, never block propagation
+   or modify the quality score. They are context for the LLM critic, not gates.
+2. **Domain-agnostic**: All four probes are graph-theoretic or numerical checks.
+   No domain-specific thresholds or variable names.
+3. **Backward-compatible**: `CriticFeedback.causal_logic_probes` defaults to `[]`.
+   Existing code that constructs `CriticFeedback` without the field is unaffected.
+4. **No new revision types**: Probe findings are addressed using existing revision
+   types (`add_structural_metadata`, `add_unit_specification`, etc.).
+5. **No quality score changes**: Probes do not add a scoring component. They inform
+   the LLM's revision proposals but do not penalize the DAG score directly.
+
+### 35.9 Propagation-Aware Critic
+
+The critic constructs a `PropagationEngine` lazily (via `_get_propagation_engine()`)
+to compute path health from the current DAG, edge cards, TSGuard results, and issue
+ledger. This enables the critic to see which paths are open/blocked and why.
+
+Invariants:
+
+1. **`propagation_health` quality component**: Equals `open_paths / total_paths` in
+   REDUCED_FORM mode from all exogenous nodes to the target node. Weight 0.20 (highest
+   single component, reflecting that a DAG with blocked paths is not usable for queries).
+2. **Engine rebuilt per iteration**: `_propagation_engine` is set to `None` on
+   `reload_dag()` and after card operations. The engine is never cached across
+   DAG modifications.
+3. **Graceful degradation**: If the PropagationEngine cannot be constructed (e.g.,
+   parse error, missing files), propagation_health defaults to 0.0 and propagation
+   fields on `CriticFeedback` default to `None`/`[]`.
+4. **REDUCED_FORM mode only**: Propagation health uses REDUCED_FORM mode because it
+   is the default query mode and most actionable. DESCRIPTIVE allows everything (always
+   100%), and STRUCTURAL requires stronger claims than most edges have.
+
+### 35.10 Critic Card Operations
+
+The critic may propose two card-level revision types:
+
+| Revision | What it does | Requires re-estimation |
+|----------|-------------|:---:|
+| `create_edge_card` | Creates a PLACEHOLDER-design edge card YAML | Yes |
+| `update_claim_level` | Modifies `identification.claim_level` on existing card | No |
+
+Invariants:
+
+1. **Validator gates**: `create_edge_card` requires edge exists in DAG, edge_type is
+   `causal`, and card file does not already exist. `update_claim_level` requires edge
+   exists and card file exists. New claim must be in `CLAIM_HIERARCHY`.
+2. **Placeholder design**: Cards created by the critic use `design: PLACEHOLDER`,
+   `credibility_rating: B`, `credibility_score: 0.65`. They are functional for
+   propagation but marked for future re-estimation.
+3. **Required fields**: `create_edge_card` details must include `claim_level`,
+   `point_estimate`, `se`, `treatment_unit`, `outcome_unit`.
+4. **Derived fields**: `propagation_role`, `counterfactual_block`, and
+   `mode_propagation_allowed` are computed from claim_level via
+   `derive_propagation_role()` — never set directly by the LLM.
+5. **Engine invalidation**: Both card operations set `_propagation_engine = None`
+   to force rebuild on next access.
 
 ---
 

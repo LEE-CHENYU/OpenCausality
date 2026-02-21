@@ -322,8 +322,8 @@ edges:
         min_obs: 80
         min_pre_periods: 12
       plausibility:
-        expected_sign: "positive"
-        magnitude_range: [0.01, 1.0]
+        expected_sign: "negative"
+        magnitude_range: [-1.0, -0.01]
       stability:
         regime_split_date: "2020-03"
         max_coefficient_change: 0.5
@@ -333,7 +333,7 @@ edges:
     unit_specification:
       treatment_unit: "sd"
       outcome_unit: "log"
-    notes: "Supply disruption raises oil prices. Contemporaneous impact."
+    notes: "Baumeister convention: positive = supply increase → price falls. Negative coefficient expected."
 
   # 2. Oil price → CPI headline
   - id: "oil_to_cpi_headline"

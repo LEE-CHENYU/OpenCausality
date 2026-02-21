@@ -167,9 +167,35 @@ class NarrativeCriticLoop:
                 self._run_estimation(iteration)
                 critic.reload_dag()
 
+            # Deterministic auto-fixes (no LLM needed)
+            n_auto_fixed = critic.apply_auto_fixes()
+            if n_auto_fixed > 0:
+                console.print(f"  Auto-fixed {n_auto_fixed} issue(s)")
+
             # Collect feedback
             console.print("  [dim]Collecting feedback...[/dim]")
             feedback = critic.collect_feedback(iteration)
+            if feedback.causal_logic_probes:
+                n_warn = sum(1 for p in feedback.causal_logic_probes if p.get("severity") == "warning")
+                n_info = len(feedback.causal_logic_probes) - n_warn
+                console.print(f"  Causal logic probes: {n_warn} warning(s), {n_info} info")
+
+            # Propagation health
+            if feedback.propagation_health:
+                ph = feedback.propagation_health
+                console.print(
+                    f"  Propagation: {ph.open_paths}/{ph.total_paths} "
+                    f"paths open ({ph.open_ratio:.0%})"
+                )
+                blockers = []
+                if ph.edges_without_cards:
+                    blockers.append(f"{len(ph.edges_without_cards)} without cards")
+                if ph.edges_with_blocked_id:
+                    blockers.append(f"{len(ph.edges_with_blocked_id)} blocked ID")
+                if ph.edges_diagnostic_only:
+                    blockers.append(f"{len(ph.edges_diagnostic_only)} diagnostic-only")
+                if blockers:
+                    console.print(f"  Top blockers: {', '.join(blockers)}")
 
             # Get critique from LLM
             console.print(

@@ -28,7 +28,8 @@ nodes:
     - connector: world_bank
       dataset: trade
       series: import_share
-      notes: World Bank WDI NE.IMP.GNFS.ZS (imports % GDP), annual forward-filled to monthly
+      notes: World Bank WDI NE.IMP.GNFS.ZS (imports % GDP), annual forward-filled
+        to monthly
   role_constraints:
     never_control: false
     never_instrument: false
@@ -97,6 +98,13 @@ nodes:
   tags:
   - prices
   - inflation
+  identity:
+    formula: 0.42 * cpi_tradable + 0.58 * cpi_nontradable
+    depends_on:
+    - cpi_tradable
+    - cpi_nontradable
+    name: cpi_headline_auto_researched
+  derived: true
 - id: cpi_nontradable
   name: Non-tradable CPI
   description: CPI for non-tradable goods (services). Block A falsification.
@@ -586,13 +594,33 @@ nodes:
   - financial
   - shock
   - exogenous
+- id: brent_oil
+  name: Brent crude oil price
+  unit: log
+  description: Global Brent crude oil price in USD/barrel (log level). Primary exogenous
+    driver of Kazakhstan's exchange rate given oil's ~60% share of exports.
+  type: continuous
+  observed: true
+  frequency: monthly
+  tags:
+  - critic_generated
+- id: nbk_base_rate
+  name: NBK base rate
+  unit: pp
+  description: National Bank of Kazakhstan base interest rate in percentage points.
+    Primary domestic monetary policy instrument affecting bank funding costs.
+  type: continuous
+  observed: true
+  frequency: monthly
+  tags:
+  - critic_generated
 edges:
 - id: kzt_usd_to_cpi_tradable
   from: kzt_usd
   to: cpi_tradable
   timing:
-    lag: 1
-    lag_unit: month
+    lag: 2
+    lag_unit: months
     contemporaneous: false
     max_anticipation: 0
   estimand:
@@ -651,16 +679,19 @@ edges:
     estimate: 0.113
   unit_specification:
     treatment_unit: log
-    outcome_unit: log
+    outcome_unit: pct
   edge_status: IMMUTABLE
   edge_type: immutable
-  notes: 'Block A validated result: 11.3% FX pass-through to tradable CPI.'
+  notes: 'Block A validated result: 11.3% FX pass-through to tradable CPI. outcome_unit=pct
+    because CPI loaders return inflation_mom (monthly rates), not index levels.'
+  forbidden_controls:
+  - imported_inflation_instrument
 - id: kzt_usd_to_cpi_nontradable
   from: kzt_usd
   to: cpi_nontradable
   timing:
-    lag: 1
-    lag_unit: month
+    lag: 4
+    lag_unit: months
     contemporaneous: false
     max_anticipation: 0
   estimand:
@@ -692,7 +723,7 @@ edges:
       min_obs: 80
       min_pre_periods: 12
     plausibility:
-      expected_sign: any
+      expected_sign: positive
       magnitude_range:
       - -0.05
       - 0.1
@@ -718,48 +749,39 @@ edges:
     estimate: 0.0
   unit_specification:
     treatment_unit: log
-    outcome_unit: log
+    outcome_unit: pct
   edge_status: IMMUTABLE
   edge_type: immutable
-  notes: 'Block A falsification: Near-zero pass-through to non-tradable CPI.'
+  notes: 'Block A falsification: Near-zero pass-through to non-tradable CPI. outcome_unit=pct
+    because CPI loaders return inflation_mom (monthly rates), not index levels.'
+  forbidden_controls:
+  - cpi_tradable
 - id: cpi_headline_to_real_income
   from: cpi_headline
   to: real_income
+  edge_type: identity
+  edge_status: IDENTITY
   timing:
-    lag: 1
-    lag_unit: quarter
-    contemporaneous: false
+    lag: 0
+    lag_unit: month
+    contemporaneous: true
     max_anticipation: 0
-  estimand:
-    type: elasticity
-    horizon: 0
-    scale: level
-  allowed_designs:
-  - PANEL_FE_BACKDOOR
-  acceptance_criteria:
-    diagnostics:
-      pretrend_p_min: 0.1
-      first_stage_f_min: 10.0
-      placebo_p_min: 0.1
-      density_p_min: 0.1
-    data:
-      max_missing_rate: 0.05
-      min_obs: 50
-      min_pre_periods: 4
-    plausibility:
-      expected_sign: any
-    stability:
-      regime_split_date: null
-      max_coefficient_change: 0.5
-    null_acceptance:
-      enabled: true
-      equivalence_bound: 0.1
+  allowed_designs: []
+  interpretation:
+    is: 'Identity component: real_income = nominal_income - cpi_headline'
+    is_not:
+    - Causal relationship
+    allowed_uses:
+    - scenario_only
   unit_specification:
-    treatment_unit: log
+    treatment_unit: log_point
     outcome_unit: log
-  edge_type: causal
-  notes: 'NL-extracted: Imported inflation (price level increase) with sticky incomes->Real
-    disposable income (negative)'
+  notes: Identity dependency. real_income = nominal_income - cpi_headline (deflation
+    identity).
+  acceptance_criteria:
+    plausibility:
+      expected_sign: negative
+  forbidden_controls: []
 - id: transfer_income_to_nominal_income_buffering
   from: transfer_income
   to: nominal_income
@@ -773,7 +795,9 @@ edges:
     horizon: 0
     scale: level
   allowed_designs:
-  - PANEL_FE_BACKDOOR
+  - LOCAL_PROJECTIONS
+  design_priority:
+  - LOCAL_PROJECTIONS
   acceptance_criteria:
     diagnostics:
       pretrend_p_min: 0.1
@@ -785,7 +809,7 @@ edges:
       min_obs: 50
       min_pre_periods: 4
     plausibility:
-      expected_sign: any
+      expected_sign: positive
     stability:
       regime_split_date: null
       max_coefficient_change: 0.5
@@ -797,7 +821,17 @@ edges:
     outcome_unit: log
   edge_type: causal
   notes: 'NL-extracted: Transfers and regulated prices (buffers) during exchange-rate/price
-    shock->Headline nominal income stability (positive)'
+    shock->Headline nominal income stability (positive). Design changed from PANEL_FE_BACKDOOR
+    to LOCAL_PROJECTIONS (time-series edge, not panel).'
+  identification_strategy:
+    type: INSTITUTIONAL_IV
+    argument: Government transfer payments are determined by fiscal policy rules and
+      budget allocations, which are set with legislative lags and are plausibly exogenous
+      to contemporaneous household income shocks.
+    key_assumption: Transfer income is not contemporaneously responsive to household-level
+      income shocks within the quarter.
+  forbidden_controls:
+  - real_income
 - id: real_income_to_cor_kspi
   from: real_income
   to: cor_kspi
@@ -823,7 +857,7 @@ edges:
       min_obs: 50
       min_pre_periods: 4
     plausibility:
-      expected_sign: any
+      expected_sign: positive
     stability:
       regime_split_date: null
       max_coefficient_change: 0.5
@@ -839,11 +873,20 @@ edges:
     stress (delinquencies and provisions) (positive); Deterioration in macro conditions
     / household squeeze (stress)->Increase in ''macro provisioning'' ahead of realized
     defaults (positive)'
+  identification_strategy:
+    type: IV_2SLS
+    argument: Use exchange-rate-driven imported inflation as an instrument for real
+      income. KZT/USD movements driven by global oil prices are exogenous to domestic
+      bank credit quality conditional on direct oil exposure controls.
+    key_assumption: Exchange rate shocks affect bank cost of risk only through the
+      real income channel, not directly (exclusion restriction).
+  forbidden_controls:
+  - ppop_kspi
 - id: vix_shock_to_deposit_cost_kspi
   from: vix_shock
   to: deposit_cost_kspi
   timing:
-    lag: 1
+    lag: 0
     lag_unit: quarter
     contemporaneous: false
     max_anticipation: 0
@@ -864,7 +907,7 @@ edges:
       min_obs: 50
       min_pre_periods: 4
     plausibility:
-      expected_sign: any
+      expected_sign: positive
     stability:
       regime_split_date: null
       max_coefficient_change: 0.5
@@ -876,11 +919,20 @@ edges:
     outcome_unit: pct
   edge_type: causal
   notes: 'NL-extracted: Tighter financial conditions->Kaspi funding costs (positive)'
+  identification_strategy:
+    type: EXTERNAL_INSTRUMENT
+    argument: VIX innovations are orthogonal to domestic conditions by construction
+      (residual from AR filtering). Global risk appetite shocks are exogenous to Kazakhstan's
+      banking sector given its small-open-economy status.
+    key_assumption: VIX innovations capture exogenous global risk appetite shocks
+      that affect Kazakh deposit costs only through the global financial cycle channel.
+  forbidden_controls:
+  - kzt_usd
 - id: vix_shock_to_ppop_kspi
   from: vix_shock
   to: ppop_kspi
   timing:
-    lag: 1
+    lag: 0
     lag_unit: quarter
     contemporaneous: false
     max_anticipation: 0
@@ -901,7 +953,7 @@ edges:
       min_obs: 50
       min_pre_periods: 4
     plausibility:
-      expected_sign: any
+      expected_sign: negative
     stability:
       regime_split_date: null
       max_coefficient_change: 0.5
@@ -914,11 +966,59 @@ edges:
   edge_type: causal
   notes: 'NL-extracted: Tighter financial conditions->Kaspi interest margins (profit
     margins) (negative)'
+  identification_strategy:
+    type: EXTERNAL_INSTRUMENT
+    argument: VIX innovations are exogenous to Kazakhstan banking conditions. The
+      direct channel captures mark-to-market and trading book effects of global risk
+      shocks on bank operating profit, beyond the deposit cost channel.
+    key_assumption: VIX innovations affect KSPI PPOP through global financial market
+      channels, not through domestic macroeconomic conditions that are separately
+      controlled for.
+  forbidden_controls:
+  - deposit_cost_kspi
+- id: deposit_cost_kspi_to_ppop_kspi
+  from: deposit_cost_kspi
+  to: ppop_kspi
+  edge_type: causal
+  timing:
+    lag: 0
+    lag_unit: quarter
+    contemporaneous: true
+    max_anticipation: 0
+  estimand:
+    type: elasticity
+    horizon: 0
+    scale: level
+  allowed_designs:
+  - LOCAL_PROJECTIONS
+  design_priority:
+  - LOCAL_PROJECTIONS
+  acceptance_criteria:
+    plausibility:
+      expected_sign: negative
+    stability:
+      regime_split_date: null
+      max_coefficient_change: 0.5
+  unit_specification:
+    treatment_unit: pct
+    outcome_unit: log
+  notes: Higher deposit costs squeeze net interest margin, reducing PPOP
+  identification_strategy:
+    type: IV_2SLS
+    argument: Use VIX innovations as an instrument for deposit cost changes. Global
+      risk appetite shocks affect Kazakh deposit pricing through wholesale funding
+      markets but do not directly affect PPOP operating components (fee income, operating
+      expenses) except through funding costs.
+    key_assumption: VIX shocks affect PPOP only through the deposit cost / net interest
+      margin channel, not through direct effects on non-interest income (exclusion
+      restriction may be violated if trading book is large).
+  forbidden_controls:
+  - vix_shock
 - id: ppop_kspi_to_total_capital_kspi
   from: ppop_kspi
   to: total_capital_kspi
   timing:
-    lag: 1
+    lag: 0
     lag_unit: quarter
     contemporaneous: false
     max_anticipation: 0
@@ -939,7 +1039,7 @@ edges:
       min_obs: 50
       min_pre_periods: 4
     plausibility:
-      expected_sign: any
+      expected_sign: positive
     stability:
       regime_split_date: null
       max_coefficient_change: 0.5
@@ -952,12 +1052,13 @@ edges:
   edge_type: mechanical
   notes: 'NL-extracted: Profits and provisions dynamics->Kaspi capital headroom (capital
     numerator) (ambiguous)'
+  forbidden_controls: []
 - id: rwa_kspi_to_k2_ratio_kspi
   from: rwa_kspi
   to: k2_ratio_kspi
   timing:
     lag: 0
-    lag_unit: quarter
+    lag_unit: month
     contemporaneous: true
     max_anticipation: 0
   estimand:
@@ -977,7 +1078,7 @@ edges:
       min_obs: 50
       min_pre_periods: 4
     plausibility:
-      expected_sign: any
+      expected_sign: negative
     stability:
       regime_split_date: null
       max_coefficient_change: 0.5
@@ -996,6 +1097,7 @@ edges:
   edge_status: IDENTITY
   edge_type: identity
   notes: K2 = Total Capital / RWA. Mechanical identity.
+  forbidden_controls: []
 - id: real_expenditure_to_ppop_kspi
   from: real_expenditure
   to: ppop_kspi
@@ -1021,7 +1123,7 @@ edges:
       min_obs: 50
       min_pre_periods: 4
     plausibility:
-      expected_sign: any
+      expected_sign: negative
     stability:
       regime_split_date: null
       max_coefficient_change: 0.5
@@ -1034,6 +1136,15 @@ edges:
   edge_type: causal
   notes: 'NL-extracted: Consumer spending holding up during stress->Non-bank revenues
     and dividends (holding company support capacity) (positive)'
+  identification_strategy:
+    type: IV_2SLS
+    argument: Use oil-price-driven exchange rate changes as an instrument for real
+      expenditure via the real income channel. Global oil price shocks are exogenous
+      to domestic consumption decisions conditional on direct energy price effects.
+    key_assumption: Oil-driven exchange rate shocks affect PPOP only through the real
+      expenditure channel, not through direct commodity-sector lending exposure.
+  forbidden_controls:
+  - real_income
 - id: kzt_usd_to_imported_inflation_instrument
   from: kzt_usd
   to: imported_inflation_instrument
@@ -1041,7 +1152,7 @@ edges:
   edge_status: IDENTITY
   timing:
     lag: 0
-    lag_unit: quarter
+    lag_unit: month
     contemporaneous: true
     max_anticipation: 0
   allowed_designs: []
@@ -1055,6 +1166,10 @@ edges:
     treatment_unit: log
     outcome_unit: pct
   notes: Auto-created identity edge from imported_inflation_iv
+  acceptance_criteria:
+    plausibility:
+      expected_sign: positive
+  forbidden_controls: []
 - id: e_import_share_to_imported_inflation_instrument
   from: E_import_share
   to: imported_inflation_instrument
@@ -1089,6 +1204,10 @@ edges:
   provenance:
     source: manual
     added_at: '2026-02-09'
+  acceptance_criteria:
+    plausibility:
+      expected_sign: positive
+  forbidden_controls: []
 - id: total_capital_kspi_to_k2_ratio_kspi
   from: total_capital_kspi
   to: k2_ratio_kspi
@@ -1098,7 +1217,7 @@ edges:
     outcome_unit: pct
   timing:
     lag: 0
-    lag_unit: quarter
+    lag_unit: month
     contemporaneous: true
     max_anticipation: 0
   estimand:
@@ -1123,6 +1242,10 @@ edges:
   provenance:
     source: manual
     added_at: '2026-02-02'
+  acceptance_criteria:
+    plausibility:
+      expected_sign: positive
+  forbidden_controls: []
 - id: nominal_expenditure_to_real_expenditure
   from: nominal_expenditure
   to: real_expenditure
@@ -1132,7 +1255,7 @@ edges:
     outcome_unit: log
   timing:
     lag: 0
-    lag_unit: quarter
+    lag_unit: month
     contemporaneous: true
     max_anticipation: 0
   estimand:
@@ -1158,6 +1281,10 @@ edges:
   provenance:
     source: manual
     added_at: '2026-02-09'
+  acceptance_criteria:
+    plausibility:
+      expected_sign: positive
+  forbidden_controls: []
 - id: cpi_headline_to_real_expenditure
   from: cpi_headline
   to: real_expenditure
@@ -1165,7 +1292,7 @@ edges:
   edge_status: IDENTITY
   timing:
     lag: 0
-    lag_unit: quarter
+    lag_unit: months
     contemporaneous: true
     max_anticipation: 0
   allowed_designs: []
@@ -1176,9 +1303,14 @@ edges:
     allowed_uses:
     - scenario_only
   unit_specification:
-    treatment_unit: log
+    treatment_unit: log_point
     outcome_unit: log
   notes: Auto-created identity edge from real_expenditure_identity
+  acceptance_criteria:
+    plausibility:
+      expected_sign: negative
+  forbidden_controls:
+  - nominal_expenditure
 - id: nominal_income_to_real_income
   from: nominal_income
   to: real_income
@@ -1186,7 +1318,7 @@ edges:
   edge_status: IDENTITY
   timing:
     lag: 0
-    lag_unit: quarter
+    lag_unit: month
     contemporaneous: true
     max_anticipation: 0
   allowed_designs: []
@@ -1200,6 +1332,10 @@ edges:
     treatment_unit: log
     outcome_unit: log
   notes: Auto-created identity edge from real_income_identity
+  acceptance_criteria:
+    plausibility:
+      expected_sign: positive
+  forbidden_controls: []
 - id: cor_kspi_to_total_capital_kspi
   from: cor_kspi
   to: total_capital_kspi
@@ -1279,10 +1415,14 @@ edges:
     allowed_uses:
     - scenario_only
   unit_specification:
-    treatment_unit: log
-    outcome_unit: log
+    treatment_unit: pct
+    outcome_unit: log_point
   notes: 'Auto-bridged: cpi_nontradable was unreachable from target. Connected to
     cpi_headline by tag similarity (shared: [''inflation'', ''prices'']).'
+  acceptance_criteria:
+    plausibility:
+      expected_sign: positive
+  forbidden_controls: []
 - id: cpi_tradable_to_cpi_headline
   from: cpi_tradable
   to: cpi_headline
@@ -1301,10 +1441,14 @@ edges:
     allowed_uses:
     - scenario_only
   unit_specification:
-    treatment_unit: log
-    outcome_unit: log
+    treatment_unit: pct
+    outcome_unit: log_point
   notes: 'Auto-bridged: cpi_tradable was unreachable from target. Connected to cpi_headline
     by tag similarity (shared: [''inflation'', ''prices'']).'
+  acceptance_criteria:
+    plausibility:
+      expected_sign: positive
+  forbidden_controls: []
 - id: real_income_to_real_expenditure
   from: real_income
   to: real_expenditure
@@ -1316,9 +1460,161 @@ edges:
     contemporaneous: false
     unit: quarter
   unit_specification:
-    treatment_unit: 1 log
-    outcome_unit: 1 log
+    treatment_unit: log
+    outcome_unit: log
   notes: When real income falls, households cut consumption expenditure
+  identification_strategy:
+    type: IV_2SLS
+    argument: Use exchange-rate-driven imported inflation as an instrument for real
+      income changes. The leads test failure may reflect forward-looking consumption
+      behavior (permanent income hypothesis) rather than reverse causality. Re-estimation
+      with the imported inflation instrument can address both endogeneity and timing
+      concerns.
+    key_assumption: Exchange rate shocks provide exogenous variation in real income
+      that is not anticipated by consumers, addressing the leads test concern.
+  acceptance_criteria:
+    plausibility:
+      expected_sign: positive
+  forbidden_controls:
+  - nominal_income
+  - cpi_headline
+  - nominal_expenditure
+- id: imported_inflation_instrument_to_cpi_tradable
+  from: imported_inflation_instrument
+  to: cpi_tradable
+  edge_type: causal
+  notes: 'Critic-added: Imported inflation instrument (interaction of exchange rate
+    change and import share) captures exchange rate passthrough to tradable goods
+    prices. Higher imported inflation raises tradable CPI through direct cost-push
+    channel.'
+  identification_strategy:
+    type: SHIFT_SHARE_IV
+    argument: The imported inflation instrument interacts exogenous exchange rate
+      variation (shift component from global oil prices) with pre-period regional
+      import intensity (share component). This Bartik-style construction isolates
+      the cost-push channel of imported inflation to tradable CPI.
+    key_assumption: Pre-period import shares are uncorrelated with time-varying local
+      demand shocks that independently affect tradable CPI.
+  unit_specification:
+    treatment_unit: pct
+    outcome_unit: pct
+  acceptance_criteria:
+    plausibility:
+      expected_sign: positive
+  timing:
+    lag: 1
+    lag_unit: month
+  forbidden_controls:
+  - cpi_headline
+  - kzt_usd
+- id: brent_oil_to_kzt_usd
+  from: brent_oil
+  to: kzt_usd
+  edge_type: causal
+  notes: 'Critic-added: Oil export revenues drive Kazakhstan''s current account and
+    capital flows. Higher oil prices increase USD inflows, appreciating KZT (reducing
+    kzt_usd). This is the primary channel of external shocks to the domestic economy.'
+  identification_strategy:
+    type: EXTERNAL_INSTRUMENT
+    argument: Brent oil price is determined in global commodity markets and exogenous
+      to Kazakhstan as a small price-taking economy. Oil revenue (~60% of exports)
+      drives the current account surplus and NBK foreign exchange interventions, mechanically
+      affecting KZT/USD.
+    key_assumption: Kazakhstan is a price-taker in global oil markets; Brent price
+      is not affected by Kazakhstan-specific shocks.
+  unit_specification:
+    treatment_unit: log
+    outcome_unit: log
+  acceptance_criteria:
+    plausibility:
+      expected_sign: negative
+  timing:
+    lag: 1
+    lag_unit: month
+  forbidden_controls:
+  - kzt_usd
+- id: nbk_base_rate_to_deposit_cost_kspi
+  from: nbk_base_rate
+  to: deposit_cost_kspi
+  edge_type: causal
+  notes: 'Critic-added: The NBK base rate sets the floor for interbank rates and directly
+    influences deposit pricing by commercial banks. Higher base rates increase deposit
+    costs as banks compete for funding.'
+  identification_strategy:
+    type: EXTERNAL_INSTRUMENT
+    argument: The NBK base rate is a monetary policy instrument set by the central
+      bank based on inflation targeting. It is exogenous to individual bank balance
+      sheet conditions. The pass-through to deposit costs operates through the interbank
+      market and competitive deposit pricing.
+    key_assumption: The NBK sets the base rate based on aggregate inflation and output
+      gap, not in response to Kaspi-specific deposit market conditions.
+  unit_specification:
+    treatment_unit: pp
+    outcome_unit: pct
+  acceptance_criteria:
+    plausibility:
+      expected_sign: positive
+  timing:
+    lag: 1
+    lag_unit: quarter
+  forbidden_controls:
+  - vix_shock
+- id: cor_kspi_to_rwa_kspi
+  from: cor_kspi
+  to: rwa_kspi
+  edge_type: causal
+  notes: 'Critic-added: Higher cost of risk reflects credit quality deterioration;
+    non-performing loans receive higher risk weights under Basel regulatory framework,
+    mechanically increasing risk-weighted assets.'
+  identification_strategy:
+    type: panel_regression
+    argument: Cost of risk (provisions-to-assets ratio) maps to risk-weighted assets
+      through Basel regulatory risk-weight schedules. Bank-level panel with time fixed
+      effects absorbs macro shocks; cross-sectional variation in portfolio composition
+      provides identification.
+    key_assumption: Basel risk-weight rules provide a stable mapping from provision
+      rates to risk weights; no omitted bank-specific shocks simultaneously drive
+      both provisioning policy and asset composition.
+  unit_specification:
+    treatment_unit: pct
+    outcome_unit: log
+  acceptance_criteria:
+    plausibility:
+      expected_sign: positive
+  timing:
+    lag: 1
+    lag_unit: quarter
+  forbidden_controls:
+  - total_capital_kspi
+  - k2_ratio_kspi
+- id: real_expenditure_to_rwa_kspi
+  from: real_expenditure
+  to: rwa_kspi
+  edge_type: causal
+  notes: 'Critic-added: Higher real consumption expenditure drives consumer credit
+    demand and loan origination at Kaspi.kz, expanding the loan portfolio and thus
+    risk-weighted assets.'
+  identification_strategy:
+    type: panel_regression
+    argument: Real household expenditure drives consumer credit origination which
+      expands risk-weighted assets. Regional variation in consumption growth (driven
+      by local labor market conditions) provides cross-sectional identification, controlling
+      for bank-level lending standards.
+    key_assumption: Regional consumption shocks affect RWA only through the credit
+      demand channel, not through simultaneous changes in bank risk appetite or portfolio
+      rebalancing.
+  unit_specification:
+    treatment_unit: log
+    outcome_unit: log
+  acceptance_criteria:
+    plausibility:
+      expected_sign: positive
+  timing:
+    lag: 1
+    lag_unit: quarter
+  forbidden_controls:
+  - ppop_kspi
+  - cor_kspi
 assumptions:
 - id: scope_consistency
   description: Transmission of global shocks to Kazakhstan-specific outcomes preserves

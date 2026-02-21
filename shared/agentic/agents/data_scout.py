@@ -96,6 +96,60 @@ class DataScoutReport:
 
 
 # ---------------------------------------------------------------------------
+# Data Availability Oracle
+# ---------------------------------------------------------------------------
+
+
+def check_data_available(node_id: str, *, include_derived: bool = True) -> bool:
+    """Check if data is available for a node without loading it.
+
+    This is the primary query API for other components (critic, validator)
+    to determine data feasibility before proposing structural changes.
+
+    Checks (in order):
+    1. Hardcoded NODE_LOADERS registry (cheap dict lookup)
+    2. Node aliases (e.g. brent_oil -> brent_price)
+    3. Derived/identity nodes (if include_derived=True)
+    """
+    from shared.engine.data_assembler import NODE_LOADERS, NODE_ALIASES, _register_aliases
+    _register_aliases()
+
+    # Direct loader exists
+    if node_id in NODE_LOADERS:
+        return True
+
+    # Alias resolves to an existing loader
+    canonical = NODE_ALIASES.get(node_id)
+    if canonical and canonical in NODE_LOADERS:
+        return True
+
+    return False
+
+
+def check_edge_data_feasible(
+    from_node: str,
+    to_node: str,
+    dag_nodes: dict[str, dict],
+) -> tuple[bool, str]:
+    """Check if both nodes of a proposed edge have data available.
+
+    Returns:
+        (feasible, reason) — feasible=True if both nodes are data-backed
+        or derived. reason explains why if not.
+    """
+    for node_id, role in [(from_node, "from_node"), (to_node, "to_node")]:
+        node_def = dag_nodes.get(node_id, {})
+        is_derived = bool(
+            node_def.get("derived")
+            or node_def.get("identity")
+            or node_def.get("type") == "exposure"  # static weights
+        )
+        if not is_derived and not check_data_available(node_id):
+            return False, f"{role} '{node_id}' has no data loader and is not derived"
+    return True, ""
+
+
+# ---------------------------------------------------------------------------
 # Connector → Client registry (static connectors are skipped)
 # ---------------------------------------------------------------------------
 
@@ -307,6 +361,18 @@ class DataScout:
         client = KazakhstanBNSClient()
         data_type = BNSDataType(dataset)
         df = client.fetch(data_type)
+
+        # Quality gate: reject trivially empty/garbage results
+        if df.empty or df.shape[1] < 2:
+            return DownloadResult(
+                node_id=node_id, connector="bns",
+                success=False,
+                error=(
+                    f"BNS returned trivial data: "
+                    f"{df.shape[0]} rows, {df.shape[1]} cols"
+                ),
+            )
+
         save_path = Path(f"data/raw/kazakhstan_bns/{dataset}.parquet")
         save_path.parent.mkdir(parents=True, exist_ok=True)
         df.to_parquet(save_path)

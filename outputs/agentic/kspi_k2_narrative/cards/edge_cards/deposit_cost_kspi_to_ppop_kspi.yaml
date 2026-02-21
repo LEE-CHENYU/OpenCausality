@@ -1,0 +1,87 @@
+edge_id: deposit_cost_kspi_to_ppop_kspi
+from_node: deposit_cost_kspi
+to_node: ppop_kspi
+spec_details:
+  design: LOCAL_PROJECTIONS
+  se_method: HAC_Newey_West
+  max_horizon: 4
+  n_lags: 1
+  controls: []
+  instruments: []
+  fixed_effects: []
+  horizon:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+estimates:
+  point: -0.142123470510243
+  se: 0.06587998343730521
+  ci_95:
+  - -0.2712458653494565
+  - -0.01300107567102951
+  pvalue: 0.030981608848577348
+  treatment_unit: pct
+  outcome_unit: log
+diagnostics:
+  sign_consistency:
+    name: sign_consistency
+    passed: true
+    value: null
+    threshold: null
+    pvalue: null
+    message: No expected sign specified
+  sample_size:
+    name: sample_size
+    passed: true
+    value: 15.0
+    threshold: 15.0
+    pvalue: null
+    message: N=15
+all_diagnostics_pass: true
+interpretation:
+  estimand: LP impulse response of ppop_kspi to deposit_cost_kspi
+  effective_obs: 15
+  hac_bandwidth: 2
+failure_flags:
+  weak_identification: false
+  potential_bad_control: false
+  mechanical_identity_risk: false
+  regime_break_detected: false
+  small_sample: false
+  high_missing_rate: false
+  entity_boundary_change: false
+  definition_inconsistency: false
+  data_insufficient: false
+counterfactual:
+  supports_shock_path: false
+  supports_policy_intervention: false
+credibility_rating: A
+credibility_score: 0.9
+identification:
+  claim_level: REDUCED_FORM
+  strategy_type: IV_2SLS
+  risks:
+    unmeasured_confounding: medium
+    simultaneity: medium
+    weak_variation: low
+    measurement_error: low
+    selection: none
+counterfactual_block:
+  shock_scenario_allowed: false
+  policy_intervention_allowed: false
+  reason_shock_blocked: Claim too weak
+  reason_policy_blocked: Requires IDENTIFIED_CAUSAL, has REDUCED_FORM
+  allowed: false
+  reason_blocked: Claim too weak
+propagation_role:
+  role: reduced_form
+  mode_propagation_allowed:
+    STRUCTURAL: false
+    REDUCED_FORM: true
+    DESCRIPTIVE: true
+data_provenance:
+  date_range: 2020-10-01 to 2024-07-01
+  n_obs: 15
+  frequency: quarterly

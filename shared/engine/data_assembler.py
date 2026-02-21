@@ -337,6 +337,23 @@ def _load_nominal_income() -> pd.Series:
     return df[col].dropna().rename("nominal_income")
 
 
+@_register("real_income")
+def _load_real_income() -> pd.Series:
+    """Load pre-computed real income growth from spending_series.
+
+    This bypasses the derived-node formula (nominal_income - cpi_headline)
+    which incorrectly subtracts monthly MoM inflation from quarterly growth.
+    The spending_series already has real_income_growth properly computed.
+    """
+    df = _load_parquet(PROCESSED_DIR / "fx_passthrough" / "spending_series.parquet")
+    if "date" in df.columns:
+        df = df.set_index("date")
+    if not isinstance(df.index, pd.DatetimeIndex):
+        df.index = pd.to_datetime(df.index)
+    col = "real_income_growth" if "real_income_growth" in df.columns else df.columns[0]
+    return df[col].dropna().rename("real_income")
+
+
 @_register("real_expenditure")
 def _load_real_expenditure() -> pd.Series:
     # Try spending_series first, then expenditure_series
@@ -410,6 +427,50 @@ def _load_k2_ratio() -> pd.Series:
     return df["k2_ratio"].dropna().rename("k2_ratio_kspi")
 
 
+@_register("ppop_kspi")
+def _load_ppop_kspi() -> pd.Series:
+    """Load pre-provision operating profit from base KSPI historical KPIs.
+
+    Uses the base file (kspi_historical_kpis.json) because the extended
+    file (kaspi_bank_extended_kpis.json) does not include the ppop column.
+    """
+    json_path = RAW_DIR / "kspi" / "kspi_historical_kpis.json"
+    if not json_path.exists():
+        raise FileNotFoundError(f"KSPI historical KPIs not found: {json_path}")
+    with open(json_path) as f:
+        data = json.load(f)
+    records = data["quarters"]
+    df = pd.DataFrame(records)
+    df["date"] = df["quarter"].apply(_quarterly_label_to_date)
+    df = df.set_index("date").sort_index()
+    if "ppop" not in df.columns:
+        raise KeyError("ppop column not found in kspi_historical_kpis.json")
+    return df["ppop"].dropna().rename("ppop_kspi")
+
+
+# ---------------------------------------------------------------------------
+# Node aliases: map critic-generated names to canonical loader names
+# ---------------------------------------------------------------------------
+
+NODE_ALIASES: dict[str, str] = {
+    "brent_oil": "brent_price",
+    "nbk_base_rate": "nbk_policy_rate",
+}
+
+_aliases_registered = False
+
+
+def _register_aliases() -> None:
+    """Register node aliases so critic-generated names resolve to existing loaders."""
+    global _aliases_registered
+    if _aliases_registered:
+        return
+    for alias, canonical in NODE_ALIASES.items():
+        if alias not in NODE_LOADERS and canonical in NODE_LOADERS:
+            NODE_LOADERS[alias] = NODE_LOADERS[canonical]
+    _aliases_registered = True
+
+
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
@@ -449,6 +510,7 @@ EDGE_NODE_MAP: dict[str, tuple[str, str]] = {
     "shock_to_cor_kspi": ("cpi_tradable", "cor_kspi"),
     "nbk_rate_to_deposit_cost": ("nbk_policy_rate", "deposit_cost_kspi"),
     "nbk_rate_to_cor": ("nbk_policy_rate", "cor_kspi"),
+    "real_income_to_cor_kspi": ("real_income", "cor_kspi"),
     # Group C-KSPI: KSPI-only, no extension possible
     "expenditure_to_payments_revenue": ("real_expenditure", "payments_revenue_kspi"),
     "portfolio_mix_to_rwa": ("portfolio_mix_kspi", "rwa_kspi"),
@@ -598,13 +660,23 @@ def _align_frequencies(treatment: pd.Series, outcome: pd.Series) -> tuple[pd.Ser
     return treatment.reindex(common).dropna(), outcome.reindex(common).dropna()
 
 
-def assemble_edge_data(edge_id: str) -> pd.DataFrame:
+def assemble_edge_data(
+    edge_id: str,
+    unit_spec: dict[str, str] | None = None,
+) -> pd.DataFrame:
     """
     Assemble treatment and outcome data for an edge.
 
     Returns a DataFrame indexed by date with columns:
     - 'treatment': The treatment variable (possibly transformed)
     - 'outcome': The outcome variable (possibly transformed)
+
+    Args:
+        edge_id: Edge identifier (must exist in EDGE_NODE_MAP).
+        unit_spec: Optional dict with 'treatment_unit' and 'outcome_unit' from
+            DAG YAML unit_specification.  When provided, log transforms are
+            derived from the spec (treatment_unit/outcome_unit == "log").
+            When *not* provided, falls back to the legacy hardcoded sets.
 
     Handles:
     - Frequency alignment (daily -> monthly, monthly -> quarterly)
@@ -620,25 +692,27 @@ def assemble_edge_data(edge_id: str) -> pd.DataFrame:
     treatment = load_node_series(treatment_node)
     outcome = load_node_series(outcome_node)
 
-    # Apply transforms: log-return on treatment
-    if edge_id in LOG_RETURN_TREATMENT:
+    # Determine which transforms to apply.
+    # Prefer DAG-driven unit_spec; fall back to hardcoded sets.
+    if unit_spec is not None:
+        treat_needs_log = unit_spec.get("treatment_unit", "") == "log"
+        outcome_needs_log = unit_spec.get("outcome_unit", "") == "log"
+    else:
+        treat_needs_log = (
+            edge_id in LOG_RETURN_TREATMENT or edge_id in LOG_TRANSFORM_TREATMENT
+        )
+        outcome_needs_log = (
+            edge_id in LOG_RETURN_OUTCOME or edge_id in LOG_TRANSFORM_OUTCOME
+        )
+
+    if treat_needs_log:
         log_level = np.log(treatment.clip(lower=1e-6))
         treatment = log_level.diff().dropna()
         treatment.name = f"dlog_{treatment_node}"
 
-    if edge_id in LOG_RETURN_OUTCOME:
+    if outcome_needs_log:
         log_level = np.log(outcome.clip(lower=1e-6))
         outcome = log_level.diff().dropna()
-        outcome.name = f"dlog_{outcome_node}"
-
-    if edge_id in LOG_TRANSFORM_TREATMENT:
-        treatment = np.log(treatment.clip(lower=1e-6))
-        treatment = treatment.diff().dropna()
-        treatment.name = f"dlog_{treatment_node}"
-
-    if edge_id in LOG_TRANSFORM_OUTCOME:
-        outcome = np.log(outcome.clip(lower=1e-6))
-        outcome = outcome.diff().dropna()
         outcome.name = f"dlog_{outcome_node}"
 
     # Align frequencies
