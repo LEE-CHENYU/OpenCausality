@@ -64,6 +64,162 @@ The NL pipeline also discovered **9 edges absent from the expert-built DAG**, in
 
 ---
 
+## Worked Example: Venezuelan Oil Supply Unlock
+
+The full pipeline — from a paragraph of analysis to a governed causal DAG to quantitative scenario answers — in three steps.
+
+### Step 1: Natural Language → DAG
+
+You write a paragraph describing a causal story. OpenCausality extracts nodes, edges, identification strategies, and unit specifications.
+
+**Input** (plain text):
+
+> When the United States lifts sanctions on Venezuela, the immediate effect is a
+> reopening of export channels — shut-in wells restart, adding roughly 100-150
+> thousand barrels per day. But the larger effect operates through investment:
+> Chevron, Repsol, ENI deploy capital into well workovers and upgrader repairs.
+> Venezuelan production feeds mechanically into global supply. OPEC may cut quotas
+> to offset the increase — a strategic reaction, not a structural equation. The
+> supply-demand balance determines price: with short-run demand elasticity of -0.05,
+> even modest supply increases produce outsized price effects.
+
+**Output** (extracted DAG YAML — abbreviated):
+
+```yaml
+nodes:
+  - id: sanctions_relief
+    name: US sanctions relief on Venezuela
+    unit: index
+    exogenous: true
+
+  - id: fdi_oil_sector
+    name: FDI into Venezuelan oil sector
+    unit: bn_usd
+
+  - id: venezuela_production
+    name: Venezuelan crude oil production
+    unit: mb_per_d
+
+  - id: global_oil_supply
+    name: Global oil supply
+    unit: mb_per_d
+    derived: true
+    identity:
+      formula: "venezuela_production + opec_quota_response + non_opec_supply_growth"
+
+  - id: supply_demand_balance
+    name: Oil supply-demand balance
+    unit: mb_per_d
+    derived: true
+    identity:
+      formula: "global_oil_supply - global_oil_demand"
+
+  - id: brent_price
+    name: Brent crude oil price
+    unit: usd_per_bbl
+
+edges:
+  # Direct channel (short-run, 1-3 months)
+  - id: sanctions_relief_to_venezuela_production
+    from: sanctions_relief
+    to: venezuela_production
+    edge_type: causal                        # structurally identified
+    unit_specification:
+      treatment_unit: index
+      outcome_unit: mb_per_d
+
+  # Investment channel (medium-run, 12-24 months)
+  - id: fdi_oil_sector_to_venezuela_production
+    from: fdi_oil_sector
+    to: venezuela_production
+    edge_type: causal                        # reduced-form — weaker ID
+    unit_specification:
+      treatment_unit: bn_usd
+      outcome_unit: mb_per_d
+
+  # OPEC strategic response — NOT on causal path
+  - id: venezuela_production_to_opec_quota_response
+    from: venezuela_production
+    to: opec_quota_response
+    edge_type: reaction_function             # blocked in all propagation modes
+
+  # Accounting identities (coefficient = 1.0 by construction)
+  - id: venezuela_production_to_global_oil_supply
+    from: venezuela_production
+    to: global_oil_supply
+    edge_type: identity
+
+  # Price formation
+  - id: supply_demand_balance_to_brent_price
+    from: supply_demand_balance
+    to: brent_price
+    edge_type: causal
+    unit_specification:
+      treatment_unit: mb_per_d
+      outcome_unit: usd_per_bbl
+```
+
+The extractor identifies 11 nodes, 13 edges, 6 channels, and correctly types the OPEC response as a `reaction_function` (excluded from counterfactual propagation) rather than a structural equation.
+
+### Step 2: The DAG Structure
+
+The resulting model has 6 distinct channels with different identification strengths:
+
+```
+sanctions_relief (exogenous policy shock)
+  │
+  ├──→ venezuela_production ──→ global_oil_supply ──→ balance ──→ brent_price
+  │    (direct, +0.15 mb/d)     (identity, 1:1)       (identity)   (-$10/bbl per mb/d)
+  │
+  ├──→ fdi_oil_sector ──→ venezuela_production  (investment channel, 12-24mo lag)
+  │
+  └──→ [BLOCKED] opec_quota_response            (reaction function, not propagated)
+
+brent_price ──→ fdi_oil_sector                  (feedback loop, dampening)
+```
+
+Each edge carries:
+- **Claim level**: `IDENTIFIED_CAUSAL`, `REDUCED_FORM`, or `DESCRIPTIVE` — set by research design, not by p-values
+- **Unit specification**: ensures dimensional consistency across the chain (mb/d → mb/d → $/bbl)
+- **Edge type**: `causal`, `identity`, `reaction_function` — determines which propagation modes allow the edge
+- **Validated evidence**: literature estimates with sources (e.g., Caldara, Cavallo & Iacoviello 2019)
+
+### Step 3: Query → Hedged Narrative
+
+Ask a question in Claude Code:
+
+```
+You:  "What happens to oil prices if sanctions are fully lifted?"
+```
+
+The MCP server runs `propagate_shock(sanctions_relief, 1.0, index)` and returns structured results. The economics guardrails plugin then enforces hedged language rules on Claude's interpretation:
+
+**Engine result** (abbreviated):
+
+```
+Structural path: sanctions → production → supply → balance → price
+  Coefficients:    +0.15        × 1.0       × 1.0     × -10.0
+  Total effect:    -$1.50/bbl   (SE: $0.67, 95% CI: [-$2.82, -$0.18])
+  Paths open: 1    Paths blocked: 3
+```
+
+**Claude's narrative** (governed by hedged language rules):
+
+> In **STRUCTURAL** mode, full sanctions relief **causes** an estimated
+> -$1.50/bbl effect on Brent crude (95% CI: [-$2.82, -$0.18]) via 1 open
+> path through the direct production restart channel.
+>
+> 3 additional paths are blocked: the FDI-investment channel (2 edges lack
+> STRUCTURAL eligibility), and the OPEC response (reaction function, excluded
+> from counterfactual propagation).
+>
+> Standard errors assume independence between edge estimates and may understate
+> true uncertainty. These are draft estimates requiring analyst verification.
+
+Notice: "causes" is allowed here because every edge on the open path is `IDENTIFIED_CAUSAL`. If the FDI path were included (REDUCED_FORM mode), the verb would downgrade to "is associated with." The OPEC reaction function is reported but never mechanically propagated — because OPEC is a strategic actor whose future behavior may diverge from historical patterns.
+
+---
+
 ## Claude Code Plugin
 
 Open the project in Claude Code and just ask:
@@ -193,7 +349,7 @@ Full CLI reference: [REFERENCE.md](REFERENCE.md#cli-reference)
 - **NL-to-DAG is lossy.** Single paragraphs can't encode full causal chains. Treat extracted DAGs as hypotheses.
 - **LLMs hallucinate edges.** All LLM-extracted edges must pass HITL review before use.
 - **Independence assumption.** Delta-method SEs assume edge independence. Shared confounders cause underestimation.
-- **Single case study.** The platform is domain-agnostic, but bundled data clients are Kazakhstan-specific.
+- **Limited case studies.** The platform is domain-agnostic, but bundled data clients are Kazakhstan-specific. The Venezuela model uses validated literature estimates rather than estimated data.
 
 ---
 
