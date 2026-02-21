@@ -1,0 +1,60 @@
+Venezuelan Oil Supply Unlock: Causal Transmission to Global Oil Prices
+
+When the United States lifts sanctions on Venezuela, the immediate effect is not a
+flood of oil but a reopening of export channels and a signal to international capital.
+In the short term (weeks to months), existing wells that were throttled or shut-in due
+to lack of buyers can restart, adding roughly 100-150 thousand barrels per day to
+Venezuelan output. But the larger effect operates through investment: sanctions relief
+removes the legal barrier that has kept Chevron, Repsol, ENI, and other international
+operators from deploying capital into well workovers, upgrader repairs (especially the
+Petropiar facility), and Orinoco Belt rehabilitation. This FDI channel is the mechanism
+through which production climbs from ~900 thousand bpd today to a potential 1.2 million
+bpd by end-2026 and 2 million bpd within two years.
+
+Venezuelan production feeds mechanically into global oil supply: every additional barrel
+produced adds to the ~108.6 million bpd world total. But this is not the only supply
+channel. OPEC+ spare capacity — currently a historically high 5.8 million bpd — means
+Saudi Arabia and other Gulf producers can strategically offset or amplify the Venezuelan
+increase. OPEC's reaction function is endogenous and strategic: they may cut quotas to
+defend prices, or they may allow the surplus to build to discipline higher-cost producers.
+Venezuela is exempt from OPEC+ quotas, which means its production increases are not
+constrained by group agreements but will nonetheless affect group dynamics.
+
+Non-OPEC supply growth — driven by the United States, Guyana, Brazil, and Canada —
+also adds to global supply independently of Venezuelan dynamics. The IEA already projects
+world output rising by 2.4 million bpd in 2026, creating a potential surplus of nearly
+4 million bpd even before accounting for a Venezuelan unlock.
+
+The supply-demand balance determines the direction and magnitude of price movements.
+Global oil demand, driven by economic growth (particularly in China, India, and
+Southeast Asia), seasonal patterns, and the pace of the energy transition, sets the
+floor. With short-run demand elasticity estimated at only -0.05, even modest supply
+increases can produce outsized price effects: a 400 thousand bpd Venezuelan increase
+(0.37% of global supply) implies roughly a 7% price decline — about $4/bbl off a $58
+Brent baseline — absent any OPEC offset.
+
+However, the relationship between supply and price is moderated by two critical factors.
+First, OPEC's strategic response: if Saudi Arabia cuts production by the same amount
+Venezuela adds, the net effect on global supply — and therefore price — is zero. Second,
+the type of crude matters. Venezuelan heavy sour crude is not fungible with US light
+tight oil. US Gulf Coast refineries were specifically engineered for Venezuelan heavy
+crude and operate more efficiently with it than with domestic light sweet barrels. This
+creates a heavy-sour crude discount channel: increased Venezuelan supply specifically
+lowers the premium on heavy sour grades, benefiting US refiners' margins even if
+headline Brent prices don't move much.
+
+The feedback loop from price to investment closes the system: lower oil prices reduce
+the return on Venezuelan upstream investment, slowing the production recovery. This
+creates a natural speed limit — Venezuelan production cannot grow indefinitely because
+the price impact of its own growth eventually chokes off the investment that drives
+further growth. At current forecasts ($58 Brent), the economics of Orinoco Belt heavy
+oil are marginal, meaning the investment case depends critically on whether prices
+stabilize above $50-55/bbl.
+
+The key identification challenge is distinguishing the effect of Venezuelan supply
+specifically from the broader non-OPEC supply wave. The sanctions-relief event provides
+a quasi-natural experiment — a sharp, politically determined supply shock that is
+plausibly exogenous to oil market fundamentals — but the OPEC reaction function and
+simultaneous non-OPEC growth confound the reduced-form relationship between Venezuelan
+production and Brent prices. A credible estimate of the price impact requires either
+instrumenting for the sanctions shock or structurally modeling the OPEC reaction.

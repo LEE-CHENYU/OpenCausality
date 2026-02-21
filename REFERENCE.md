@@ -1133,17 +1133,81 @@ state the query mode and weakest claim level, and will include SE independence
 disclaimers for multi-edge paths. All results are framed as drafts requiring
 analyst review.
 
-### Plugin Structure
+### Economics Guardrails Plugin (`econ-guardrails/`)
+
+The `econ-guardrails/` companion plugin adds a four-layer defense-in-depth
+system that catches economics reasoning errors at the *moment of interpretation*
+— when Claude receives MCP tool results and formulates prose.
+
+**Architecture:**
 
 ```
-.claude-plugin/
-  plugin.json              # Plugin manifest
-skills/
-  opencausality-query/
-    SKILL.md               # Domain knowledge + language rules
-    references/
-      modes.md             # Mode semantics
-      language-rules.md    # Hedged language specification
+MCP tool returns JSON
+  → PostToolUse prompt hook injects hedged language rules
+  → PostToolUse command hook validates result structure
+  → Claude interprets with constraints
+  → Stop prompt hook audits for 7 error types
+  → Stop command hook verifies arithmetic
+```
+
+**Layer 1 — Prevention (background skill).** The `econ-reasoning` skill
+auto-loads into every session with a 7-type error taxonomy (sign convention,
+mechanism confusion, missing horizon, causal direction, unit mixing, stock/flow,
+real/nominal) plus word substitution tables for hedged language by claim level.
+
+**Layer 2 — PostToolUse prompt hook.** Fires immediately after
+`propagate_shock`, `propagate_policy`, `find_paths`, or `target_contributors`
+returns. Injects 6 rules from INVARIANTS.md §23: forbidden causal verbs for
+non-identified paths, mode-appropriate language, SE independence disclaimer,
+blocked-path reporting, draft framing, and sign convention checking.
+
+**Layer 3 — PostToolUse command hook (`propagation_check.py`).** Validates
+the raw JSON from `propagate_shock`/`propagate_policy` for structural issues:
+
+- Reaction function leak: flags `diagnostic_only` edges on unblocked paths (engine bug)
+- All-blocked warning: alerts if every path is blocked so Claude doesn't silently ignore
+- Unit chain consistency: verifies consecutive edges have compatible treatment/outcome units
+- Magnitude plausibility: flags scaled effects exceeding 10x the input shock (unit mismatch)
+- Blocked reasons populated: ensures blocked paths carry explanations
+
+**Layer 4 — Stop hooks (existing).** Economics reasoning auditor (prompt-based)
+checks all 7 error types in the final response. Arithmetic checker
+(`arithmetic_check.py`) verifies explicit calculations.
+
+**Installation:**
+
+```bash
+# Symlink into Claude Code's local plugin directory
+ln -s $(pwd)/econ-guardrails ~/.claude/plugins/local/econ-guardrails
+# Restart Claude Code for hooks to activate
+```
+
+**Plugin structure:**
+
+```
+econ-guardrails/
+├── .claude-plugin/
+│   └── plugin.json              # Plugin manifest
+├── hooks/
+│   └── hooks.json               # PostToolUse + Stop hooks
+├── scripts/
+│   ├── propagation_check.py     # Propagation result validator
+│   └── arithmetic_check.py      # Arithmetic verifier
+├── skills/
+│   └── econ-reasoning/
+│       ├── SKILL.md             # Error taxonomy + hedged language rules
+│       └── references/
+│           ├── common-errors.md          # Worked examples
+│           ├── elasticities-reference.md # Standard ranges
+│           ├── unit-conversions.md       # Conversion tables
+│           └── hedged-language-rules.md  # PASS/FAIL examples by claim level
+└── agents/
+    └── econ-verifier.md         # On-demand deep review agent
+```
+
+### MCP Plugin Structure
+
+```
 .mcp.json                  # MCP server config (auto-discovered)
 shared/mcp/
   query_server.py          # MCP stdio server (13 tools)
@@ -1155,6 +1219,36 @@ fallback for environments without Claude Code.
 ---
 
 ## Recent Changes
+
+### v0.3.3 — Economics Guardrails Query Integration
+
+#### New Features
+
+- **PostToolUse hooks for MCP propagation tools** -- When Claude receives results
+  from `propagate_shock`, `propagate_policy`, `find_paths`, or `target_contributors`,
+  a prompt hook injects hedged language rules (INVARIANTS.md §23) at the moment of
+  interpretation. A command hook (`propagation_check.py`) validates the raw JSON for
+  reaction function leaks, all-blocked warnings, unit chain consistency, and magnitude
+  plausibility.
+
+- **Hedged language rules in econ-reasoning skill** -- Word substitution table by
+  claim level (`IDENTIFIED_CAUSAL` → "causes", `REDUCED_FORM` → "is associated with",
+  `DESCRIPTIVE` → "correlates with"), mode-appropriate framing templates, and a
+  self-contained reference file with PASS/FAIL examples for each of the 6 rules.
+
+- **Venezuela oil unlock case study** -- New DAG (`venezuela_oil_unlock.yaml`) with
+  11 nodes and 13 edges modeling sanctions relief → FDI → production → global supply
+  → Brent price. Demonstrates reaction function blocking (OPEC strategic response),
+  identity edge propagation, and the heavy-sour crude discount channel. Full edge
+  cards and example narrative included.
+
+#### Architecture
+
+The econ-guardrails plugin intercepts results *outside* the MCP server (no changes
+to `query_server.py` or `propagation.py`). Hooks fire at the Claude Code level,
+adding a prevention layer between "tool returns JSON" and "Claude presents prose."
+
+---
 
 ### v0.3.2 — Eval Framework, KnowledgeScout & Data Guardrails
 

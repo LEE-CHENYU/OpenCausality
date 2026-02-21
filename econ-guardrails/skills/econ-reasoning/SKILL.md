@@ -101,9 +101,48 @@ See `references/unit-conversions.md` for conversion tables.
 
 **Self-check**: Are any dollar values compared across years? If so, is the deflation method specified?
 
+## Hedged Language Rules for Causal Propagation Results
+
+When interpreting OpenCausality propagation results (`propagate_shock`, `propagate_policy`, `find_paths`, `target_contributors`), you must use language that matches the identification strength of the path. This is a **hard rule**, not a suggestion.
+
+### Word Substitution Table
+
+| Path claim level | Allowed verbs | Forbidden verbs |
+|---|---|---|
+| All edges `IDENTIFIED_CAUSAL` | "causes", "causal effect", "the structural estimate implies" | — |
+| Any edge `REDUCED_FORM` | "is associated with", "predicts", "the model predicts" | "causes", "drives", "leads to", "results in", "produces", "generates", "brings about" |
+| Any edge `DESCRIPTIVE` or `BLOCKED_ID` | "co-moves with", "correlates with" | All of the above + "is associated with", "predicts" |
+
+### Mode-Appropriate Framing
+
+| Query mode | Opening framing |
+|---|---|
+| STRUCTURAL | "In STRUCTURAL mode, the structural estimate implies..." |
+| REDUCED_FORM | "In REDUCED_FORM mode, the model predicts..." |
+| DESCRIPTIVE | "In DESCRIPTIVE mode, the correlation suggests..." |
+
+### Interpretation Template
+
+When presenting propagation results, follow this structure:
+
+> In [MODE] mode, a [magnitude] [unit] shock to [source] is [associated with / predicted to produce / structurally estimated to cause] an effect of [scaled_effect] [unit] on [target] (95% CI: [scaled_ci_lower, scaled_ci_upper]) via [N] open path(s). [K] path(s) are blocked due to [reasons]. Standard errors assume independence between edge estimates and may understate true uncertainty. These are draft estimates requiring analyst verification.
+
+### Mandatory Disclosures
+
+1. **Always state the query mode** — readers must know the identification strength
+2. **Report blocked paths** — never silently omit blocked edges; list reasons
+3. **SE independence disclaimer** — required for any path with 2+ edges
+4. **Time horizon** — specify short-run vs long-run for all elasticities
+5. **Draft framing** — all results are draft estimates, not final conclusions
+
+**Self-check**: Does your interpretation use only verbs from the "Allowed" column for the weakest claim level on any open path?
+
+See `references/hedged-language-rules.md` for detailed PASS/FAIL examples.
+
 ## Reference Data
 
 For detailed reference tables, see:
 - `references/common-errors.md` — Worked examples of each error type
 - `references/elasticities-reference.md` — Standard ranges with academic sources
 - `references/unit-conversions.md` — Conversion tables for energy, finance, and macro
+- `references/hedged-language-rules.md` — Hedged language rules with PASS/FAIL examples

@@ -586,6 +586,14 @@ All propagation tools delegate to the same \texttt{PropagationEngine} used by th
 
 The server is strictly read-only: it never writes edge cards, issues, or DAG files. The only mutable state is the in-memory DAG (replaced on \texttt{load\_dag}) and the active query mode (changed by \texttt{switch\_mode}). This ensures that AI-assisted exploration cannot alter the governed estimation artifacts.
 
+\subsection{Interpretation Guardrails}
+
+While the propagation engine enforces guardrails on the \emph{computation} (which paths are blocked, which counterfactuals are eligible), a separate risk arises at the \emph{interpretation} stage---when the AI assistant translates JSON results into natural-language explanations. Common errors include using causal language for non-identified paths, omitting blocked paths, or confusing sign conventions.
+
+\oc{} addresses this with a companion plugin (\texttt{econ-guardrails}) that intercepts MCP tool results via Claude Code's PostToolUse hook mechanism. When \texttt{propagate\_shock} or \texttt{propagate\_policy} returns, two hooks fire: (1)~a \emph{prompt hook} injects the hedged language rules from Section~23 of the project's invariants document---forbidden causal verbs, mode-appropriate framing, SE independence disclaimers, blocked-path reporting, and draft framing; (2)~a \emph{command hook} (\texttt{propagation\_check.py}) validates the raw JSON for structural issues: reaction-function edges on unblocked paths (an engine bug if present), all-blocked warnings, unit chain consistency, and magnitude plausibility.
+
+This creates a four-layer defense: background skill (prevention), PostToolUse hooks (interpretation guard), Stop hooks (output audit), and an on-demand verification agent (deep review). The hooks operate entirely outside the MCP server---no changes to \texttt{query\_server.py} or \texttt{PropagationEngine}---preserving the server's domain-agnostic design.
+
 %% ============================================================
 %% 11  GOVERNANCE
 %% ============================================================
@@ -829,8 +837,8 @@ Qualifying language is collapsed to binary decisions, effect magnitudes are not 
 \paragraph{Claims are not identification.}
 A DAG extracted from the literature represents \emph{claimed} causal relationships, not identified ones. \oc{}'s identifiability screen partially addresses this, but the initial DAG structure reflects community beliefs rather than proven mechanisms.
 
-\paragraph{Single-country evaluation.}
-Our primary case study is Kazakhstan bank stress testing. While the platform is domain-agnostic, the data clients and variable catalogs are currently specific to this use case.
+\paragraph{Limited case studies.}
+Our primary case study is Kazakhstan bank stress testing, with a second demonstration DAG modeling Venezuelan oil supply dynamics (11~nodes, 13~edges, modeling sanctions relief through FDI and production channels to Brent crude prices). While the platform is domain-agnostic, the data clients and variable catalogs are currently specific to these use cases.
 
 \paragraph{LLM hallucination risk.}
 The LLM can fabricate plausible-sounding causal edges not present in the source material. All LLM-extracted edges must be verified against the original text---a requirement that our governance framework enforces via HITL gates but cannot guarantee in fully automated mode.
@@ -844,7 +852,7 @@ The delta-method SE formula (Equation~\ref{eq:delta}) assumes independence acros
 \section{Conclusion}
 \label{sec:conclusion}
 
-\oc{} demonstrates that automation and transparency in causal inference are not mutually exclusive. By treating every modeling decision as an auditable event---logged in a hash-chained ledger, gated by identifiability screens and refutation tests, and protected by anti-p-hacking policies---the platform enables researchers to move faster while maintaining the evidentiary standards that credible causal claims demand. The always-on sentinel loop ensures that this rigor is continuous rather than episodic: the DAG is re-validated after every change, schema regressions are auto-healed, and interactive review panels are surfaced the moment estimation completes. With 19 estimation adapters spanning econometric and ML-based methods, data-driven causal discovery (PC, GES, FCI, NOTEARS), adaptive data discovery via LLM tool-use, a 4-agent agentic pipeline, LLM-assisted literature extraction, a principle-based DAG Critic with causal logic probes and estimation-aware auto-repair, a KnowledgeScout agent for LLM-backed formula research, a DAGHealthSnapshot eval framework for regression detection, a data-availability oracle, and a Model Context Protocol server for AI-assisted querying, \oc{} bridges expert-specified and data-driven structure learning within a unified governance framework. We release \oc{} as open-source software to support reproducible causal inference research.
+\oc{} demonstrates that automation and transparency in causal inference are not mutually exclusive. By treating every modeling decision as an auditable event---logged in a hash-chained ledger, gated by identifiability screens and refutation tests, and protected by anti-p-hacking policies---the platform enables researchers to move faster while maintaining the evidentiary standards that credible causal claims demand. The always-on sentinel loop ensures that this rigor is continuous rather than episodic: the DAG is re-validated after every change, schema regressions are auto-healed, and interactive review panels are surfaced the moment estimation completes. With 19 estimation adapters spanning econometric and ML-based methods, data-driven causal discovery (PC, GES, FCI, NOTEARS), adaptive data discovery via LLM tool-use, a 4-agent agentic pipeline, LLM-assisted literature extraction, a principle-based DAG Critic with causal logic probes and estimation-aware auto-repair, a KnowledgeScout agent for LLM-backed formula research, a DAGHealthSnapshot eval framework for regression detection, a data-availability oracle, a Model Context Protocol server for AI-assisted querying, and a companion economics guardrails plugin that enforces hedged language and validates interpretation at the moment AI assistants translate results into prose, \oc{} bridges expert-specified and data-driven structure learning within a unified governance framework. We release \oc{} as open-source software to support reproducible causal inference research.
 
 %% ============================================================
 %% REFERENCES

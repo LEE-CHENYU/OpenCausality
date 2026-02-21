@@ -1,0 +1,562 @@
+schema_version: 2
+metadata:
+  name: venezuela_oil_unlock
+  description: >
+    Causal transmission from Venezuelan oil supply unlock (sanctions relief)
+    to global oil supply and Brent crude prices. Models the FDI-investment
+    channel, OPEC strategic response, non-OPEC supply growth, and the
+    supply-demand price mechanism with heavy-sour crude differentiation.
+  target_node: brent_price
+  created: '2026-02-20'
+  owner: narrative_pipeline
+  tags:
+    - oil
+    - venezuela
+    - sanctions
+    - geopolitical
+
+# ============================================================
+# NODES
+# ============================================================
+nodes:
+  # --- Exogenous shocks ---
+  - id: sanctions_relief
+    name: US sanctions relief on Venezuela
+    description: >
+      Degree of US sanctions lifting on Venezuela's oil sector.
+      Ranges from partial (Chevron license) to full (OFAC general license).
+      Treated as exogenous policy shock — determined by US foreign policy,
+      not oil market fundamentals.
+    unit: index
+    frequency: monthly
+    type: policy
+    observed: true
+    latent: false
+    exogenous: true
+    tags:
+      - exogenous
+      - policy
+
+  - id: global_oil_demand
+    name: Global oil demand
+    description: >
+      Total world petroleum demand (~103-105 mb/d in 2026). Driven by
+      GDP growth (China, India, SE Asia), seasonal patterns, energy
+      transition pace. Exogenous to Venezuelan supply dynamics.
+    unit: mb_per_d
+    frequency: monthly
+    type: continuous
+    observed: true
+    latent: false
+    exogenous: true
+    tags:
+      - exogenous
+      - demand
+
+  - id: opec_spare_capacity
+    name: OPEC spare production capacity
+    description: >
+      Effective OPEC spare production capacity (~5.8 mb/d in 2025).
+      Concentrated in Saudi Arabia, UAE, Iraq. Sets the upper bound
+      on OPEC's ability to offset supply shocks. Slow-moving.
+    unit: mb_per_d
+    frequency: monthly
+    type: continuous
+    observed: true
+    latent: false
+    exogenous: true
+    tags:
+      - exogenous
+      - opec
+
+  - id: non_opec_supply_growth
+    name: Non-OPEC supply growth
+    description: >
+      Production growth from US, Guyana, Brazil, Canada. EIA forecasts
+      +1.6 mb/d in 2026. Driven by geology, capex cycles, technology —
+      largely independent of Venezuelan dynamics on a monthly basis.
+    unit: mb_per_d
+    frequency: monthly
+    type: continuous
+    observed: true
+    latent: false
+    exogenous: true
+    tags:
+      - exogenous
+      - supply
+
+  # --- Venezuelan production chain ---
+  - id: fdi_oil_sector
+    name: FDI into Venezuelan oil sector
+    description: >
+      Foreign direct investment + PDVSA partner capex into Venezuelan
+      upstream: well workovers, Petropiar upgrader repair, Orinoco Belt
+      rehabilitation. Key investors: Chevron, Repsol, ENI. Requires
+      sanctions relief + political stability + acceptable fiscal terms.
+    unit: bn_usd
+    frequency: quarterly
+    type: continuous
+    observed: true
+    latent: false
+    tags:
+      - investment
+      - venezuela
+
+  - id: venezuela_production
+    name: Venezuelan crude oil production
+    description: >
+      Total Venezuelan crude oil output. Current: ~900K bpd (2025).
+      Historical peak: 3.5M bpd (1998). Short-term potential: 1.0-1.2M bpd.
+      Medium-term (1-2yr): up to 2M bpd. Long-term (decade): 3-4M bpd.
+      Heavy sour crude (Merey 16 API).
+    unit: mb_per_d
+    frequency: monthly
+    type: continuous
+    observed: true
+    latent: false
+    tags:
+      - production
+      - venezuela
+
+  # --- Global oil market ---
+  - id: opec_quota_response
+    name: OPEC+ quota adjustment
+    description: >
+      OPEC+ production adjustment in response to market conditions.
+      Endogenous strategic variable. Venezuela is exempt from OPEC+
+      quotas but its output affects group dynamics. OPEC chose
+      "wait and see" stance in Jan 2026.
+    unit: mb_per_d
+    frequency: monthly
+    type: continuous
+    observed: true
+    latent: false
+    tags:
+      - opec
+      - reaction
+
+  - id: global_oil_supply
+    name: Global oil supply
+    description: >
+      Total world petroleum supply (~108.6 mb/d in 2026 per IEA).
+      Sum of Venezuelan production, OPEC adjustment, and non-OPEC growth
+      (relative to baseline).
+    unit: mb_per_d
+    frequency: monthly
+    type: continuous
+    observed: true
+    latent: false
+    derived: true
+    identity:
+      name: global_supply_composition
+      formula: "venezuela_production + opec_quota_response + non_opec_supply_growth"
+      depends_on:
+        - venezuela_production
+        - opec_quota_response
+        - non_opec_supply_growth
+    tags:
+      - supply
+      - aggregate
+
+  - id: supply_demand_balance
+    name: Oil supply-demand balance
+    description: >
+      Global oil surplus or deficit (mb/d). IEA projects ~2M bpd surplus
+      in 2026 before Venezuelan unlock. Positive = surplus = bearish.
+    unit: mb_per_d
+    frequency: monthly
+    type: continuous
+    observed: true
+    latent: false
+    derived: true
+    identity:
+      name: balance_identity
+      formula: "global_oil_supply - global_oil_demand"
+      depends_on:
+        - global_oil_supply
+        - global_oil_demand
+    tags:
+      - balance
+
+  - id: brent_price
+    name: Brent crude oil price
+    description: >
+      ICE Brent front-month futures ($/bbl). EIA forecast: $58/bbl
+      average in 2026, $53 in 2027. Short-run demand elasticity ~-0.05
+      implies outsized price sensitivity to supply changes.
+    unit: usd_per_bbl
+    frequency: monthly
+    type: continuous
+    observed: true
+    latent: false
+    tags:
+      - price
+      - target
+
+  - id: heavy_sour_discount
+    name: Heavy-sour crude discount
+    description: >
+      Price differential between heavy sour crude (Maya/Merey) and Brent.
+      Venezuelan crude is 16 API heavy sour — not fungible with US light
+      tight oil. US Gulf Coast refineries configured for this grade.
+    unit: usd_per_bbl
+    frequency: monthly
+    type: continuous
+    observed: true
+    latent: false
+    tags:
+      - price
+      - grade
+
+# ============================================================
+# EDGES
+# ============================================================
+edges:
+  # ---- Channel 1: Sanctions → Investment → Production ----
+
+  - id: sanctions_relief_to_fdi_oil_sector
+    from: sanctions_relief
+    to: fdi_oil_sector
+    edge_type: causal
+    timing:
+      lag: 3
+      lag_unit: months
+      contemporaneous: false
+      max_anticipation: 0
+    estimand:
+      type: elasticity
+      horizon: [0, 1, 3, 6, 12]
+      scale: level
+    allowed_designs:
+      - LOCAL_PROJECTIONS
+    design_priority:
+      - LOCAL_PROJECTIONS
+    acceptance_criteria:
+      plausibility:
+        expected_sign: positive
+        magnitude_range: [0.1, 10.0]
+    interpretation:
+      is: Effect of sanctions relief on FDI inflow to Venezuelan oil
+      is_not:
+        - Effect of other policy changes on investment
+      allowed_uses:
+        - policy_counterfactual
+    unit_specification:
+      treatment_unit: index
+      outcome_unit: bn_usd
+    notes: >
+      Sanctions relief removes OFAC legal barriers, enabling Chevron,
+      Repsol, ENI to deploy capital. Quasi-experimental: sharp,
+      politically determined shock plausibly exogenous to oil fundamentals.
+
+  - id: sanctions_relief_to_venezuela_production
+    from: sanctions_relief
+    to: venezuela_production
+    edge_type: causal
+    timing:
+      lag: 1
+      lag_unit: months
+      contemporaneous: true
+      max_anticipation: 0
+    estimand:
+      type: elasticity
+      horizon: [0, 1, 3]
+      scale: level
+    allowed_designs:
+      - LOCAL_PROJECTIONS
+    design_priority:
+      - LOCAL_PROJECTIONS
+    acceptance_criteria:
+      plausibility:
+        expected_sign: positive
+        magnitude_range: [0.05, 0.30]
+    interpretation:
+      is: Direct short-term production response to sanctions lifting
+      is_not:
+        - Long-term production capacity expansion
+    validated_evidence:
+      description: "Kpler (Jan 2026): +100-150K bpd within 3 months of full relief"
+      estimate: 0.15
+      immutable: false
+    unit_specification:
+      treatment_unit: index
+      outcome_unit: mb_per_d
+    notes: >
+      Direct channel: reopening export routes allows shut-in wells to restart.
+      Does not require new investment — uses existing but throttled capacity.
+
+  - id: fdi_oil_sector_to_venezuela_production
+    from: fdi_oil_sector
+    to: venezuela_production
+    edge_type: causal
+    timing:
+      lag: 12
+      lag_unit: months
+      contemporaneous: false
+      max_anticipation: 0
+    estimand:
+      type: elasticity
+      horizon: [6, 12, 24]
+      scale: level
+    allowed_designs:
+      - LOCAL_PROJECTIONS
+      - PANEL_FE_BACKDOOR
+    design_priority:
+      - LOCAL_PROJECTIONS
+    acceptance_criteria:
+      plausibility:
+        expected_sign: positive
+        magnitude_range: [0.01, 0.5]
+    interpretation:
+      is: Medium/long-term production response to upstream investment
+      is_not:
+        - Short-term well restarts (that's the direct sanctions channel)
+    unit_specification:
+      treatment_unit: bn_usd
+      outcome_unit: mb_per_d
+    notes: >
+      Investment → well workovers, upgrader repairs, Orinoco Belt rehab.
+      Wood Mackenzie: "a lot of wells just need a workover."
+      +500K bpd in 1-2yr; +2M bpd requires decade + $100B (CFR/Monaldi).
+
+  # ---- Channel 2: Production → Global Supply (identity) ----
+
+  - id: venezuela_production_to_global_oil_supply
+    from: venezuela_production
+    to: global_oil_supply
+    edge_type: identity
+    timing:
+      lag: 0
+      lag_unit: months
+      contemporaneous: true
+      max_anticipation: 0
+    acceptance_criteria:
+      plausibility:
+        expected_sign: positive
+    unit_specification:
+      treatment_unit: mb_per_d
+      outcome_unit: mb_per_d
+    notes: >
+      Mechanical: every additional barrel of Venezuelan crude adds 1:1
+      to global supply. Coefficient = 1.0 by accounting identity.
+
+  - id: non_opec_supply_growth_to_global_oil_supply
+    from: non_opec_supply_growth
+    to: global_oil_supply
+    edge_type: identity
+    timing:
+      lag: 0
+      lag_unit: months
+      contemporaneous: true
+      max_anticipation: 0
+    acceptance_criteria:
+      plausibility:
+        expected_sign: positive
+    unit_specification:
+      treatment_unit: mb_per_d
+      outcome_unit: mb_per_d
+    notes: >
+      Non-OPEC supply (US, Guyana, Brazil, Canada) adds 1:1 to global total.
+      EIA: +1.6 mb/d in 2026.
+
+  - id: opec_quota_response_to_global_oil_supply
+    from: opec_quota_response
+    to: global_oil_supply
+    edge_type: identity
+    timing:
+      lag: 0
+      lag_unit: months
+      contemporaneous: true
+      max_anticipation: 0
+    acceptance_criteria:
+      plausibility:
+        expected_sign: positive
+    unit_specification:
+      treatment_unit: mb_per_d
+      outcome_unit: mb_per_d
+    notes: >
+      OPEC production adjustments add (+) or subtract (-) from global supply.
+      Coefficient = 1.0 mechanically.
+
+  # ---- Channel 3: OPEC strategic response (reaction function) ----
+
+  - id: venezuela_production_to_opec_quota_response
+    from: venezuela_production
+    to: opec_quota_response
+    edge_type: reaction_function
+    timing:
+      lag: 1
+      lag_unit: months
+      contemporaneous: false
+      max_anticipation: 0
+    acceptance_criteria:
+      plausibility:
+        expected_sign: negative
+        magnitude_range: [0.0, 1.0]
+    validated_evidence:
+      description: "Historical OPEC offset ratio: ~0.3-0.7 (partial offset)"
+      estimate: -0.5
+      immutable: false
+    unit_specification:
+      treatment_unit: mb_per_d
+      outcome_unit: mb_per_d
+    notes: >
+      OPEC strategic reaction: Venezuela adds supply → OPEC may cut
+      to defend prices (offset ratio ~0.5) or allow surplus to build.
+      Venezuela exempt from quotas but triggers group recalculation.
+      Typed as reaction_function → excluded from shock propagation paths.
+
+  - id: opec_spare_capacity_to_opec_quota_response
+    from: opec_spare_capacity
+    to: opec_quota_response
+    edge_type: causal
+    timing:
+      lag: 0
+      lag_unit: months
+      contemporaneous: true
+      max_anticipation: 0
+    acceptance_criteria:
+      plausibility:
+        expected_sign: positive
+    unit_specification:
+      treatment_unit: mb_per_d
+      outcome_unit: mb_per_d
+    notes: >
+      Spare capacity determines feasibility of production adjustments.
+      With 5.8 mb/d spare, OPEC has ample room to offset Venezuela.
+
+  # ---- Channel 4: Supply-demand → Price ----
+
+  - id: global_oil_supply_to_supply_demand_balance
+    from: global_oil_supply
+    to: supply_demand_balance
+    edge_type: identity
+    timing:
+      lag: 0
+      lag_unit: months
+      contemporaneous: true
+      max_anticipation: 0
+    acceptance_criteria:
+      plausibility:
+        expected_sign: positive
+    unit_specification:
+      treatment_unit: mb_per_d
+      outcome_unit: mb_per_d
+    notes: "Balance = supply - demand. Coefficient = +1.0."
+
+  - id: global_oil_demand_to_supply_demand_balance
+    from: global_oil_demand
+    to: supply_demand_balance
+    edge_type: identity
+    timing:
+      lag: 0
+      lag_unit: months
+      contemporaneous: true
+      max_anticipation: 0
+    acceptance_criteria:
+      plausibility:
+        expected_sign: negative
+    unit_specification:
+      treatment_unit: mb_per_d
+      outcome_unit: mb_per_d
+    notes: "Balance = supply - demand. Coefficient = -1.0."
+
+  - id: supply_demand_balance_to_brent_price
+    from: supply_demand_balance
+    to: brent_price
+    edge_type: causal
+    timing:
+      lag: 0
+      lag_unit: months
+      contemporaneous: true
+      max_anticipation: 0
+    estimand:
+      type: elasticity
+      horizon: [0, 1, 3]
+      scale: level
+    allowed_designs:
+      - LOCAL_PROJECTIONS
+    design_priority:
+      - LOCAL_PROJECTIONS
+    acceptance_criteria:
+      plausibility:
+        expected_sign: negative
+        magnitude_range: [1.0, 50.0]
+    validated_evidence:
+      description: >
+        Caldara, Cavallo, Iacoviello (2019): short-run demand elasticity
+        -0.05 implies ~$10/bbl per 1 mb/d surplus. Fed IFDP 1173.
+      estimate: -10.0
+      immutable: false
+    unit_specification:
+      treatment_unit: mb_per_d
+      outcome_unit: usd_per_bbl
+    notes: >
+      Surplus pushes prices down. Short-run demand elasticity ~-0.05.
+      A 400K bpd surplus increase → ~$4/bbl decline from $58 base.
+    forbidden_controls:
+      - venezuela_production
+
+  # ---- Channel 5: Crude quality differentiation ----
+
+  - id: venezuela_production_to_heavy_sour_discount
+    from: venezuela_production
+    to: heavy_sour_discount
+    edge_type: causal
+    timing:
+      lag: 0
+      lag_unit: months
+      contemporaneous: true
+      max_anticipation: 0
+    estimand:
+      type: elasticity
+      horizon: [0, 1, 3]
+      scale: level
+    allowed_designs:
+      - LOCAL_PROJECTIONS
+    design_priority:
+      - LOCAL_PROJECTIONS
+    acceptance_criteria:
+      plausibility:
+        expected_sign: positive
+        magnitude_range: [0.5, 20.0]
+    unit_specification:
+      treatment_unit: mb_per_d
+      outcome_unit: usd_per_bbl
+    notes: >
+      Venezuelan heavy sour crude (Merey 16 API) is not fungible with
+      light sweet. Increased supply widens the heavy-sour discount,
+      benefiting US Gulf Coast refineries configured for this grade.
+      Operates independently of the aggregate supply-price effect.
+
+  # ---- Channel 6: Price → Investment feedback ----
+
+  - id: brent_price_to_fdi_oil_sector
+    from: brent_price
+    to: fdi_oil_sector
+    edge_type: causal
+    timing:
+      lag: 6
+      lag_unit: months
+      contemporaneous: false
+      max_anticipation: 0
+    estimand:
+      type: elasticity
+      horizon: [3, 6, 12]
+      scale: level
+    allowed_designs:
+      - LOCAL_PROJECTIONS
+    design_priority:
+      - LOCAL_PROJECTIONS
+    acceptance_criteria:
+      plausibility:
+        expected_sign: positive
+        magnitude_range: [0.01, 1.0]
+    unit_specification:
+      treatment_unit: usd_per_bbl
+      outcome_unit: bn_usd
+    notes: >
+      Feedback loop: lower oil prices reduce returns on Venezuelan
+      upstream investment, slowing production recovery. Orinoco Belt
+      economics are marginal at $58 Brent — need prices above $50-55.
+      Creates a natural speed limit on production growth.
