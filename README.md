@@ -273,6 +273,201 @@ Install: symlink `econ-guardrails/` into `~/.claude/plugins/local/` and restart 
 
 ---
 
+## For AI Agents: MCP Integration Guide
+
+This section is for AI agents (Claude Code, custom MCP clients, agent frameworks) that want to use OpenCausality's causal reasoning engine programmatically. The MCP server exposes 13 read-only tools — you can query, inspect, and propagate shocks through governed causal DAGs without modifying any artifacts.
+
+### Connect
+
+Add to your `.mcp.json` (or equivalent MCP client config):
+
+```json
+{
+  "mcpServers": {
+    "opencausality-query": {
+      "command": "python",
+      "args": ["-m", "shared.mcp.query_server"],
+      "env": { "PYTHONPATH": "." }
+    }
+  }
+}
+```
+
+The server runs via stdio transport. No API keys needed for the query engine itself.
+
+### Quickstart Workflow
+
+Every session follows the same pattern: **load → inspect → propagate → interpret**.
+
+```
+1. load_dag(dag_path="config/agentic/dags/my_dag.yaml")   # REQUIRED first
+2. list_nodes()                                             # see what's in the DAG
+3. list_edges(mode="STRUCTURAL")                            # see edges + which are allowed
+4. propagate_shock(source="x", magnitude=-0.30, unit="pct") # run a scenario
+5. inspect_edge(edge_id="x_to_y")                           # drill into any edge
+```
+
+### Tool Reference
+
+**Setup & Navigation**
+
+| Tool | Purpose | Key Parameters |
+|------|---------|----------------|
+| `load_dag` | Load DAG YAML + edge cards + issues. **Must call first.** | `dag_path` (string) |
+| `list_nodes` | All nodes with id, name, frequency, type | — |
+| `list_edges` | All edges with role, claim level, allowed status | `mode?` |
+| `switch_mode` | Change active query mode | `mode`: `STRUCTURAL` \| `REDUCED_FORM` \| `DESCRIPTIVE` |
+
+**Propagation & Paths**
+
+| Tool | Purpose | Key Parameters |
+|------|---------|----------------|
+| `propagate_shock` | Propagate a shock scenario through the DAG | `source`, `magnitude`, `unit?` (`pct`/`pp`/`sd`/`bps`), `target?`, `mode?` |
+| `propagate_policy` | Propagate a policy intervention (stricter: requires STRUCTURAL + IDENTIFIED_CAUSAL) | Same as `propagate_shock` |
+| `find_paths` | Find all paths between two nodes, with blocked reasons | `source`, `target`, `mode?` |
+| `target_contributors` | Rank all source nodes by effect size on target | `target`, `mode?` |
+
+**Inspection & Diagnostics**
+
+| Tool | Purpose | Key Parameters |
+|------|---------|----------------|
+| `inspect_edge` | Full edge card: estimates, credibility, identification, TSGuard, issues, literature | `edge_id` |
+| `get_identification` | Identification summary for all edges: claim levels + risks | — |
+| `compare_modes` | Edge permissions across all three modes side-by-side | — |
+| `run_placebo` | Falsification tests on missing edges (Markov property) | `max_tests?`, `alpha?` |
+| `dag_doctor` | Health check: coverage, issues, missing cards | — |
+
+### Reading Propagation Results
+
+`propagate_shock` and `propagate_policy` return a `paths` array. Each path is either open or blocked:
+
+```json
+{
+  "paths": [
+    {
+      "is_blocked": false,
+      "total_effect": -1.5,
+      "total_se": 0.67,
+      "ci_lower": -2.82,
+      "ci_upper": -0.18,
+      "edges": [
+        {"edge_id": "a_to_b", "coefficient": 0.15, "claim_level": "IDENTIFIED_CAUSAL", "role": "structural"},
+        {"edge_id": "b_to_c", "coefficient": -10.0, "claim_level": "IDENTIFIED_CAUSAL", "role": "structural"}
+      ]
+    },
+    {
+      "is_blocked": true,
+      "blocked_reasons": ["mode_restriction: ... not allowed in STRUCTURAL", "reaction_function edges are never allowed"],
+      "edges": [...]
+    }
+  ],
+  "blocked_edges": [{"edge_id": "...", "reason": "..."}],
+  "mode": "STRUCTURAL",
+  "scenario_type": "shock"
+}
+```
+
+**Key fields to extract:**
+- Sum `total_effect` across all open paths (`is_blocked: false`) for the aggregate effect
+- `blocked_reasons` explains *why* each path is gated — always surface these to users
+- `scaled_effect` / `scaled_ci_lower` / `scaled_ci_upper` are the unit-adjusted values to report
+- `warnings` contains SE independence caveats for multi-edge paths
+
+### Interpreting Results: Hedged Language Rules
+
+**This is the most important section.** When narrating propagation results, your language must match the identification strength. These are hard rules, not suggestions.
+
+**Rule 1 — Verb choice depends on the weakest claim level on any open path:**
+
+| Weakest claim on path | Allowed verbs | Forbidden |
+|---|---|---|
+| `IDENTIFIED_CAUSAL` (all edges) | "causes", "the structural estimate implies" | — |
+| `REDUCED_FORM` (any edge) | "is associated with", "predicts" | "causes", "drives", "leads to", "results in" |
+| `DESCRIPTIVE` | "correlates with", "co-moves with" | All causal + associative language |
+
+**Rule 2 — Always state the query mode.** Every interpretation must name the mode explicitly:
+> "In **STRUCTURAL** mode, a -30% shock to oil prices causes..."
+
+**Rule 3 — Report blocked paths.** Never silently omit them:
+> "2 open paths, 3 blocked (2 due to mode gating, 1 reaction function)"
+
+**Rule 4 — SE independence disclaimer** for any path with 2+ edges:
+> "Standard errors assume independence between edge estimates and may understate true uncertainty."
+
+**Rule 5 — Draft framing.** All results are draft estimates:
+> "These are draft estimates requiring analyst verification."
+
+**Template:**
+
+> In **[MODE]** mode, a [magnitude] [unit] shock to [source] **[causes / is associated with]** an effect of [scaled_effect] [unit] on [target] (95% CI: [ci_lower, ci_upper]) via [N] open path(s). [K] path(s) are blocked due to [reasons]. Standard errors assume independence between edge estimates. These are draft estimates requiring analyst verification.
+
+### Three Query Modes
+
+| Mode | What it allows | When to use |
+|------|---------------|-------------|
+| **STRUCTURAL** | Only `IDENTIFIED_CAUSAL` edges with structural/identity roles | Counterfactual questions: "What would happen if X?" |
+| **REDUCED_FORM** | Also allows `REDUCED_FORM` edges | Association questions: "What is X associated with?" |
+| **DESCRIPTIVE** | All edges including correlations | Exploration: "What co-moves with X?" |
+
+Use `switch_mode()` or pass `mode` as a parameter to any propagation tool. Default is REDUCED_FORM.
+
+### Edge Types and What Gets Blocked
+
+| Edge type | STRUCTURAL | REDUCED_FORM | DESCRIPTIVE |
+|-----------|-----------|-------------|-------------|
+| `causal` (IDENTIFIED_CAUSAL) | Allowed | Allowed | Allowed |
+| `causal` (REDUCED_FORM) | **Blocked** | Allowed | Allowed |
+| `identity` | Allowed (coeff=1.0) | Allowed | Allowed |
+| `reaction_function` | **Blocked always** | **Blocked always** | **Blocked always** |
+| `bridge` / `mechanical` | Allowed | Allowed | Allowed |
+
+`reaction_function` edges are **never propagated** in any mode — they represent strategic responses (e.g., OPEC quota adjustments) whose future behavior cannot be mechanically predicted from historical patterns. They appear in `inspect_edge` results for informational purposes only.
+
+### Common Agent Patterns
+
+**Pattern 1: Answer a "what if" question**
+```
+load_dag(dag_path) → propagate_shock(source, magnitude, unit) → narrate with hedged language
+```
+
+**Pattern 2: Assess DAG quality before querying**
+```
+load_dag(dag_path) → dag_doctor() → get_identification() → compare_modes()
+```
+
+**Pattern 3: Investigate a suspicious edge**
+```
+inspect_edge(edge_id) → check credibility_rating, claim_level, open_issues, counterfactual eligibility
+```
+
+**Pattern 4: Find what drives a target variable**
+```
+target_contributors(target) → inspect_edge() on top contributors → propagate_shock() on the most important source
+```
+
+**Pattern 5: Validate DAG structural integrity**
+```
+run_placebo(max_tests=20) → any failures suggest missing edges → inspect_edge() on flagged pairs
+```
+
+### Available DAGs
+
+```bash
+ls config/agentic/dags/   # list all DAG YAML files
+```
+
+Bundled examples:
+- `kz_bank_stress.yaml` — Kazakhstan bank stress testing (FX → bank capital, 20 nodes, 26 edges)
+- `venezuela_oil_unlock.yaml` — Venezuelan oil supply unlock (sanctions → oil prices, 11 nodes, 13 edges)
+
+### Error Handling
+
+- Calling any tool before `load_dag` returns an error message — always load first
+- NaN/Infinity values are serialized as strings (`"NaN"`, `"Inf"`) for JSON safety
+- If all paths are blocked, `total_effect` will be 0.0 on every path — check `is_blocked` flags, don't interpret zeros as "no effect"
+
+---
+
 ## Key Features
 
 **Estimation** — 19 adapters: Local Projections, Panel FE, IV-2SLS, DiD, RDD, Regression Kink, Synthetic Control, DoWhy (Backdoor/IV/Frontdoor), DoubleML, EconML CATE, CausalML Uplift, plus Identity/Bridge/Immutable.
