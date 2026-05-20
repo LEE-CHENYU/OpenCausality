@@ -15,7 +15,6 @@
 
 You describe a causal story. OpenCausality estimates every edge, flags what's wrong, and blocks any claim the research design can't support — all in a hash-chained audit trail.
 
-> **Paper:** [OpenCausality: Auditable Agentic Causal Inference](paper/main.pdf) (Li, 2026)
 > **Full reference:** [REFERENCE.md](REFERENCE.md) — complete architecture, CLI reference, adapter details, and design philosophy.
 
 ---
@@ -47,7 +46,7 @@ No API key? Use `LLM_PROVIDER=claude_cli` or `LLM_PROVIDER=codex` — they shell
 The central design rule: **claim levels are a one-way ratchet.** The research design sets a ceiling. Diagnostics and human review can only push it down, never up. Good p-values don't make an OLS estimate causal.
 
 <p align="center">
-  <img src="paper/fig_dag_panel.png" alt="DAG Visualization Panel" width="100%"/>
+  <img src="docs/assets/fig_dag_panel.png" alt="DAG Visualization Panel" width="100%"/>
 </p>
 <p align="center"><em>Interactive DAG visualization with color-coded edges, severity badges, and issue sidebar. Every output is framed as "DRAFT PROPOSAL — Requires analyst review."</em></p>
 
@@ -68,7 +67,7 @@ Starting from a single paragraph describing how FX shocks propagate to bank capi
 The NL pipeline also discovered **9 edges absent from the expert-built DAG**, including VIX → bank funding costs (risk-taking channel) and household income → cost of risk (bank lending channel).
 
 <p align="center">
-  <img src="paper/fig_hitl_panel.png" alt="HITL Resolution Panel" width="100%"/>
+  <img src="docs/assets/fig_hitl_panel.png" alt="HITL Resolution Panel" width="100%"/>
 </p>
 <p align="center"><em>Human-in-the-Loop resolution panel. Issues grouped by rule type and severity. Each card has accept/reject/revise/escalate actions with justification fields. All decisions are hash-chained.</em></p>
 
@@ -249,7 +248,7 @@ Claude: → run_placebo() → inspect_edge() for failures → synthesizes findin
 13 MCP tools. Full guardrail enforcement. Read-only — AI exploration can't alter governed artifacts.
 
 <p align="center">
-  <img src="paper/fig_claude_plugin.png" alt="Claude Code Plugin" width="100%"/>
+  <img src="docs/assets/fig_claude_plugin.png" alt="Claude Code Plugin" width="100%"/>
 </p>
 <p align="center"><em>Claude Code MCP plugin in action. User asks a natural language question, the propagation engine returns structured results with open/blocked paths, and the econ-guardrails hooks enforce hedged language — "causes" in STRUCTURAL mode downgrades to "is associated with" in REDUCED_FORM.</em></p>
 
